@@ -29,10 +29,9 @@ body {
     width: 90%;
     background-color: #1e1e1e;
     padding: 30px;
-    margin: 80px auto 40px auto;
+    margin: 80px auto 40px auto; /* pushed down so it doesn't overlap navbar */
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-    box-sizing: border-box;
 }
 
 /* Headings */
@@ -50,17 +49,18 @@ form {
 
 textarea {
     resize: none;
-    padding: 10px;
+    padding: 12px;
     border-radius: 8px;
     border: none;
     font-size: 16px;
     margin-bottom: 15px;
     background-color: #2a2a2a;
     color: #f0f0f0;
+    min-height: 150px;
 }
 
 button {
-    padding: 12px;
+    padding: 14px;
     border: none;
     border-radius: 8px;
     background-color: #00ffd5;
@@ -84,13 +84,14 @@ pre {
     word-wrap: break-word;
     font-size: 16px;
     color: #f0f0f0;
+    overflow-x: auto;
 }
 
 /* Cipher Selector */
-.cipher-label {
-    font-weight: 500;
-    color: #f0f0f0;
-    margin-bottom: 6px;
+.selector-label, .cipher-label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #00ffd5;
 }
 
 select {
@@ -98,19 +99,20 @@ select {
     color: #f0f0f0;
     border: none;
     border-radius: 8px;
-    padding: 10px;
+    padding: 12px;
     font-size: 16px;
     margin-bottom: 15px;
     cursor: pointer;
+    outline: none;
     transition: 0.2s;
-}
-
-select:hover {
-    background-color: #333;
 }
 
 select:focus {
     border: 2px solid #00ffd5;
+}
+
+select:hover {
+    background-color: #333;
 }
 
 /* Navbar */
@@ -150,15 +152,16 @@ select:focus {
     text-decoration: none;
     font-weight: bold;
     transition: 0.2s;
+    justify-content: center;
 }
 
 .nav-items li a:hover {
     color: #00ffd5;
 }
 
-/* Shift Frequency Analyser slightly to the left */
-.nav-items li:first-child {
-    transform: translateX(-400px); /* adjust if needed */
+/* Push container down so navbar doesn't overlap */
+.container {
+    margin-top: 80px;
 }
 
 /* Spinner Animation */
@@ -170,6 +173,8 @@ select:focus {
     height: 28px;
     animation: spin 1s linear infinite;
     display: inline-block;
+    margin-left: 10px;
+    vertical-align: middle;
 }
 
 @keyframes spin {
@@ -194,55 +199,73 @@ select:focus {
     transition: opacity 0.5s ease;
 }
 
-/* Push container down so navbar doesn't overlap */
-.container {
-    margin-top: 80px;
-}
-
-/* ========== MOBILE STYLES ========== */
+/* Mobile responsiveness */
 @media (max-width: 768px) {
-    body {
-        padding: 0 10px;
-    }
-
     .container {
         width: 95%;
-        padding: 20px;
+        padding: 20px 15px;
         margin-top: 70px;
+    }
+
+    h2 {
+        font-size: 22px;
+    }
+
+    textarea {
+        font-size: 16px;
+        min-height: 120px;
+    }
+
+    select {
+        font-size: 16px;
+        padding: 12px;
+    }
+
+    button {
+        font-size: 16px;
+        padding: 14px;
+    }
+
+    pre {
+        font-size: 15px;
+    }
+
+    .nav-items {
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .nav-logo {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 20px 10px;
+        margin-top: 60px;
     }
 
     h2 {
         font-size: 20px;
     }
 
-    textarea, select, button, pre {
+    textarea {
+        font-size: 15px;
+        min-height: 100px;
+    }
+
+    select {
+        font-size: 15px;
+        padding: 10px;
+    }
+
+    button {
+        font-size: 15px;
+        padding: 12px;
+    }
+
+    pre {
         font-size: 14px;
-    }
-
-    .nav-items {
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .nav-logo {
-        font-size: 18px;
-    }
-
-    .nav-items li:first-child {
-        transform: translateX(0);
-    }
-}
-
-@media (max-width: 480px) {
-    h2 {
-        font-size: 18px;
-    }
-
-    textarea, select, button, pre {
-        font-size: 13px;
-    }
-
-    .navbar {
-        padding: 0 10px;
     }
 }
