@@ -29,9 +29,10 @@ body {
     width: 90%;
     background-color: #1e1e1e;
     padding: 30px;
-    margin: 80px auto 40px auto; /* pushed down so it doesn't overlap logo */
+    margin: 80px auto 40px auto;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
 }
 
 /* Headings */
@@ -84,93 +85,8 @@ pre {
     font-size: 16px;
     color: #f0f0f0;
 }
+
 /* Cipher Selector */
-.selector-label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #00ffd5;
-}
-
-select {
-    background-color: #2a2a2a;
-    color: #f0f0f0;
-    border: none;
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 16px;
-    margin-bottom: 15px;
-    cursor: pointer;
-    outline: none;
-}
-
-select:focus {
-    border: 2px solid #00ffd5;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-    .container {
-        padding: 20px;
-    }
-
-    textarea, button {
-        font-size: 14px;
-        padding: 8px;
-    }
-
-    .logo {
-        font-size: 24px;
-    }
-}
-/* Spinner Animation */
-.spinner {
-    border: 4px solid #2a2a2a;
-    border-top: 4px solid #00ffd5;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 1s linear infinite;
-    display: inline-block;
-    margin-left: 10px;
-    vertical-align: middle;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-/* Loading overlay */
-.loading-overlay {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-top: 15px;
-    gap: 10px;
-    color: #aaa;
-    transition: opacity 0.4s ease;
-}
-
-/* Spinner style stays elegant */
-.spinner {
-    border: 4px solid #2a2a2a;
-    border-top: 4px solid #00ffd5;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Smooth fade-in for results */
-#result-key, #result-text {
-    transition: opacity 0.5s ease;
-}
-/* Cipher selector style */
 .cipher-label {
     font-weight: 500;
     color: #f0f0f0;
@@ -192,6 +108,11 @@ select {
 select:hover {
     background-color: #333;
 }
+
+select:focus {
+    border: 2px solid #00ffd5;
+}
+
 /* Navbar */
 .navbar {
     position: fixed;
@@ -217,8 +138,8 @@ select:hover {
 .nav-items {
     list-style: none;
     display: flex;
-    flex: 1;               /* take full width */
-    justify-content: center; /* center the items horizontally */
+    flex: 1;
+    justify-content: center;
     margin: 0;
     padding: 0;
     gap: 20px;
@@ -229,22 +150,99 @@ select:hover {
     text-decoration: none;
     font-weight: bold;
     transition: 0.2s;
-    justify-content: center;
 }
 
 .nav-items li a:hover {
     color: #00ffd5;
 }
 
-
 /* Shift Frequency Analyser slightly to the left */
 .nav-items li:first-child {
-    transform: translateX(-400px) /* adjust the value as needed */
+    transform: translateX(-400px); /* adjust if needed */
 }
 
-/* If you want to move it to the right instead, use margin-left */
+/* Spinner Animation */
+.spinner {
+    border: 4px solid #2a2a2a;
+    border-top: 4px solid #00ffd5;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Loading overlay */
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+    gap: 10px;
+    color: #aaa;
+    transition: opacity 0.4s ease;
+}
+
+/* Smooth fade-in for results */
+#result-key, #result-text {
+    transition: opacity 0.5s ease;
+}
 
 /* Push container down so navbar doesn't overlap */
 .container {
-    margin-top: 80px; /* adjusted for navbar height */
+    margin-top: 80px;
+}
+
+/* ========== MOBILE STYLES ========== */
+@media (max-width: 768px) {
+    body {
+        padding: 0 10px;
+    }
+
+    .container {
+        width: 95%;
+        padding: 20px;
+        margin-top: 70px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    textarea, select, button, pre {
+        font-size: 14px;
+    }
+
+    .nav-items {
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .nav-logo {
+        font-size: 18px;
+    }
+
+    .nav-items li:first-child {
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 480px) {
+    h2 {
+        font-size: 18px;
+    }
+
+    textarea, select, button, pre {
+        font-size: 13px;
+    }
+
+    .navbar {
+        padding: 0 10px;
+    }
 }
