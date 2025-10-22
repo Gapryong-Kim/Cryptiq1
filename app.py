@@ -53,8 +53,11 @@ def frequency():
         return jsonify({"text": result_text})
 
     return render_template("frequency.html")
-
+@app.route("/sitemap.xml")
+def sitemap():
+    return send_from_directory('.', 'sitemap.xml', mimetype='application/xml')
 
 if __name__ == "__main__":
     app.run()
+
 
