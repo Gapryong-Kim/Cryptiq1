@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CryptiQ - Cipher Breaker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-logo">CryptiQ</div>
+        <ul class="nav-items">
+            <li><a href="{{ url_for('frequency') }}">Frequency Analyzer</a></li>
+            <!-- future tools can be added here -->
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h2>Cipher Breaker</h2>
+
+        <form id="breaker-form">
+            <!-- Cipher Selector ABOVE the input box -->
+            <label for="cipher_type" class="cipher-label">Select Cipher:</label>
+            <select name="cipher_type" id="cipher_type">
+                <option value="affine" selected>Affine Cipher</option>  
+                <option value="amsco">AMSCO Cipher</option>  
+                <option value="caesar">Caesar Cipher</option>
+                <option value="columnar">Columnar Transposition Cipher</option>
+                <option value="permutation">Permutation (Block Transposition) Cipher</option>
+                <option value="railfence">Railfence Cipher</option>
+                <option value="vigenere">Vigenère Cipher</option>
+            </select>
+
+            <textarea name="text" placeholder="Enter ciphertext to break" required></textarea>
+
+            <button type="submit" id="break-btn">Break Cipher</button>
+
+            <!-- Spinner (centered under button) -->
+            <div id="loading" class="loading-overlay" style="display:none;">
+                <div class="spinner"></div>
+                <p>Breaking cipher...</p>
+            </div>
+        </form>
+
+        <h2>Result:</h2>
+        <p id="result-key"></p>
+        <!-- Copy button -->
+        <button id="copy-btn" style="display:none; margin-bottom: 10px;">Copy to Clipboard</button>
+        <pre id="result-text"></pre>
+    </div>
+
+    <script>
+        const form = document.getElementById("breaker-form");
+        const button = document.getElementById("break-btn");
+        const loading = document.getElementById("loading");
+        const resultText = document.getElementById("result-text");
+        const resultKey = document.getElementById("result-key");
+        const copyBtn = document.getElementById("copy-btn");
+
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            button.style.display = "none";
+            loading.style.display = "flex";
+
+            const formData = new FormData(form);
+            const response = await fetch("/", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            loading.style.opacity = "0";
+            setTimeout(() => {
+                loading.style.display = "none";
+                loading.style.opacity = "1";
+                button.style.display = "inline-block";
+
+                resultKey.style.opacity = "0";
+                resultText.style.opacity = "0";
+                resultKey.textContent = data.key ? `Key: ${data.key}` : "";
+                resultText.textContent = data.text || "";
+
+                copyBtn.style.display = data.text ? "inline-block" : "none";
+
+                setTimeout(() => {
+                    resultKey.style.transition = "opacity 0.5s";
+                    resultText.style.transition = "opacity 0.5s";
+                    resultKey.style.opacity = "1";
+                    resultText.style.opacity = "1";
+                }, 100);
+            }, 500);
+        });
+
+        copyBtn.addEventListener("click", () => {
+            navigator.clipboard.writeText(resultText.textContent).then(() => {
+                copyBtn.textContent = "Copied!";
+                setTimeout(() => {
+                    copyBtn.textContent = "Copy to Clipboard";
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CryptiQ - Frequency Analyser</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-logo">CryptiQ</div>
+        <ul class="nav-items">
+            <li><a href="{{ url_for('index') }}">Cipher Breaker</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h2>Frequency Analyser</h2>
+
+        <form id="breaker-form">
+            <textarea name="text" placeholder="Enter ciphertext to analyse" required></textarea>
+            <button type="submit" id="break-btn">Analyse</button>
+
+            <!-- Spinner -->
+            <div id="loading" class="loading-overlay" style="display:none;">
+                <div class="spinner"></div>
+                <p>Analysing...</p>
+            </div>
+        </form>
+
+        <h2>Result:</h2>
+        <!-- Copy button -->
+        <button id="copy-btn" style="display:none; margin-bottom: 10px;">Copy to Clipboard</button>
+        <pre id="result-text"></pre>
+    </div>
+
+    <script>
+        const form = document.getElementById("breaker-form");
+        const button = document.getElementById("break-btn");
+        const loading = document.getElementById("loading");
+        const resultText = document.getElementById("result-text");
+        const copyBtn = document.getElementById("copy-btn");
+
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            button.style.display = "none";
+            loading.style.display = "flex";
+
+            const formData = new FormData(form);
+            const response = await fetch("/frequency", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            loading.style.opacity = "0";
+            setTimeout(() => {
+                loading.style.display = "none";
+                loading.style.opacity = "1";
+                button.style.display = "inline-block";
+
+                resultText.style.opacity = "0";
+                resultText.textContent = data.text || "";
+
+                setTimeout(() => {
+                    resultText.style.transition = "opacity 0.5s";
+                    resultText.style.opacity = "1";
+                }, 100);
+
+                // Show copy button if there’s content
+                copyBtn.style.display = data.text ? "inline-block" : "none";
+            }, 500);
+        });
+
+        // Copy button functionality
+        copyBtn.addEventListener("click", () => {
+            const textToCopy = resultText.textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                copyBtn.textContent = "Copied!";
+                setTimeout(() => {
+                    copyBtn.textContent = "Copy to Clipboard";
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
