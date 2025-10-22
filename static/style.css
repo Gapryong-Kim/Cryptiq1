@@ -25,16 +25,16 @@ body {
 
 /* Container */
 .container {
-    width: 100%;
-    max-width: 700px;
+    width: 95%;
+    max-width: 900px; /* wider container */
     background-color: #1e1e1e;
     padding: 30px;
     margin: 80px auto 40px auto; 
     border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 100px); /* full height minus navbar */
+    min-height: auto;
 }
 
 /* Headings */
@@ -48,20 +48,19 @@ h2 {
 form {
     display: flex;
     flex-direction: column;
-    flex: 1;
 }
 
 textarea {
     resize: none;
-    padding: 12px;
+    padding: 14px;
     border-radius: 8px;
     border: none;
     font-size: 16px;
     margin-bottom: 15px;
     background-color: #2a2a2a;
     color: #f0f0f0;
-    flex: 1; /* expand to fill space */
-    min-height: 200px;
+    width: 100%;
+    min-height: 150px;
 }
 
 button {
@@ -91,7 +90,8 @@ pre {
     font-size: 16px;
     color: #f0f0f0;
     overflow-x: auto;
-    flex: 1; /* expand to fill space */
+    width: 100%;
+    min-height: 120px;
 }
 
 /* Cipher Selector */
@@ -112,6 +112,7 @@ select {
     cursor: pointer;
     outline: none;
     transition: 0.2s;
+    width: 100%;
 }
 
 select:focus {
@@ -208,11 +209,9 @@ select:hover {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .container {
-        width: 100%;
-        height: calc(100vh - 60px); /* almost full screen */
+        width: 95%;
         padding: 20px;
-        margin: 60px 0 0 0;
-        border-radius: 0;
+        margin: 60px auto 20px auto;
     }
 
     h2 {
@@ -221,7 +220,7 @@ select:hover {
 
     textarea, pre {
         font-size: 16px;
-        min-height: 150px;
+        min-height: 140px;
     }
 
     select, button {
@@ -237,6 +236,7 @@ select:hover {
 
 @media (max-width: 480px) {
     .container {
+        width: 100%;
         padding: 15px;
         margin-top: 50px;
     }
