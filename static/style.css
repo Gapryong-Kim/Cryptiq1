@@ -25,13 +25,16 @@ body {
 
 /* Container */
 .container {
+    width: 100%;
     max-width: 700px;
-    width: 90%;
     background-color: #1e1e1e;
     padding: 30px;
-    margin: 80px auto 40px auto; /* pushed down so it doesn't overlap navbar */
+    margin: 80px auto 40px auto; 
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 100px); /* full height minus navbar */
 }
 
 /* Headings */
@@ -45,6 +48,7 @@ h2 {
 form {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 textarea {
@@ -56,7 +60,8 @@ textarea {
     margin-bottom: 15px;
     background-color: #2a2a2a;
     color: #f0f0f0;
-    min-height: 150px;
+    flex: 1; /* expand to fill space */
+    min-height: 200px;
 }
 
 button {
@@ -69,6 +74,7 @@ button {
     font-size: 16px;
     cursor: pointer;
     transition: 0.2s;
+    margin-bottom: 15px;
 }
 
 button:hover {
@@ -85,6 +91,7 @@ pre {
     font-size: 16px;
     color: #f0f0f0;
     overflow-x: auto;
+    flex: 1; /* expand to fill space */
 }
 
 /* Cipher Selector */
@@ -142,7 +149,7 @@ select:hover {
     display: flex;
     flex: 1;
     justify-content: center;
-    margin: 0;
+    margin-right: 1000px;
     padding: 0;
     gap: 20px;
 }
@@ -152,7 +159,6 @@ select:hover {
     text-decoration: none;
     font-weight: bold;
     transition: 0.2s;
-    justify-content: center;
 }
 
 .nav-items li a:hover {
@@ -161,7 +167,7 @@ select:hover {
 
 /* Push container down so navbar doesn't overlap */
 .container {
-    margin-top: 80px;
+    margin-top: 70px; 
 }
 
 /* Spinner Animation */
@@ -202,70 +208,50 @@ select:hover {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .container {
-        width: 95%;
-        padding: 20px 15px;
-        margin-top: 70px;
+        width: 100%;
+        height: calc(100vh - 60px); /* almost full screen */
+        padding: 20px;
+        margin: 60px 0 0 0;
+        border-radius: 0;
     }
 
     h2 {
         font-size: 22px;
     }
 
-    textarea {
+    textarea, pre {
         font-size: 16px;
-        min-height: 120px;
+        min-height: 150px;
     }
 
-    select {
-        font-size: 16px;
-        padding: 12px;
-    }
-
-    button {
+    select, button {
         font-size: 16px;
         padding: 14px;
-    }
-
-    pre {
-        font-size: 15px;
     }
 
     .nav-items {
         gap: 12px;
         flex-wrap: wrap;
     }
-
-    .nav-logo {
-        font-size: 20px;
-    }
 }
 
 @media (max-width: 480px) {
     .container {
-        padding: 20px 10px;
-        margin-top: 60px;
+        padding: 15px;
+        margin-top: 50px;
     }
 
     h2 {
         font-size: 20px;
     }
 
-    textarea {
+    textarea, pre {
         font-size: 15px;
-        min-height: 100px;
+        min-height: 120px;
     }
 
-    select {
-        font-size: 15px;
-        padding: 10px;
-    }
-
-    button {
+    select, button {
         font-size: 15px;
         padding: 12px;
-    }
-
-    pre {
-        font-size: 14px;
     }
 }
