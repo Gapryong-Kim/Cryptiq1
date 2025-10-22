@@ -56,8 +56,11 @@ def frequency():
 @app.route("/sitemap.xml")
 def sitemap():
     return send_from_directory('.', 'sitemap.xml', mimetype='application/xml')
-
+@app.route("/google-site-verification=yL9ZyE9FIdPmgn447gFEGkiwtHNKWodpHC43zVLSMAI.html")
+def google_verification():
+    return send_from_directory('.', 'google-site-verification=yL9ZyE9FIdPmgn447gFEGkiwtHNKWodpHC43zVLSMAI.html')
 if __name__ == "__main__":
     app.run()
+
 
 
