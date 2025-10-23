@@ -28,7 +28,7 @@ alphabet = [
 ]
 
 
-def polybius_decode(message):
+def polybius_standardize(message):
     message = message.replace(" ", "")
     coords = []
     coord = ""
@@ -43,7 +43,6 @@ def polybius_decode(message):
     standardized = ""
     for i in coords:
         standardized += alphabet[unique_coords.index(i)]
-    print(standardized.upper())
+    return standardized.upper()
 
 
-polybius_decode(input("Enter a message: "))
