@@ -17,7 +17,6 @@
       display: grid;
       place-items: start center;
     }
-
     .auth-bg {
       position: absolute; inset: 0;
       pointer-events: none;
@@ -27,7 +26,6 @@
       filter: blur(20px);
       opacity: .9;
     }
-
     .auth-container {
       width: min(980px, 94vw);
       display: grid;
@@ -36,7 +34,6 @@
       align-items: center;
       z-index: 1;
     }
-
     .auth-hero {
       display: flex;
       flex-direction: column;
@@ -63,7 +60,6 @@
       font-size: 1rem;
       line-height: 1.6;
     }
-
     .auth-card {
       background: color-mix(in oklab, var(--panel) 86%, transparent);
       border: 1px solid var(--line);
@@ -73,7 +69,6 @@
       -webkit-backdrop-filter: blur(6px);
       padding: 22px 18px;
     }
-
     .auth-card h2 {
       margin: 0 0 4px 0;
       text-align: center;
@@ -87,7 +82,6 @@
       color: var(--muted);
       font-size: .96rem;
     }
-
     .auth-form {
       display: grid;
       gap: 12px;
@@ -99,7 +93,6 @@
       color: var(--text);
       font-size: .95rem;
     }
-
     .auth-input {
       width: 100%;
       box-sizing: border-box;
@@ -118,7 +111,6 @@
       background: var(--input-focus);
       box-shadow: 0 0 0 2px var(--accent-soft);
     }
-
     .password-field { position: relative; }
     .toggle-pass {
       position: absolute;
@@ -134,7 +126,6 @@
       transition: background .2s, border-color .2s;
     }
     .toggle-pass:hover { background: var(--panel-2); border-color: var(--accent); }
-
     .auth-button {
       width: 100%;
       padding: 14px 16px;
@@ -154,17 +145,30 @@
       transform: translateY(-1px);
     }
 
-    /* Error banner (Discord-style) */
-    .auth-error {
+    /* Category-aware flash banners */
+    .auth-flash {
+      text-align: center;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: .95rem;
+      margin-bottom: 12px;
+      animation: fadeIn .25s ease;
+    }
+    .auth-flash.success {
+      color: #00ffb0;
+      background: rgba(0,255,213,0.08);
+      border: 1px solid rgba(0,255,213,0.35);
+    }
+    .auth-flash.error,
+    .auth-flash.danger {
       color: #ff6b6b;
       background: rgba(255,107,107,0.08);
       border: 1px solid rgba(255,107,107,0.3);
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: .95rem;
-      animation: fadeIn .25s ease;
-      text-align: center;
-      margin-top: -4px;
+    }
+    .auth-flash.info {
+      color: #62a0ff;
+      background: rgba(98,160,255,0.08);
+      border: 1px solid rgba(98,160,255,0.3);
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-6px); }
@@ -229,13 +233,12 @@
         <h2>Create Account</h2>
         <p class="auth-sub">It takes less than a minute.</p>
 
-        {# Global error banner via flash() or error string #}
-        {% if error %}
-          <div class="auth-error">{{ error }}</div>
-        {% endif %}
-        {% with messages = get_flashed_messages() %}
+        {# Category-aware flashes #}
+        {% with messages = get_flashed_messages(with_categories=True) %}
           {% if messages %}
-            <div class="auth-error">{{ messages[0] }}</div>
+            {% for category, msg in messages %}
+              <div class="auth-flash {{ category }}">{{ msg }}</div>
+            {% endfor %}
           {% endif %}
         {% endwith %}
 
@@ -287,7 +290,7 @@
     wireToggle('toggle-pass-1', 'password');
     wireToggle('toggle-pass-2', 'confirm');
 
-    // Simple client validation for password match (Discord-like inline warning)
+    // Inline password match warning
     const form = document.getElementById('register-form');
     const pwd = document.getElementById('password');
     const cfm = document.getElementById('confirm');

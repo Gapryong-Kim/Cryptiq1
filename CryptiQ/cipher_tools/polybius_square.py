@@ -2,46 +2,17 @@
 # substitution_solver_fast.py
 # Fast + accurate monoalphabetic substitution solver (Windows-safe threading)
 # Tuned for LONG ciphertexts: stronger 4-grams, larger corpus, 2-phase polish.
+# Now robust to mixed ciphers: ignores long two-letter runs (e.g. Baconian) for scoring.
 
 import math, random, re, time, sys, os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-alphabet = [
-    "a",
-    "b",
-    "c",
-    "d",
-    "e",
-    "f",
-    "g",
-    "h",
-    "i",
-    "j",
-    "k",
-    "l",
-    "m",
-    "n",
-    "o",
-    "p",
-    "q",
-    "r",
-    "s",
-    "t",
-    "u",
-    "v",
-    "w",
-    "x",
-    "y",
-    "z",
-]
-
-
+alphabet = list("abcdefghijklmnopqrstuvwxyz")
 
 def polybius_standardize(message):
     message = message.replace(" ", "")
-    coords = []
-    coord = ""
+    coords, coord = [], ""
     for i, k in enumerate(message):
         if i % 2 == 0 and coord:
             coords.append(coord)
@@ -70,6 +41,44 @@ def apply_substitution(text, key_cipher_to_plain):
             out.append(ch)
     return "".join(out)
 
+def _find_two_letter_runs(CT_UP, min_run=40):
+    """
+    Return a boolean mask (len = len(CT_UP)) where True marks positions
+    that belong to long “two-letter” runs (e.g., {E,U}, {A,B}, {0,1}).
+    We only consider alphabetic chars for membership; other chars break the run.
+    """
+    n = len(CT_UP)
+    mask = [False] * n
+
+    # sets to consider as "binary alphabets"
+    binary_sets = [
+        set("AB"), set("BA"),
+        set("EU"), set("UE"),
+        set("OI"), set("IO"),  # sometimes people use O/I
+        set("01"),
+        set("XO"), set("OX"),
+    ]
+
+    i = 0
+    while i < n:
+        if not CT_UP[i].isalpha():
+            i += 1
+            continue
+        # extend j while letters remain, then analyze that contiguous alpha run
+        j = i
+        while j < n and CT_UP[j].isalpha():
+            j += 1
+        run = CT_UP[i:j]
+        uniq = set(run)
+
+        # If the run's unique set is only two letters and long enough, mark it
+        if len(uniq) == 2 and len(run) >= min_run and any(uniq == s for s in binary_sets):
+            for k in range(i, j):
+                mask[k] = True
+
+        i = j
+
+    return mask
 
 def substitution_break(ciphertext,
                        max_restarts=14,
@@ -78,7 +87,9 @@ def substitution_break(ciphertext,
                        time_limit_seconds=35,
                        threads=None,
                        fixed=None,
-                       verbose=True):
+                       verbose=True,
+                       ignore_twoletter_runs=True,
+                       min_twoletter_run_len=40):
     """
     Fast + accurate monoalphabetic substitution solver (delta scoring + threaded restarts).
     Tuned for LONG texts (150+ letters):
@@ -86,6 +97,8 @@ def substitution_break(ciphertext,
       • Heavier tetragram weight
       • SA with light reheating
       • Greedy delta polish + semantic polish (tiny word bonus)
+    Now also:
+      • Ignores long two-letter runs (Baconian-like) when scoring so mixed ciphers won't derail the search.
     """
     if seed is not None:
         random.seed(seed)
@@ -97,7 +110,22 @@ def substitution_break(ciphertext,
     # --------- Normalize ciphertext to int array (letters-only) ---------
     CT = ciphertext
     CT_UP = CT.upper()
-    letters_idx = [A2I[ch] for ch in CT_UP if 'A' <= ch <= 'Z']
+
+    # Optionally mask out long two-letter runs for scoring
+    excluded = [False] * len(CT_UP)
+    if ignore_twoletter_runs:
+        excluded = _find_two_letter_runs(CT_UP, min_run=min_twoletter_run_len)
+        if verbose and any(excluded):
+            run_len = sum(1 for i, ch in enumerate(CT_UP) if ch.isalpha() and excluded[i])
+            print(f"[note] Detected ~{run_len} letters inside long two-letter runs; excluding from scoring.")
+
+    letters_idx = []
+    kept_pos = []  # original indices that are kept for scoring
+    for idx, ch in enumerate(CT_UP):
+        if 'A' <= ch <= 'Z' and not excluded[idx]:
+            letters_idx.append(A2I[ch])
+            kept_pos.append(idx)
+
     L = letters_idx
     nL = len(L)
 
@@ -106,7 +134,8 @@ def substitution_break(ciphertext,
         key = _freq_start_key(CT, AZ)
         if fixed:
             _apply_fixed(key, fixed)
-        return apply_substitution(CT, key), key
+        plain = apply_substitution(CT, key)
+        return key, plain
 
     # --------- Larger English model ---------
     CORPUS = """
@@ -163,7 +192,7 @@ def substitution_break(ciphertext,
         return p
 
     def freq_start_key_list():
-        d = _freq_start_key(CT, AZ)
+        d = _freq_start_key(CT, AZ)  # cipher->plain (letters across whole CT)
         arr = [0] * 26
         inv = {A2I[c]: A2I[p] for c, p in d.items()}
         for c_idx in range(26):
@@ -388,8 +417,7 @@ def substitution_break(ciphertext,
         dur = time.time() - start_time
         print(f"[done in {dur:.1f}s | restarts={len(jobs)} | threads={threads}]")
 
-    return key_dict,plain
-
+    return key_dict, plain
 
 # =========================
 #   Internal helpers
@@ -416,14 +444,11 @@ def _ngram_logprobs_dense(corpus, n, k=0.5):
         arr[idx] = math.log((c + k) / denom)
     return arr, floor
 
-
 def _scale_dense(arr, w):
     if abs(w - 1.0) < 1e-12:
         return
     for i in range(len(arr)):
-        arr[i]
         arr[i] *= w
-
 
 def _freq_start_key(text, AZ):
     """Return dict cipher→plain based on frequency order."""
@@ -436,33 +461,30 @@ def _freq_start_key(text, AZ):
             order.append(a)
     return {order[i]: ENGLISH_FREQ_ORDER[i] for i in range(26)}
 
-
 def _apply_fixed(key_dict, fixed):
     """Mutate key_dict to enforce cipher→plain locks."""
     for c, p in fixed.items():
         key_dict[c] = p
 
-
 def _is_locked_idx(c_idx, fixed, A2I):
     return fixed is not None and (list(A2I.keys())[c_idx] in fixed)
-
 
 # =========================
 #   CLI for Testing
 # =========================
 if __name__ == "__main__":
-    print("=== Monoalphabetic Substitution Solver (high accuracy, long-text tuned) ===")
+    print("=== Monoalphabetic Substitution Solver (long-text tuned; mixed-cipher aware) ===")
     print("Paste your ciphertext, then press Enter.\n")
     cipher = input("> ").strip()
     if not cipher:
         print("No ciphertext provided.")
         sys.exit(0)
 
-    plain, key = substitution_break(
+    key, plain = substitution_break(
         cipher,
         max_restarts=14,       # more restarts for long text
         sa_steps=9000,         # deeper search
-        time_limit_seconds=35, # longer runtime cap
+        time_limit_seconds=35, # runtime cap
         seed=42,
         verbose=True
     )

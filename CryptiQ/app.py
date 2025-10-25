@@ -156,7 +156,26 @@ def index():
     if request.method == "POST":
         text = request.form.get("text", "")
         cipher_type = request.form.get("cipher_type", "vigenere").lower()
+        known_plaintext = request.form.get("known_plaintext", "").strip()
 
+        # --- Helper: parse "D=E,X=T,R=A" → {'D':'E','X':'T','R':'A'} ---
+        fixed_map = None
+        if known_plaintext:
+            # detect pattern with '=' sign(s)
+            if "=" in known_plaintext:
+                fixed_map = {}
+                pairs = [p.strip() for p in known_plaintext.replace(";", ",").split(",") if p.strip()]
+                for pair in pairs:
+                    if "=" in pair:
+                        ciph, plain = pair.split("=", 1)
+                        if ciph and plain:
+                            fixed_map[ciph.strip().upper()] = plain.strip().upper()
+            else:
+                # treat as crib word (known word)
+                # we’ll pass it later as None but you can extend your cipher solver to use it
+                fixed_map = None
+
+        # --- Cipher selection ---
         if cipher_type == "caesar":
             key, plaintext = caesar_break(text)
         elif cipher_type == "vigenere":
@@ -172,35 +191,34 @@ def index():
         elif cipher_type == "railfence":
             key, plaintext = railfence_break(text)
         elif cipher_type == "polybius":
-            key,plaintext = substitution_break(
-        polybius_standardize(text),
-        max_restarts=16,      # raise to 16–24 for very hard texts
-        sa_steps=6000,        # annealing steps per restart
-        seed=42,
-        time_limit_seconds=25,
-        threads=None,         # auto threads (Windows-safe)
-        fixed=None,           # e.g. {'D':'E','X':'T'} to lock known pairs
-        verbose=True
-    )
-        
+            key, plaintext = substitution_break(
+                polybius_standardize(text),
+                max_restarts=16,
+                sa_steps=6000,
+                seed=42,
+                time_limit_seconds=25,
+                threads=None,
+                fixed=fixed_map,
+                verbose=True
+            )
         elif cipher_type == "substitution":
-            key,plaintext = substitution_break(
-        text,
-        max_restarts=14,      # raise to 16–24 for very hard texts
-        sa_steps=6000,        # annealing steps per restart
-        seed=42,
-        time_limit_seconds=25,
-        threads=None,         # auto threads (Windows-safe)
-        fixed=None,           # e.g. {'D':'E','X':'T'} to lock known pairs
-        verbose=True
-    )
+            key, plaintext = substitution_break(
+                text,
+                max_restarts=16,
+                sa_steps=6000,
+                seed=42,
+                time_limit_seconds=25,
+                threads=None,
+                fixed=fixed_map,   # ✅ apply the known plaintext map here
+                verbose=True
+            )
         else:
             key, plaintext = None, text
-        
 
         return jsonify({"key": key, "text": plaintext})
 
     return render_template("index.html", user=current_user())
+
 
 # ------------------- Tools Page -------------------
 @app.route("/tools", methods=["GET"])
@@ -534,17 +552,21 @@ def register():
             flash("Email or username already exists.", "error")
             return render_template('register.html')
 
-        # Hash password and store
+        # Hash password and store in 'password_hash' column
         hashed = generate_password_hash(password)
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
-            c.execute("INSERT INTO users (email, username, password) VALUES (?, ?, ?)", (email, username, hashed))
+            c.execute(
+                "INSERT INTO users (email, username, password_hash, created_at) VALUES (?, ?, ?, ?)",
+                (email, username, hashed, datetime.utcnow().isoformat())
+            )
             conn.commit()
 
         flash("Account created successfully! You can now log in.", "success")
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
 
 
 @app.route("/login", methods=["GET", "POST"])

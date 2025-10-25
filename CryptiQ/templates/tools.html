@@ -254,8 +254,7 @@
     <div class="tools-row">
       <label for="tool-select" class="cipher-label">Select Tool</label>
       <select id="tool-select">
-        <option value="">— Choose a Tool —</option>
-        <option value="frequency">Frequency Analyzer</option>
+        <option value="frequency" selected>Frequency Analyzer</option>
         <option value="polybius">Polybius Standardizer</option>
         <option value="substitution">Substitution Cipher Analyzer</option>
         <option value="unique">Unique Symbol Finder</option>
@@ -267,170 +266,174 @@
   </div>
 
   <script>
-    const toolSelect = document.getElementById("tool-select");
-    const toolContainer = document.getElementById("tool-container");
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    (function () {
+      const toolSelect = document.getElementById("tool-select");
+      const toolContainer = document.getElementById("tool-container");
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-    const toolExplanations = {
-      frequency: "Counts how often each letter appears. Great first step for substitution-style ciphers.",
-      polybius:  "Normalizes Polybius outputs to a clean letter stream you can feed into other tools.",
-      substitution: "Map each ciphertext letter to a plaintext guess. Cipher (top) → your guess (bottom). Live preview updates in the textarea.",
-      unique:    "Splits text into blocks of length n and counts unique blocks. Helpful for pattern hunting.",
-      text_spacer: "Removes spaces, then re-blocks your text into fixed-size chunks for readability and analysis."
-    };
+      const toolExplanations = {
+        frequency: "Counts how often each letter appears. Great first step for substitution-style ciphers.",
+        polybius:  "Normalizes Polybius outputs to a clean letter stream you can feed into other tools.",
+        substitution: "Map each ciphertext letter to a plaintext guess. Cipher (top) → your guess (bottom). Live preview updates in the textarea.",
+        unique:    "Splits text into blocks of length n and counts unique blocks. Helpful for pattern hunting.",
+        text_spacer: "Removes spaces, then re-blocks your text into fixed-size chunks for readability and analysis."
+      };
 
-    const showCard = () => { toolContainer.style.display = 'flex'; };
+      const showCard = () => { toolContainer.style.display = 'flex'; };
 
-    toolSelect.addEventListener("change", async () => {
-      toolContainer.innerHTML = "";
-      const selected = toolSelect.value;
-      if (!selected) { toolContainer.style.display = 'none'; return; }
-      showCard();
+      function renderTool(selected) {
+        toolContainer.innerHTML = "";
+        if (!selected) { toolContainer.style.display = 'none'; return; }
+        showCard();
 
-      /* ---------- Substitution Analyzer ---------- */
-      if (selected === "substitution") {
-        toolContainer.innerHTML = `
-          <p class="tool-description">${toolExplanations['substitution']}</p>
-          <textarea id="ciphertext" placeholder="Paste ciphertext here…"></textarea>
-          <div id="substitution-row" aria-label="Substitution grid"></div>
+        /* ---------- Substitution Analyzer ---------- */
+        if (selected === "substitution") {
+          toolContainer.innerHTML = `
+            <p class="tool-description">${toolExplanations['substitution']}</p>
+            <textarea id="ciphertext" placeholder="Paste ciphertext here…"></textarea>
+            <div id="substitution-row" aria-label="Substitution grid"></div>
 
-          <div class="helper-bar">
-            <div class="helper-left" style="color:var(--muted);font-size:.92rem;">
-              Tip: Enter lowercase plaintext guesses. Use Frequency Analyzer for hints.
+            <div class="helper-bar">
+              <div class="helper-left" style="color:var(--muted);font-size:.92rem;">
+                Tip: Enter lowercase plaintext guesses. Use Frequency Analyzer for hints.
+              </div>
+              <div class="helper-right">
+                <button class="btn secondary" id="clear-mapping" type="button">Clear Mapping</button>
+                <button class="btn secondary" id="reset-text" type="button">Reset Text</button>
+              </div>
             </div>
-            <div class="helper-right">
-              <button class="btn secondary" id="clear-mapping" type="button">Clear Mapping</button>
-              <button class="btn secondary" id="reset-text" type="button">Reset Text</button>
-            </div>
-          </div>
 
-          <div class="result-box" id="frequency-output" aria-live="polite"></div>
-        `;
+            <div class="result-box" id="frequency-output" aria-live="polite"></div>
+          `;
 
-        const substitutionRow = document.getElementById("substitution-row");
-        const mapping = {};   // mapping[cipherLetter] = plaintextGuess(lowercase) or ""
-        let originalText = "";
-        const textarea = document.getElementById("ciphertext");
-        const freqOutput = document.getElementById("frequency-output");
+          const substitutionRow = document.getElementById("substitution-row");
+          const mapping = {};
+          let originalText = "";
+          const textarea = document.getElementById("ciphertext");
+          const freqOutput = document.getElementById("frequency-output");
 
-        // Build tiles: Cipher on top → user input (plaintext) below, with a small arrow
-        alphabet.forEach(cipherLetter => {
-          const box = document.createElement("div");
-          box.className = "sub-letter-box";
-          const top = document.createElement("span");
-          top.className = "sub-top";
-          top.textContent = cipherLetter;
+          alphabet.forEach(cipherLetter => {
+            const box = document.createElement("div");
+            box.className = "sub-letter-box";
+            const top = document.createElement("span");
+            top.className = "sub-top";
+            top.textContent = cipherLetter;
 
-          const arrow = document.createElement("span");
-          arrow.className = "sub-arrow";
-          arrow.textContent = "↓";
+            const arrow = document.createElement("span");
+            arrow.className = "sub-arrow";
+            arrow.textContent = "↓";
 
-          const input = document.createElement("input");
-          input.className = "sub-input";
-          input.maxLength = 1;
-          input.dataset.cipher = cipherLetter;
-          input.placeholder = "…";
+            const input = document.createElement("input");
+            input.className = "sub-input";
+            input.maxLength = 1;
+            input.dataset.cipher = cipherLetter;
+            input.placeholder = "…";
 
-          input.addEventListener("input", () => {
-            const cipher = input.dataset.cipher;
-            const plain = (input.value || "").toLowerCase();
-            mapping[cipher] = plain;
-            updateTextarea();
+            input.addEventListener("input", () => {
+              const cipher = input.dataset.cipher;
+              const plain = (input.value || "").toLowerCase();
+              mapping[cipher] = plain;
+              updateTextarea();
+            });
+
+            box.appendChild(top);
+            box.appendChild(arrow);
+            box.appendChild(input);
+            substitutionRow.appendChild(box);
+            mapping[cipherLetter] = "";
           });
 
-          box.appendChild(top);
-          box.appendChild(arrow);
-          box.appendChild(input);
-          substitutionRow.appendChild(box);
-          mapping[cipherLetter] = "";
-        });
+          textarea.addEventListener("input", async () => {
+            originalText = textarea.value.toUpperCase();
+            updateTextarea();
 
-        // Live textarea mapping
-        textarea.addEventListener("input", async () => {
-          originalText = textarea.value.toUpperCase();
-          updateTextarea();
-
-          // frequency call
-          if (originalText.trim()) {
-            try {
-              const formData = new FormData();
-              formData.append("text", originalText);
-              formData.append("tool_type", "frequency");
-              const res = await fetch("/tools/run", { method: "POST", body: formData });
-              const data = await res.json();
-              freqOutput.innerText = data.text || "";
-            } catch (e) {
-              freqOutput.innerText = "Error fetching frequency analysis.";
+            if (originalText.trim()) {
+              try {
+                const formData = new FormData();
+                formData.append("text", originalText);
+                formData.append("tool_type", "frequency");
+                const res = await fetch("/tools/run", { method: "POST", body: formData });
+                const data = await res.json();
+                freqOutput.innerText = data.text || "";
+              } catch {
+                freqOutput.innerText = "Error fetching frequency analysis.";
+              }
+            } else {
+              freqOutput.innerText = "";
             }
-          } else {
+          });
+
+          function updateTextarea() {
+            let out = "";
+            for (let ch of originalText) {
+              out += mapping[ch] !== undefined && mapping[ch] !== "" ? mapping[ch] : ch;
+            }
+            textarea.value = out;
+          }
+
+          document.getElementById("clear-mapping").addEventListener("click", () => {
+            substitutionRow.querySelectorAll(".sub-input").forEach(inp => inp.value = "");
+            Object.keys(mapping).forEach(k => mapping[k] = "");
+            updateTextarea();
+          });
+          document.getElementById("reset-text").addEventListener("click", () => {
+            textarea.value = originalText;
             freqOutput.innerText = "";
-          }
-        });
-
-        function updateTextarea() {
-          // Render plaintext guesses inline (letters not mapped stay as original)
-          let out = "";
-          for (let ch of originalText) {
-            out += mapping[ch] !== undefined && mapping[ch] !== "" ? mapping[ch] : ch;
-          }
-          textarea.value = out;
+          });
         }
 
-        // helper buttons
-        document.getElementById("clear-mapping").addEventListener("click", () => {
-          substitutionRow.querySelectorAll(".sub-input").forEach(inp => inp.value = "");
-          Object.keys(mapping).forEach(k => mapping[k] = "");
-          updateTextarea();
-        });
-        document.getElementById("reset-text").addEventListener("click", () => {
-          textarea.value = originalText;
-          freqOutput.innerText = "";
-        });
+        /* ---------- Frequency / Polybius / Unique / Text Spacer ---------- */
+        else if (["frequency", "polybius", "unique", "text_spacer"].includes(selected)) {
+          let extra = "";
+          if (selected === "text_spacer") {
+            extra = `
+              <div class="inline-controls">
+                <label for="block-length" class="cipher-label">Block Length</label>
+                <input type="number" id="block-length" min="1" value="5" class="num-input">
+              </div>
+            `;
+          }
+          if (selected === "unique") {
+            extra = `
+              <div class="inline-controls">
+                <label for="block-length" class="cipher-label">Block Length</label>
+                <input type="number" id="block-length" min="1" value="2" class="num-input">
+              </div>
+            `;
+          }
+
+          toolContainer.innerHTML = `
+            <p class="tool-description">${toolExplanations[selected]}</p>
+            <textarea id="tool-text" placeholder="Paste or type your text…"></textarea>
+            ${extra}
+            <button id="tools-run" class="btn" type="button">Run</button>
+            <div id="tool-result" class="result-box" aria-live="polite"></div>
+          `;
+
+          document.getElementById("tools-run").addEventListener("click", async () => {
+            const text = document.getElementById("tool-text").value;
+            const formData = new FormData();
+            formData.append("text", text);
+            formData.append("tool_type", selected);
+
+            const blockEl = document.getElementById("block-length");
+            if (blockEl) formData.append("block_length", blockEl.value);
+
+            const res = await fetch("/tools/run", { method: "POST", body: formData });
+            const data = await res.json();
+            document.getElementById("tool-result").innerText = data.text || "";
+          });
+        }
       }
 
-      /* ---------- Frequency / Polybius / Unique / Text Spacer ---------- */
-      else if (["frequency", "polybius", "unique", "text_spacer"].includes(selected)) {
-        let extra = "";
-        if (selected === "text_spacer") {
-          extra = `
-            <div class="inline-controls">
-              <label for="block-length" class="cipher-label">Block Length</label>
-              <input type="number" id="block-length" min="1" value="5" class="num-input">
-            </div>
-          `;
-        }
-        if (selected === "unique") {
-          extra = `
-            <div class="inline-controls">
-              <label for="block-length" class="cipher-label">Block Length</label>
-              <input type="number" id="block-length" min="1" value="2" class="num-input">
-            </div>
-          `;
-        }
+      // Build the default UI immediately on load
+      document.addEventListener("DOMContentLoaded", () => {
+        renderTool(toolSelect.value || "frequency");
+      });
 
-        toolContainer.innerHTML = `
-          <p class="tool-description">${toolExplanations[selected]}</p>
-          <textarea id="tool-text" placeholder="Paste or type your text…"></textarea>
-          ${extra}
-          <button id="tools-run" class="btn" type="button">Run</button>
-          <div id="tool-result" class="result-box" aria-live="polite"></div>
-        `;
-
-        document.getElementById("tools-run").addEventListener("click", async () => {
-          const text = document.getElementById("tool-text").value;
-          const formData = new FormData();
-          formData.append("text", text);
-          formData.append("tool_type", selected);
-
-          const blockEl = document.getElementById("block-length");
-          if (blockEl) formData.append("block_length", blockEl.value);
-
-          const res = await fetch("/tools/run", { method: "POST", body: formData });
-          const data = await res.json();
-          document.getElementById("tool-result").innerText = data.text || "";
-        });
-      }
-    });
+      // Update when selector changes
+      toolSelect.addEventListener("change", () => renderTool(toolSelect.value));
+    })();
   </script>
 </body>
 </html>

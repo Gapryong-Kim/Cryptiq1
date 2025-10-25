@@ -1,175 +1,88 @@
-import pyperclip
-
 common_words = [
-    "the",
-    "be",
-    "to",
-    "of",
-    "and",
-    "a",
-    "in",
-    "that",
-    "have",
-    "I",
-    "it",
-    "for",
-    "not",
-    "on",
-    "with",
-    "he",
-    "as",
-    "you",
-    "do",
-    "at",
-    "this",
-    "but",
-    "his",
-    "by",
-    "from",
-    "they",
-    "we",
-    "say",
-    "her",
-    "she",
-    "or",
-    "an",
-    "will",
-    "my",
-    "one",
-    "all",
-    "would",
-    "there",
-    "their",
-    "what",
-    "so",
-    "up",
-    "out",
-    "if",
-    "about",
-    "who",
-    "get",
-    "which",
-    "go",
-    "me",
-    "when",
-    "make",
-    "can",
-    "like",
-    "no",
-    "just",
-    "him",
-    "know",
-    "take",
-    "into",
-    "your",
-    "good",
-    "some",
-    "could",
-    "them",
-    "see",
-    "other",
-    "than",
-    "then",
-    "now",
-    "look",
-    "only",
-    "come",
-    "its",
-    "over",
-    "think",
-    "also",
-    "back",
-    "after",
-    "use",
-    "two",
-    "how",
-    "our",
-    "work",
-    "first",
-    "well",
-    "way",
-    "even",
-    "new",
-    "want",
-    "because",
-    "any",
-    "these",
-    "give",
-    "day",
-    "most",
-    "us",
+    "the","be","to","of","and","a","in","that","have","i","it","for","not","on","with","he","as","you","do","at",
+    "this","but","his","by","from","they","we","say","her","she","or","an","will","my","one","all","would","there",
+    "their","what","so","up","out","if","about","who","get","which","go","me","when","make","can","like","no","just",
+    "him","know","take","into","your","good","some","could","them","see","other","than","then","now","look","only",
+    "come","its","over","think","also","back","after","use","two","how","our","work","first","well","way","even",
+    "new","want","because","any","these","give","day","most","us",
 ]
 
+def _railfence_decrypt(ct_letters: str, rails: int) -> str:
+    """Decrypt letters-only rail-fence with a known rail count."""
+    n = len(ct_letters)
+    if rails <= 1 or rails >= n:
+        return ct_letters
 
-def railfence_break(message):
-    decoded_possible = []
-    original_message = message
-    message=''.join(i for i in message if i.isalpha() ).lower()
+    # Build the zig-zag pattern of row indices for positions 0..n-1
+    pattern = []
+    row = 0
+    direction = 1  # 1 = down, -1 = up
+    for _ in range(n):
+        pattern.append(row)
+        row += direction
+        if row == rails - 1 or row == 0:
+            direction *= -1
 
-    for rails in range(2, 10):
+    # Count how many chars go to each row
+    row_counts = [0] * rails
+    for r in pattern:
+        row_counts[r] += 1
 
-        message = message.replace(" ", "")
-        cycle_length = 2 * (rails - 1)
-        full_cycles = len(message) // cycle_length
-        extra_cycle = round(
-            (((len(message) / cycle_length) - full_cycles) * cycle_length)
-        )
-        row_lengths = []
-        for i in range(rails):
-            if i == 0 or i == rails - 1:
-                row_lengths.append(full_cycles)
-            else:
-                row_lengths.append(full_cycles * 2)
+    # Slice ciphertext into rows according to the counts
+    rows = []
+    idx = 0
+    for count in row_counts:
+        rows.append(list(ct_letters[idx:idx + count]))
+        idx += count
 
-        true_row_lengths = []
-        for i in row_lengths:
-            if extra_cycle > 0:
-                i += 1
-                extra_cycle -= 1
-            true_row_lengths.append(i)
-        truest_row_lengths = []
+    # Read off rows following the same zig-zag
+    row_ptrs = [0] * rails
+    out_chars = []
+    for r in pattern:
+        out_chars.append(rows[r][row_ptrs[r]])
+        row_ptrs[r] += 1
 
-        true_row_lengths = true_row_lengths[::-1]
-        for index, i in enumerate(true_row_lengths):
-            if extra_cycle > 0:
-                if index != 0:
-                    i += 1
-                    extra_cycle -= 1
-            truest_row_lengths.append(i)
-        truest_row_lengths = truest_row_lengths[::-1]
-        rows = ["" for i in range(rails)]
-        previous_length = 0
-        for index, i in enumerate(truest_row_lengths):
-            rows[index] += message[previous_length : previous_length + i]
-            previous_length += i
-        row_index = 0
-        word_index = 0
-        direction = -1
-        true_decoded = []
-        word_indices = [0] * rails 
-        decoded = ""
-        for i in range(len(message)):
-            decoded += rows[row_index][word_indices[row_index]]
-            if row_index == 0 or row_index == rails - 1:
-                direction *= -1
-            word_indices[row_index] += 1
-            row_index += direction
-        probability = sum(decoded.count(i) for i in common_words)
-        decoded_possible.append((probability, decoded,rails))
-    decoded_possible.sort(key=lambda x: x[0], reverse=True)
-    final_msg=decoded_possible[0][1]
-    final_key=f'{decoded_possible[0][2]} rails'
+    return "".join(out_chars)
+
+def _score_english(s: str) -> int:
+    """Very light score: sum of occurrences of common words."""
+    s = s.lower()
+    return sum(s.count(w) for w in common_words)
+
+def railfence_break(message: str):
+    """
+    Auto-detect rails (2..min(10, len_letters)) and return (key, restored_plaintext)
+    Restores the original spacing/punctuation and case from 'message'.
+    """
+    # Extract letters only (preserve for reinsertion later)
+    letters_only = [ch for ch in message if ch.isalpha()]
+    n_letters = len(letters_only)
+    if n_letters == 0:
+        return "2 rails", message  # nothing to do
+
+    ct_letters = "".join(ch.lower() for ch in letters_only)
+
+    best = None  # tuple(score, plaintext_letters, rails)
+    max_rails = max(2, min(20, n_letters))  # don’t try more rails than letters
+
+    for rails in range(2, max_rails + 1):
+        pt_letters = _railfence_decrypt(ct_letters, rails)
+        score = _score_english(pt_letters)
+        cand = (score, pt_letters, rails)
+        if best is None or cand > best:
+            best = cand
+
+    _, best_letters, best_rails = best
+
+    # Re-insert non-letters and preserve original case
     restored = []
-    letter_index = 0
-    for ch in original_message:
+    li = 0
+    for ch in message:
         if ch.isalpha():
-            # Preserve original case
-            new_char = final_msg[letter_index]
-            restored.append(new_char.upper() if ch.isupper() else new_char)
-            letter_index += 1
+            dec_ch = best_letters[li]
+            restored.append(dec_ch.upper() if ch.isupper() else dec_ch)
+            li += 1
         else:
             restored.append(ch)
-    restored_text = ''.join(restored)
-    return final_key,restored_text
 
-
+    return f"{best_rails} rails", "".join(restored)

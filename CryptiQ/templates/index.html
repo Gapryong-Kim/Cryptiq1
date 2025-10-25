@@ -6,16 +6,13 @@
   <title>CryptiQ — Cipher Breaker</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    /* === Page-scoped polish to match your new pro vibe === */
-
     .cb-shell {
       min-height: calc(100dvh - 80px);
       display: grid;
       place-items: start center;
-      padding: 110px 16px 40px;  /* room for navbar */
+      padding: 110px 16px 40px;
       box-sizing: border-box;
     }
-
     .cb-card {
       width: 100%;
       max-width: 1080px;
@@ -25,7 +22,6 @@
       box-shadow: var(--elev-shadow);
       overflow: hidden;
     }
-
     .cb-header {
       display: flex;
       align-items: center;
@@ -54,10 +50,7 @@
       padding: 18px;
     }
     @media (min-width: 980px) {
-      .cb-grid {
-        grid-template-columns: 1.1fr .9fr; /* input / output split */
-        gap: 16px;
-      }
+      .cb-grid { grid-template-columns: 1.1fr .9fr; gap: 16px; }
     }
 
     .cb-panel {
@@ -82,7 +75,6 @@
       line-height: 1.5;
     }
 
-    /* Button group */
     .cb-actions {
       display: flex; gap: 10px; flex-wrap: wrap;
       align-items: center; margin-top: 6px;
@@ -116,34 +108,32 @@
     }
 
     .cb-label { font-weight: 600; color: var(--text); }
-    .cb-select, .cb-textarea {
+    .cb-select, .cb-textarea, .cb-input {
       width: 100%;
       box-sizing: border-box;
-      font-family: 'Inter','Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 15px;
       color: var(--text);
       background: var(--input-bg);
       border: 1px solid var(--input-border);
       border-radius: 8px;
       transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
     }
-    .cb-select { padding: 10px 12px; }
+    .cb-select, .cb-input { padding: 10px 12px; font-size: 15px; }
     .cb-textarea {
       min-height: 200px;
       padding: 12px 14px;
       resize: vertical;
       line-height: 1.5;
       font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 15px;
     }
-    .cb-select:hover, .cb-textarea:hover { background: var(--input-hover); }
-    .cb-select:focus, .cb-textarea:focus {
+    .cb-select:hover, .cb-textarea:hover, .cb-input:hover { background: var(--input-hover); }
+    .cb-select:focus, .cb-textarea:focus, .cb-input:focus {
       outline: none;
       border-color: var(--accent);
       background: var(--input-focus);
       box-shadow: 0 0 0 2px var(--accent-soft);
     }
 
-    /* Error banner (Discord-like) */
     .cb-error {
       display: none;
       margin: 12px 0 0;
@@ -156,7 +146,6 @@
     }
     .cb-error.show { display: block; }
 
-    /* Loading row */
     .cb-loading {
       display: none;
       align-items: center; gap: 10px;
@@ -174,7 +163,6 @@
     }
     @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
 
-    /* Output */
     .cb-key {
       margin: 6px 0 10px;
       color: var(--text-dim);
@@ -183,22 +171,32 @@
       word-break: break-word;
     }
     .cb-pre {
-      width: 100%;
-      min-height: 220px;
-      margin: 0;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      border-radius: 8px;
-      padding: 12px 14px;
-      color: var(--text);
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-size: 15px;
-      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
-      box-sizing: border-box;
-    }
+  width: 100%;
+  min-height: 220px;
+  margin: 0;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+  box-sizing: border-box;
 
-    /* Small devices top spacing for navbar */
+  /* ✅ fixes */
+  white-space: pre-wrap;      /* preserves newlines but allows wrapping */
+  word-break: break-word;     /* breaks long continuous words (like ciphertexts) */
+  overflow-wrap: anywhere;    /* modern equivalent for safety */
+  overflow-x: hidden;         /* prevents sideways scrolling */
+  overflow-y: auto;           /* allows vertical scroll if it's super long */
+  line-break: anywhere;
+}
+
+
+    /* only shown for substitution */
+    .known-plain-wrap { display: none; }
+    .known-plain-wrap.show { display: grid; }
+
     @media (max-width: 480px) {
       .cb-shell { padding: 96px 12px 32px; }
     }
@@ -222,14 +220,14 @@
             <div class="cb-row">
               <label for="cipher_type" class="cb-label">Cipher</label>
               <select name="cipher_type" id="cipher_type" class="cb-select" required>
-                <option value="affine" selected>Affine</option>
+                <option value="affine">Affine</option>
                 <option value="amsco">AMSCO</option>
-                <option value="caesar">Caesar</option>
+                <option value="caesar" selected>Caesar</option>
                 <option value="columnar">Columnar Transposition</option>
+                <option value="substitution">Monoalphabetic Substitution</option>
                 <option value="permutation">Permutation (Block Transposition)</option>
                 <option value="polybius">Polybius Square</option>
                 <option value="railfence">Railfence</option>
-                <option value="substitution">Monoalphabetic Substitution</option>
                 <option value="vigenere">Vigenère</option>
               </select>
             </div>
@@ -238,6 +236,14 @@
               <label for="ciphertext" class="cb-label">Ciphertext</label>
               <textarea id="ciphertext" name="text" class="cb-textarea" placeholder="Paste or type ciphertext here…" required></textarea>
               <p class="cb-help">Tip: longer samples produce better results for classical ciphers (Substitution, Vigenère, Columnar, etc.).</p>
+            </div>
+
+            <!-- Known plaintext: ONLY for substitution -->
+            <div id="known-plain" class="cb-row known-plain-wrap">
+              <label for="known_plaintext" class="cb-label">Known Plaintext (optional)</label>
+              <input id="known_plaintext" name="known_plaintext" class="cb-input" type="text"
+                     placeholder='Examples: "the", "and", or pattern like D=E,X=T,R=A'>
+              <p class="cb-help">If you know a word or some letter pairs, add them here. Words act as cribs; pairs like <code>D=E</code> lock cipher→plain mappings.</p>
             </div>
 
             <div class="cb-actions">
@@ -249,7 +255,6 @@
               </div>
             </div>
 
-            <!-- error banner -->
             <div id="error-banner" class="cb-error">Something went wrong. Please try again.</div>
           </form>
         </div>
@@ -277,6 +282,9 @@
     const copyBtn = document.getElementById("copy-btn");
     const errorBanner = document.getElementById("error-banner");
     const textarea = document.getElementById("ciphertext");
+    const cipherSelect = document.getElementById("cipher_type");
+    const knownWrap = document.getElementById("known-plain");
+    const knownInput = document.getElementById("known_plaintext");
 
     function showError(msg) {
       errorBanner.textContent = msg || "Something went wrong. Please try again.";
@@ -290,11 +298,25 @@
       clearBtn.disabled = isLoading;
     }
 
+    function toggleKnownBox() {
+      if ((cipherSelect.value || "").toLowerCase() === "substitution") {
+        knownWrap.classList.add("show");
+      } else {
+        knownWrap.classList.remove("show");
+        knownInput.value = "";
+      }
+    }
+
+    // Initialize known-plaintext visibility on load
+    toggleKnownBox();
+    cipherSelect.addEventListener("change", toggleKnownBox);
+
     clearBtn.addEventListener("click", () => {
       textarea.value = "";
       resultText.textContent = "";
       resultKey.style.display = "none";
       copyBtn.style.display = "none";
+      knownInput.value = "";
       clearError();
       textarea.focus();
     });
@@ -317,18 +339,16 @@
 
         const data = await res.json();
 
-        // Display
         resultText.textContent = data.text || "";
         if (data.key) {
           resultKey.style.display = "block";
-          resultKey.textContent = `Key: ${data.key}`;
+          resultKey.textContent = `Key: ${typeof data.key === 'string' ? data.key : JSON.stringify(data.key)}`;
         } else {
           resultKey.style.display = "none";
           resultKey.textContent = "";
         }
         copyBtn.style.display = data.text ? "inline-flex" : "none";
 
-        // Optional: show a simple warning if output looks empty
         if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
       } catch (err) {
         showError("Unable to reach the server. Please try again.");
