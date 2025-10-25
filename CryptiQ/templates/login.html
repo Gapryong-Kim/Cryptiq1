@@ -1,23 +1,264 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Login — CryptiQ</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="utf-8" />
+  <title>Login — CryptiQ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* ===== Auth Layout (dark/light aware) ===== */
+    .auth-viewport {
+      min-height: 100dvh;
+      padding-top: 90px;
+      padding-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+      display: grid;
+      place-items: start center;
+    }
+
+    .auth-bg {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(50% 40% at 85% 10%, rgba(0,198,165,.22) 0%, rgba(0,198,165,0) 60%),
+        radial-gradient(40% 35% at 10% 20%, rgba(0,198,165,.12) 0%, rgba(0,198,165,0) 60%);
+      filter: blur(20px);
+      opacity: .9;
+    }
+
+    .auth-container {
+      width: min(940px, 94vw);
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 28px;
+      align-items: center;
+      z-index: 1;
+    }
+
+    .auth-hero {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 12px;
+    }
+    .auth-eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: .85rem;
+    }
+    .auth-heading {
+      margin: 0;
+      font-size: clamp(1.6rem, 4.4vw, 2.4rem);
+      line-height: 1.15;
+      color: var(--text);
+      font-weight: 800;
+    }
+    .auth-copy {
+      color: var(--muted);
+      max-width: 50ch;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .auth-card {
+      background: color-mix(in oklab, var(--panel) 86%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--elev-shadow);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 22px 18px;
+    }
+
+    .auth-card h2 {
+      margin: 0 0 4px 0;
+      text-align: center;
+      color: var(--accent);
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+    .auth-sub {
+      text-align: center;
+      margin: 0 0 16px 0;
+      color: var(--muted);
+      font-size: .96rem;
+    }
+
+    .auth-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 4px;
+      width: min(420px, 86vw);
+    }
+    .form-label {
+      font-weight: 650;
+      color: var(--text);
+      font-size: .95rem;
+    }
+
+    .auth-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 16px;
+      transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    }
+    .auth-input:hover { background: var(--input-hover); }
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .password-field { position: relative; }
+    .toggle-pass {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: .85rem;
+      transition: background .2s, border-color .2s;
+    }
+    .toggle-pass:hover { background: var(--panel-2); border-color: var(--accent); }
+
+    .auth-button {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      background: var(--accent);
+      color: #0f0f0f;
+      font-weight: 800;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color .15s, box-shadow .18s, border-color .18s, transform .06s;
+    }
+    .auth-button:hover {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      transform: translateY(-1px);
+    }
+
+    /* Error message */
+    .auth-error {
+      color: #ff6b6b;
+      background: rgba(255,107,107,0.08);
+      border: 1px solid rgba(255,107,107,0.3);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: .95rem;
+      animation: fadeIn .25s ease;
+      text-align: center;
+      margin-top: -4px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-links {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: .95rem; margin-top: 2px; color: var(--muted);
+    }
+    .auth-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      border-bottom: 1px dashed transparent;
+      transition: color .18s ease, border-color .18s ease;
+    }
+    .auth-links a:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .auth-container { grid-template-columns: 1fr; gap: 20px; }
+      .auth-hero { display: none; }
+      .auth-card { width: min(520px, 94vw); margin: 0 auto; }
+    }
+    @media (max-width: 520px) {
+      .auth-card {
+        width: 100%;
+        border-radius: 0;
+        border-left: none; border-right: none;
+        box-shadow: none;
+        padding: 20px 14px 22px;
+      }
+      .auth-card h2 { font-size: 1.45rem; }
+      .auth-form { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-    {% include 'base_nav.html' %}
-    <div class="container">
+  {% include 'base_nav.html' %}
+
+  <main class="auth-viewport">
+    <div class="auth-bg" aria-hidden="true"></div>
+
+    <div class="auth-container">
+      <section class="auth-hero" aria-hidden="true">
+        <span class="auth-eyebrow">Welcome</span>
+        <h1 class="auth-heading">Crack ciphers faster with<br/>a clean, focused workspace.</h1>
+        <p class="auth-copy">Log in to save keys, share posts, and use advanced tools.</p>
+      </section>
+
+      <section class="auth-card" aria-label="Login form">
         <h2>Log In</h2>
-        <form method="post" style="display:flex;flex-direction:column;gap:12px;max-width:420px;">
-            <label class="form-label">Email or Username</label>
-            <input type="text" name="username" required>
+        <p class="auth-sub">Welcome back to <strong>CryptiQ</strong>.</p>
 
-            <label class="form-label">Password</label>
-            <input type="password" name="password" required>
+        {% if error %}
+          <div class="auth-error">{{ error }}</div>
+        {% endif %}
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="auth-error">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
 
-            <button type="submit" id="login-submit">Login</button>
+        <form method="post" class="auth-form" autocomplete="on">
+          <label class="form-label" for="username">Email or Username</label>
+          <input class="auth-input" id="username" type="text" name="username" required>
+
+          <label class="form-label" for="password">Password</label>
+          <div class="password-field">
+            <input class="auth-input" id="password" type="password" name="password" required>
+            <button type="button" class="toggle-pass" id="toggle-pass">Show</button>
+          </div>
+
+          <button type="submit" class="auth-button">Continue</button>
+
+          <div class="auth-links">
+            <a href="{{ url_for('register') }}">Create account</a>
+            <a href="#">Forgot password?</a>
+          </div>
         </form>
+      </section>
     </div>
+  </main>
+
+  <script>
+    const btn = document.getElementById('toggle-pass');
+    const input = document.getElementById('password');
+    if (btn && input) {
+      btn.addEventListener('click', () => {
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? 'Hide' : 'Show';
+      });
+    }
+  </script>
 </body>
 </html>

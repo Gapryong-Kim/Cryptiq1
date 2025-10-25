@@ -513,48 +513,39 @@ def uploaded_file(filename):
 # ------------------- Accounts -------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        confirm = request.form.get("confirm", "")
+    if request.method == 'POST':
+        email = request.form['email'].strip()
+        username = request.form['username'].strip()
+        password = request.form['password']
+        confirm = request.form['confirm']
 
-        if not username or not password or not email:
-            flash("Username, email and password are required.", "danger")
-            return redirect(url_for("register"))
-        if "@" not in email or "." not in email:
-            flash("Please enter a valid email.", "danger")
-            return redirect(url_for("register"))
+        # Check if passwords match
         if password != confirm:
-            flash("Passwords do not match.", "danger")
-            return redirect(url_for("register"))
+            flash("Passwords do not match.", "error")
+            return render_template('register.html')
 
-        # email uniqueness (app-level)
-        conn = get_db()
-        cur = conn.execute("SELECT id FROM users WHERE LOWER(IFNULL(email,'')) = ?", (email,))
-        exists = cur.fetchone()
-        if exists:
-            conn.close()
-            flash("That email is already in use.", "danger")
-            return redirect(url_for("register"))
+        # Check if email or username already exist
+        with sqlite3.connect(DB_PATH) as conn:
+            c = conn.cursor()
+            c.execute("SELECT * FROM users WHERE email=? OR username=?", (email, username))
+            existing_user = c.fetchone()
 
-        pw_hash = generate_password_hash(password)
-        is_admin_val = 1 if email == ADMIN_EMAIL.lower() else 0
-        try:
-            conn.execute(
-                "INSERT INTO users (username, email, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?)",
-                (username, email, pw_hash, is_admin_val, datetime.utcnow().isoformat()),
-            )
+        if existing_user:
+            flash("Email or username already exists.", "error")
+            return render_template('register.html')
+
+        # Hash password and store
+        hashed = generate_password_hash(password)
+        with sqlite3.connect(DB_PATH) as conn:
+            c = conn.cursor()
+            c.execute("INSERT INTO users (email, username, password) VALUES (?, ?, ?)", (email, username, hashed))
             conn.commit()
-            conn.close()
-            flash("Account created — please log in.", "success")
-            return redirect(url_for("login"))
-        except sqlite3.IntegrityError:
-            conn.close()
-            flash("Username already exists.", "danger")
-            return redirect(url_for("register"))
 
-    return render_template("register.html", user=current_user())
+        flash("Account created successfully! You can now log in.", "success")
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

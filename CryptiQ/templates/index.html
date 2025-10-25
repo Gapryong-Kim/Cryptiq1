@@ -1,76 +1,352 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="dark">
 <head>
-    <title>CryptiQ - Cipher Breaker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CryptiQ — Cipher Breaker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* === Page-scoped polish to match your new pro vibe === */
+
+    .cb-shell {
+      min-height: calc(100dvh - 80px);
+      display: grid;
+      place-items: start center;
+      padding: 110px 16px 40px;  /* room for navbar */
+      box-sizing: border-box;
+    }
+
+    .cb-card {
+      width: 100%;
+      max-width: 1080px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--elev-shadow);
+      overflow: hidden;
+    }
+
+    .cb-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    }
+    .cb-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-soft);
+    }
+    .cb-title {
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: .2px;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .cb-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+    @media (min-width: 980px) {
+      .cb-grid {
+        grid-template-columns: 1.1fr .9fr; /* input / output split */
+        gap: 16px;
+      }
+    }
+
+    .cb-panel {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .cb-panel h3 {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-size: 1rem;
+      letter-spacing: .2px;
+    }
+
+    .cb-row { display: grid; gap: 10px; }
+    .cb-row.inline { grid-template-columns: 1fr auto; align-items: center; gap: 10px; }
+    .cb-help {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.5;
+    }
+
+    /* Button group */
+    .cb-actions {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      align-items: center; margin-top: 6px;
+    }
+    .btn {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #0f0f0f;
+      font-weight: 650;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background .15s ease, box-shadow .18s ease, border-color .18s ease, transform .06s ease;
+    }
+    .btn:hover {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line-2);
+    }
+    .btn.secondary:hover {
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .cb-label { font-weight: 600; color: var(--text); }
+    .cb-select, .cb-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: 'Inter','Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 15px;
+      color: var(--text);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    }
+    .cb-select { padding: 10px 12px; }
+    .cb-textarea {
+      min-height: 200px;
+      padding: 12px 14px;
+      resize: vertical;
+      line-height: 1.5;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+    }
+    .cb-select:hover, .cb-textarea:hover { background: var(--input-hover); }
+    .cb-select:focus, .cb-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    /* Error banner (Discord-like) */
+    .cb-error {
+      display: none;
+      margin: 12px 0 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(255, 83, 83, 0.10);
+      border: 1px solid rgba(255, 83, 83, 0.35);
+      color: #ff8b8b;
+      font-weight: 600;
+    }
+    .cb-error.show { display: block; }
+
+    /* Loading row */
+    .cb-loading {
+      display: none;
+      align-items: center; gap: 10px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+    .cb-loading.show { display: inline-flex; }
+    .spinner {
+      border: 4px solid #2a2a2a;
+      border-top: 4px solid var(--accent);
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
+    /* Output */
+    .cb-key {
+      margin: 6px 0 10px;
+      color: var(--text-dim);
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      font-size: .95rem;
+      word-break: break-word;
+    }
+    .cb-pre {
+      width: 100%;
+      min-height: 220px;
+      margin: 0;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 15px;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      box-sizing: border-box;
+    }
+
+    /* Small devices top spacing for navbar */
+    @media (max-width: 480px) {
+      .cb-shell { padding: 96px 12px 32px; }
+    }
+  </style>
 </head>
 <body>
-    {% include 'base_nav.html' %}
+  {% include 'base_nav.html' %}
 
-    <div class="container">
-        <h2>Cipher Breaker</h2>
+  <main class="cb-shell">
+    <section class="cb-card" aria-label="Cipher Breaker">
+      <header class="cb-header">
+        <span class="cb-dot" aria-hidden="true"></span>
+        <h1 class="cb-title">Cipher Breaker</h1>
+      </header>
 
-        <form id="breaker-form">
-            <label for="cipher_type" class="cipher-label">Select Cipher:</label>
-            <select name="cipher_type" id="cipher_type">
+      <div class="cb-grid">
+        <!-- LEFT: Input -->
+        <div class="cb-panel">
+          <h3>Input</h3>
+          <form id="breaker-form" class="cb-row" novalidate>
+            <div class="cb-row">
+              <label for="cipher_type" class="cb-label">Cipher</label>
+              <select name="cipher_type" id="cipher_type" class="cb-select" required>
                 <option value="affine" selected>Affine</option>
                 <option value="amsco">AMSCO</option>
                 <option value="caesar">Caesar</option>
                 <option value="columnar">Columnar Transposition</option>
-                <option value="permutation">Permutation (Block  Transposition)</option>
+                <option value="permutation">Permutation (Block Transposition)</option>
                 <option value="polybius">Polybius Square</option>
                 <option value="railfence">Railfence</option>
                 <option value="substitution">Monoalphabetic Substitution</option>
                 <option value="vigenere">Vigenère</option>
-
-
-            </select>
-
-            <textarea name="text" placeholder="Enter ciphertext to break" required></textarea>
-            <button type="submit" id="break-btn">Break Cipher</button>
-
-            <div id="loading" class="loading-overlay" style="display:none;">
-                <div class="spinner"></div>
-                <p>Breaking cipher...</p>
+              </select>
             </div>
-        </form>
 
-        <h2>Result:</h2>
-        <p id="result-key"></p>
-        <button id="copy-btn" style="display:none; margin-bottom: 10px;">Copy to Clipboard</button>
-        <pre id="result-text"></pre>
-    </div>
+            <div class="cb-row">
+              <label for="ciphertext" class="cb-label">Ciphertext</label>
+              <textarea id="ciphertext" name="text" class="cb-textarea" placeholder="Paste or type ciphertext here…" required></textarea>
+              <p class="cb-help">Tip: longer samples produce better results for classical ciphers (Substitution, Vigenère, Columnar, etc.).</p>
+            </div>
 
-    <script>
-        const form = document.getElementById("breaker-form");
-        const button = document.getElementById("break-btn");
-        const loading = document.getElementById("loading");
-        const resultText = document.getElementById("result-text");
-        const resultKey = document.getElementById("result-key");
-        const copyBtn = document.getElementById("copy-btn");
+            <div class="cb-actions">
+              <button type="submit" id="break-btn" class="btn">Break Cipher</button>
+              <button type="button" id="clear-btn" class="btn secondary">Clear</button>
+              <div id="loading" class="cb-loading" aria-live="polite">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Analyzing…</span>
+              </div>
+            </div>
 
-        form.addEventListener("submit", async function(e) {
-            e.preventDefault();
-            button.style.display = "none";
-            loading.style.display = "flex";
+            <!-- error banner -->
+            <div id="error-banner" class="cb-error">Something went wrong. Please try again.</div>
+          </form>
+        </div>
 
-            const formData = new FormData(form);
-            const response = await fetch("/", { method: "POST", body: formData });
-            const data = await response.json();
+        <!-- RIGHT: Output -->
+        <div class="cb-panel">
+          <h3>Result</h3>
+          <div id="result-key" class="cb-key" style="display:none;"></div>
+          <div class="cb-actions" style="margin-bottom: 10px;">
+            <button id="copy-btn" class="btn secondary" style="display:none;">Copy Plaintext</button>
+          </div>
+          <pre id="result-text" class="cb-pre" aria-live="polite"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
 
-            loading.style.display = "none";
-            button.style.display = "inline-block";
+  <script>
+    const form = document.getElementById("breaker-form");
+    const breakBtn = document.getElementById("break-btn");
+    const clearBtn = document.getElementById("clear-btn");
+    const loading = document.getElementById("loading");
+    const resultText = document.getElementById("result-text");
+    const resultKey = document.getElementById("result-key");
+    const copyBtn = document.getElementById("copy-btn");
+    const errorBanner = document.getElementById("error-banner");
+    const textarea = document.getElementById("ciphertext");
 
-            resultKey.textContent = data.key ? `Key: ${data.key}` : "";
-            resultText.textContent = data.text || "";
-            copyBtn.style.display = data.text ? "inline-block" : "none";
-        });
+    function showError(msg) {
+      errorBanner.textContent = msg || "Something went wrong. Please try again.";
+      errorBanner.classList.add("show");
+    }
+    function clearError() { errorBanner.classList.remove("show"); }
 
-        copyBtn.addEventListener("click", () => {
-            navigator.clipboard.writeText(resultText.textContent);
-            copyBtn.textContent = "Copied!";
-            setTimeout(() => copyBtn.textContent = "Copy to Clipboard", 2000);
-        });
-    </script>
+    function setLoading(isLoading) {
+      loading.classList.toggle("show", isLoading);
+      breakBtn.disabled = isLoading;
+      clearBtn.disabled = isLoading;
+    }
+
+    clearBtn.addEventListener("click", () => {
+      textarea.value = "";
+      resultText.textContent = "";
+      resultKey.style.display = "none";
+      copyBtn.style.display = "none";
+      clearError();
+      textarea.focus();
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const text = textarea.value.trim();
+      if (!text) {
+        showError("Please paste some ciphertext first.");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const formData = new FormData(form);
+        const res = await fetch("/", { method: "POST", body: formData });
+        if (!res.ok) throw new Error("Network error");
+
+        const data = await res.json();
+
+        // Display
+        resultText.textContent = data.text || "";
+        if (data.key) {
+          resultKey.style.display = "block";
+          resultKey.textContent = `Key: ${data.key}`;
+        } else {
+          resultKey.style.display = "none";
+          resultKey.textContent = "";
+        }
+        copyBtn.style.display = data.text ? "inline-flex" : "none";
+
+        // Optional: show a simple warning if output looks empty
+        if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
+      } catch (err) {
+        showError("Unable to reach the server. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(resultText.textContent || "");
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
+      } catch {
+        copyBtn.textContent = "Failed to copy";
+        setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
+      }
+    });
+  </script>
 </body>
 </html>
