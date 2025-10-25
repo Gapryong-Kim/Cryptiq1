@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CryptiQ — Community Posts</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
   <style>
-    /* === Base === */
-    :root {
-      /* fallback if not in your global tokens */
+    :root{
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-right: env(safe-area-inset-right, 0px);
     }
@@ -19,17 +18,18 @@
       font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
     }
 
+    /* ===== Layout ===== */
     .posts-container {
       width: min(960px, 94%);
-      margin: 120px auto 80px;
+      margin: 110px auto 80px;   /* trimmed a bit at the top */
       display: flex;
       flex-direction: column;
-      gap: 28px;
+      gap: 24px;
     }
 
     .posts-header {
       text-align: center;
-      margin-bottom: 8px;
+      margin: 0 0 6px;
       padding: 0 4px;
     }
     .posts-header h2 {
@@ -45,61 +45,36 @@
       margin: 0;
     }
 
-    /* === Post Cards === */
+    /* ===== Cards ===== */
     .post-card {
       background: color-mix(in oklab, var(--panel) 85%, transparent);
       border: 1px solid var(--line);
       border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.26);
-      padding: 20px 22px;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      transition: transform 0.16s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,.24);
+      padding: 18px 20px;
+      transition: transform .16s ease, box-shadow .2s ease;
     }
-    .post-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 28px rgba(0,0,0,.3);
-    }
+    .post-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,.28); }
 
     .post-top {
       display: grid;
       grid-template-columns: 1fr auto;
       align-items: center;
-      gap: 8px 14px;
+      gap: 6px 12px;
     }
-    .post-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--text);
-      margin: 0;
-      line-height: 1.2;
-    }
-    .post-author {
-      color: var(--text-dim);
-      margin-top: 4px;
-      font-size: .95rem;
-    }
-    .post-meta {
-      font-size: .9rem;
-      color: var(--muted);
-      justify-self: end;
-      white-space: nowrap;
-    }
+    .post-title { margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .post-author { color: var(--text-dim); margin-top: 4px; font-size: .95rem; }
+    .post-meta { font-size: .9rem; color: var(--muted); justify-self: end; white-space: nowrap; }
 
     .post-image {
-      margin-top: 14px;
-      border-radius: 12px;
-      overflow: hidden;
+      margin-top: 12px;
+      border-radius: 12px; overflow: hidden;
       border: 1px solid var(--line);
     }
-    .post-image img {
-      width: 100%;
-      display: block;
-      object-fit: cover;
-    }
+    .post-image img { width: 100%; display: block; object-fit: cover; }
 
     .post-body {
-      margin-top: 14px;
+      margin-top: 12px;
       background: var(--panel-2);
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -110,7 +85,7 @@
       word-wrap: break-word;
     }
 
-    /* === Action Buttons === */
+    /* ===== Actions ===== */
     .post-actions {
       display: flex;
       justify-content: flex-end;
@@ -119,7 +94,7 @@
       flex-wrap: wrap;
     }
     .post-actions a,
-    .post-actions form button {
+    .post-actions form button{
       border: 1px solid var(--line);
       background: transparent;
       color: var(--text);
@@ -129,136 +104,71 @@
       transition: background .15s ease, border-color .15s ease;
     }
     .post-actions a:hover { background: var(--input-hover); border-color: var(--accent); }
-    .post-actions .danger {
-      color: #ff6b6b;
-      border-color: #ff6b6b;
-    }
-    .post-actions .danger:hover {
-      background: rgba(255,107,107,0.12);
-    }
+    .post-actions .danger { color:#ff6b6b; border-color:#ff6b6b; }
+    .post-actions .danger:hover{ background: rgba(255,107,107,.12); }
 
-    /* === Comments Section === */
+    /* ===== Comments ===== */
     .comments {
-      margin-top: 14px;
+      margin-top: 12px;
       background: var(--panel-2);
       border: 1px solid var(--line);
       border-radius: 10px;
       overflow: hidden;
-      transition: all 0.2s ease;
       display: none;
+      transition: all .2s ease;
     }
-    .comments.open { display: block; }
+    .comments.open{ display:block; }
 
     .comments-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 12px; border-bottom:1px solid var(--line);
     }
-    .comments-count {
-      font-weight: 600;
-      color: var(--accent);
-      font-size: .95rem;
+    .comments-count { font-weight:600; color:var(--accent); font-size:.95rem; }
+
+    .comment-list{ list-style:none; margin:0; padding:0; }
+
+    .comment{
+      display:grid; grid-template-columns: 32px 1fr auto;
+      gap:10px; padding:10px 12px; border-bottom:1px solid var(--line);
+      align-items:start;
+    }
+    .comment:last-child{ border-bottom:none; }
+
+    .comment-avatar{
+      width:32px;height:32px;border-radius:50%;
+      background:var(--input-bg); border:1px solid var(--line);
+      display:flex; align-items:center; justify-content:center;
+      color:var(--accent); font-weight:700; font-size:.92rem;
     }
 
-    .comment-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
+    .comment-body{ color:var(--text); line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; }
 
-    .comment {
-      display: grid;
-      grid-template-columns: 34px 1fr auto;
-      gap: 10px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--line);
-      align-items: start;
-    }
-    .comment:last-child { border-bottom: none; }
-
-    .comment-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: var(--input-bg);
-      border: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      color: var(--accent);
-      font-size: .95rem;
-    }
-
-    .comment-body {
-      color: var(--text);
-      line-height: 1.5;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      overflow-wrap: anywhere;
-    }
-
-    .comment-delete {
-      border: none;
-      background: transparent;
-      color: #ff6b6b;
-      cursor: pointer;
-      font-size: .9rem;
-      padding: 4px 6px;
-      border-radius: 6px;
+    .comment-delete{
+      border:none; background:transparent; color:#ff6b6b; cursor:pointer;
+      font-size:.9rem; padding:4px 6px; border-radius:6px;
       transition: background .15s ease, color .15s ease;
     }
-    .comment-delete:hover {
-      color: #ff8484;
-      background: rgba(255,107,107,0.08);
-    }
+    .comment-delete:hover{ color:#ff8484; background:rgba(255,107,107,.08); }
 
-    /* Add comment box */
-    .comment-add {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--line);
-      background: var(--panel);
+    .comment-add{
+      display:grid; grid-template-columns: 1fr auto;
+      gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); background:var(--panel);
     }
-    .comment-input {
-      border: 1px solid var(--input-border);
-      border-radius: 8px;
-      background: var(--input-bg);
-      color: var(--text);
-      padding: 10px 12px;
-      min-height: 44px;
-      resize: vertical;
-      font: inherit;
+    .comment-input{
+      border:1px solid var(--input-border); border-radius:8px;
+      background:var(--input-bg); color:var(--text);
+      padding:10px 12px; min-height:44px; resize:vertical; font:inherit;
     }
-    .comment-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-soft);
-    }
-    .comment-submit {
-      background: var(--accent);
-      color: #0f0f0f;
-      font-weight: 700;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
+    .comment-input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+    .comment-submit{
+      background:var(--accent); color:#0f0f0f; font-weight:700; border:none;
+      border-radius:8px; padding:10px 16px; cursor:pointer; height:44px; align-self:end;
       transition: transform .08s, box-shadow .15s;
-      height: 44px;
-      align-self: end;
     }
-    .comment-submit:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.24);
-    }
+    .comment-submit:hover{ transform: translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.22); }
 
-    /* Comments toggle */
-    .comments-toggle {
-      margin-top: 12px;
+    .comments-toggle{
+      margin-top: 10px;
       background: transparent;
       border: 1px solid var(--accent);
       color: var(--accent);
@@ -269,140 +179,63 @@
       transition: background .15s, color .15s;
       width: max-content;
     }
-    .comments-toggle:hover {
-      background: var(--accent);
-      color: #0f0f0f;
-    }
+    .comments-toggle:hover{ background: var(--accent); color:#0f0f0f; }
 
-    /* === Floating Add (+) Button — refined minimalist version === */
-    .fab {
+    /* ===== FAB (squarish) ===== */
+    .fab{
       position: fixed;
-      bottom: calc(18px + var(--safe-bottom));
-      right: calc(18px + var(--safe-right));
-      width: 54px;
-      height: 54px;
-      border-radius: 12px;           /* squarish for techy vibe */
+      bottom: calc(16px + var(--safe-bottom));
+      right:  calc(16px + var(--safe-right));
+      width: 52px; height: 52px;
+      border-radius: 12px;
       background: var(--bg);
       color: var(--text);
       border: 1px solid var(--line-2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      cursor: pointer;
-      z-index: 2500;
-      box-shadow: 0 6px 14px rgba(0,0,0,0.22);
-      transition: transform .12s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+      display:flex; align-items:center; justify-content:center;
+      text-decoration:none; cursor:pointer; z-index:2500;
+      box-shadow: 0 6px 14px rgba(0,0,0,.2);
+      transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
     }
-    .fab span {
-      font-size: 1.7rem;
-      font-weight: 600;
-      line-height: 1;
-      position: relative;
-      top: 0; /* optically centered */
-    }
-    .fab:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent);
-      box-shadow: 0 10px 22px rgba(0,0,0,0.26);
-    }
-    .fab:active {
-      transform: translateY(0);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
+    .fab span{ font-size:1.6rem; font-weight:600; line-height:1; }
+    .fab:hover{ transform: translateY(-2px); border-color: var(--accent); box-shadow:0 10px 22px rgba(0,0,0,.24); }
+    .fab:active{ transform: translateY(0); box-shadow:0 4px 10px rgba(0,0,0,.18); }
 
-    /* === Responsive Tweaks === */
-    @media (max-width: 900px) {
-      .posts-container {
-        width: min(820px, 92%);
-        margin: 104px auto 64px;
-        gap: 22px;
+    /* ===== Mobile polish ===== */
+    @media (max-width: 720px){
+      .posts-container{
+        width: 94%;
+        margin: 88px auto 56px;    /* tighter top gap on phones */
+        gap: 16px;                 /* compact vertical rhythm */
       }
-      .post-card { padding: 18px; }
-    }
-
-    @media (max-width: 680px) {
-      .posts-container {
-        width: min(720px, 92%);
-        margin: 96px auto 56px;
-        gap: 18px;
-      }
-      .posts-header h2 { font-size: 1.7rem; }
+      .posts-header h2{ font-size: 1.6rem; }
       .posts-header p { font-size: .95rem; }
 
-      .post-card {
-        padding: 16px;
-        border-radius: 14px;
-      }
+      .post-card{ padding: 14px; border-radius: 14px; }
+      .post-top{ grid-template-columns: 1fr; gap: 2px 0; }
+      .post-meta{ justify-self: start; font-size: .86rem; }
+      .post-title{ font-size: 1.08rem; }
+      .post-author{ font-size: .88rem; }
+      .post-body{ padding: 10px 12px; font-size: .98rem; border-radius: 8px; }
 
-      .post-top {
-        grid-template-columns: 1fr;
-        gap: 2px 0;
-      }
-      .post-meta {
-        justify-self: start;
-        font-size: .88rem;
-        color: var(--muted);
-      }
-      .post-title { font-size: 1.12rem; }
-      .post-author { font-size: .9rem; }
+      .post-actions{ justify-content: flex-start; gap: 8px; }
+      .post-actions a, .post-actions form button{ padding: 7px 10px; }
 
-      .post-body {
-        padding: 10px 12px;
-        font-size: .98rem;
-        border-radius: 8px;
-      }
+      .comment{ grid-template-columns: 28px 1fr auto; padding: 9px 10px; }
+      .comment-avatar{ width:28px; height:28px; font-size:.85rem; }
+      .comment-add{ grid-template-columns: 1fr; }
+      .comment-submit{ width: 100%; }
+      .comments-toggle{ width: 100%; text-align: center; }
 
-      .post-actions {
-        justify-content: flex-start;
-      }
-
-      .comment {
-        grid-template-columns: 30px 1fr auto;
-        padding: 10px;
-      }
-      .comment-avatar {
-        width: 30px; height: 30px;
-        font-size: .9rem;
-      }
-      .comment-add {
-        grid-template-columns: 1fr;
-      }
-      .comment-submit {
-        width: 100%;
-      }
-
-      .comments-toggle {
-        width: 100%;
-        text-align: center;
-      }
-
-      .fab {
-        width: 50px;
-        height: 50px;
-        border-radius: 10px;
-        bottom: calc(14px + var(--safe-bottom));
-        right: calc(14px + var(--safe-right));
-      }
-      .fab span { font-size: 1.55rem; }
+      .fab{ width: 50px; height: 50px; border-radius: 10px; }
+      .fab span{ font-size: 1.5rem; }
     }
 
-    @media (max-width: 420px) {
-      .posts-container {
-        width: 96%;
-        margin: 92px auto 48px;
-        gap: 16px;
-      }
-      .post-card { padding: 14px; }
-      .post-body { font-size: .96rem; }
-      .post-actions a,
-      .post-actions form button {
-        padding: 7px 10px;
-      }
+    @media (max-width: 380px){
+      .posts-container{ width: 96%; }
+      .post-card{ padding: 12px; }
     }
   </style>
 </head>
-
 <body>
   {% include 'base_nav.html' %}
 
