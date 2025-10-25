@@ -8,7 +8,7 @@ import sqlite3
 import os
 from datetime import datetime
 
-# --- Cipher tools (your existing imports) ---
+# --- Cipher tools ---
 from cipher_tools.vigenere import vigenere_break
 from cipher_tools.caesar import caesar_break
 from cipher_tools.permutation import permutation_break
@@ -26,7 +26,6 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 DB_PATH = os.path.join(BASE_DIR, "cryptiq.db")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 
-# change this to your admin email
 ADMIN_EMAIL = "jimcalstrom@gmail.com"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -36,17 +35,17 @@ app.secret_key = os.environ.get("CRYPTIQ_SECRET") or "dev-secret-key"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6 MB upload limit
 
+
 # ----- Database helpers -----
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
+
 def init_db():
-    """Create tables if missing (idempotent)."""
     conn = get_db()
     cur = conn.cursor()
-    # users (with email + is_admin)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,7 +56,6 @@ def init_db():
         created_at TEXT NOT NULL
     )
     """)
-    # posts
     cur.execute("""
     CREATE TABLE IF NOT EXISTS posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,7 +67,6 @@ def init_db():
         FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
-    # comments (new)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS comments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,8 +81,8 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 def migrate_db():
-    """Add missing columns if the DB was created before (email, is_admin)."""
     conn = get_db()
     cur = conn.cursor()
     cur.execute("PRAGMA table_info(users)")
@@ -97,8 +94,8 @@ def migrate_db():
     conn.commit()
     conn.close()
 
+
 def ensure_admin_flag():
-    """Mark the ADMIN_EMAIL (if present) as admin."""
     if not ADMIN_EMAIL:
         return
     conn = get_db()
@@ -106,16 +103,18 @@ def ensure_admin_flag():
     conn.commit()
     conn.close()
 
+
 init_db()
 migrate_db()
 ensure_admin_flag()
+
 
 # ----- Utility -----
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def current_user():
-    """Return the logged-in user as a plain dict (not sqlite3.Row)."""
     if "user_id" in session:
         conn = get_db()
         cur = conn.execute(
@@ -127,18 +126,25 @@ def current_user():
         return dict(row) if row else None
     return None
 
+
 def is_admin(user):
-    """Admin if flagged in DB OR matches ADMIN_EMAIL."""
     if not user:
         return False
     return (user.get("is_admin") == 1) or (user.get("email", "").lower() == ADMIN_EMAIL.lower())
 
+
 def fetch_post(post_id):
     conn = get_db()
-    cur = conn.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    cur = conn.execute("""
+        SELECT p.*, u.username AS author
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.id = ?
+    """, (post_id,))
     post = cur.fetchone()
     conn.close()
     return post
+
 
 def delete_image_file(filename):
     if not filename:
@@ -150,32 +156,50 @@ def delete_image_file(filename):
     except Exception:
         pass
 
-# ------------------- Main Cipher Breaker -------------------
-@app.route("/", methods=["GET", "POST"])
+
+def get_recent_posts(limit=6):
+    conn = get_db()
+    cur = conn.execute("""
+        SELECT p.id, p.title, p.body, p.created_at, u.username AS author
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        ORDER BY datetime(p.created_at) DESC
+        LIMIT ?
+    """, (limit,))
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+# ------------------- HOME -------------------
+@app.route("/", methods=["GET"])
 def index():
+    user = current_user()
+    recent_posts = get_recent_posts(limit=6)
+    return render_template("index.html", user=user, recent_posts=recent_posts)
+
+app.add_url_rule("/", endpoint="home", view_func=index)
+
+
+# ------------------- BREAKER -------------------
+@app.route("/breaker", methods=["GET", "POST"])
+def breaker():
     if request.method == "POST":
         text = request.form.get("text", "")
         cipher_type = request.form.get("cipher_type", "vigenere").lower()
         known_plaintext = request.form.get("known_plaintext", "").strip()
 
-        # --- Helper: parse "D=E,X=T,R=A" → {'D':'E','X':'T','R':'A'} ---
         fixed_map = None
-        if known_plaintext:
-            # detect pattern with '=' sign(s)
-            if "=" in known_plaintext:
-                fixed_map = {}
-                pairs = [p.strip() for p in known_plaintext.replace(";", ",").split(",") if p.strip()]
-                for pair in pairs:
-                    if "=" in pair:
-                        ciph, plain = pair.split("=", 1)
-                        if ciph and plain:
-                            fixed_map[ciph.strip().upper()] = plain.strip().upper()
-            else:
-                # treat as crib word (known word)
-                # we’ll pass it later as None but you can extend your cipher solver to use it
-                fixed_map = None
+        if known_plaintext and "=" in known_plaintext:
+            fixed_map = {}
+            pairs = [p.strip() for p in known_plaintext.replace(";", ",").split(",") if p.strip()]
+            for pair in pairs:
+                if "=" in pair:
+                    ciph, plain = pair.split("=", 1)
+                    if ciph and plain:
+                        fixed_map[ciph.strip().upper()] = plain.strip().upper()
 
-        # --- Cipher selection ---
+        # Determine which cipher to use
         if cipher_type == "caesar":
             key, plaintext = caesar_break(text)
         elif cipher_type == "vigenere":
@@ -193,37 +217,32 @@ def index():
         elif cipher_type == "polybius":
             key, plaintext = substitution_break(
                 polybius_standardize(text),
-                max_restarts=16,
-                sa_steps=6000,
-                seed=42,
-                time_limit_seconds=25,
-                threads=None,
-                fixed=fixed_map,
-                verbose=True
+                max_restarts=16, sa_steps=6000, seed=42,
+                time_limit_seconds=25, threads=None,
+                fixed=fixed_map, verbose=True
             )
         elif cipher_type == "substitution":
             key, plaintext = substitution_break(
                 text,
-                max_restarts=16,
-                sa_steps=6000,
-                seed=42,
-                time_limit_seconds=25,
-                threads=None,
-                fixed=fixed_map,   # ✅ apply the known plaintext map here
-                verbose=True
+                max_restarts=24, sa_steps=6000, seed=42,
+                time_limit_seconds=25, threads=None,
+                fixed=fixed_map, verbose=True
             )
         else:
             key, plaintext = None, text
 
         return jsonify({"key": key, "text": plaintext})
 
-    return render_template("index.html", user=current_user())
+    return render_template("breaker.html", user=current_user())
 
 
 # ------------------- Tools Page -------------------
 @app.route("/tools", methods=["GET"])
 def tools_page():
     return render_template("tools.html", user=current_user())
+
+app.add_url_rule("/tools", endpoint="tools", view_func=tools_page)
+
 
 # ------------------- Tools API -------------------
 @app.route("/tools/run", methods=["POST"])
@@ -244,7 +263,7 @@ def tools_run():
         initial_text = polybius_standardize(text)
         trigrams, bigrams, unigrams, cipher_type = analyse(initial_text)
         unigrams_str = ", ".join([f"{letter}: {count}" for letter, count in unigrams])
-        result_text = initial_text + "\n"
+        result_text  = initial_text + "\n"
         result_text += f"Common trigrams: {trigrams}\n"
         result_text += f"Common bigrams: {bigrams}\n"
         result_text += f"Letter frequencies: {unigrams_str}\n"
@@ -255,6 +274,7 @@ def tools_run():
             block_length = int(request.form.get("block_length", 5))
         except Exception:
             block_length = 5
+
         def text_spacer(message, block_length):
             message = message.replace(' ', '')
             blocked = ""
@@ -263,6 +283,7 @@ def tools_run():
                     blocked += " "
                 blocked += ch
             return blocked
+
         result_text = text_spacer(text, block_length)
     elif tool_type == "substitution":
         result_text = text.upper()
@@ -271,10 +292,14 @@ def tools_run():
 
     return jsonify({"text": result_text})
 
+
 # ------------------- Info Page -------------------
 @app.route("/info", methods=["GET"])
 def info_page():
     return render_template("info.html", user=current_user())
+
+app.add_url_rule("/info", endpoint="info", view_func=info_page)
+
 
 # ------------------- Posts -------------------
 @app.route("/posts", methods=["GET"])
@@ -297,7 +322,10 @@ def posts_list():
     conn.close()
     return render_template("posts.html", posts=posts, user=user, user_is_admin=is_admin(user))
 
-@app.route("/posts/new", methods=["GET", "POST"])
+app.add_url_rule("/posts", endpoint="posts", view_func=posts_list)
+
+
+@app.route("/posts/new", methods=["GET", "POST"], endpoint="create_post")
 def posts_new():
     user = current_user()
     if not user:
@@ -312,12 +340,12 @@ def posts_new():
 
         if not title or not body:
             flash("Title and body are required.", "danger")
-            return redirect(url_for("posts_new"))
+            return redirect(url_for("create_post"))
 
         if image and image.filename:
             if not allowed_file(image.filename):
                 flash("Unsupported image type.", "danger")
-                return redirect(url_for("posts_new"))
+                return redirect(url_for("create_post"))
             filename = secure_filename(f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{image.filename}")
             image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             image_filename = filename
@@ -334,7 +362,17 @@ def posts_new():
 
     return render_template("new_post.html", user=user)
 
-# ---- EDIT POST (owner or admin) ----
+app.add_url_rule("/posts/new", endpoint="posts_new", view_func=posts_new)
+
+
+@app.route("/posts/<int:post_id>", methods=["GET"], endpoint="post_detail")
+def post_detail(post_id):
+    post = fetch_post(post_id)
+    if not post:
+        abort(404)
+    return render_template("post_detail.html", post=post, user=current_user())
+
+
 @app.route("/posts/<int:post_id>/edit", methods=["GET", "POST"])
 def posts_edit(post_id):
     user = current_user()
@@ -352,7 +390,7 @@ def posts_edit(post_id):
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         body = request.form.get("body", "").strip()
-        delete_image = request.form.get("delete_image") == "true"  # hidden field from the bin overlay
+        delete_image = request.form.get("delete_image") == "true"
         new_image = request.files.get("image")
 
         image_filename = post["image_filename"]
@@ -387,7 +425,7 @@ def posts_edit(post_id):
 
     return render_template("edit_post.html", post=post, user=user, user_is_admin=is_admin(user))
 
-# ---- DELETE POST (owner or admin) ----
+
 @app.route("/posts/<int:post_id>/delete", methods=["POST"])
 def posts_delete(post_id):
     user = current_user()
@@ -402,7 +440,6 @@ def posts_delete(post_id):
         flash("You can only delete your own post.", "danger")
         return redirect(url_for("posts_list"))
 
-    # delete comments for the post, too (FK not declared ON DELETE)
     conn = get_db()
     conn.execute("DELETE FROM comments WHERE post_id=?", (post_id,))
     conn.commit()
@@ -413,6 +450,7 @@ def posts_delete(post_id):
     conn.close()
     flash("Post deleted.", "info")
     return redirect(url_for("posts_list"))
+
 
 # ------------------- Comments (AJAX) -------------------
 @app.route("/comments/list", methods=["GET"])
@@ -450,13 +488,13 @@ def comments_list():
 
     return jsonify({"ok": True, "count": len(comments), "comments": comments})
 
+
 @app.route("/comments/add", methods=["POST"])
 def comments_add():
     user = current_user()
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
 
-    # Accept both JSON and form-encoded
     if request.is_json:
         data = request.get_json(silent=True) or {}
         post_id = int(data.get("post_id") or 0)
@@ -468,7 +506,6 @@ def comments_add():
     if not post_id or not body:
         return jsonify({"ok": False, "error": "post_id and body required"}), 400
 
-    # make sure post exists
     if not fetch_post(post_id):
         return jsonify({"ok": False, "error": "post not found"}), 404
 
@@ -479,7 +516,6 @@ def comments_add():
         (post_id, user["id"], body, now)
     )
     conn.commit()
-    # Return the newly inserted comment
     cur = conn.execute("""
         SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, u.username
         FROM comments c
@@ -497,9 +533,10 @@ def comments_add():
         "username": row["username"],
         "body": row["body"],
         "created_at": row["created_at"],
-        "can_delete": True  # author can delete
+        "can_delete": True
     }
     return jsonify({"ok": True, "comment": comment})
+
 
 @app.route("/comments/<int:comment_id>/delete", methods=["POST"])
 def comments_delete(comment_id):
@@ -523,10 +560,12 @@ def comments_delete(comment_id):
     conn.close()
     return jsonify({"ok": True})
 
+
 # Serve uploaded images
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
 
 # ------------------- Accounts -------------------
 @app.route("/register", methods=["GET", "POST"])
@@ -537,12 +576,10 @@ def register():
         password = request.form['password']
         confirm = request.form['confirm']
 
-        # Check if passwords match
         if password != confirm:
             flash("Passwords do not match.", "error")
             return render_template('register.html')
 
-        # Check if email or username already exist
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
             c.execute("SELECT * FROM users WHERE email=? OR username=?", (email, username))
@@ -552,7 +589,6 @@ def register():
             flash("Email or username already exists.", "error")
             return render_template('register.html')
 
-        # Hash password and store in 'password_hash' column
         hashed = generate_password_hash(password)
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
@@ -568,11 +604,10 @@ def register():
     return render_template('register.html')
 
 
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        identifier = (request.form.get("username") or "").strip()  # username or email
+        identifier = (request.form.get("username") or "").strip()
         password = request.form.get("password", "")
 
         conn = get_db()
@@ -600,11 +635,13 @@ def login():
 
     return render_template("login.html", user=current_user())
 
+
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
     flash("Logged out.", "info")
     return redirect(url_for("index"))
+
 
 # ------------------- Run -------------------
 if __name__ == "__main__":

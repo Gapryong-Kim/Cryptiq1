@@ -1,25 +1,377 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="utf-8">
-    <title>Create Post — CryptiQ</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Post — CryptiQ</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    :root {
+      --page-max: 1000px;         /* a touch wider for fixed preview column */
+      --radius: 12px;
+      --radius-lg: 14px;
+      --accent: #00ffd5;
+      --accent-strong: #00e0bf;
+      --accent-soft: rgba(0,255,213,.25);
+    }
+
+    /* Keep vertical scrollbar space reserved (Windows “jerk” fix) */
+    html, body { height: 100%; }
+    html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter','Segoe UI',Tahoma,system-ui,sans-serif;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    /* ---------- Shell ---------- */
+    .cp-shell {
+      min-height: calc(100dvh - 80px);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 110px 16px 60px;
+      box-sizing: border-box;
+    }
+
+    /* ---------- Card ---------- */
+    .cp-card {
+      width: min(100%, var(--page-max));
+      margin-inline: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 30px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+
+    /* ---------- Header ---------- */
+    .cp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+    .cp-title {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: .2px;
+    }
+    .cp-subtle {
+      margin: 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* ---------- Main Grid ---------- */
+    .cp-grid {
+      display: grid;
+      grid-template-columns: 1fr;    /* mobile default */
+      gap: 20px;
+      padding: 20px;
+      align-items: start;
+    }
+    /* Important: allow children to shrink in their tracks */
+    .cp-grid > *, .cp-panel, .cp-form, .preview-wrap { min-width: 0; }
+
+    /* Laptop / desktop: fixed preview column prevents wobble */
+    @media (min-width: 960px) {
+      .cp-grid {
+        grid-template-columns: minmax(0, 1fr) 420px;  /* left grows, right fixed */
+        gap: 20px;
+      }
+    }
+
+    /* ---------- Panels ---------- */
+    .cp-panel {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cp-panel h3 {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+
+    /* ---------- Form ---------- */
+    .cp-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .cp-label {
+      font-weight: 600;
+      color: var(--text);
+      font-size: .95rem;
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+
+    .cp-input,
+    .cp-textarea,
+    .cp-file {
+      width: 100%;
+      color: var(--text);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 12px 13px;
+      font-size: 16px; /* avoid iOS zoom */
+      box-sizing: border-box;
+      transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    }
+
+    .cp-input:hover, .cp-textarea:hover { background: var(--input-hover); }
+    .cp-input:focus, .cp-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    /* ---------- Textarea (fixed height) ---------- */
+    .cp-textarea {
+      height: 340px;
+      min-height: 340px;
+      max-height: 340px;
+      resize: none;
+      overflow-y: auto;
+      line-height: 1.5;
+      font-family: 'Inter','Segoe UI',Tahoma,sans-serif;
+      scrollbar-gutter: stable both-edges;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .cp-file {
+      padding: 10px 0;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .cp-help {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    /* ---------- Actions ---------- */
+    .cp-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .btn {
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #0f0f0f;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .18s ease, transform .06s ease;
+    }
+    .btn:hover {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 6px 18px rgba(0,0,0,.3);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    .btn.secondary:hover {
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    /* ---------- Preview ---------- */
+    .preview-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .preview-body {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 14px;
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 340px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      scrollbar-gutter: stable both-edges;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .preview-image {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .preview-image img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      max-height: 340px;
+    }
+
+    /* ---------- Error ---------- */
+    .cp-error {
+      display: none;
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 83, 83, .35);
+      background: rgba(255, 83, 83, .10);
+      color: #ff8b8b;
+      font-weight: 600;
+    }
+    .cp-error.show { display: block; }
+
+    /* ---------- Mobile ---------- */
+    @media (max-width: 600px) {
+      .cp-shell { padding: 96px 12px 40px; }
+      .cp-textarea, .preview-body { height: 260px; min-height: 260px; max-height: 260px; }
+      .btn { width: 100%; }
+      .cp-actions { justify-content: stretch; }
+    }
+
+    /* ---------- Motion reduction ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
 </head>
+
 <body>
-    {% include 'base_nav.html' %}
+  {% include 'base_nav.html' %}
 
-    <div class="container">
-        <h2>Create New Post</h2>
+  <main class="cp-shell">
+    <section class="cp-card">
+      <header class="cp-header">
+        <h1 class="cp-title">Create New Post</h1>
+        <p class="cp-subtle">Share a discovery, walkthrough, or challenge.</p>
+      </header>
 
-        <form method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:12px;">
-            <label class="cipher-label">Title</label>
-            <input type="text" name="title" required style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;">
-            <label class="cipher-label">Body</label>
-            <textarea name="body" rows="8" required style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;"></textarea>
-            <label class="cipher-label">Image (optional)</label>
-            <input type="file" name="image" accept="image/*">
-            <button type="submit" id="post-submit">Publish Post</button>
-        </form>
-    </div>
+      <div class="cp-grid">
+        <!-- LEFT: Form -->
+        <div class="cp-panel">
+          <h3>Post Details</h3>
+          <form method="post" enctype="multipart/form-data" class="cp-form" id="create-post-form" novalidate>
+            <div>
+              <label for="title" class="cp-label">Title</label>
+              <input id="title" name="title" class="cp-input" type="text" required placeholder="e.g., Breaking a Vigenère with Kasiski">
+            </div>
+
+            <div>
+              <label for="body" class="cp-label">Body</label>
+              <textarea id="body" name="body" class="cp-textarea" required placeholder="Write your post…"></textarea>
+              <p class="cp-help"><span id="char-count">0</span> characters</p>
+            </div>
+
+            <div>
+              <label for="image" class="cp-label">Image (optional)</label>
+              <input id="image" name="image" class="cp-file" type="file" accept="image/*">
+            </div>
+
+            <div class="cp-actions">
+              <button type="submit" class="btn">Publish Post</button>
+              <a href="{{ url_for('posts_list') }}" class="btn secondary">Cancel</a>
+            </div>
+
+            <div id="form-error" class="cp-error">Please fill all required fields.</div>
+          </form>
+        </div>
+
+        <!-- RIGHT: Live Preview (fixed width on desktop) -->
+        <div class="cp-panel">
+          <h3>Live Preview</h3>
+          <div class="preview-wrap">
+            <div class="preview-image" id="preview-image">
+              <img id="preview-img" alt="Selected image preview">
+            </div>
+            <div class="preview-body" id="preview-body" aria-live="polite">Start typing your post to see a live preview here…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const titleEl = document.getElementById('title');
+    const bodyEl = document.getElementById('body');
+    const imageEl = document.getElementById('image');
+    const charCount = document.getElementById('char-count');
+    const previewBody = document.getElementById('preview-body');
+    const previewImageWrap = document.getElementById('preview-image');
+    const previewImg = document.getElementById('preview-img');
+    const formError = document.getElementById('form-error');
+    const form = document.getElementById('create-post-form');
+
+    // Live preview + character count
+    function updatePreview() {
+      const title = titleEl.value.trim();
+      const body  = bodyEl.value.trim();
+      charCount.textContent = body.length;
+      previewBody.textContent = title || body
+        ? `${title ? '# ' + title + '\\n\\n' : ''}${body}`
+        : 'Start typing your post to see a live preview here…';
+    }
+    titleEl.addEventListener('input', updatePreview);
+    bodyEl.addEventListener('input', updatePreview);
+
+    // Image preview
+    imageEl.addEventListener('change', () => {
+      const file = imageEl.files && imageEl.files[0];
+      if (!file) { previewImageWrap.style.display = 'none'; return; }
+      const url = URL.createObjectURL(file);
+      previewImg.onload = () => URL.revokeObjectURL(url);
+      previewImg.src = url;
+      previewImageWrap.style.display = 'block';
+    });
+
+    // Simple validation
+    form.addEventListener('submit', (e) => {
+      formError.classList.remove('show');
+      if (!titleEl.value.trim() || !bodyEl.value.trim()) {
+        e.preventDefault();
+        formError.classList.add('show');
+      }
+    });
+  </script>
 </body>
 </html>
