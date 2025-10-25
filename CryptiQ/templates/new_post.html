@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Create Post — CryptiQ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include 'base_nav.html' %}
+
+    <div class="container">
+        <h2>Create New Post</h2>
+
+        <form method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:12px;">
+            <label class="cipher-label">Title</label>
+            <input type="text" name="title" required style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;">
+            <label class="cipher-label">Body</label>
+            <textarea name="body" rows="8" required style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;"></textarea>
+            <label class="cipher-label">Image (optional)</label>
+            <input type="file" name="image" accept="image/*">
+            <button type="submit" id="post-submit">Publish Post</button>
+        </form>
+    </div>
+</body>
+</html>

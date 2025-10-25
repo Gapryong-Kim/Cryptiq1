@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>CryptiQ — Posts</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .post-card { background:#262626; padding:18px; border-radius:12px; margin-bottom:16px; position: relative; }
+        .post-top { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+        .post-title { color:#00ffd5; font-weight:700; }
+        .post-meta { color:#aaa; font-size: 0.9rem; white-space: nowrap; }
+
+        .kebab-wrap { position: relative; margin-left: auto; }
+        .kebab-btn {
+            background: transparent; border: none; color: #cfcfcf; cursor: pointer;
+            padding: 6px 8px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .kebab-btn:hover { background: rgba(255,255,255,0.06); }
+        .kebab-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; display: block; margin: 2px 0; }
+
+        .kebab-menu {
+            position: absolute; top: 34px; right: 0; background: #1d1d1d;
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 160px; padding: 6px; display: none; z-index: 10;
+        }
+        .kebab-menu.open { display: block; }
+        .kebab-item {
+            display: flex; align-items: center; justify-content: flex-start;
+            width: calc(100% - 4px); text-align: left; background: transparent; color: #eaeaea;
+            text-decoration: none; border: none; padding: 10px 12px; margin: 2px; border-radius: 8px; cursor: pointer; font: inherit;
+            box-sizing: border-box;
+        }
+        .kebab-item:hover { background: rgba(0,255,213,0.12); color: #00ffd5; }
+        .kebab-danger:hover { background: rgba(255,77,77,0.15); color: #ff7373; }
+
+        .post-author { color:#bbb; }
+        .post-body { margin-top:12px; color:#eee; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; }
+        .post-image { margin-top:12px; }
+        .post-image img { max-width:100%; border-radius:10px; height:auto; display:block; }
+        .post-header-sub { display:flex; justify-content:space-between; align-items:center; margin-top:6px; color:#bbb; }
+
+        /* Comments */
+        .comments { background:#1f1f1f; border:1px solid #333; border-radius:10px; margin-top:14px; display:none; }
+        .comments.open { display:block; }
+        .comments-header { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #2d2d2d; }
+        .comments-count { color:#00ffd5; font-weight:600; }
+        .comment-list { list-style:none; margin:0; padding:0; }
+
+        .comment {
+            display:flex; align-items:flex-start; gap:10px; padding:10px 14px;
+            border-bottom:1px solid #2a2a2a; width:100%; box-sizing:border-box;
+        }
+        .comment:last-child { border-bottom:none; }
+
+        .comment-avatar {
+            width:28px; height:28px; border-radius:50%; background:#2d2d2d;
+            flex: 0 0 28px; display:flex; align-items:center; justify-content:center;
+            color:#aaa; font-weight:700; font-size:12px;
+        }
+        .comment-main { flex:1 1 auto; min-width:0; }
+        .comment-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .comment-user { color:#e8e8e8; font-weight:600; }
+        .comment-time { color:#9a9a9a; font-size:12px; }
+        .comment-body { color:#f1f1f1; margin-top:4px; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; max-width:100%; }
+
+        .comment-actions { margin-left:auto; }
+        .comment-delete {
+            background:transparent; border:none; color:#ff6b6b; cursor:pointer; padding:6px 8px; border-radius:8px;
+        }
+        .comment-delete:hover { background:rgba(255,77,77,0.15); }
+
+        /* Comment add box at TOP */
+        .comment-add {
+            padding:10px 14px; border-bottom:1px solid #2d2d2d;
+            display:flex; gap:10px; align-items:flex-end;
+        }
+        .comment-input {
+            flex:1 1 auto; background:#2a2a2a; color:#eee; border:1px solid #3a3a3a; border-radius:8px;
+            padding:10px 12px; min-width:0; min-height:40px; max-height:240px; resize:vertical;
+            line-height:1.4; font: inherit; white-space: pre-wrap; overflow-wrap:anywhere;
+            word-break: break-word; overflow-y:auto;
+        }
+        .comment-submit { background:#00ffd5; color:#0f0f0f; border:none; border-radius:8px; padding:10px 14px; font-weight:700; cursor:pointer; }
+        .comment-submit:hover { background:#00d9b8; }
+
+        .comments-toggle {
+            margin-top:12px; background:transparent; color:#00ffd5; border:1px solid rgba(0,255,213,0.35);
+            padding:8px 12px; border-radius:8px; cursor:pointer;
+        }
+        .comments-toggle:hover { background:rgba(0,255,213,0.08); }
+
+        @media (max-width: 520px) { .post-meta { display:none; } }
+    </style>
+</head>
+<body>
+    {% include 'base_nav.html' %}
+
+    <div class="container">
+        <h2>Community Posts</h2>
+
+        {% if posts | length == 0 %}
+            <p>No posts yet — be the first to <a href="{{ url_for('posts_new') }}">create one</a>!</p>
+        {% endif %}
+
+        {% for p in posts %}
+            <article class="post-card" data-post-id="{{ p['id'] }}">
+                <div class="post-top">
+                    <strong class="post-title">{{ p['title'] }}</strong>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <small class="post-meta">{{ p['created_at'][:19].replace('T',' ') }}</small>
+                        {% if user and (user['id'] == p['owner_id'] or user_is_admin) %}
+                        <div class="kebab-wrap" data-post-id="{{ p['id'] }}">
+                            <button class="kebab-btn" aria-haspopup="true" aria-expanded="false" aria-label="Post menu">
+                                <span class="kebab-dot"></span><span class="kebab-dot"></span><span class="kebab-dot"></span>
+                            </button>
+                            <div class="kebab-menu" role="menu" aria-label="Post actions">
+                                <a class="kebab-item" href="{{ url_for('posts_edit', post_id=p['id']) }}">✎ Edit</a>
+                                <form method="post" action="{{ url_for('posts_delete', post_id=p['id']) }}"
+                                      onsubmit="return confirm('Delete this post?');">
+                                    <button type="submit" class="kebab-item kebab-danger">🗑 Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="post-header-sub"><em class="post-author">by {{ p['username'] }}</em></div>
+
+                {% if p['image_filename'] %}
+                    <div class="post-image"><img src="{{ url_for('uploaded_file', filename=p['image_filename']) }}" alt="post image"></div>
+                {% endif %}
+
+                <div class="post-body">{{ p['body'] }}</div>
+
+                <button class="comments-toggle" data-state="closed">Show comments</button>
+
+                <div class="comments" id="comments-{{ p['id'] }}">
+                    <div class="comments-header"><div class="comments-count" id="comments-count-{{ p['id'] }}">0 comments</div></div>
+
+                    {% if user %}
+                    <div class="comment-add">
+                        <textarea class="comment-input" id="comment-input-{{ p['id'] }}" placeholder="Add a comment..." rows="1"></textarea>
+                        <button class="comment-submit" data-post-id="{{ p['id'] }}">Comment</button>
+                    </div>
+                    {% else %}
+                    <div class="comment-add" style="justify-content:center;">
+                        <em style="color:#aaa;">Log in to add a comment</em>
+                    </div>
+                    {% endif %}
+
+                    <ul class="comment-list" id="comment-list-{{ p['id'] }}"></ul>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+
+    <script>
+        // --- kebab dropdown (post actions) ---
+        (function () {
+            const wraps = document.querySelectorAll('.kebab-wrap');
+            function closeAll(except=null) {
+                document.querySelectorAll('.kebab-menu.open').forEach(m => {
+                    if (!except || m !== except) {
+                        m.classList.remove('open');
+                        const btn = m.parentElement.querySelector('.kebab-btn');
+                        if (btn) btn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+            wraps.forEach(wrap => {
+                const btn = wrap.querySelector('.kebab-btn');
+                const menu = wrap.querySelector('.kebab-menu');
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isOpen = menu.classList.contains('open');
+                    closeAll();
+                    if (!isOpen) {
+                        menu.classList.add('open');
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+                menu.addEventListener('click', (e) => e.stopPropagation());
+            });
+            document.addEventListener('click', () => closeAll());
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
+        })();
+
+        // --- helpers ---
+        function autoGrow(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,240)+'px'; }
+        function fmtTime(iso){ try{ return new Date(iso).toLocaleString(); } catch{ return iso; } }
+
+        // Renders a single comment LI, including delete button if allowed
+        function renderCommentLi(c) {
+            const li = document.createElement('li');
+            li.className = 'comment';
+            li.dataset.commentId = c.id;
+
+            const initials = (c.username || '?').slice(0,1).toUpperCase();
+
+            li.innerHTML = `
+                <div class="comment-avatar">${initials}</div>
+                <div class="comment-main">
+                  <div class="comment-top">
+                    <span class="comment-user"></span>
+                    <span class="comment-time"></span>
+                  </div>
+                  <div class="comment-body"></div>
+                </div>
+                <div class="comment-actions"></div>
+            `;
+
+            li.querySelector('.comment-user').textContent = c.username;
+            li.querySelector('.comment-time').textContent = `• ${fmtTime(c.created_at)}`;
+            li.querySelector('.comment-body').textContent = c.body || '';
+
+            // Restore delete button/handler when permitted
+            if (c.can_delete) {
+                const del = document.createElement('button');
+                del.className = 'comment-delete';
+                del.textContent = 'Delete';
+                del.addEventListener('click', async () => {
+                    if (!confirm('Delete this comment?')) return;
+                    try {
+                        const res = await fetch(`/comments/${c.id}/delete`, { method: 'POST' });
+                        const data = await res.json();
+                        if (!data.ok) throw new Error(data.error || 'Failed');
+                        // Remove comment from DOM
+                        li.remove();
+                        // Update count
+                        const countEl = document.getElementById(`comments-count-${c.post_id}`);
+                        if (countEl) {
+                            const current = parseInt(countEl.dataset.count || '1', 10) - 1;
+                            const safe = Math.max(current, 0);
+                            countEl.dataset.count = String(safe);
+                            countEl.textContent = `${safe} comment${safe===1?'':'s'}`;
+                        }
+                    } catch (e) {
+                        alert(e.message || 'Failed to delete.');
+                    }
+                });
+                li.querySelector('.comment-actions').appendChild(del);
+            }
+
+            return li;
+        }
+
+        async function loadComments(postId) {
+            const listEl = document.getElementById(`comment-list-${postId}`);
+            const countEl = document.getElementById(`comments-count-${postId}`);
+            listEl.innerHTML = `<li class="comment" style="justify-content:center;"><em style="color:#aaa;">Loading...</em></li>`;
+            try {
+                const res = await fetch(`/comments/list?post_id=${postId}`);
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error || 'Error');
+                listEl.innerHTML = '';
+                data.comments.forEach(c => listEl.appendChild(renderCommentLi(c)));
+                countEl.dataset.count = String(data.count);
+                countEl.textContent = `${data.count} comment${data.count===1?'':'s'}`;
+            } catch (e) {
+                listEl.innerHTML = `<li class="comment" style="justify-content:center;"><em style="color:#ff9f9f;">Failed to load comments</em></li>`;
+            }
+        }
+
+        async function addComment(postId, bodyEl) {
+            const body = bodyEl.value.trim();
+            if (!body) return;
+
+            const btn = bodyEl.nextElementSibling;
+            const originalText = btn.textContent;
+            btn.disabled = true; btn.textContent = 'Posting...';
+
+            try {
+                const res = await fetch('/comments/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ post_id: postId, body })
+                });
+                const data = await res.json();
+                if (!data.ok) {
+                    alert(data.error || 'Failed to post.');
+                    return;
+                }
+                // Prepend new comment
+                const listEl = document.getElementById(`comment-list-${postId}`);
+                listEl.insertBefore(renderCommentLi(data.comment), listEl.firstChild);
+
+                // Update count
+                const countEl = document.getElementById(`comments-count-${postId}`);
+                const current = parseInt(countEl.dataset.count || '0', 10) + 1;
+                countEl.dataset.count = String(current);
+                countEl.textContent = `${current} comment${current===1?'':'s'}`;
+
+                bodyEl.value = '';
+                autoGrow(bodyEl);
+            } catch (e) {
+                alert('Network error.');
+            } finally {
+                btn.disabled = false; btn.textContent = originalText;
+            }
+        }
+
+        // Attach per-post handlers
+        document.querySelectorAll('.post-card').forEach(card => {
+            const postId = parseInt(card.dataset.postId, 10);
+            const toggleBtn = card.querySelector('.comments-toggle');
+            const commentsBox = card.querySelector('.comments');
+            const submitBtn = card.querySelector('.comment-submit');
+            const inputEl = card.querySelector('.comment-input');
+
+            // Comments toggle + lazy load
+            toggleBtn.addEventListener('click', async () => {
+                const open = toggleBtn.dataset.state === 'open';
+                if (open) {
+                    commentsBox.classList.remove('open');
+                    toggleBtn.dataset.state = 'closed';
+                    toggleBtn.textContent = 'Show comments';
+                } else {
+                    commentsBox.classList.add('open');
+                    toggleBtn.dataset.state = 'open';
+                    toggleBtn.textContent = 'Hide comments';
+                    // lazy load on first open
+                    const listEl = document.getElementById(`comment-list-${postId}`);
+                    if (!listEl.dataset.loaded) {
+                        await loadComments(postId);
+                        listEl.dataset.loaded = '1';
+                    }
+                    if (inputEl) autoGrow(inputEl);
+                }
+            });
+
+            // Input auto-grow + submit
+            if (inputEl) {
+                inputEl.addEventListener('input', () => autoGrow(inputEl));
+                inputEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        addComment(postId, inputEl);
+                    }
+                });
+            }
+            if (submitBtn && inputEl) {
+                submitBtn.addEventListener('click', () => addComment(postId, inputEl));
+            }
+        });
+    </script>
+</body>
+</html>

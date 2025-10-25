@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>CryptiQ — Tools</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include 'base_nav.html' %}
+
+    <div class="container">
+        <h2>Tools</h2>
+
+        <label for="tool-select" class="cipher-label">Select Tool:</label>
+        <select id="tool-select">
+            <option value="">-- Select Tool --</option>
+            <option value="frequency">Frequency Analyzer</option>
+            <option value="polybius">Polybius Standardizer</option>
+            <option value="substitution">Substitution Cipher Analyzer</option>
+            <option value="unique">Unique Symbol Finder</option>
+            <option value="text_spacer">Text Spacer</option>
+        </select>
+
+        <div id="tool-container" style="margin-top:20px;"></div>
+    </div>
+
+    <script>
+        const toolSelect = document.getElementById("tool-select");
+        const toolContainer = document.getElementById("tool-container");
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+        const toolExplanations = {
+            frequency: "The Frequency Analyzer examines how often each letter appears in your text, which can reveal useful patterns for cracking ciphers.",
+            polybius: "The Polybius Standardizer cleans and formats text encoded using the Polybius square cipher, representing it as a basic substitution cipher which you can analyze with our Substitution Cipher Analyzer.",
+            substitution: "The Substitution Cipher Analyzer helps decode monoalphabetic ciphers by allowing you to assign plaintext letters to ciphertext equivalents. Each plaintext replacement appears in lowercase directly in your text.",
+            unique: "The Unique Symbol Finder divides text into blocks of length n, starting with one, and returns how many unique blocks there are.",
+            text_spacer: "The Text Spacer divides your message into blocks of a specified length, removing spaces and adding spaces between blocks."
+        };
+
+        toolSelect.addEventListener("change", async () => {
+            toolContainer.innerHTML = "";
+            const selected = toolSelect.value;
+
+            // --- Substitution Analyzer ---
+            if (selected === "substitution") {
+                toolContainer.innerHTML = `
+                    <p class="tool-description">${toolExplanations['substitution']}</p>
+                    <textarea id="ciphertext" placeholder="Enter ciphertext here..."></textarea>
+                    <div id="substitution-row"></div>
+                    <pre id="frequency-output" style="margin-top:15px;"></pre>
+                `;
+
+                const substitutionRow = document.getElementById("substitution-row");
+                const mapping = {};
+                let ciphertext = "";
+                let originalText = "";
+
+                // Create plaintext alphabet labels
+                alphabet.forEach(letter => {
+                    const label = document.createElement("label");
+                    label.style.display = "inline-flex";
+                    label.style.flexDirection = "column";
+                    label.style.alignItems = "center";
+                    label.style.margin = "2px";
+                    label.style.fontSize = "12px";
+                    label.style.color = "#aaa";
+                    label.innerText = letter;
+
+                    const input = document.createElement("input");
+                    input.maxLength = 1;
+                    input.dataset.plain = letter;
+                    input.style.width = "28px";
+                    input.style.textAlign = "center";
+                    input.style.backgroundColor = "#262626";
+                    input.style.color = "#f0f0f0";
+                    input.style.border = "1px solid #555";
+                    input.style.borderRadius = "6px";
+                    input.style.fontSize = "16px";
+
+                    input.addEventListener("input", () => {
+                        const plainLetter = input.dataset.plain;
+                        const cipherLetter = input.value.toUpperCase();
+
+                        // Prevent duplicate use of a cipher letter
+                        for (let key in mapping) {
+                            if (mapping[key] === cipherLetter && key !== plainLetter) {
+                                mapping[key] = "";
+                                document.querySelector(`input[data-plain="${key}"]`).value = "";
+                            }
+                        }
+
+                        mapping[plainLetter] = cipherLetter || "";
+                        updateTextarea();
+                    });
+
+                    label.appendChild(input);
+                    substitutionRow.appendChild(label);
+                    mapping[letter] = "";
+                });
+
+                const textarea = document.getElementById("ciphertext");
+                const freqOutput = document.getElementById("frequency-output");
+
+                textarea.addEventListener("input", async () => {
+                    ciphertext = textarea.value.toUpperCase();
+                    originalText = ciphertext;
+                    updateTextarea();
+
+                    // Frequency analysis runs only when ciphertext changes
+                    if (ciphertext.trim()) {
+                        try {
+                            const formData = new FormData();
+                            formData.append("text", ciphertext);
+                            formData.append("tool_type", "frequency");
+                            const response = await fetch("/tools/run", { method: "POST", body: formData });
+                            const data = await response.json();
+                            freqOutput.innerText = data.text;
+                        } catch {
+                            freqOutput.innerText = "Error fetching frequency analysis.";
+                        }
+                    } else {
+                        freqOutput.innerText = "";
+                    }
+                });
+
+                function updateTextarea() {
+                    let result = "";
+                    for (let char of originalText) {
+                        if (alphabet.includes(char)) {
+                            const mapped = Object.entries(mapping).find(([plain, cipher]) => cipher === char);
+                            result += mapped ? mapped[0].toLowerCase() : char;
+                        } else {
+                            result += char;
+                        }
+                    }
+                    textarea.value = result;
+                }
+            }
+
+            // --- Frequency / Polybius / Unique ---
+            else if (selected === "unique" || selected === "frequency" || selected === "polybius") {
+                toolContainer.innerHTML = `
+                    <p class="tool-description">${toolExplanations[selected]}</p>
+                    <textarea id="tool-text" placeholder="Enter text here..."></textarea>
+                    <button id="tools-run">Run</button>
+                    <pre id="tool-result"></pre>
+                `;
+
+                document.getElementById("tools-run").addEventListener("click", async () => {
+                    const text = document.getElementById("tool-text").value;
+                    const formData = new FormData();
+                    formData.append("text", text);
+                    formData.append("tool_type", selected);
+
+                    const response = await fetch("/tools/run", { method: "POST", body: formData });
+                    const data = await response.json();
+                    document.getElementById("tool-result").innerText = data.text;
+                });
+            }
+
+            // --- Text Spacer ---
+            else if (selected === "text_spacer") {
+                toolContainer.innerHTML = `
+                    <p class="tool-description">${toolExplanations['text_spacer']}</p>
+                    <textarea id="tool-text" placeholder="Enter text here..."></textarea>
+                    <label for="block-length" style="margin-top:10px;">Block Length:</label>
+                    <input type="number" id="block-length" min="1" value="5" style="width:60px; margin-left:5px;">
+                    <button id="tools-run">Run</button>
+                    <pre id="tool-result"></pre>
+                `;
+
+                document.getElementById("tools-run").addEventListener("click", async () => {
+                    const text = document.getElementById("tool-text").value;
+                    const blockLength = parseInt(document.getElementById("block-length").value) || 5;
+                    const formData = new FormData();
+                    formData.append("text", text);
+                    formData.append("tool_type", "text_spacer");
+                    formData.append("block_length", blockLength);
+
+                    const response = await fetch("/tools/run", { method: "POST", body: formData });
+                    const data = await response.json();
+                    document.getElementById("tool-result").innerText = data.text;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+s

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptiQ — Cipher Info & Guides</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+  /* === Page-Specific Additions === */
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* === Sidebar === */
+  .sidebar {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 240px;
+    height: calc(100% - 70px);
+    background-color: var(--panel-2);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .sidebar h3 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .sidebar a {
+    display: block;
+    color: var(--text-dim);
+    text-decoration: none;
+    margin: 6px 0;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.25s ease;
+  }
+  .sidebar a:hover {
+    background-color: var(--accent);
+    color: #0f0f0f;
+    box-shadow: 0 0 12px var(--accent-soft-2);
+  }
+
+  /* === Main Content === */
+  .content {
+    margin-left: 260px;
+    padding: 110px 60px 60px 60px;
+    max-width: 900px;
+  }
+  .content h1 {
+    color: var(--accent);
+    margin-bottom: 12px;
+    font-size: 2rem;
+  }
+  .content h2 {
+    color: var(--accent);
+    margin-top: 40px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--accent);
+    padding-bottom: 4px;
+  }
+  .content h3 {
+    color: var(--accent);
+    margin-top: 24px;
+  }
+  .content p {
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  /* === Example & Tip Boxes === */
+  .example-box, .tip {
+    transition: box-shadow 0.25s ease, transform 0.2s ease;
+  }
+  .example-box:hover, .tip:hover {
+    box-shadow: 0 0 20px var(--accent-soft-2);
+    transform: translateY(-2px);
+  }
+  .example-box {
+    background: var(--panel-2);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 10px 0 20px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    color: var(--accent);
+  }
+  .tip {
+    background: var(--panel);
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    margin: 10px 0;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    border-radius: 4px;
+  }
+
+  /* === Responsive === */
+  @media (max-width: 980px) {
+    .content {
+      margin-left: 0;
+      padding: 140px 20px 60px 20px;
+    }
+    .sidebar {
+      position: relative;
+      width: 100%;
+      height: auto;
+      top: 0;
+      border-right: none;
+      padding: 10px 0;
+    }
+    .sidebar a {
+      padding: 8px 12px;
+    }
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Theme Toggle Button */
+  #theme-toggle {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  #theme-toggle:hover {
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+  }
+  </style>
+</head>
+
+<body>
+  {% include 'base_nav.html' %}
+
+  <div class="sidebar">
+    <h3>Quick Jump</h3>
+    <a href="#intro">Overview</a>
+    <a href="#substitution">Substitution Cipher</a>
+    <a href="#caesar">Caesar Cipher</a>
+    <a href="#vigenere">Vigenère Cipher</a>
+    <a href="#affine">Affine Cipher</a>
+    <a href="#playfair">Playfair Cipher</a>
+    <a href="#hill">Hill Cipher</a>
+    <a href="#autokey">Autokey Cipher</a>
+    <a href="#transposition">Transposition Cipher</a>
+    <a href="#bacon">Bacon Cipher</a>
+    <a href="#morse">Morse & Enigma Intro</a>
+  </div>
+
+  <div class="content">
+    <section id="intro">
+      <h1>Cryptography Overview</h1>
+      <p>
+        Cryptography is the art of transforming messages to conceal their meaning. 
+        Classical ciphers were built on substitution (changing letters) and transposition (changing order). 
+        Modern cryptanalysis involves both logic and pattern recognition — something this site aims to teach interactively.
+      </p>
+      <div class="tip">
+        💡 <strong>Tip:</strong> Always start by identifying repeating patterns or letter frequencies. They often reveal the cipher type.
+      </div>
+    </section>
+
+    <section id="substitution">
+      <h2>Substitution Cipher</h2>
+      <p>
+        A substitution cipher replaces each letter of the plaintext with another letter. 
+        The mapping remains consistent throughout the message. 
+        This is one of the simplest yet most instructive forms of encryption.
+      </p>
+      <div class="example-box">
+        Plaintext:  HELLO WORLD<br>
+        Ciphertext: QEBBY TBOBD
+      </div>
+      <p>
+        To break it, perform a <strong>frequency analysis</strong>. 
+        In English, letters like E, T, and A appear most frequently, so 
+        high-frequency ciphertext characters often correspond to them.
+      </p>
+    </section>
+
+    <section id="caesar">
+      <h2>Caesar Cipher</h2>
+      <p>
+        The Caesar cipher is a substitution cipher with a fixed shift. 
+        Each letter is replaced by another a certain number of positions down the alphabet.
+      </p>
+      <div class="example-box">
+        Shift: 3<br>
+        Plaintext:  HELLO → KHOOR
+      </div>
+      <p>
+        Since there are only 25 possible shifts, you can brute-force all possibilities quickly.
+      </p>
+    </section>
+
+    <section id="vigenere">
+      <h2>Vigenère Cipher</h2>
+      <p>
+        The Vigenère cipher uses a repeating keyword to apply multiple Caesar shifts.
+        Each letter of the key determines how much the plaintext letter is shifted.
+      </p>
+      <div class="example-box">
+        Key: KEY<br>
+        Plaintext: ATTACKATDAWN<br>
+        Ciphertext: KXRKGIKXREQF
+      </div>
+      <p>
+        To break it, first find the key length using <strong>Kasiski examination</strong> or <strong>Index of Coincidence</strong>, 
+        then treat each column as a Caesar cipher.
+      </p>
+    </section>
+
+    <section id="affine">
+      <h2>Affine Cipher</h2>
+      <p>
+        The affine cipher uses a mathematical formula:
+        <code>E(x) = (ax + b) mod 26</code>, where <code>a</code> and <code>b</code> are keys.
+      </p>
+      <div class="example-box">
+        a = 5, b = 8<br>
+        Plaintext: AFFINE → Ciphertext: IHHWVCS
+      </div>
+      <p>
+        To break it, use two plaintext-ciphertext pairs and solve simultaneous equations mod 26 to find a and b.
+      </p>
+    </section>
+
+    <section id="playfair">
+      <h2>Playfair Cipher</h2>
+      <p>
+        The Playfair cipher encrypts digraphs (pairs of letters) using a 5×5 grid derived from a keyword.
+      </p>
+      <div class="example-box">
+        Key: MONARCHY<br>
+        Plaintext: HELLO → Ciphertext: GYIYQ
+      </div>
+    </section>
+
+    <section id="hill">
+      <h2>Hill Cipher</h2>
+      <p>
+        The Hill cipher uses matrix multiplication mod 26.
+      </p>
+      <div class="example-box">
+        Key matrix: [[3,3],[2,5]]<br>
+        Plaintext: HI → Ciphertext: RC
+      </div>
+    </section>
+
+    <section id="autokey">
+      <h2>Autokey Cipher</h2>
+      <p>
+        The autokey cipher uses the plaintext itself to extend the key, creating more variability and reducing repetition patterns.
+      </p>
+    </section>
+
+    <section id="transposition">
+      <h2>Transposition Ciphers</h2>
+      <p>
+        Unlike substitution ciphers, transposition ciphers rearrange the letters without changing them.
+        Common types include Rail Fence, Columnar, and Amsco.
+      </p>
+      <div class="example-box">
+        Columnar Key: ZEBRAS<br>
+        Plaintext: WEAREDISCOVEREDRUN → Ciphertext: EVLNEACDTKESEAQROFO
+      </div>
+    </section>
+
+    <section id="bacon">
+      <h2>Bacon Cipher</h2>
+      <div class="example-box">
+        AABAA AABAB ABBAB ... → HELLO
+      </div>
+    </section>
+
+    <section id="morse">
+      <h2>Morse & Enigma Intro</h2>
+      <p>
+        Morse code represents letters as dots and dashes. The Enigma machine, used by Germany in WWII, 
+        extended these ideas with mechanical rotors and plugboard wiring, creating effectively unbreakable encryption until 1940s breakthroughs.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    // === Theme Toggle ===
+    const btn = document.getElementById('theme-toggle');
+    const root = document.documentElement;
+    const saved = localStorage.getItem('theme');
+    if (saved) root.dataset.theme = saved;
+
+    function updateThemeIcon() {
+      if (root.dataset.theme === 'light') btn.textContent = '🌞 Light';
+      else btn.textContent = '🌙 Dark';
+    }
+    updateThemeIcon();
+
+    btn.addEventListener('click', () => {
+      const current = root.dataset.theme;
+      root.dataset.theme = current === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', root.dataset.theme);
+      updateThemeIcon();
+    });
+  </script>
+</body>
+</html>

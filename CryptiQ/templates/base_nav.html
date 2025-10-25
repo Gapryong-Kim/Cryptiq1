@@ -1,0 +1,102 @@
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-logo">CryptiQ</div>
+  </div>
+
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <ul class="nav-items" id="nav-menu">
+  <li><a href="{{ url_for('index') }}">Cipher Breaker</a></li>
+  <li><a href="{{ url_for('tools_page') }}">Tools</a></li>
+  <li><a href="{{ url_for('info_page') }}">Info</a></li>
+  <li><a href="{{ url_for('posts_list') }}">Posts</a></li>
+
+  {% if user %}
+    <li><a href="{{ url_for('posts_new') }}">New Post</a></li>
+    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+    <li class="nav-username">{{ user['username'] }}</li>
+  {% else %}
+    <li><a href="{{ url_for('login') }}">Login</a></li>
+    <li><a href="{{ url_for('register') }}">Register</a></li>
+  {% endif %}
+
+  <li>
+    <button id="theme-toggle" aria-label="Toggle theme" title="Toggle theme"
+      style="
+        display:inline-flex; align-items:center; gap:.5rem;
+        padding:8px 12px; border:1px solid var(--line); 
+        background:transparent; color:var(--text);
+        border-radius:8px; cursor:pointer;
+      ">
+      <span id="theme-toggle-icon" aria-hidden="true">🌙</span>
+      <span id="theme-toggle-text">Dark</span>
+    </button>
+  </li>
+</ul>
+
+
+</nav>
+
+<script>
+  // Hamburger toggle
+  document.getElementById('hamburger').addEventListener('click', function () {
+    this.classList.toggle('open');
+    document.getElementById('nav-menu').classList.toggle('open');
+  });
+
+  // Close on outside click
+  document.addEventListener('click', function (e) {
+    const menu = document.getElementById('nav-menu');
+    const burger = document.getElementById('hamburger');
+    if (!menu.contains(e.target) && !burger.contains(e.target)) {
+      menu.classList.remove('open');
+      burger.classList.remove('open');
+    }
+  });
+
+  // === Theme toggle logic ===
+  (function() {
+    const STORAGE_KEY = 'cryptiq.theme';
+    const root = document.documentElement;
+    const btn = document.getElementById('theme-toggle');
+    const icon = document.getElementById('theme-toggle-icon');
+    const label = document.getElementById('theme-toggle-text');
+
+    function getSystemTheme() {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    function getSavedTheme() {
+      try { return localStorage.getItem(STORAGE_KEY) || null; } catch { return null; }
+    }
+    function applyTheme(theme) {
+      if (theme === 'light') root.setAttribute('data-theme', 'light');
+      else root.removeAttribute('data-theme');
+      const isLight = root.getAttribute('data-theme') === 'light';
+      icon.textContent = isLight ? '☀️' : '🌙';
+      label.textContent = isLight ? 'Light' : 'Dark';
+    }
+
+    const saved = getSavedTheme();
+    const initial = saved || getSystemTheme();
+    applyTheme(initial);
+
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    function handleSystemChange(e) {
+      const userSet = getSavedTheme();
+      if (!userSet) applyTheme(e.matches ? 'light' : 'dark');
+    }
+    if (mq.addEventListener) mq.addEventListener('change', handleSystemChange);
+    else if (mq.addListener) mq.addListener(handleSystemChange);
+
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const isLight = root.getAttribute('data-theme') === 'light';
+        const next = isLight ? 'dark' : 'light';
+        applyTheme(next);
+        try { localStorage.setItem(STORAGE_KEY, next); } catch {}
+      });
+    }
+  })();
+</script>

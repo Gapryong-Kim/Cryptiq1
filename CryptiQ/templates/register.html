@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Register — CryptiQ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include 'base_nav.html' %}
+    <div class="container">
+        <h2>Create Account</h2>
+        <form method="post" style="display:flex;flex-direction:column;gap:12px;max-width:420px;">
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="you@example.com"
+                style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;">
+            <label>Username</label>
+            <input type="text" name="username" required
+                style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;">
+            <label>Password</label>
+            <input type="password" name="password" required
+                style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;">
+            <label>Confirm Password</label>
+            <input type="password" name="confirm" required
+                style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;">
+            <button type="submit" id="register-submit">Create Account</button>
+        </form>
+    </div>
+</body>
+</html>
