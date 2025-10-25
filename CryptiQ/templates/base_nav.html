@@ -8,95 +8,80 @@
   </button>
 
   <ul class="nav-items" id="nav-menu">
-  <li><a href="{{ url_for('index') }}">Cipher Breaker</a></li>
-  <li><a href="{{ url_for('tools_page') }}">Tools</a></li>
-  <li><a href="{{ url_for('info_page') }}">Info</a></li>
-  <li><a href="{{ url_for('posts_list') }}">Posts</a></li>
+    <li><a href="{{ url_for('index') }}">Cipher Breaker</a></li>
+    <li><a href="{{ url_for('tools_page') }}">Tools</a></li>
+    <li><a href="{{ url_for('info_page') }}">Info</a></li>
+    <li><a href="{{ url_for('posts_list') }}">Posts</a></li>
 
-  {% if user %}
-    <li><a href="{{ url_for('posts_new') }}">New Post</a></li>
-    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-    <li class="nav-username">{{ user['username'] }}</li>
-  {% else %}
-    <li><a href="{{ url_for('login') }}">Login</a></li>
-    <li><a href="{{ url_for('register') }}">Register</a></li>
-  {% endif %}
+    {% if user %}
+      <li><a href="{{ url_for('posts_new') }}">New Post</a></li>
+      <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      <li class="nav-username">{{ user['username'] }}</li>
+    {% else %}
+      <li><a href="{{ url_for('login') }}">Login</a></li>
+      <li><a href="{{ url_for('register') }}">Register</a></li>
+    {% endif %}
 
-  <li>
-    <button id="theme-toggle" aria-label="Toggle theme" title="Toggle theme"
-      style="
-        display:inline-flex; align-items:center; gap:.5rem;
-        padding:8px 12px; border:1px solid var(--line); 
-        background:transparent; color:var(--text);
-        border-radius:8px; cursor:pointer;
-      ">
-      <span id="theme-toggle-icon" aria-hidden="true">🌙</span>
-      <span id="theme-toggle-text">Dark</span>
-    </button>
-  </li>
-</ul>
-
-
+    <li class="nav-theme">
+      <button id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+        <span id="theme-toggle-icon" aria-hidden="true">🌙</span>
+        <span id="theme-toggle-text">Dark</span>
+      </button>
+    </li>
+  </ul>
 </nav>
 
 <script>
-  // Hamburger toggle
-  document.getElementById('hamburger').addEventListener('click', function () {
-    this.classList.toggle('open');
-    document.getElementById('nav-menu').classList.toggle('open');
+  // === Mobile Menu Toggle ===
+  const burger = document.getElementById("hamburger");
+  const menu = document.getElementById("nav-menu");
+  burger.addEventListener("click", () => {
+    burger.classList.toggle("open");
+    menu.classList.toggle("open");
   });
-
-  // Close on outside click
-  document.addEventListener('click', function (e) {
-    const menu = document.getElementById('nav-menu');
-    const burger = document.getElementById('hamburger');
+  document.addEventListener("click", (e) => {
     if (!menu.contains(e.target) && !burger.contains(e.target)) {
-      menu.classList.remove('open');
-      burger.classList.remove('open');
+      menu.classList.remove("open");
+      burger.classList.remove("open");
     }
   });
 
-  // === Theme toggle logic ===
-  (function() {
-    const STORAGE_KEY = 'cryptiq.theme';
+  // === Theme Toggle ===
+  (function () {
+    const STORAGE_KEY = "cryptiq.theme";
     const root = document.documentElement;
-    const btn = document.getElementById('theme-toggle');
-    const icon = document.getElementById('theme-toggle-icon');
-    const label = document.getElementById('theme-toggle-text');
+    const btn = document.getElementById("theme-toggle");
+    const icon = document.getElementById("theme-toggle-icon");
+    const label = document.getElementById("theme-toggle-text");
 
-    function getSystemTheme() {
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    }
-    function getSavedTheme() {
-      try { return localStorage.getItem(STORAGE_KEY) || null; } catch { return null; }
-    }
-    function applyTheme(theme) {
-      if (theme === 'light') root.setAttribute('data-theme', 'light');
-      else root.removeAttribute('data-theme');
-      const isLight = root.getAttribute('data-theme') === 'light';
-      icon.textContent = isLight ? '☀️' : '🌙';
-      label.textContent = isLight ? 'Light' : 'Dark';
+    const getSystem = () =>
+      window.matchMedia("(prefers-color-scheme: light)").matches
+        ? "light"
+        : "dark";
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const theme = saved || getSystem();
+    apply(theme);
+
+    function apply(t) {
+      if (t === "light") root.setAttribute("data-theme", "light");
+      else root.removeAttribute("data-theme");
+      const isLight = root.getAttribute("data-theme") === "light";
+      icon.textContent = isLight ? "☀️" : "🌙";
+      label.textContent = isLight ? "Light" : "Dark";
     }
 
-    const saved = getSavedTheme();
-    const initial = saved || getSystemTheme();
-    applyTheme(initial);
+    btn.addEventListener("click", () => {
+      const current = root.getAttribute("data-theme");
+      const next = current === "light" ? "dark" : "light";
+      apply(next);
+      localStorage.setItem(STORAGE_KEY, next);
+    });
 
-    const mq = window.matchMedia('(prefers-color-scheme: light)');
-    function handleSystemChange(e) {
-      const userSet = getSavedTheme();
-      if (!userSet) applyTheme(e.matches ? 'light' : 'dark');
-    }
-    if (mq.addEventListener) mq.addEventListener('change', handleSystemChange);
-    else if (mq.addListener) mq.addListener(handleSystemChange);
-
-    if (btn) {
-      btn.addEventListener('click', () => {
-        const isLight = root.getAttribute('data-theme') === 'light';
-        const next = isLight ? 'dark' : 'light';
-        applyTheme(next);
-        try { localStorage.setItem(STORAGE_KEY, next); } catch {}
+    window
+      .matchMedia("(prefers-color-scheme: light)")
+      .addEventListener("change", (e) => {
+        if (!localStorage.getItem(STORAGE_KEY))
+          apply(e.matches ? "light" : "dark");
       });
-    }
   })();
 </script>
