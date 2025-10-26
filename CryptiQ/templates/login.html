@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    /* ===== Auth Layout (dark/light aware) ===== */
+    /* ===== Auth Layout ===== */
     .auth-viewport {
       min-height: 100dvh;
       padding-top: 90px;
@@ -60,6 +60,8 @@
       font-size: 1rem;
       line-height: 1.6;
     }
+
+    /* ===== Auth Card ===== */
     .auth-card {
       background: color-mix(in oklab, var(--panel) 86%, transparent);
       border: 1px solid var(--line);
@@ -82,6 +84,7 @@
       color: var(--muted);
       font-size: .96rem;
     }
+
     .auth-form {
       display: grid;
       gap: 12px;
@@ -126,6 +129,7 @@
       transition: background .2s, border-color .2s;
     }
     .toggle-pass:hover { background: var(--panel-2); border-color: var(--accent); }
+
     .auth-button {
       width: 100%;
       padding: 14px 16px;
@@ -145,14 +149,19 @@
       transform: translateY(-1px);
     }
 
-    /* Category-aware flash banners */
+    /* ===== Flash messages ===== */
+    #flash-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
     .auth-flash {
       text-align: center;
       border-radius: 10px;
       padding: 10px 12px;
       font-size: .95rem;
-      margin-bottom: 12px;
-      animation: fadeIn .25s ease;
+      animation: slideIn .25s ease;
     }
     .auth-flash.success {
       color: #00ffb0;
@@ -170,11 +179,13 @@
       background: rgba(98,160,255,0.08);
       border: 1px solid rgba(98,160,255,0.3);
     }
-    @keyframes fadeIn {
+
+    @keyframes slideIn {
       from { opacity: 0; transform: translateY(-6px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* ===== Links ===== */
     .auth-links {
       display: flex; justify-content: space-between; align-items: center;
       font-size: .95rem; margin-top: 2px; color: var(--muted);
@@ -206,6 +217,7 @@
     }
   </style>
 </head>
+
 <body>
   {% include 'base_nav.html' %}
 
@@ -223,12 +235,25 @@
         <h2>Log In</h2>
         <p class="auth-sub">Welcome back to <strong>CryptiQ</strong>.</p>
 
-        {# Category-aware flashes #}
+        <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=True) %}
           {% if messages %}
-            {% for category, msg in messages %}
-              <div class="auth-flash {{ category }}">{{ msg }}</div>
-            {% endfor %}
+            <div id="flash-container">
+              {% for category, msg in messages %}
+                <div class="auth-flash {{ category }}">{{ msg }}</div>
+              {% endfor %}
+            </div>
+            <script>
+              // Auto-fade flash messages
+              setTimeout(() => {
+                document.querySelectorAll('.auth-flash').forEach(flash => {
+                  flash.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                  flash.style.opacity = '0';
+                  flash.style.transform = 'translateY(-8px)';
+                  setTimeout(() => flash.remove(), 600);
+                });
+              }, 4000);
+            </script>
           {% endif %}
         {% endwith %}
 

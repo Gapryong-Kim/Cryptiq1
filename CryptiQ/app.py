@@ -733,24 +733,36 @@ init_weekly_tables()
 migrate_weekly_tables()
 
 
-@app.route("/weekly", methods=["GET"])
+@app.before_request
+def clear_flash_on_login():
+    """
+    Prevent old flash messages (like 'Post created') from stacking
+    when visiting the login page again.
+    """
+    if request.endpoint == "login" and request.method == "GET":
+        session.pop("_flashes", None)
+
+
+@app.route("/weekly")
 def weekly_page():
-    user = current_user()
-    wc = get_current_weekly()
+    user = current_user()  # ✅ Fetch user properly from DB
 
-    solved = False
-    if user and wc:
-        conn = get_db()
-        cur = conn.execute("""
-            SELECT 1 FROM cipher_submissions
-            WHERE user_id=? AND cipher_week=? AND is_correct=1
-            LIMIT 1
-        """, (user["id"], wc["week_number"]))
-        solved = bool(cur.fetchone())
-        conn.close()
+    user_is_admin = is_admin(user)  # ✅ Use your helper function
 
-    return render_template("weekly_cipher.html", user=user, wc=wc, solved=solved)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM weekly_cipher ORDER BY week_number DESC LIMIT 1")
+    wc = cur.fetchone()
+    conn.close()
 
+    return render_template(
+        "weekly_cipher.html",
+        wc=wc,
+        user=user,
+        user_is_admin=user_is_admin
+    )
+
+import re
 
 @app.route("/weekly/submit", methods=["POST"])
 def weekly_submit():
@@ -763,8 +775,15 @@ def weekly_submit():
     user = current_user()
     now = datetime.utcnow()
 
+    # --- Normalize text: ignore spaces, punctuation, case ---
+    def normalize(text):
+        return re.sub(r'[^A-Z0-9]', '', (text or "").upper())
+
+    answer_clean = normalize(answer)
+    solution_clean = normalize(wc["solution"])
+
     # Determine correctness
-    correct = 1 if answer.upper() == (wc["solution"] or "").strip().upper() else 0
+    correct = 1 if answer_clean == solution_clean else 0
     score = 0
 
     if correct:
@@ -778,10 +797,36 @@ def weekly_submit():
         elapsed = (now - posted_time).total_seconds()
         remaining = max(total_window - elapsed, 0)
 
-        # Points: max 100, linearly decreasing over the week
-        score = int((remaining / total_window) * 100)
-        score = max(1, score)  # Minimum 1 point for correct answers
+        # Base score (out of 100, decreasing linearly over the week)
+        base_score = int((remaining / total_window) * 100)
+        base_score = max(1, base_score)
 
+        # Determine rank among correct solvers this week
+        conn = get_db()
+        cur = conn.execute("""
+            SELECT COUNT(*) AS correct_count
+            FROM cipher_submissions
+            WHERE cipher_week=? AND is_correct=1
+        """, (wc["week_number"],))
+        correct_count = cur.fetchone()["correct_count"]
+
+        # Apply bonus
+        if correct_count == 0:
+            bonus = 25  # First solver bonus
+        elif correct_count == 1:
+            bonus = 15  # Second solver
+        elif correct_count == 2:
+            bonus = 10  # Third solver
+        else:
+            bonus = 0
+
+        score = base_score + bonus
+        conn.close()
+    else:
+        conn = get_db()
+        conn.close()
+
+    # Record submission
     conn = get_db()
     conn.execute("""
         INSERT INTO cipher_submissions (user_id, username, cipher_week, answer, is_correct, score, submitted_at)
@@ -799,8 +844,6 @@ def weekly_submit():
     conn.close()
 
     return jsonify({"ok": True, "correct": bool(correct), "score": score})
-
-
 
 @app.route("/admin/weekly", methods=["GET", "POST"])
 def admin_weekly():

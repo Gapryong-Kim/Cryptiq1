@@ -7,13 +7,14 @@
   <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
+
   {% if request.endpoint not in ['login', 'register'] %}
-  {% if user %}
-    <!-- (optional) any logged-in status you want -->
-  {% else %}
-    <!-- (optional) logged-out status you might show elsewhere -->
+    {% if user %}
+      <!-- logged-in status -->
+    {% else %}
+      <!-- logged-out status -->
+    {% endif %}
   {% endif %}
-{% endif %}
 
   <ul class="nav-items" id="nav-menu">
 
@@ -40,7 +41,6 @@
     <li><a href="{{ url_for('posts_list') }}">Posts</a></li>
     <li><a href="{{ url_for('weekly_page') }}">Weekly Cipher</a></li>
     <li><a href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
-
 
     {% if not user %}
       <li><a href="{{ url_for('login') }}">Login</a></li>
@@ -99,10 +99,7 @@
   z-index: 1000;
 }
 
-/* Push content below navbar */
-body {
-  padding-top: 80px;
-}
+body { padding-top: 80px; }
 @media (max-width: 900px) {
   .navbar { height: 60px; }
   body { padding-top: 75px; }
@@ -167,7 +164,6 @@ body {
   justify-content: center;
   cursor: pointer;
   border-radius: 50%;
-  outline: none;
 }
 .avatar {
   width: 34px;
@@ -197,48 +193,101 @@ body {
 }
 
 /* Dropdown menu */
-.profile-dropdown { position: relative; }
+.profile-dropdown {
+  position: relative;
+}
+
+/* === Dropdown Menu Modern Look === */
 .dropdown-menu {
   position: absolute;
-  right: 0; top: 48px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+  right: 0;
+  top: 48px;
+  background: color-mix(in oklab, var(--panel) 90%, transparent);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,255,213,0.05);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   padding: 10px 0;
-  min-width: 180px;
+  min-width: 200px;
   z-index: 1001;
   display: flex;
   flex-direction: column;
   opacity: 0;
-  transform: translateY(-10px) scale(0.95);
+  transform: translateY(-8px) scale(0.96);
   pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity .25s ease, transform .25s ease;
 }
+
 .profile-dropdown.open .dropdown-menu {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: all;
 }
+
+/* Username Header — tighter, elegant */
 .dropdown-username {
   font-weight: 700;
   color: var(--accent);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 6px;
-  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(0,255,213,0.12), rgba(0,255,213,0));
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin: 0;
+  padding: 8px 16px 10px;
+  font-size: 0.95rem;
+  text-align: left;
+  letter-spacing: .02em;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
 }
+
+/* Links */
 .dropdown-menu a {
   color: var(--text);
   text-decoration: none;
-  padding: 10px 12px;
+  padding: 10px 16px;
   font-size: 0.95rem;
-  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
 }
-.dropdown-menu a:hover { background: var(--accent); color: #0f0f0f; }
-.logout-link { color: #ff6b6b !important; font-weight: 600; }
-.logout-link:hover { background: #ff6b6b; color: #0f0f0f !important; }
+.dropdown-menu a:hover {
+  background: var(--accent);
+  color: #0f0f0f;
+  transform: translateX(3px);
+}
 
-/* Hamburger */
+/* Logout — distinct visual cue */
+.logout-link {
+  color: #ff6b6b !important;
+  font-weight: 600;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 6px;
+  padding-top: 10px;
+}
+.logout-link:hover {
+  background: #ff6b6b !important;
+  color: #0f0f0f !important;
+  transform: none;
+}
+
+/* Light mode refinement */
+[data-theme="light"] .dropdown-menu {
+  background: color-mix(in srgb, #ffffff 92%, #00ffd5 4%);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+[data-theme="light"] .dropdown-username {
+  color: #00bfae;
+  background: linear-gradient(90deg, rgba(0,255,213,0.08), transparent);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+[data-theme="light"] .dropdown-menu a:hover {
+  background: #00e6c2;
+  color: #0f0f0f;
+}
+
+/* Hamburger + mobile */
 .hamburger {
   display: none;
   position: absolute;
@@ -265,7 +314,6 @@ body {
 .hamburger.open span:nth-child(2) { opacity: 0; }
 .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Mobile */
 .nav-extra-mobile, .nav-account-mobile { display: none; }
 
 @media (max-width: 900px) {
@@ -362,7 +410,6 @@ body {
     }
   });
 
-  // Account dropdowns (desktop + mobile)
   const dropdowns = document.querySelectorAll(".profile-dropdown");
   dropdowns.forEach(dd => {
     const btn = dd.querySelector(".profile-btn");
