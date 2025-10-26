@@ -93,6 +93,19 @@ def migrate_db():
         cur.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
     conn.commit()
     conn.close()
+def migrate_weekly_tables():
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Add score column if missing
+    cur.execute("PRAGMA table_info(cipher_submissions)")
+    cols = {row["name"] for row in cur.fetchall()}
+    if "score" not in cols:
+        cur.execute("ALTER TABLE cipher_submissions ADD COLUMN score INTEGER DEFAULT 0")
+
+    conn.commit()
+    conn.close()
+
 
 
 def ensure_admin_flag():
@@ -667,6 +680,186 @@ def account():
 
     return render_template("account.html", user=user, user_info=user_info, posts=posts)
 
+
+# ===== Weekly Cipher: DB helpers and routes =====
+def init_weekly_tables():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS weekly_cipher (
+        id INTEGER PRIMARY KEY CHECK (id=1),
+        week_number INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        ciphertext TEXT NOT NULL,
+        solution TEXT NOT NULL,
+        hint TEXT,
+        posted_at TEXT NOT NULL
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cipher_submissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        username TEXT,
+        cipher_week INTEGER,
+        answer TEXT NOT NULL,
+        is_correct INTEGER NOT NULL DEFAULT 0,
+        submitted_at TEXT NOT NULL
+    )
+    """)
+    # Ensure there is at least one row for weekly_cipher (id=1) with a default
+    cur.execute("SELECT 1 FROM weekly_cipher WHERE id=1")
+    if not cur.fetchone():
+        cur.execute("""
+        INSERT INTO weekly_cipher (id, week_number, title, description, ciphertext, solution, hint, posted_at)
+        VALUES (1, 1, 'Week #1 — Welcome Cipher',
+                'Kickoff puzzle. Decrypt and submit the plaintext keyword.',
+                'BJQHTRJ YT YMJ HNUMJW QFG!',  -- HELLO WORLD TEST!
+                'WELCOME TO THE CIPHER LAB',
+                'Think Caesar…', datetime('now'))
+        """)
+    conn.commit()
+    conn.close()
+
+def get_current_weekly():
+    conn = get_db()
+    cur = conn.execute("SELECT * FROM weekly_cipher WHERE id=1 LIMIT 1")
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+init_weekly_tables()
+migrate_weekly_tables()
+
+
+@app.route("/weekly", methods=["GET"])
+def weekly_page():
+    user = current_user()
+    wc = get_current_weekly()
+
+    solved = False
+    if user and wc:
+        conn = get_db()
+        cur = conn.execute("""
+            SELECT 1 FROM cipher_submissions
+            WHERE user_id=? AND cipher_week=? AND is_correct=1
+            LIMIT 1
+        """, (user["id"], wc["week_number"]))
+        solved = bool(cur.fetchone())
+        conn.close()
+
+    return render_template("weekly_cipher.html", user=user, wc=wc, solved=solved)
+
+
+@app.route("/weekly/submit", methods=["POST"])
+def weekly_submit():
+    data = request.get_json(silent=True) or {}
+    answer = (data.get("answer") or "").strip()
+    wc = get_current_weekly()
+    if not wc:
+        return jsonify({"ok": False, "error": "Weekly cipher not found."}), 404
+
+    user = current_user()
+    now = datetime.utcnow()
+
+    # Determine correctness
+    correct = 1 if answer.upper() == (wc["solution"] or "").strip().upper() else 0
+    score = 0
+
+    if correct:
+        # Parse when puzzle was posted
+        try:
+            posted_time = datetime.fromisoformat(wc["posted_at"])
+        except Exception:
+            posted_time = now
+
+        total_window = 7 * 24 * 3600  # 7 days in seconds
+        elapsed = (now - posted_time).total_seconds()
+        remaining = max(total_window - elapsed, 0)
+
+        # Points: max 100, linearly decreasing over the week
+        score = int((remaining / total_window) * 100)
+        score = max(1, score)  # Minimum 1 point for correct answers
+
+    conn = get_db()
+    conn.execute("""
+        INSERT INTO cipher_submissions (user_id, username, cipher_week, answer, is_correct, score, submitted_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        (user["id"] if user else None),
+        (user["username"] if user else None),
+        wc["week_number"],
+        answer,
+        correct,
+        score,
+        now.isoformat()
+    ))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "correct": bool(correct), "score": score})
+
+
+
+@app.route("/admin/weekly", methods=["GET", "POST"])
+def admin_weekly():
+    user = current_user()
+    if not is_admin(user):
+        flash("Admin access required.", "danger")
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
+        week_number = int(request.form.get("week_number") or 1)
+        title = (request.form.get("title") or "").strip() or f"Week #{week_number}"
+        description = (request.form.get("description") or "").strip()
+        ciphertext = (request.form.get("ciphertext") or "").strip()
+        solution = (request.form.get("solution") or "").strip()
+        hint = (request.form.get("hint") or "").strip()
+
+        if not ciphertext or not solution:
+            flash("Ciphertext and solution are required.", "danger")
+            return redirect(url_for("admin_weekly"))
+
+        conn = get_db()
+        # Upsert id=1 row
+        conn.execute("""
+            INSERT INTO weekly_cipher (id, week_number, title, description, ciphertext, solution, hint, posted_at)
+            VALUES (1, ?, ?, ?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(id) DO UPDATE SET
+                week_number=excluded.week_number,
+                title=excluded.title,
+                description=excluded.description,
+                ciphertext=excluded.ciphertext,
+                solution=excluded.solution,
+                hint=excluded.hint,
+                posted_at=excluded.posted_at
+        """, (week_number, title, description, ciphertext, solution, hint))
+        conn.commit()
+        conn.close()
+
+        flash("Weekly cipher updated.", "success")
+        return redirect(url_for("weekly_page"))
+
+    wc = get_current_weekly()
+    return render_template("admin_weekly.html", user=user, wc=wc)
+
+
+@app.route("/leaderboard")
+def leaderboard():
+    user = current_user()
+    conn = get_db()
+    cur = conn.execute("""
+        SELECT username, SUM(score) AS total_score, COUNT(DISTINCT cipher_week) AS weeks_played
+        FROM cipher_submissions
+        WHERE is_correct = 1
+        GROUP BY username
+        ORDER BY total_score DESC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    return render_template("leaderboard.html", user=user, leaderboard=rows)
 
 
 # ------------------- Run -------------------

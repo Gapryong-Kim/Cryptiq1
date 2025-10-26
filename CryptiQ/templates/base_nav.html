@@ -7,6 +7,13 @@
   <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
+  {% if request.endpoint not in ['login', 'register'] %}
+  {% if user %}
+    <!-- (optional) any logged-in status you want -->
+  {% else %}
+    <!-- (optional) logged-out status you might show elsewhere -->
+  {% endif %}
+{% endif %}
 
   <ul class="nav-items" id="nav-menu">
 
@@ -31,6 +38,9 @@
     <li><a href="{{ url_for('tools_page') }}">Tools</a></li>
     <li><a href="{{ url_for('info_page') }}">Info</a></li>
     <li><a href="{{ url_for('posts_list') }}">Posts</a></li>
+    <li><a href="{{ url_for('weekly_page') }}">Weekly Cipher</a></li>
+    <li><a href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
+
 
     {% if not user %}
       <li><a href="{{ url_for('login') }}">Login</a></li>
