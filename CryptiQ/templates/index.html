@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
   <style>
-    /* === COLOR SCHEMES === */
+    /* === DARK THEME DEFAULT === */
     :root {
       --accent: #00ffd5;
       --bg: #0b0b0b;
@@ -17,33 +17,51 @@
       --border: rgba(255,255,255,0.08);
     }
 
-    [data-theme="light"] {
-      --bg: #f8f9fa;
+    /* === LIGHT THEME OVERRIDES (toggle applies to <html>) === */
+    html[data-theme="light"] {
+      --accent: #00b3a0;
+      --bg: #f9f9fb;
       --text: #111;
-      --subtext: #444;
-      --panel: #ffffff;
+      --subtext: #555;
+      --panel: #f3f3f3; /* ✅ Softer grey instead of white */
       --border: rgba(0,0,0,0.08);
     }
 
     /* === BASE LAYOUT === */
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.4s ease, color 0.4s ease;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Hide scrollbar visually on desktop */
+@media (min-width: 900px) {
+  ::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+  }
+  html {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+}
+
 
     main {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: stretch;
     }
 
     /* === HERO === */
@@ -54,11 +72,12 @@
       height: calc(100vh - 68px);
       width: 100vw;
       padding: 0 8%;
-      background: linear-gradient(180deg, #111 0%, #1a1a1a 100%);
+      background: linear-gradient(180deg, var(--bg) 0%, var(--panel) 100%);
       gap: 60px;
       box-sizing: border-box;
       opacity: 0;
       animation: fadeIn 1.2s ease forwards;
+      transition: background 0.4s ease;
     }
 
     .hero-text {
@@ -75,7 +94,7 @@
       margin: 0 0 22px;
       position: relative;
       color: var(--text);
-      transition: color 0.3s ease;
+      transition: color 0.4s ease;
     }
 
     .hero-text h1 span { color: var(--accent); }
@@ -94,6 +113,7 @@
       color: var(--subtext);
       line-height: 1.6;
       margin-bottom: 36px;
+      transition: color 0.4s ease;
     }
 
     .cta {
@@ -134,6 +154,11 @@
       font-family: "Consolas", monospace;
       color: var(--text);
       animation: pulseGlow 5s ease-in-out infinite;
+      transition: background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    html[data-theme="light"] .cipher-box {
+      box-shadow: 0 0 40px rgba(0,179,160,0.1), 0 10px 25px rgba(0,0,0,0.08);
     }
 
     .cipher-header {
@@ -161,7 +186,7 @@
       word-wrap: break-word;
     }
 
-    /* === FOOTER PARA === */
+    /* === FOOTER === */
     .footer-text {
       width: 100%;
       text-align: center;
@@ -172,6 +197,7 @@
       border-top: 1px solid var(--border);
       margin: 0;
       position: relative;
+      transition: background 0.4s ease, color 0.4s ease;
     }
 
     .footer-text::before {
@@ -234,6 +260,7 @@
     @media (max-width: 600px) {
       .hero-text h1 { font-size: 2rem; }
       .cipher-box { max-width: 320px; }
+      .hero-text { padding: 0 10px; }
     }
   </style>
 </head>

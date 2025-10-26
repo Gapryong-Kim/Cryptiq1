@@ -643,6 +643,32 @@ def logout():
     return redirect(url_for("index"))
 
 
+@app.route("/account")
+def account():
+    user = current_user()
+    if not user:
+        flash("Please log in to view your account.", "warning")
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    cur = conn.execute("""
+        SELECT id, title, body, image_filename, created_at
+        FROM posts
+        WHERE user_id = ?
+        ORDER BY datetime(created_at) DESC
+    """, (user["id"],))
+    posts = cur.fetchall()
+    conn.close()
+
+    conn = get_db()
+    cur = conn.execute("SELECT username, email, created_at FROM users WHERE id = ?", (user["id"],))
+    user_info = cur.fetchone()
+    conn.close()
+
+    return render_template("account.html", user=user, user_info=user_info, posts=posts)
+
+
+
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
