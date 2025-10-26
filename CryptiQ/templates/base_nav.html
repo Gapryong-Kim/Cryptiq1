@@ -37,7 +37,7 @@
       <li><a href="{{ url_for('register') }}">Register</a></li>
     {% endif %}
 
-    <!-- Theme toggle at bottom -->
+    <!-- Theme toggle inline -->
     <li class="nav-extra-mobile">
       <button id="theme-toggle-mobile" aria-label="Toggle theme" title="Toggle theme">
         <svg id="theme-icon-mobile" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
@@ -87,6 +87,15 @@
   border-bottom: 1px solid rgba(255,255,255,0.08);
   padding: 0 20px;
   z-index: 1000;
+}
+
+/* Push content below navbar */
+body {
+  padding-top: 80px;
+}
+@media (max-width: 900px) {
+  .navbar { height: 60px; }
+  body { padding-top: 75px; }
 }
 
 /* Logo */
@@ -246,7 +255,7 @@
 .hamburger.open span:nth-child(2) { opacity: 0; }
 .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Mobile layout */
+/* Mobile */
 .nav-extra-mobile, .nav-account-mobile { display: none; }
 
 @media (max-width: 900px) {
@@ -255,7 +264,7 @@
 
   .nav-items {
     position: fixed;
-    top: 68px;
+    top: 60px;
     right: -100%;
     flex-direction: column;
     align-items: flex-start;
@@ -263,19 +272,17 @@
     backdrop-filter: blur(14px);
     border-left: 1px solid rgba(255,255,255,0.06);
     width: 260px;
-    height: calc(100vh - 68px);
+    height: calc(100vh - 60px);
     padding: 20px;
-    gap: 10px;
+    gap: 14px;
     box-shadow: -6px 0 25px rgba(0,0,0,0.4);
     transition: right 0.35s cubic-bezier(0.25, 1, 0.3, 1);
   }
   .nav-items.open { right: 0; }
 
-  .nav-account-mobile { display: block; margin-bottom: 0; }
-  .nav-extra-mobile { display: block; margin-top: auto; }
+  .nav-account-mobile { display: block; margin-bottom: 4px; }
+  .nav-extra-mobile { display: block; }
 
-  /* Compact spacing fix */
-  .nav-account-mobile .profile-btn { margin-bottom: 4px; }
   .mobile-menu {
     position: static;
     display: none;
