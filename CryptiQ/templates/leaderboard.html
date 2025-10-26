@@ -3,59 +3,200 @@
 <head>
   <meta charset="utf-8" />
   <title>Leaderboard — The Cipher Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    .leaderboard-wrap {
-      width: min(800px, 94%);
-      margin: 110px auto 80px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: 0 8px 26px rgba(0,0,0,.28);
-      padding: 20px 24px;
+    :root {
+      --accent-glow: 0 0 10px rgba(0,255,213,0.3);
     }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .leaderboard-wrap {
+      width: min(900px, 94%);
+      margin: 110px auto 80px;
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 8px 26px rgba(0,0,0,.3);
+      padding: 26px 24px 34px;
+      backdrop-filter: blur(10px);
+      animation: fadeIn .4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     h2 {
       color: var(--accent);
-      margin-bottom: 14px;
+      font-size: clamp(1.6rem, 4vw, 2rem);
       font-weight: 800;
+      text-align: center;
+      margin: 0 0 24px 0;
+      text-shadow: var(--accent-glow);
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
+      background: color-mix(in srgb, var(--panel-2) 92%, transparent);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: inset 0 0 8px rgba(0,255,213,0.05);
     }
+
+    thead {
+      background: linear-gradient(90deg, rgba(0,255,213,0.08), rgba(0,255,213,0.02));
+    }
+
     th, td {
       text-align: left;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--line);
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.97rem;
     }
+
     th {
       color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
       font-size: 0.9rem;
     }
-    tr:nth-child(even) {
-      background: var(--panel-2);
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(255,255,255,0.02);
+    }
+
+    tbody tr:hover {
+      background: rgba(0,255,213,0.07);
+      transition: background 0.25s ease;
+    }
+
+    td:first-child {
+      font-weight: 700;
+      text-align: center;
+      width: 60px;
+      font-size: 1.05rem;
+    }
+
+    .rank-1 td:first-child {
+      color: #ffd700;
+      text-shadow: 0 0 8px rgba(255,215,0,0.5);
+    }
+
+    .rank-2 td:first-child {
+      color: #c0c0c0;
+      text-shadow: 0 0 8px rgba(192,192,192,0.5);
+    }
+
+    .rank-3 td:first-child {
+      color: #cd7f32;
+      text-shadow: 0 0 8px rgba(205,127,50,0.5);
+    }
+
+    .no-submissions {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-top: 20px;
+      font-style: italic;
+    }
+
+    /* --- Mobile Adaptation --- */
+    @media (max-width: 700px) {
+      .leaderboard-wrap {
+        padding: 20px 14px 26px;
+        margin: 90px auto 60px;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        background: color-mix(in srgb, var(--panel-2) 94%, transparent);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        padding: 12px 14px;
+      }
+
+      td {
+        border: none;
+        padding: 6px 0;
+        font-size: 0.95rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--accent);
+        flex: 1;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+      }
+
+      td:last-child {
+        border-bottom: none;
+      }
+
+      .rank-1 td:first-child,
+      .rank-2 td:first-child,
+      .rank-3 td:first-child {
+        text-align: left;
+      }
     }
   </style>
 </head>
+
 <body>
   {% include 'base_nav.html' %}
+
   <div class="leaderboard-wrap">
     <h2>Leaderboard</h2>
+
     {% if leaderboard|length == 0 %}
-      <p style="color:var(--muted);text-align:center;">No submissions yet!</p>
+      <p class="no-submissions">No submissions yet — be the first to claim the top spot!</p>
     {% else %}
-    <table>
-      <tr><th>Rank</th><th>Username</th><th>Weeks Played</th><th>Total Score</th></tr>
-      {% for row in leaderboard %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ row['username'] }}</td>
-        <td>{{ row['weeks_played'] }}</td>
-        <td>{{ row['total_score'] }}</td>
-      </tr>
-      {% endfor %}
-    </table>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Username</th>
+            <th>Weeks Played</th>
+            <th>Total Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in leaderboard %}
+          <tr class="{% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}">
+            <td data-label="Rank">#{{ loop.index }}</td>
+            <td data-label="Username">{{ row['username'] }}</td>
+            <td data-label="Weeks Played">{{ row['weeks_played'] }}</td>
+            <td data-label="Total Score">{{ row['total_score'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     {% endif %}
   </div>
 </body>
