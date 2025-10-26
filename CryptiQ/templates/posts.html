@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CryptiQ — Community Posts</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
@@ -10,8 +11,10 @@
       background: var(--bg);
       color: var(--text);
       font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+      margin: 0;
     }
 
+    /* === Container === */
     .posts-container {
       width: min(960px, 94%);
       margin: 110px auto 80px;
@@ -26,14 +29,14 @@
       margin-bottom: 12px;
     }
     .posts-header h2 {
-      font-size: 2rem;
+      font-size: clamp(1.6rem, 4vw, 2rem);
       font-weight: 800;
       color: var(--accent);
       margin-bottom: 6px;
     }
     .posts-header p {
       color: var(--muted);
-      font-size: 1rem;
+      font-size: clamp(0.9rem, 2vw, 1rem);
     }
 
     /* === Post Card === */
@@ -46,6 +49,7 @@
       box-shadow: 0 6px 20px rgba(0,0,0,.22);
       backdrop-filter: blur(8px);
       transition: transform .16s ease, box-shadow .2s ease;
+      word-break: break-word;
     }
     .post-card:hover {
       transform: translateY(-2px);
@@ -56,13 +60,13 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      flex-wrap: nowrap;
-      gap: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
       margin-bottom: 6px;
     }
 
     .post-title {
-      font-size: 1.25rem;
+      font-size: clamp(1.1rem, 3vw, 1.25rem);
       font-weight: 700;
       color: var(--text);
     }
@@ -76,7 +80,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-left: auto;
+      flex-shrink: 0;
     }
     .post-meta {
       font-size: .85rem;
@@ -84,7 +88,7 @@
       white-space: nowrap;
     }
 
-    /* Kebab menu (minimal) */
+    /* Kebab menu */
     .post-menu { position: relative; }
     .kebab-btn {
       background: transparent;
@@ -126,6 +130,7 @@
       font: inherit;
       cursor: pointer;
       text-decoration: none;
+      transition: background .15s;
     }
     .menu a:hover,
     .menu button:hover {
@@ -152,10 +157,16 @@
       border: 1px solid var(--line);
       border-radius: 10px;
       overflow: hidden;
-      display: none;
-      transition: all 0.2s ease;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: max-height .4s ease, opacity .35s ease, transform .35s ease;
     }
-    .comments.open { display: block; }
+    .comments.open {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 1000px;
+    }
 
     .comments-header {
       display: flex;
@@ -169,6 +180,7 @@
     .comment-list { list-style: none; margin: 0; padding: 0; }
     .comment {
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       padding: 10px 14px;
       border-bottom: 1px solid var(--line);
@@ -188,10 +200,10 @@
       color: var(--accent);
     }
     .comment-body {
-      flex: 1;
+      flex: 1 1 100%;
       color: var(--text);
       line-height: 1.5;
-      white-space: pre-wrap;
+      word-break: break-word;
     }
     .comment-actions {
       display: flex;
@@ -206,7 +218,7 @@
       font-size: .9rem;
       padding: 4px 6px;
       border-radius: 6px;
-      transition: background .15s ease, color .15s ease;
+      transition: background .15s ease;
     }
     .comment-delete:hover { background: rgba(255,107,107,0.12); }
 
@@ -217,6 +229,7 @@
       padding: 10px 14px;
       border-bottom: 1px solid var(--line);
       background: var(--panel);
+      flex-wrap: wrap;
     }
     .comment-input {
       flex: 1;
@@ -237,8 +250,9 @@
       border-radius: 8px;
       padding: 10px 16px;
       cursor: pointer;
-      transition: transform .08s, box-shadow .15s;
+      transition: transform .08s;
     }
+    .comment-submit:hover { transform: translateY(-1px); }
 
     .comments-toggle {
       margin-top: 12px;
@@ -271,31 +285,21 @@
       cursor: pointer;
       z-index: 2500;
       box-shadow: 0 6px 14px rgba(0,0,0,0.25);
-      transition: transform .12s ease, box-shadow .15s ease, background .15s ease;
+      transition: transform .12s ease, box-shadow .15s ease;
     }
-    .fab span {
-      font-size: 1.8rem;
-      font-weight: 500;
-      line-height: 1;
-      position: relative;
-      top: -1px;
-    }
-    .fab:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-    }
+    .fab span { font-size: 1.8rem; font-weight: 500; }
+    .fab:hover { transform: translateY(-2px); }
 
-    /* Mobile */
-    @media (max-width: 600px) {
-      .posts-container {
-        margin: 90px auto 60px;
-        gap: 22px;
-      }
+    /* === Mobile Enhancements === */
+    @media (max-width: 700px) {
+      .posts-container { margin: 85px auto 60px; gap: 22px; }
       .post-card { padding: 16px 14px; border-radius: 12px; }
+      .post-top { flex-direction: column; align-items: flex-start; gap: 6px; }
       .post-title { font-size: 1.1rem; }
       .post-meta { font-size: .8rem; }
+      .comment-add { flex-direction: column; align-items: stretch; }
+      .comment-submit { align-self: flex-end; width: 100%; }
       .fab { bottom: 20px; right: 20px; width: 48px; height: 48px; }
-      .fab span { font-size: 1.6rem; }
     }
   </style>
 </head>
@@ -339,9 +343,8 @@
       </div>
 
       {% if p['image_filename'] %}
-      <div class="post-image">
-        <img src="{{ url_for('uploaded_file', filename=p['image_filename']) }}" alt="Post image">
-      </div>
+      <img src="{{ url_for('uploaded_file', filename=p['image_filename']) }}" alt="Post image"
+           style="width:100%;border-radius:10px;margin-top:10px;">
       {% endif %}
 
       <div class="post-body">{{ p['body'] }}</div>
@@ -369,17 +372,16 @@
     </article>
     {% endfor %}
 
-    <a
-      href="{% if user %}{{ url_for('posts_new') }}{% else %}{{ url_for('login') }}{% endif %}"
-      class="fab"
-      title="{% if user %}Create a new post{% else %}Log in to post{% endif %}"
-      aria-label="{% if user %}Create a new post{% else %}Log in to post{% endif %}"
-    ><span>＋</span></a>
+    <a href="{% if user %}{{ url_for('posts_new') }}{% else %}{{ url_for('login') }}{% endif %}"
+       class="fab" title="{% if user %}Create a new post{% else %}Log in to post{% endif %}"
+       aria-label="{% if user %}Create a new post{% else %}Log in to post{% endif %}">
+      <span>＋</span>
+    </a>
   </main>
 
   <script>
-    // ---------- KEBAB MENU ----------
-    document.addEventListener('click', (e) => {
+    // --- Kebab menu ---
+    document.addEventListener('click', e => {
       const btn = e.target.closest('.kebab-btn');
       const allMenus = document.querySelectorAll('.menu');
       if (btn) {
@@ -387,12 +389,10 @@
         const isOpen = menu.classList.contains('open');
         allMenus.forEach(m => m.classList.remove('open'));
         if (!isOpen) menu.classList.add('open');
-      } else {
-        allMenus.forEach(m => m.classList.remove('open'));
-      }
+      } else allMenus.forEach(m => m.classList.remove('open'));
     });
 
-    // ---------- COMMENTS TOGGLE ----------
+    // --- Comments toggle ---
     document.querySelectorAll('.comments-toggle').forEach(btn => {
       btn.addEventListener('click', async () => {
         const postId = btn.closest('.post-card').dataset.postId;
@@ -411,7 +411,6 @@
       });
     });
 
-    // ---------- LOAD COMMENTS (includes delete button when permitted) ----------
     async function loadComments(postId) {
       const list = document.getElementById(`comment-list-${postId}`);
       const count = document.getElementById(`comments-count-${postId}`);
@@ -428,7 +427,6 @@
       }
     }
 
-    // ---------- RENDER SINGLE COMMENT ----------
     function renderComment(c) {
       const li = document.createElement('li');
       li.className = 'comment';
@@ -438,57 +436,47 @@
         <div class="comment-body">${escapeHtml(c.body)}</div>
         <div class="comment-actions">
           ${c.can_delete ? `<button class="comment-delete" data-id="${c.id}" title="Delete">Delete</button>` : ''}
-        </div>
-      `;
+        </div>`;
       return li;
     }
 
-    // ---------- ESCAPE (simple XSS guard for body text already server-cleaned) ----------
     function escapeHtml(str) {
-      return (str || '').replace(/[&<>"']/g, s => (
-        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]
-      ));
+      return (str || '').replace(/[&<>"']/g, s =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])
+      );
     }
 
-    // ---------- ADD COMMENT ----------
     document.querySelectorAll('.comment-submit').forEach(btn => {
       btn.addEventListener('click', async () => {
         const postId = btn.dataset.postId;
         const input = document.getElementById(`comment-input-${postId}`);
         const body = (input.value || '').trim();
         if (!body) return;
-        btn.disabled = true; const oldText = btn.textContent; btn.textContent = 'Posting…';
+        btn.disabled = true; const old = btn.textContent; btn.textContent = 'Posting…';
         try {
           const res = await fetch('/comments/add', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ post_id: Number(postId), body })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({post_id: Number(postId), body})
           });
           const data = await res.json();
           if (data.ok && data.comment) {
             const list = document.getElementById(`comment-list-${postId}`);
             list.prepend(renderComment(data.comment));
             input.value = '';
-            // bump count
             const countEl = document.getElementById(`comments-count-${postId}`);
             const m = /(\d+)/.exec(countEl.textContent);
             if (m) {
               const n = Number(m[1]) + 1;
               countEl.textContent = `${n} comment${n !== 1 ? 's' : ''}`;
             }
-          } else {
-            alert(data.error || 'Failed to comment.');
-          }
-        } catch {
-          alert('Failed to comment.');
-        } finally {
-          btn.disabled = false; btn.textContent = oldText;
-        }
+          } else alert(data.error || 'Failed to comment.');
+        } catch { alert('Failed to comment.'); }
+        finally { btn.disabled = false; btn.textContent = old; }
       });
     });
 
-    // ---------- DELETE COMMENT (event delegation) ----------
-    document.addEventListener('click', async (e) => {
+    document.addEventListener('click', async e => {
       const delBtn = e.target.closest('.comment-delete');
       if (!delBtn) return;
       const commentId = delBtn.dataset.id;
@@ -496,15 +484,12 @@
       const article = delBtn.closest('.post-card');
       const postId = article?.dataset.postId;
       if (!commentId || !li || !postId) return;
-
-      delBtn.disabled = true;
-      const old = delBtn.textContent; delBtn.textContent = 'Deleting…';
+      delBtn.disabled = true; const old = delBtn.textContent; delBtn.textContent = 'Deleting…';
       try {
-        const res = await fetch(`/comments/${commentId}/delete`, { method: 'POST' });
+        const res = await fetch(`/comments/${commentId}/delete`, {method: 'POST'});
         const data = await res.json();
         if (data.ok) {
           li.remove();
-          // decrement count
           const countEl = document.getElementById(`comments-count-${postId}`);
           const m = /(\d+)/.exec(countEl.textContent);
           if (m) {
