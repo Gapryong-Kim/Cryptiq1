@@ -19,6 +19,8 @@ from cipher_tools.amsco import amsco_break
 from cipher_tools.railfence import railfence_break
 from cipher_tools.polybius_square import *
 from utility.unique import unique
+from flask_mail import Mail, Message
+
 
 # ----- Configuration -----
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,6 +33,19 @@ ADMIN_EMAIL = "jimcalstrom@gmail.com"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
+
+
+# ---- Mail configuration ----
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = "thecipherlab@gmail.com"   # your sender email
+app.config["MAIL_PASSWORD"] = "xryonkhnboapnuwt"      # 16-char App Password
+app.config["MAIL_DEFAULT_SENDER"] = ("The Cipher Lab Support", "thecipherlab@gmail.com")
+
+mail = Mail(app)
+
+
 app.secret_key = os.environ.get("CRYPTIQ_SECRET") or "dev-secret-key"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6 MB upload limit
@@ -647,6 +662,86 @@ def login():
         return redirect(url_for("posts_list"))
 
     return render_template("login.html", user=current_user())
+
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail, Message
+
+# Token generator for password resets
+serializer = URLSafeTimedSerializer(app.secret_key)
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        if not email:
+            flash("Please enter your email address.", "danger")
+            return render_template("forgot_password.html", user=current_user())
+
+        conn = get_db()
+        cur = conn.execute("SELECT id, email FROM users WHERE lower(email)=?", (email,))
+        user = cur.fetchone()
+        conn.close()
+
+        if not user:
+            flash("No account found with that email.", "danger")
+            return render_template("forgot_password.html", user=current_user())
+
+        # Generate token (valid 1 hour)
+        token = serializer.dumps(email, salt="password-reset")
+        reset_link = url_for("reset_password", token=token, _external=True)
+
+        # --- Send Email ---
+        msg = Message(
+            subject="CryptiQ Password Reset",
+            recipients=[email],
+            html=f"""
+            <h2 style="color:#00ffd5;font-weight:700;">Password Reset Requested</h2>
+            <p>Hello,</p>
+            <p>We received a request to reset your password for your CryptiQ account.</p>
+            <p>Click the link below to reset it:</p>
+            <p><a href="{reset_link}" style="color:#00ffd5;">Reset your password</a></p>
+            <p>This link will expire in 1 hour.</p>
+            <br><p style="color:#888;">– The CryptiQ Team</p>
+            """
+        )
+        try:
+            mail.send(msg)
+            flash("✅ Password reset email sent! Check your inbox for instructions.", "success")
+        except Exception as e:
+            flash("⚠️ Error sending email. Please try again later.", "danger")
+            print("MAIL ERROR:", e)
+
+        # Instead of redirecting — re-render same page with message
+        return render_template("forgot_password.html", user=current_user())
+
+    return render_template("forgot_password.html", user=current_user())
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt="password-reset", max_age=3600)
+    except Exception:
+        flash("Invalid or expired reset link.", "danger")
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+        new_pass = request.form.get("password", "")
+        confirm = request.form.get("confirm", "")
+        if new_pass != confirm:
+            flash("Passwords do not match.", "danger")
+            return redirect(url_for("reset_password", token=token))
+
+        hashed = generate_password_hash(new_pass)
+        conn = get_db()
+        conn.execute("UPDATE users SET password_hash=? WHERE lower(email)=?", (hashed, email))
+        conn.commit()
+        conn.close()
+
+        flash("Password updated successfully! You can now log in.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html", email=email)
 
 
 @app.route("/logout")
