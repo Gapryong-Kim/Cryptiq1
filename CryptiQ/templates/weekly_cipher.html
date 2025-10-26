@@ -3,30 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <title>Weekly Cipher — The Cipher Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    .weekly-wrap{
-      width:min(980px,94%);
-      margin:110px auto 80px;
-      display:flex;flex-direction:column;gap:18px;
+    .weekly-wrap {
+      width: min(980px, 94%);
+      margin: 110px auto 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
-    .weekly-header{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:18px 20px;
-      box-shadow:0 8px 26px rgba(0,0,0,.28);
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      flex-wrap:wrap;
-      gap:10px;
+
+    .weekly-header {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.28);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    .weekly-title{font-size:1.65rem;font-weight:800;color:var(--accent);margin:0 0 6px;}
-    .weekly-meta{color:var(--muted);font-size:.95rem;}
+
+    .weekly-title {
+      font-size: clamp(1.35rem, 2.6vw, 1.65rem);
+      font-weight: 800;
+      color: var(--accent);
+      margin: 0 0 6px;
+      word-break: break-word;
+    }
+
+    .weekly-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
 
     /* --- Admin menu --- */
-    .admin-menu { position: relative; }
+    .admin-menu {
+      position: relative;
+      flex-shrink: 0;
+    }
     .kebab-btn {
       background: transparent;
       border: none;
@@ -35,9 +54,12 @@
       cursor: pointer;
       padding: 6px;
       border-radius: 8px;
-      transition: color .2s ease, background .2s ease;
+      transition: color 0.2s ease, background 0.2s ease;
     }
-    .kebab-btn:hover { color: var(--accent); background: rgba(0,255,213,0.08); }
+    .kebab-btn:hover {
+      color: var(--accent);
+      background: rgba(0, 255, 213, 0.08);
+    }
     .menu {
       position: absolute;
       top: 32px;
@@ -46,12 +68,14 @@
       background: var(--panel-2);
       border: 1px solid var(--line);
       border-radius: 10px;
-      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
       padding: 6px;
       display: none;
       z-index: 25;
     }
-    .menu.open { display: block; }
+    .menu.open {
+      display: block;
+    }
     .menu a {
       display: block;
       width: 100%;
@@ -71,65 +95,163 @@
       color: #0f0f0f;
     }
 
-    .weekly-body{
-      background:var(--panel-2);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:18px 20px;
-      display:grid;grid-template-columns:1.2fr .9fr;gap:18px;
-    }
-    .cipher-block{
-      background:var(--input-bg);
-      border:1px solid var(--input-border);
-      border-radius:10px;padding:14px 16px;
-    }
-    .cipher-label{color:var(--accent);font-weight:700;margin-bottom:6px;}
-    .ciphertext{
-      white-space:pre-wrap;word-wrap:break-word;color:var(--text);
-      font-family:'Fira Code','JetBrains Mono',monospace;
+    .weekly-body {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 18px;
     }
 
-    .desc{color:var(--text-dim);line-height:1.55;margin-top:10px;}
+    .cipher-block {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      word-break: break-word;
+    }
 
-    .hint-wrap{margin-top:10px;}
-    .hint-toggle{
-      background:transparent;border:1px solid var(--accent);color:var(--accent);
-      padding:8px 12px;border-radius:8px;font-weight:600;cursor:pointer;
+    .cipher-label {
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 6px;
     }
-    .hint-toggle:hover{background:var(--accent);color:#0f0f0f;}
-    .hint-box{
-      margin-top:8px;display:none;background:var(--input-bg);
-      border:1px solid var(--input-border);border-radius:8px;padding:10px 12px;color:var(--text);
-    }
-    .hint-box.open{display:block;}
 
-    .submit-card{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:12px;padding:18px;
-      box-shadow:0 8px 26px rgba(0,0,0,.22);
-      align-self:start;
+    .ciphertext {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: var(--text);
+      font-family: 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
     }
-    .submit-card h3{margin:0 0 8px;color:var(--text);}
-    .answer-input{
-      width:100%;padding:12px 14px;border-radius:8px;
-      background:var(--input-bg);border:1px solid var(--input-border);
-      color:var(--text);font-size:1rem;
-    }
-    .submit-btn{
-      margin-top:10px;background:var(--accent);color:#0f0f0f;
-      border:none;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;
-    }
-    .submit-btn:hover{filter:brightness(1.05);}
-    .feedback{margin-top:10px;font-weight:700;}
 
-    /* Mobile */
-    @media (max-width: 800px){
-      .weekly-wrap{margin:94px auto 60px;}
-      .weekly-body{grid-template-columns:1fr;gap:14px;}
+    .desc {
+      color: var(--text-dim);
+      line-height: 1.55;
+      margin-top: 10px;
+    }
+
+    .hint-wrap {
+      margin-top: 10px;
+    }
+
+    .hint-toggle {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .hint-toggle:hover {
+      background: var(--accent);
+      color: #0f0f0f;
+    }
+
+    .hint-box {
+      margin-top: 8px;
+      display: none;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+    }
+
+    .hint-box.open {
+      display: block;
+    }
+
+    .submit-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.22);
+      align-self: start;
+    }
+
+    .submit-card h3 {
+      margin: 0 0 8px;
+      color: var(--text);
+    }
+
+    .answer-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .submit-btn {
+      margin-top: 10px;
+      background: var(--accent);
+      color: #0f0f0f;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .submit-btn:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .feedback {
+      margin-top: 10px;
+      font-weight: 700;
+    }
+
+    /* ✅ Responsive mobile design */
+    @media (max-width: 860px) {
+      .weekly-wrap {
+        margin: 90px auto 60px;
+        padding: 0 6px;
+      }
+      .weekly-body {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+      }
+      .weekly-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .weekly-title {
+        font-size: 1.4rem;
+      }
+      .weekly-meta {
+        font-size: 0.85rem;
+      }
+      .submit-card {
+        width: 100%;
+        padding: 16px;
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+    .shake {
+      animation: shake 0.3s ease;
     }
   </style>
 </head>
+
 <body>
   {% include 'base_nav.html' %}
 
@@ -172,19 +294,18 @@
       </div>
 
       <div class="submit-card">
-  <h3>Submit Your Answer</h3>
-  {% if solved %}
-    <p style="color:#2ee6a6;font-weight:700;">✅ You’ve already solved this week’s cipher — great job!</p>
-  {% elif not user %}
-    <p style="color:var(--muted);margin-top:0;">Log in to submit an answer.</p>
-  {% else %}
-    <p style="color:var(--muted);margin-top:0;">Enter the plaintext, keyword, or final answer — per the puzzle instructions.</p>
-    <input id="answer" class="answer-input" type="text" placeholder="Your answer…" />
-    <button id="submit" class="submit-btn">Submit</button>
-    <div id="feedback" class="feedback" aria-live="polite"></div>
-  {% endif %}
-</div>
-
+        <h3>Submit Your Answer</h3>
+        {% if solved %}
+          <p style="color:#2ee6a6;font-weight:700;">✅ You’ve already solved this week’s cipher — great job!</p>
+        {% elif not user %}
+          <p style="color:var(--muted);margin-top:0;">Log in to submit an answer.</p>
+        {% else %}
+          <p style="color:var(--muted);margin-top:0;">Enter the plaintext, keyword, or final answer — per the puzzle instructions.</p>
+          <input id="answer" class="answer-input" type="text" placeholder="Your answer…" />
+          <button id="submit" class="submit-btn">Submit</button>
+          <div id="feedback" class="feedback" aria-live="polite"></div>
+        {% endif %}
+      </div>
     </section>
   </main>
 
@@ -214,12 +335,13 @@
       }
     });
 
-    // Submission
+    // Submission logic
     const submitBtn = document.getElementById('submit');
     const answerEl = document.getElementById('answer');
     const feedback = document.getElementById('feedback');
 
-    submitBtn.addEventListener('click', async () => {
+    if (submitBtn) {
+      submitBtn.addEventListener('click', async () => {
         const answer = (answerEl.value || '').trim();
         if (!answer) return;
         submitBtn.disabled = true;
@@ -227,14 +349,14 @@
         feedback.textContent = '';
 
         try {
-            const res = await fetch('{{ url_for("weekly_submit") }}', {
+          const res = await fetch('{{ url_for("weekly_submit") }}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ answer })
-            });
-            const data = await res.json();
+          });
+          const data = await res.json();
 
-            if (!data.ok) {
+          if (!data.ok) {
             feedback.style.color = '#ff4e4e';
             feedback.textContent = data.error || '❌ Incorrect. Try again!';
             submitBtn.disabled = false;
@@ -242,42 +364,40 @@
             answerEl.classList.add('shake');
             setTimeout(() => answerEl.classList.remove('shake'), 400);
             return;
-            }
+          }
 
-            if (data.correct) {
+          if (data.correct) {
             feedback.style.color = '#2ee6a6';
             feedback.textContent = `✅ Correct — nice work! You earned ${data.score || 0} points.`;
 
-            // Disable future submissions immediately
             answerEl.disabled = true;
             submitBtn.disabled = true;
             submitBtn.textContent = 'Solved!';
 
-            // Replace the submit card message (so it's identical to post-refresh)
             const card = document.querySelector('.submit-card');
             if (card) {
-                card.innerHTML = `
+              card.innerHTML = `
                 <h3>Submit Your Answer</h3>
                 <p style="color:#2ee6a6;font-weight:700;">✅ You’ve already solved this week’s cipher — great job!</p>
                 <input class="answer-input" type="text" placeholder="Your answer…" disabled />
                 <button class="submit-btn" disabled>Solved!</button>
                 <div class="feedback" style="color:#2ee6a6;">Solved successfully!</div>
-                `;
+              `;
             }
-            }
+          }
 
         } catch (e) {
-            feedback.style.color = '#ff9f9f';
-            feedback.textContent = 'Error submitting your answer.';
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit';
+          feedback.style.color = '#ff9f9f';
+          feedback.textContent = 'Error submitting your answer.';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit';
         }
-        });
+      });
 
-
-    answerEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') submitBtn.click();
-    });
+      answerEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitBtn.click();
+      });
+    }
   })();
   </script>
 </body>
