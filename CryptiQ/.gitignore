@@ -1,0 +1,5 @@
+.env
+cryptiq.db
+__pycache__/
+instance/
+*.pyc
