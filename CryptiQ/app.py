@@ -400,6 +400,7 @@ def info_page():
 app.add_url_rule("/info", endpoint="info", view_func=info_page)
 
 # ------------------- Posts -------------------
+# ------------------- Posts -------------------
 @app.route("/posts", methods=["GET"])
 def posts_list():
     user = current_user()
@@ -409,20 +410,26 @@ def posts_list():
 
     conn = get_db()
     cur = conn.execute("""
-        SELECT posts.id,
-               posts.user_id AS owner_id,
-               posts.title,
-               posts.body,
-               posts.image_filename,
-               posts.created_at,
-               users.username
+        SELECT 
+            posts.id,
+            posts.user_id AS owner_id,
+            posts.title,
+            posts.body,
+            posts.image_filename,
+            posts.created_at,
+            posts.pinned,
+            users.username,
+            users.email,
+            users.is_admin
         FROM posts
         JOIN users ON posts.user_id = users.id
-        ORDER BY posts.created_at DESC
+        ORDER BY posts.pinned DESC, datetime(posts.created_at) DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset))
+
     posts = cur.fetchall()
 
+    # Total post count for pagination
     cur = conn.execute("SELECT COUNT(*) AS total FROM posts")
     total_posts = cur.fetchone()["total"]
     conn.close()
@@ -452,6 +459,7 @@ def posts_new():
         body = request.form.get("body", "").strip()
         image = request.files.get("image")
         image_filename = None
+        pinned = 1 if (request.form.get("pinned") and is_admin(user)) else 0  # ✅ NEW
 
         if not title or not body:
             flash("Title and body are required.", "error")
@@ -467,25 +475,20 @@ def posts_new():
 
         conn = get_db()
         conn.execute(
-            "INSERT INTO posts (user_id, title, body, image_filename, created_at) VALUES (?, ?, ?, ?, ?)",
-            (user["id"], title, body, image_filename, datetime.utcnow().isoformat()),
+            "INSERT INTO posts (user_id, title, body, image_filename, pinned, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (user["id"], title, body, image_filename, pinned, datetime.utcnow().isoformat())
         )
         conn.commit()
         conn.close()
+
         flash("Post created successfully.", "success")
         return redirect(url_for("posts_list"))
 
-    return render_template("new_post.html", user=user)
+    return render_template("new_post.html", user=user, user_is_admin=is_admin(user))
 
 # Preserve your alias endpoint (as in your original file)
 app.add_url_rule("/posts/new", endpoint="posts_new", view_func=posts_new)
 
-@app.route("/posts/<int:post_id>", methods=["GET"], endpoint="post_detail")
-def post_detail(post_id):
-    post = fetch_post(post_id)
-    if not post:
-        abort(404)
-    return render_template("post_detail.html", post=post, user=current_user())
 
 @app.route("/posts/<int:post_id>/edit", methods=["GET", "POST"])
 def posts_edit(post_id):
@@ -506,6 +509,7 @@ def posts_edit(post_id):
         body = request.form.get("body", "").strip()
         delete_image = request.form.get("delete_image") == "true"
         new_image = request.files.get("image")
+        pinned = 1 if (request.form.get("pinned") and is_admin(user)) else 0  # ✅ NEW
 
         image_filename = post["image_filename"]
 
@@ -529,11 +533,12 @@ def posts_edit(post_id):
 
         conn = get_db()
         conn.execute(
-            "UPDATE posts SET title=?, body=?, image_filename=? WHERE id=?",
-            (title, body, image_filename, post_id),
+            "UPDATE posts SET title=?, body=?, image_filename=?, pinned=? WHERE id=?",
+            (title, body, image_filename, pinned, post_id)
         )
         conn.commit()
         conn.close()
+
         flash("Post updated successfully.", "success")
         return redirect(url_for("posts_list"))
 
@@ -563,6 +568,29 @@ def posts_delete(post_id):
     conn.close()
     flash("Post deleted.", "info")
     return redirect(url_for("posts_list"))
+
+@app.route("/posts/<int:post_id>/pin", methods=["POST"])
+def posts_toggle_pin(post_id):
+    user = current_user()
+    if not is_admin(user):
+        return jsonify({"ok": False, "error": "Unauthorized"}), 403
+
+    conn = get_db()
+    cur = conn.execute("SELECT pinned FROM posts WHERE id = ?", (post_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "error": "Post not found"}), 404
+
+    new_value = 0 if row["pinned"] else 1
+    conn.execute("UPDATE posts SET pinned = ? WHERE id = ?", (new_value, post_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "pinned": new_value})
+
+
+
 
 # ------------------- Comments (AJAX) -------------------
 @app.route("/comments/list", methods=["GET"])
@@ -865,6 +893,30 @@ def account():
 
     conn.close()
     return render_template("account.html", user=user, user_info=user_info, posts=posts, leaderboard_data=leaderboard_data)
+
+
+@app.route("/delete_account")
+def delete_account():
+    user = current_user()
+    if not user:
+        flash("You must be logged in to delete your account.", "warning")
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    conn.execute("DELETE FROM users WHERE id = ?", (user["id"],))
+    conn.execute("DELETE FROM posts WHERE user_id = ?", (user["id"],))
+    conn.execute("DELETE FROM cipher_submissions WHERE username = ?", (user["username"],))
+    conn.commit()
+    conn.close()
+
+    session.clear()
+    flash("Your account and all associated data have been permanently deleted.", "success")
+    return redirect(url_for("register"))
+
+
+
+
+
 
 @app.route("/api/leaderboard_data")
 def leaderboard_data_api():
@@ -1266,14 +1318,19 @@ def perform_cipher(cipher, text, key, mode="encode"):
             rails = to_int(3)
             return func(text, rails)
 
-        # Keyed ciphers that truly need a key
+                # Keyed ciphers that truly need a key
         if cipher in ("vigenere", "columnar", "permutation", "amsco"):
             if not key:
                 return "⚠️ Key required for this cipher."
             return func(text, key)
 
+        # Polybius now supports custom grid key
+        if cipher == "polybius":
+            return func(text, key)
+
         # Keyless ciphers
         return func(text)
+
 
     except Exception as e:
         return f"⚠️ Error: {str(e)}"

@@ -204,42 +204,53 @@ body { padding-top: 80px; }
   transform: scale(1.03);
 }
 
-/* Dropdown menu */
-.profile-dropdown { position: relative; }
+/* === Dropdown menu === */
+.profile-dropdown {
+  position: relative;
+}
+
 .dropdown-menu {
   position: absolute;
   right: 0;
-  top: 48px;
+  top: 100%;
+  margin-top: -1px;
   background: color-mix(in oklab, var(--panel) 90%, transparent);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,255,213,0.05);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 0 20px rgba(0,255,213,0.05);
   backdrop-filter: blur(14px);
-  padding: 10px 0;
+  padding: 0; /* 👈 Removed inner padding that caused that sliver */
   min-width: 200px;
   z-index: 1001;
   display: flex;
   flex-direction: column;
   opacity: 0;
-  transform: translateY(-8px) scale(0.96);
+  transform: translateY(-4px) scale(0.97);
   pointer-events: none;
-  transition: opacity .25s ease, transform .25s ease;
+  transition: opacity .2s ease, transform .2s ease;
 }
+
 .profile-dropdown.open .dropdown-menu {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: all;
 }
+
+/* Username header – tightened */
 .dropdown-username {
   font-weight: 700;
   color: var(--accent);
   background: linear-gradient(90deg, rgba(0,255,213,0.12), rgba(0,255,213,0));
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   margin: 0;
-  padding: 8px 16px 10px;
+  padding: 8px 16px 10px; /* 👈 reduced top padding from ~12px → 8px */
   font-size: 0.95rem;
   text-align: left;
+  border-top-left-radius: 12px; /* 👈 keeps it visually smooth at top corners */
+  border-top-right-radius: 12px;
 }
+
+
 .dropdown-menu a {
   color: var(--text);
   text-decoration: none;
@@ -247,18 +258,19 @@ body { padding-top: 80px; }
   font-size: 0.95rem;
   display: flex;
   align-items: center;
-  gap: 8px;
   transition: background 0.2s ease, color 0.2s ease;
 }
+
 .dropdown-menu a:hover {
   background: var(--accent);
   color: #0f0f0f;
 }
+
 .logout-link {
   color: #ff6b6b !important;
   font-weight: 600;
   border-top: 1px solid rgba(255,255,255,0.08);
-  margin-top: 6px;
+  margin-top: 4px;
   padding-top: 10px;
 }
 

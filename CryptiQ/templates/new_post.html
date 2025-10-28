@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Create Post — CryptiQ</title>
+  <title>Create Post — The Cipher Lab</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
   <style>
     :root {
-      --page-max: 1000px;         /* a touch wider for fixed preview column */
+      --page-max: 1000px;
       --radius: 12px;
       --radius-lg: 14px;
       --accent: #00ffd5;
@@ -16,7 +16,6 @@
       --accent-soft: rgba(0,255,213,.25);
     }
 
-    /* Keep vertical scrollbar space reserved (Windows “jerk” fix) */
     html, body { height: 100%; }
     html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }
 
@@ -64,7 +63,6 @@
       font-size: 1.35rem;
       font-weight: 800;
       color: var(--accent);
-      letter-spacing: .2px;
     }
     .cp-subtle {
       margin: 0;
@@ -75,18 +73,14 @@
     /* ---------- Main Grid ---------- */
     .cp-grid {
       display: grid;
-      grid-template-columns: 1fr;    /* mobile default */
+      grid-template-columns: 1fr;
       gap: 20px;
       padding: 20px;
       align-items: start;
     }
-    /* Important: allow children to shrink in their tracks */
-    .cp-grid > *, .cp-panel, .cp-form, .preview-wrap { min-width: 0; }
-
-    /* Laptop / desktop: fixed preview column prevents wobble */
     @media (min-width: 960px) {
       .cp-grid {
-        grid-template-columns: minmax(0, 1fr) 420px;  /* left grows, right fixed */
+        grid-template-columns: minmax(0, 1fr) 420px;
         gap: 20px;
       }
     }
@@ -108,7 +102,6 @@
       color: var(--accent);
       font-size: 1rem;
       font-weight: 700;
-      letter-spacing: .3px;
     }
 
     /* ---------- Form ---------- */
@@ -124,7 +117,6 @@
       color: var(--text);
       font-size: .95rem;
       margin-bottom: 4px;
-      display: inline-block;
     }
 
     .cp-input,
@@ -136,7 +128,7 @@
       border: 1px solid var(--input-border);
       border-radius: 10px;
       padding: 12px 13px;
-      font-size: 16px; /* avoid iOS zoom */
+      font-size: 16px;
       box-sizing: border-box;
       transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
     }
@@ -149,7 +141,6 @@
       box-shadow: 0 0 0 2px var(--accent-soft);
     }
 
-    /* ---------- Textarea (fixed height) ---------- */
     .cp-textarea {
       height: 340px;
       min-height: 340px;
@@ -158,9 +149,7 @@
       overflow-y: auto;
       line-height: 1.5;
       font-family: 'Inter','Segoe UI',Tahoma,sans-serif;
-      scrollbar-gutter: stable both-edges;
       white-space: pre-wrap;
-      overflow-wrap: anywhere;
       word-break: break-word;
     }
 
@@ -178,7 +167,30 @@
       font-size: .9rem;
     }
 
-    /* ---------- Actions ---------- */
+    /* ---------- Pin checkbox ---------- */
+    .pin-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      background: var(--panel);
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .pin-toggle input {
+      accent-color: var(--accent);
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .pin-toggle label {
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    /* ---------- Buttons ---------- */
     .cp-actions {
       display: flex;
       gap: 10px;
@@ -231,7 +243,6 @@
       min-height: 340px;
       white-space: pre-wrap;
       overflow-y: auto;
-      scrollbar-gutter: stable both-edges;
       overflow-wrap: anywhere;
       word-break: break-word;
     }
@@ -262,17 +273,10 @@
     }
     .cp-error.show { display: block; }
 
-    /* ---------- Mobile ---------- */
     @media (max-width: 600px) {
       .cp-shell { padding: 96px 12px 40px; }
-      .cp-textarea, .preview-body { height: 260px; min-height: 260px; max-height: 260px; }
+      .cp-textarea, .preview-body { height: 260px; }
       .btn { width: 100%; }
-      .cp-actions { justify-content: stretch; }
-    }
-
-    /* ---------- Motion reduction ---------- */
-    @media (prefers-reduced-motion: reduce) {
-      * { transition: none !important; animation: none !important; }
     }
   </style>
 </head>
@@ -308,6 +312,13 @@
               <input id="image" name="image" class="cp-file" type="file" accept="image/*">
             </div>
 
+            {% if user_is_admin %}
+            <div class="pin-toggle">
+              <input type="checkbox" id="pinned" name="pinned">
+              <label for="pinned">📌 Pin this post</label>
+            </div>
+            {% endif %}
+
             <div class="cp-actions">
               <button type="submit" class="btn">Publish Post</button>
               <a href="{{ url_for('posts_list') }}" class="btn secondary">Cancel</a>
@@ -317,14 +328,16 @@
           </form>
         </div>
 
-        <!-- RIGHT: Live Preview (fixed width on desktop) -->
+        <!-- RIGHT: Live Preview -->
         <div class="cp-panel">
           <h3>Live Preview</h3>
           <div class="preview-wrap">
             <div class="preview-image" id="preview-image">
               <img id="preview-img" alt="Selected image preview">
             </div>
-            <div class="preview-body" id="preview-body" aria-live="polite">Start typing your post to see a live preview here…</div>
+            <div class="preview-body" id="preview-body" aria-live="polite">
+              Start typing your post to see a live preview here…
+            </div>
           </div>
         </div>
       </div>
@@ -342,7 +355,6 @@
     const formError = document.getElementById('form-error');
     const form = document.getElementById('create-post-form');
 
-    // Live preview + character count
     function updatePreview() {
       const title = titleEl.value.trim();
       const body  = bodyEl.value.trim();
@@ -354,7 +366,6 @@
     titleEl.addEventListener('input', updatePreview);
     bodyEl.addEventListener('input', updatePreview);
 
-    // Image preview
     imageEl.addEventListener('change', () => {
       const file = imageEl.files && imageEl.files[0];
       if (!file) { previewImageWrap.style.display = 'none'; return; }
@@ -364,7 +375,6 @@
       previewImageWrap.style.display = 'block';
     });
 
-    // Simple validation
     form.addEventListener('submit', (e) => {
       formError.classList.remove('show');
       if (!titleEl.value.trim() || !bodyEl.value.trim()) {

@@ -341,15 +341,24 @@
     decodeBtn.onclick = () => setMode("decode");
 
     function generatePolybiusGrid() {
-      polybiusGrid.innerHTML = "";
-      const letters = "ABCDEFGHIKLMNOPQRSTUVWXYZ"; 
-      for (let i = 0; i < 25; i++) {
-        const cell = document.createElement("input");
-        cell.maxLength = 1;
-        cell.value = letters[i];
-        polybiusGrid.appendChild(cell);
-      }
-    }
+  polybiusGrid.innerHTML = "";
+  const letters = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
+
+  for (let i = 0; i < 25; i++) {
+    const cell = document.createElement("input");
+    cell.maxLength = 1;
+    cell.value = letters[i];
+    cell.addEventListener("input", () => {
+      // when a user edits the grid, re-encode/decode immediately
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    });
+    polybiusGrid.appendChild(cell);
+  }
+}
+
 
     function updateKeyInput() {
       const cipher = cipherSelect.value;

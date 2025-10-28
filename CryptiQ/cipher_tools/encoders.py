@@ -162,24 +162,68 @@ def columnar_decode(cipher, key):
                 plaintext += col_data[c][r]
     return plaintext
 
-
 # ==============================
-#  POLYBIUS
+#  POLYBIUS (Customizable Grid)
 # ==============================
-POLYBIUS_SQUARE = {
-    'A': '11','B': '12','C': '13','D': '14','E': '15',
-    'F': '21','G': '22','H': '23','I': '24','J': '24','K': '25',
-    'L': '31','M': '32','N': '33','O': '34','P': '35',
-    'Q': '41','R': '42','S': '43','T': '44','U': '45',
-    'V': '51','W': '52','X': '53','Y': '54','Z': '55'
-}
-def polybius_encode(text):
-    return ' '.join(POLYBIUS_SQUARE.get(ch.upper(), ch) for ch in text)
+def generate_polybius_square(key=None):
+    """
+    Generate a Polybius 5x5 grid. If a custom key is provided (25 letters),
+    it defines the grid order; otherwise defaults to the standard one.
+    The letter J is merged with I.
+    """
+    base = "ABCDEFGHIKLMNOPQRSTUVWXYZ"  # 25 letters (I/J merged)
+    if key:
+        key = ''.join(ch for ch in key.upper() if ch.isalpha())
+        key = key.replace("J", "I")
+        seen = set()
+        ordered = []
+        for ch in key + base:
+            if ch not in seen and len(ordered) < 25:
+                seen.add(ch)
+                ordered.append(ch)
+        letters = ordered
+    else:
+        letters = list(base)
 
-def polybius_decode(cipher):
-    inv = {v: k for k, v in POLYBIUS_SQUARE.items()}
-    parts = cipher.split()
-    return ''.join(inv.get(p, p) for p in parts)
+    # build coordinate mapping
+    square = {}
+    index = 0
+    for r in range(1, 6):
+        for c in range(1, 6):
+            square[letters[index]] = f"{r}{c}"
+            index += 1
+    return square
+
+
+def polybius_encode(text, key=None):
+    """
+    Encode plaintext using a (possibly custom) Polybius square.
+    Non-letter characters are preserved.
+    """
+    grid = generate_polybius_square(key)
+    result = []
+    for ch in text:
+        up = ch.upper()
+        if up in grid:
+            result.append(grid[up])
+        else:
+            result.append(ch)
+    return ' '.join(result)
+
+
+def polybius_decode(cipher, key=None):
+    """
+    Decode Polybius coordinates (11–55) using a (possibly custom) grid.
+    Non-digit chunks are left untouched.
+    """
+    grid = generate_polybius_square(key)
+    inv = {v: k for k, v in grid.items()}
+    parts = cipher.strip().replace("\n", " ").split()
+
+    result = []
+    for p in parts:
+        result.append(inv.get(p, p))
+    return ''.join(result)
 
 
 # ==============================

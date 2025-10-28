@@ -14,7 +14,6 @@
       margin: 0;
     }
 
-    /* === Container === */
     .posts-container {
       width: min(960px, 94%);
       margin: 110px auto 80px;
@@ -39,21 +38,49 @@
       font-size: clamp(0.9rem, 2vw, 1rem);
     }
 
-    /* === Post Card === */
     .post-card {
       position: relative;
-      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 20px 22px;
       box-shadow: 0 6px 20px rgba(0,0,0,.22);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(6px);
       transition: transform .16s ease, box-shadow .2s ease;
       word-break: break-word;
     }
     .post-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(0,0,0,.28);
+    }
+
+    .post-card.pinned {
+      border: 1px solid var(--accent);
+    }
+
+    /* Clean inline pin badge */
+    .pinned-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(0,255,213,0.15);
+    }
+
+    .pinned-badge svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .post-top {
@@ -74,21 +101,36 @@
       color: var(--text-dim);
       font-size: .95rem;
       margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .admin-badge {
+      background: var(--accent);
+      color: #0f0f0f;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
     }
 
     .post-right {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       flex-shrink: 0;
     }
     .post-meta {
       font-size: .85rem;
       color: var(--muted);
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    /* Kebab menu */
     .post-menu { position: relative; }
     .kebab-btn {
       background: transparent;
@@ -133,9 +175,7 @@
       transition: background .15s;
     }
     .menu a:hover,
-    .menu button:hover {
-      background: var(--input-hover);
-    }
+    .menu button:hover { background: var(--input-hover); }
     .menu .danger { color: #ff6b6b; }
 
     .post-body {
@@ -150,7 +190,6 @@
       word-wrap: break-word;
     }
 
-    /* === Comments === */
     .comments {
       margin-top: 16px;
       background: var(--panel-2);
@@ -251,7 +290,6 @@
     }
     .comments-toggle:hover { background: var(--accent); color: #0f0f0f; }
 
-    /* === Pagination === */
     .pagination {
       display: flex;
       justify-content: center;
@@ -272,7 +310,6 @@
     .page-btn:hover { background: var(--accent-strong, #00e6c0); }
     .pagination span { color: var(--text-dim); }
 
-    /* Floating Add Button */
     .fab {
       position: fixed;
       bottom: 30px;
@@ -295,7 +332,6 @@
     .fab span { font-size: 1.8rem; font-weight: 500; }
     .fab:hover { transform: translateY(-2px); }
 
-    /* === Mobile Enhancements === */
     @media (max-width: 700px) {
       .posts-container { margin: 85px auto 60px; gap: 22px; }
       .post-card { padding: 16px 14px; border-radius: 12px; }
@@ -320,18 +356,39 @@
     {% endif %}
 
     {% for p in posts %}
-    <article class="post-card" data-post-id="{{ p['id'] }}">
+    <article id="post-{{ p['id'] }}" class="post-card {% if p['pinned'] %}pinned{% endif %}" data-post-id="{{ p['id'] }}">
       <div class="post-top">
         <div>
           <div class="post-title">{{ p['title'] }}</div>
-          <div class="post-author">by {{ p['username'] }}</div>
+          <div class="post-author">
+            by {{ p['username'] }}
+            {% if p['is_admin'] %}
+              <span class="admin-badge">Admin</span>
+            {% endif %}
+          </div>
         </div>
         <div class="post-right">
-          <div class="post-meta">{{ p['created_at'][:19].replace('T',' ') }}</div>
+          <div class="post-meta">
+            {% if p['pinned'] %}
+              <span class="pinned-badge" title="Pinned post">
+  <img 
+    src="{{ url_for('static', filename='assets/pin.svg') }}" 
+    alt="Pinned" 
+    style="width:14px;height:14px;vertical-align:-2px;filter:invert(63%) sepia(95%) saturate(500%) hue-rotate(125deg) brightness(102%) contrast(101%);">
+  Pinned
+</span>
+            {% endif %}
+            <span>{{ p['created_at'][:19].replace('T',' ') }}</span>
+          </div>
           {% if user and (user['id'] == p['owner_id'] or user_is_admin) %}
           <div class="post-menu">
             <button class="kebab-btn" title="Options">⋯</button>
             <div class="menu">
+              {% if user_is_admin %}
+                <button class="toggle-pin" data-id="{{ p['id'] }}" data-state="{{ 1 if p['pinned'] else 0 }}">
+                  {% if p['pinned'] %}Unpin{% else %}Pin{% endif %}
+                </button>
+              {% endif %}
               <a href="{{ url_for('posts_edit', post_id=p['id']) }}">Edit</a>
               <form method="post" action="{{ url_for('posts_delete', post_id=p['id']) }}" onsubmit="return confirm('Delete this post?');">
                 <button type="submit" class="danger">Delete</button>
@@ -392,7 +449,6 @@
   </main>
 
   <script>
-    // --- Kebab menu ---
     document.addEventListener('click', e => {
       const btn = e.target.closest('.kebab-btn');
       const allMenus = document.querySelectorAll('.menu');
@@ -404,7 +460,6 @@
       } else allMenus.forEach(m => m.classList.remove('open'));
     });
 
-    // --- Comments toggle ---
     document.querySelectorAll('.comments-toggle').forEach(btn => {
       btn.addEventListener('click', async () => {
         const postId = btn.closest('.post-card').dataset.postId;
@@ -433,7 +488,7 @@
         if (!data.ok) throw new Error(data.error);
         list.innerHTML = '';
         data.comments.forEach(c => list.appendChild(renderComment(c)));
-        count.textContent = `${data.count} comment${data.count !== 1 ? 's' : ''}`;
+                count.textContent = `${data.count} comment${data.count !== 1 ? 's' : ''}`;
       } catch {
         list.innerHTML = '<li class="comment"><em style="color:#ff9f9f;">Failed to load comments</em></li>';
       }
@@ -456,40 +511,42 @@
       );
     }
 
-    document.querySelectorAll('.comment-submit').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const postId = btn.dataset.postId;
-        const input = document.getElementById(`comment-input-${postId}`);
-        const body = (input.value || '').trim();
-        if (!body) return;
-        btn.disabled = true; const old = btn.textContent; btn.textContent = 'Posting…';
-        try {
-          const res = await fetch('/comments/add', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({post_id: Number(postId), body})
-          });
-          const data = await res.json();
-          if (data.ok && data.comment) {
-            const list = document.getElementById(`comment-list-${postId}`);
-            list.prepend(renderComment(data.comment));
-            input.value = '';
-            const countEl = document.getElementById(`comments-count-${postId}`);
-            const m = /(\d+)/.exec(countEl.textContent);
-            if (m) {
-                            const n = Number(m[1]) + 1;
-              countEl.textContent = `${n} comment${n !== 1 ? 's' : ''}`;
-            }
-          } else {
-            alert(data.error || 'Failed to comment.');
+    // --- Comment posting ---
+    document.addEventListener('click', async e => {
+      const postBtn = e.target.closest('.comment-submit');
+      if (!postBtn) return;
+      const postId = postBtn.dataset.postId;
+      const input = document.getElementById(`comment-input-${postId}`);
+      const body = input.value.trim();
+      if (!body) return;
+
+      postBtn.disabled = true;
+      const old = postBtn.textContent;
+      postBtn.textContent = 'Posting…';
+      try {
+        const res = await fetch('/comments/add', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ post_id: Number(postId), body })
+        });
+        const data = await res.json();
+        if (data.ok && data.comment) {
+          const list = document.getElementById(`comment-list-${postId}`);
+          list.prepend(renderComment(data.comment));
+          input.value = '';
+          const countEl = document.getElementById(`comments-count-${postId}`);
+          const m = /(\d+)/.exec(countEl.textContent);
+          if (m) {
+            const n = Number(m[1]) + 1;
+            countEl.textContent = `${n} comment${n !== 1 ? 's' : ''}`;
           }
-        } catch {
-          alert('Failed to comment.');
-        } finally {
-          btn.disabled = false;
-          btn.textContent = old;
-        }
-      });
+        } else alert(data.error || 'Failed to comment.');
+      } catch {
+        alert('Failed to comment.');
+      } finally {
+        postBtn.disabled = false;
+        postBtn.textContent = old;
+      }
     });
 
     // --- Delete comment ---
@@ -498,10 +555,7 @@
       if (!delBtn) return;
       const commentId = delBtn.dataset.id;
       const li = delBtn.closest('.comment');
-      const article = delBtn.closest('.post-card');
-      const postId = article?.dataset.postId;
-      if (!commentId || !li || !postId) return;
-
+      const postId = li.closest('.post-card')?.dataset.postId;
       delBtn.disabled = true;
       const old = delBtn.textContent;
       delBtn.textContent = 'Deleting…';
@@ -516,18 +570,56 @@
             const n = Math.max(0, Number(m[1]) - 1);
             countEl.textContent = `${n} comment${n !== 1 ? 's' : ''}`;
           }
+        } else alert(data.error || 'Failed to delete comment.');
+      } catch { alert('Failed to delete comment.'); }
+      finally { delBtn.disabled = false; delBtn.textContent = old; }
+    });
+
+    // --- Pin/unpin posts ---
+    document.addEventListener('click', async e => {
+      const btn = e.target.closest('.toggle-pin');
+      if (!btn) return;
+      const postId = btn.dataset.id;
+      const state = btn.dataset.state === "1";
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = state ? "Unpinning…" : "Pinning…";
+      try {
+        const res = await fetch(`/posts/${postId}/pin`, { method: "POST" });
+        const data = await res.json();
+        if (data.ok) {
+          btn.textContent = data.pinned ? "Unpin" : "Pin";
+          btn.dataset.state = data.pinned ? "1" : "0";
+          location.reload();
         } else {
-          alert(data.error || 'Failed to delete comment.');
-          delBtn.disabled = false;
-          delBtn.textContent = old;
+          alert(data.error || "Failed to pin post.");
+          btn.textContent = old;
         }
       } catch {
-        alert('Failed to delete comment.');
-        delBtn.disabled = false;
-        delBtn.textContent = old;
-      }
+        alert("Failed to pin post.");
+        btn.textContent = old;
+      } finally { btn.disabled = false; }
     });
   </script>
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Smooth scroll behavior
+  document.documentElement.style.scrollBehavior = 'smooth';
+
+  const hash = window.location.hash;
+  if (hash.startsWith('#post-')) {
+    const post = document.querySelector(hash);
+    if (post) {
+      post.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // temporary glow effect
+      post.style.boxShadow = '0 0 18px var(--accent)';
+      post.style.transition = 'box-shadow 0.8s ease-out';
+      setTimeout(() => post.style.boxShadow = '', 1200);
+    }
+  }
+});
+</script>
+
 </body>
 </html>
-
