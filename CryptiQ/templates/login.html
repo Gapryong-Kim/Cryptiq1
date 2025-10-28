@@ -233,29 +233,9 @@
 
       <section class="auth-card" aria-label="Login form">
         <h2>Log In</h2>
-        <p class="auth-sub">Welcome back to <strong>CryptiQ</strong>.</p>
+        <p class="auth-sub">Welcome back to <strong>The Cipher Lab</strong>.</p>
 
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages(with_categories=True) %}
-          {% if messages %}
-            <div id="flash-container">
-              {% for category, msg in messages %}
-                <div class="auth-flash {{ category }}">{{ msg }}</div>
-              {% endfor %}
-            </div>
-            <script>
-              // Auto-fade flash messages
-              setTimeout(() => {
-                document.querySelectorAll('.auth-flash').forEach(flash => {
-                  flash.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                  flash.style.opacity = '0';
-                  flash.style.transform = 'translateY(-8px)';
-                  setTimeout(() => flash.remove(), 600);
-                });
-              }, 4000);
-            </script>
-          {% endif %}
-        {% endwith %}
+        
 
         <form method="post" class="auth-form" autocomplete="on">
           <label class="form-label" for="username">Email or Username</label>

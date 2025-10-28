@@ -3,22 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CryptiQ — Cipher Breaker</title>
+  <title>The Cipher Lab — Cipher Breaker</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    /* Keep scrollbar space reserved to avoid laptop “jerk” */
     html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }
 
     .cb-shell {
       min-height: calc(100dvh - 80px);
       display: grid;
       place-items: start center;
-      padding: 110px 16px 40px;
+      padding: 90px 16px 40px;
       box-sizing: border-box;
     }
 
     .cb-card {
-      width: 100%;
+      width: 100vw;
       max-width: 1080px;
       background: var(--panel);
       border: 1px solid var(--line);
@@ -35,11 +34,13 @@
       border-bottom: 1px solid var(--line);
       background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
     }
+
     .cb-dot {
       width: 10px; height: 10px; border-radius: 50%;
       background: var(--accent);
       box-shadow: 0 0 10px var(--accent-soft);
     }
+
     .cb-title {
       margin: 0;
       font-size: 1.1rem;
@@ -54,6 +55,7 @@
       gap: 18px;
       padding: 18px;
     }
+
     @media (min-width: 980px) {
       .cb-grid { grid-template-columns: 1.1fr .9fr; gap: 16px; }
     }
@@ -64,6 +66,7 @@
       border-radius: 12px;
       padding: 16px;
     }
+
     .cb-panel h3 {
       margin: 0 0 12px;
       color: var(--accent);
@@ -72,7 +75,7 @@
     }
 
     .cb-row { display: grid; gap: 10px; }
-    .cb-row.inline { grid-template-columns: 1fr auto; align-items: center; gap: 10px; }
+
     .cb-help {
       margin-top: 8px;
       color: var(--muted);
@@ -96,17 +99,21 @@
       cursor: pointer;
       transition: background .15s ease, box-shadow .18s ease, border-color .18s ease, transform .06s ease;
     }
+
     .btn:hover {
       background: var(--accent-strong);
       border-color: var(--accent-strong);
       box-shadow: 0 6px 18px rgba(0,0,0,0.35);
     }
+
     .btn:active { transform: translateY(1px); }
+
     .btn.secondary {
       background: transparent;
       color: var(--text);
       border: 1px solid var(--line-2);
     }
+
     .btn.secondary:hover {
       background: var(--input-hover);
       border-color: var(--accent);
@@ -114,7 +121,7 @@
     }
 
     .cb-label { font-weight: 600; color: var(--text); }
-    .cb-select, .cb-textarea, .cb-input {
+    .cb-select, .cb-textarea {
       width: 100%;
       box-sizing: border-box;
       color: var(--text);
@@ -123,7 +130,8 @@
       border-radius: 8px;
       transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
     }
-    .cb-select, .cb-input { padding: 10px 12px; font-size: 15px; }
+
+    .cb-select { padding: 10px 12px; font-size: 15px; }
     .cb-textarea {
       min-height: 200px;
       padding: 12px 14px;
@@ -131,11 +139,11 @@
       line-height: 1.5;
       font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
       font-size: 15px;
-      /* keep scrollbars stable inside the field */
       scrollbar-gutter: stable both-edges;
     }
-    .cb-select:hover, .cb-textarea:hover, .cb-input:hover { background: var(--input-hover); }
-    .cb-select:focus, .cb-textarea:focus, .cb-input:focus {
+
+    .cb-select:hover, .cb-textarea:hover { background: var(--input-hover); }
+    .cb-select:focus, .cb-textarea:focus {
       outline: none;
       border-color: var(--accent);
       background: var(--input-focus);
@@ -152,6 +160,7 @@
       color: #ff8b8b;
       font-weight: 600;
     }
+
     .cb-error.show { display: block; }
 
     .cb-loading {
@@ -160,7 +169,9 @@
       color: var(--muted);
       font-size: .95rem;
     }
+
     .cb-loading.show { display: inline-flex; }
+
     .spinner {
       border: 4px solid #2a2a2a;
       border-top: 4px solid var(--accent);
@@ -169,6 +180,7 @@
       animation: spin 1s linear infinite;
       display: inline-block;
     }
+
     @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
 
     .cb-key {
@@ -193,33 +205,17 @@
       box-sizing: border-box;
       white-space: pre-wrap;
       word-break: break-word;
-      overflow-wrap: anywhere;
       overflow-x: hidden;
       overflow-y: auto;
-      line-break: anywhere;
-      /* stable internal scrollbar */
       scrollbar-gutter: stable both-edges;
     }
 
-    /* Squarish inputs only (professional look) */
-    .cb--square .cb-select,
-    .cb--square .cb-textarea,
-    .cb--square .cb-input {
-      border-radius: 6px;
-      border-color: var(--line);
-    }
-    .cb--square .cb-panel.input-panel { border-radius: 10px; }
-    .cb--square .cb-panel.output-panel { border-radius: 12px; }
-
-    /* Known-plaintext block hidden by default; shown only for substitution */
-    .known-plain-wrap { display: none; }
-    .known-plain-wrap.show { display: grid; }
-
     @media (max-width: 480px) {
-      .cb-shell { padding: 96px 12px 32px; }
+      .cb-shell { padding: 80px 12px 32px; }
     }
   </style>
 </head>
+
 <body>
   {% include 'base_nav.html' %}
 
@@ -238,30 +234,28 @@
             <div class="cb-row">
               <label for="cipher_type" class="cb-label">Cipher</label>
               <select name="cipher_type" id="cipher_type" class="cb-select" required>
+                <option value="auto">Auto Detect (Try All)</option>
+                <option value="caesar" selected>Caesar</option>
+                <option value="vigenere">Vigenère</option>
                 <option value="affine">Affine</option>
                 <option value="amsco">AMSCO</option>
-                <option value="caesar" selected>Caesar</option>
-                <option value="columnar">Columnar Transposition</option>
-                <option value="substitution">Basic Substitution</option>
-                <option value="permutation">Permutation (Block Transposition)</option>
-                <option value="polybius">Polybius Square</option>
                 <option value="railfence">Railfence</option>
-                <option value="vigenere">Vigenère</option>
+                <option value="columnar">Columnar Transposition</option>
+                <option value="permutation">Permutation</option>
+                <option value="substitution">Basic Substitution</option>
+                <option value="polybius">Polybius Square</option>
+                <option value="atbash">Atbash</option>
+                <option value="base64">Base64</option>
+                <option value="hex">Hexadecimal</option>
+                <option value="binary">Binary</option>
+                <option value="baconian">Baconian</option>
               </select>
             </div>
 
             <div class="cb-row">
               <label for="ciphertext" class="cb-label">Ciphertext</label>
-              <textarea id="ciphertext" name="text" class="cb-textarea" placeholder="Paste or type ciphertext here…" required></textarea>
-              <p class="cb-help">Tip: longer samples produce better results for classical ciphers (Substitution, Vigenère, Columnar, etc.).</p>
-            </div>
-
-            <!-- Known plaintext: ONLY for substitution -->
-            <div id="known-plain" class="cb-row known-plain-wrap" aria-hidden="true">
-              <label for="known_plaintext" class="cb-label">Known Plaintext (optional)</label>
-              <input id="known_plaintext" name="known_plaintext" class="cb-input" type="text" disabled
-                     placeholder='Examples: "the", "and", or pattern like D=E,X=T,R=A'>
-              <p class="cb-help">If you know a word or some letter pairs, add them here. Words act as cribs; pairs like <code>D=E</code> lock cipher→plain mappings.</p>
+              <textarea id="ciphertext" name="text" class="cb-textarea"></textarea>
+              <p class="cb-help">Tip: longer samples produce better results for classical ciphers.</p>
             </div>
 
             <div class="cb-actions">
@@ -300,14 +294,36 @@
     const copyBtn = document.getElementById("copy-btn");
     const errorBanner = document.getElementById("error-banner");
     const textarea = document.getElementById("ciphertext");
-    const cipherSelect = document.getElementById("cipher_type");
-    const knownWrap = document.getElementById("known-plain");
-    const knownInput = document.getElementById("known_plaintext");
+
+    const funSamples = [
+      "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
+      "This sentence knows it’s about to be encrypted and is very nervous.",
+      "My secret code is hidden in plain sight, but even I forgot the key.",
+      "Somewhere, a potato is learning Morse code faster than I can learn Python.",
+      "Warning: decoding this message may summon unintended consequences.",
+      "The cake is a cipher. You just haven’t decrypted it yet.",
+      "Behind every random string lies someone trying to be mysterious.",
+      "Sometimes I encrypt my thoughts just so I can feel like a secret agent.",
+      "I whispered my password to a pigeon. I regret everything.",
+      "My diary is written entirely in base64. Even I can’t read it anymore.",
+      "The vending machine only accepts encrypted coins.",
+      "Somewhere, a cat just brute-forced the Wi-Fi.",
+      "My coffee tastes like ciphertext and regret.",
+      "I accidentally encrypted my shopping list. Now I just buy random stuff.",
+      "Trust no one. Except maybe the hash function.",
+      "I lost my key… literally. It’s somewhere in the cipher.",
+      "The real ciphertext was the friends we made along the way.",
+      "I asked for a decryption key and got a therapy session instead.",
+      "The key was under the doormat the whole time."
+    ];
+
+    textarea.value = funSamples[Math.floor(Math.random() * funSamples.length)];
 
     function showError(msg) {
       errorBanner.textContent = msg || "Something went wrong. Please try again.";
       errorBanner.classList.add("show");
     }
+
     function clearError() { errorBanner.classList.remove("show"); }
 
     function setLoading(isLoading) {
@@ -316,34 +332,18 @@
       clearBtn.disabled = isLoading;
     }
 
-    function toggleKnownBox() {
-      const isSub = (cipherSelect.value || "").toLowerCase() === "substitution";
-      knownWrap.classList.toggle("show", isSub);
-      knownWrap.setAttribute("aria-hidden", String(!isSub));
-      knownInput.disabled = !isSub;
-      if (!isSub) knownInput.value = "";
-    }
-
-    // Initialize known-plaintext visibility on load
-    toggleKnownBox();
-    cipherSelect.addEventListener("change", toggleKnownBox);
-
     clearBtn.addEventListener("click", () => {
-      textarea.value = "";
+      textarea.value = funSamples[Math.floor(Math.random() * funSamples.length)];
       resultText.textContent = "";
       resultKey.style.display = "none";
-      resultKey.textContent = "";
       copyBtn.style.display = "none";
-      knownInput.value = "";
       clearError();
       textarea.focus();
-      toggleKnownBox();
     });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearError();
-
       const text = textarea.value.trim();
       if (!text) {
         showError("Please paste some ciphertext first.");
@@ -353,10 +353,8 @@
       setLoading(true);
       try {
         const formData = new FormData(form);
-        // ✅ post to the breaker endpoint (not "/")
         const res = await fetch('{{ url_for("breaker") }}', { method: "POST", body: formData });
         if (!res.ok) throw new Error("Network error");
-
         const data = await res.json();
 
         resultText.textContent = data.text || "";
@@ -365,10 +363,8 @@
           resultKey.textContent = `Key: ${typeof data.key === 'string' ? data.key : JSON.stringify(data.key)}`;
         } else {
           resultKey.style.display = "none";
-          resultKey.textContent = "";
         }
         copyBtn.style.display = data.text ? "inline-flex" : "none";
-
         if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
       } catch (err) {
         showError("Unable to reach the server. Please try again.");

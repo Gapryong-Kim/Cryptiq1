@@ -6,26 +6,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    :root {
-      --accent-glow: 0 0 10px rgba(0,255,213,0.3);
-    }
-
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
     }
 
     .leaderboard-wrap {
       width: min(900px, 94%);
       margin: 110px auto 80px;
-      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 16px;
-      box-shadow: 0 8px 26px rgba(0,0,0,.3);
-      padding: 26px 24px 34px;
-      backdrop-filter: blur(10px);
-      animation: fadeIn .4s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      padding: 30px 28px;
+      backdrop-filter: blur(6px);
+      animation: fadeIn .5s ease;
     }
 
     @keyframes fadeIn {
@@ -34,54 +32,83 @@
     }
 
     h2 {
-      color: var(--accent);
+      color: var(--accent); /* 🔹 Updated: matches site’s trademark accent */
       font-size: clamp(1.6rem, 4vw, 2rem);
       font-weight: 800;
       text-align: center;
-      margin: 0 0 24px 0;
-      text-shadow: var(--accent-glow);
+      margin: 0 0 10px 0;
     }
 
+    .season-info {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+    }
+
+    /* === Tabs === */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 10px 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .tab:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #0f0f0f;
+      border-color: var(--accent);
+    }
+
+    .lb-section.hidden { display: none; }
+
+    /* === Tables === */
     table {
       width: 100%;
       border-collapse: collapse;
-      background: color-mix(in srgb, var(--panel-2) 92%, transparent);
+      background: var(--panel);
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: inset 0 0 8px rgba(0,255,213,0.05);
-    }
-
-    thead {
-      background: linear-gradient(90deg, rgba(0,255,213,0.08), rgba(0,255,213,0.02));
     }
 
     th, td {
       text-align: left;
       padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-size: 0.97rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.96rem;
     }
 
     th {
       color: var(--accent);
-      font-weight: 700;
-      letter-spacing: 0.03em;
       text-transform: uppercase;
-      font-size: 0.9rem;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    tbody tr:nth-child(odd) {
-      background: rgba(255,255,255,0.02);
+      letter-spacing: 0.03em;
+      font-size: 0.85rem;
     }
 
     tbody tr:hover {
-      background: rgba(0,255,213,0.07);
+      background: rgba(255,255,255,0.04);
       transition: background 0.25s ease;
     }
+
+    tr:last-child td { border-bottom: none; }
 
     td:first-child {
       font-weight: 700;
@@ -90,19 +117,13 @@
       font-size: 1.05rem;
     }
 
-    .rank-1 td:first-child {
-      color: #ffd700;
-      text-shadow: 0 0 8px rgba(255,215,0,0.5);
-    }
+    .rank-1 td:first-child { color: #ffd700; }
+    .rank-2 td:first-child { color: #c0c0c0; }
+    .rank-3 td:first-child { color: #c08a4c; }
 
-    .rank-2 td:first-child {
-      color: #c0c0c0;
-      text-shadow: 0 0 8px rgba(192,192,192,0.5);
-    }
-
-    .rank-3 td:first-child {
-      color: #cd7f32;
-      text-shadow: 0 0 8px rgba(205,127,50,0.5);
+    .user-highlight {
+      background: var(--accent-soft) !important;
+      border-left: 4px solid var(--accent);
     }
 
     .no-submissions {
@@ -113,11 +134,11 @@
       font-style: italic;
     }
 
-    /* --- Mobile Adaptation --- */
-    @media (max-width: 700px) {
+    /* === Mobile Responsive === */
+    @media (max-width: 720px) {
       .leaderboard-wrap {
-        padding: 20px 14px 26px;
-        margin: 90px auto 60px;
+        margin: 90px auto 50px;
+        padding: 22px 16px;
       }
 
       table, thead, tbody, th, td, tr {
@@ -125,22 +146,20 @@
         width: 100%;
       }
 
-      thead {
-        display: none;
-      }
+      thead { display: none; }
 
       tr {
-        background: color-mix(in srgb, var(--panel-2) 94%, transparent);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
         margin-bottom: 12px;
-        padding: 12px 14px;
+        padding: 10px 14px;
       }
 
       td {
         border: none;
         padding: 6px 0;
-        font-size: 0.95rem;
+        font-size: 0.93rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -148,21 +167,11 @@
 
       td::before {
         content: attr(data-label);
-        font-weight: 700;
+        font-weight: 600;
         color: var(--accent);
         flex: 1;
         text-transform: uppercase;
-        font-size: 0.85rem;
-      }
-
-      td:last-child {
-        border-bottom: none;
-      }
-
-      .rank-1 td:first-child,
-      .rank-2 td:first-child,
-      .rank-3 td:first-child {
-        text-align: left;
+        font-size: 0.8rem;
       }
     }
   </style>
@@ -173,22 +182,27 @@
 
   <div class="leaderboard-wrap">
     <h2>Leaderboard</h2>
+    <p class="season-info">Season {{ current_season }} • New season every 2 months</p>
 
-    {% if leaderboard|length == 0 %}
-      <p class="no-submissions">No submissions yet — be the first to claim the top spot!</p>
-    {% else %}
+    <div class="tabs">
+      <div class="tab active" data-target="all-time">All-Time</div>
+      <div class="tab" data-target="seasonal">Season {{ current_season }}</div>
+      <div class="tab" data-target="weekly">Fastest Solvers</div>
+    </div>
+
+    <!-- === ALL-TIME === -->
+    <section id="all-time" class="lb-section">
+      {% if all_time|length == 0 %}
+        <p class="no-submissions">No submissions yet — be the first to claim the top spot!</p>
+      {% else %}
       <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Username</th>
-            <th>Weeks Played</th>
-            <th>Total Score</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Rank</th><th>Username</th><th>Weeks Played</th><th>Total Score</th></tr></thead>
         <tbody>
-          {% for row in leaderboard %}
-          <tr class="{% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}">
+          {% for row in all_time %}
+          <tr class="
+            {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}
+            {% if current_user and row['username'] == current_user %}user-highlight{% endif %}
+          ">
             <td data-label="Rank">#{{ loop.index }}</td>
             <td data-label="Username">{{ row['username'] }}</td>
             <td data-label="Weeks Played">{{ row['weeks_played'] }}</td>
@@ -197,7 +211,69 @@
           {% endfor %}
         </tbody>
       </table>
-    {% endif %}
+      {% endif %}
+    </section>
+
+    <!-- === SEASONAL === -->
+    <section id="seasonal" class="lb-section hidden">
+      {% if seasonal|length == 0 %}
+        <p class="no-submissions">No submissions yet this season — start cracking!</p>
+      {% else %}
+      <table>
+        <thead><tr><th>Rank</th><th>Username</th><th>Weeks Played</th><th>Total Score</th></tr></thead>
+        <tbody>
+          {% for row in seasonal %}
+          <tr class="
+            {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}
+            {% if current_user and row['username'] == current_user %}user-highlight{% endif %}
+          ">
+            <td data-label="Rank">#{{ loop.index }}</td>
+            <td data-label="Username">{{ row['username'] }}</td>
+            <td data-label="Weeks Played">{{ row['weeks_played'] }}</td>
+            <td data-label="Total Score">{{ row['total_score'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </section>
+
+    <!-- === WEEKLY === -->
+    <section id="weekly" class="lb-section hidden">
+      {% if weekly|length == 0 %}
+        <p class="no-submissions">No submissions yet this week — be the first to solve!</p>
+      {% else %}
+      <table>
+        <thead><tr><th>Rank</th><th>Username</th><th>Fastest Time (s)</th><th>Score</th></tr></thead>
+        <tbody>
+          {% for row in weekly %}
+          <tr class="
+            {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}
+            {% if current_user and row['username'] == current_user %}user-highlight{% endif %}
+          ">
+            <td data-label="Rank">#{{ loop.index }}</td>
+            <td data-label="Username">{{ row['username'] }}</td>
+            <td data-label="Fastest Time (s)">{{ row['best_time'] or "—" }}</td>
+            <td data-label="Score">{{ row['score'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </section>
   </div>
+
+  <script>
+    const tabs = document.querySelectorAll(".tab");
+    const sections = document.querySelectorAll(".lb-section");
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        tabs.forEach(t => t.classList.remove("active"));
+        sections.forEach(s => s.classList.add("hidden"));
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.target).classList.remove("hidden");
+      });
+    });
+  </script>
 </body>
 </html>

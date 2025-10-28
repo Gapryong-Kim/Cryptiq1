@@ -1,3 +1,11 @@
+from cipher_tools.breakers import (
+    atbash_break,
+    base64_break,
+    hex_break,
+    binary_break,
+    baconian_break
+)
+
 from flask import (
     Flask, request, jsonify, render_template, redirect,
     url_for, session, flash, send_from_directory, abort
@@ -7,6 +15,9 @@ from werkzeug.utils import secure_filename
 import sqlite3
 import os
 from datetime import datetime
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail, Message
+import re
 
 # --- Cipher tools ---
 from cipher_tools.vigenere import vigenere_break
@@ -19,7 +30,49 @@ from cipher_tools.amsco import amsco_break
 from cipher_tools.railfence import railfence_break
 from cipher_tools.polybius_square import *
 from utility.unique import unique
-from flask_mail import Mail, Message
+
+
+from datetime import datetime
+from cipher_tools.breakers import (
+            atbash_break,
+            base64_break,
+            hex_break,
+            binary_break,
+            baconian_break
+        )
+from cipher_tools.auto_break import auto_break  # ✅ new auto detector
+
+
+
+
+
+def migrate_weekly_tables():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(cipher_submissions)")
+    cols = {row["name"] for row in cur.fetchall()}
+    if "score" not in cols:
+        cur.execute("ALTER TABLE cipher_submissions ADD COLUMN score INTEGER DEFAULT 0")
+    if "season" not in cols:
+        cur.execute("ALTER TABLE cipher_submissions ADD COLUMN season INTEGER DEFAULT 1")
+    if "solve_time_seconds" not in cols:
+        cur.execute("ALTER TABLE cipher_submissions ADD COLUMN solve_time_seconds INTEGER DEFAULT NULL")
+    if "created_at" not in cols:
+        cur.execute("ALTER TABLE cipher_submissions ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP")
+    conn.commit()
+    conn.close()
+
+
+
+def get_current_season():
+    """Returns the current season number, starting at 1 from November 2025."""
+    start = datetime(2025, 11, 1)  # site launch / first season start
+    now = datetime.utcnow()
+    months_since = (now.year - start.year) * 12 + (now.month - start.month)
+    season = (months_since // 2) + 1  # one season = 2 months
+    return max(1, season)
+
+
 
 
 # ----- Configuration -----
@@ -34,29 +87,28 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 
-
 # ---- Mail configuration ----
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USERNAME"] = "thecipherlab@gmail.com"   # your sender email
-app.config["MAIL_PASSWORD"] = "xryonkhnboapnuwt"      # 16-char App Password
+app.config["MAIL_PASSWORD"] = "xryonkhnboapnuwt"         # 16-char App Password
 app.config["MAIL_DEFAULT_SENDER"] = ("The Cipher Lab Support", "thecipherlab@gmail.com")
 
 mail = Mail(app)
-
 
 app.secret_key = os.environ.get("CRYPTIQ_SECRET") or "dev-secret-key"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6 MB upload limit
 
+# Token generator for password resets
+serializer = URLSafeTimedSerializer(app.secret_key)
 
 # ----- Database helpers -----
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-
 
 def init_db():
     conn = get_db()
@@ -96,7 +148,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-
 def migrate_db():
     conn = get_db()
     cur = conn.cursor()
@@ -108,20 +159,17 @@ def migrate_db():
         cur.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
     conn.commit()
     conn.close()
+
 def migrate_weekly_tables():
     conn = get_db()
     cur = conn.cursor()
-
     # Add score column if missing
     cur.execute("PRAGMA table_info(cipher_submissions)")
     cols = {row["name"] for row in cur.fetchall()}
     if "score" not in cols:
         cur.execute("ALTER TABLE cipher_submissions ADD COLUMN score INTEGER DEFAULT 0")
-
     conn.commit()
     conn.close()
-
-
 
 def ensure_admin_flag():
     if not ADMIN_EMAIL:
@@ -131,16 +179,13 @@ def ensure_admin_flag():
     conn.commit()
     conn.close()
 
-
 init_db()
 migrate_db()
 ensure_admin_flag()
 
-
 # ----- Utility -----
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 def current_user():
     if "user_id" in session:
@@ -154,12 +199,10 @@ def current_user():
         return dict(row) if row else None
     return None
 
-
 def is_admin(user):
     if not user:
         return False
     return (user.get("is_admin") == 1) or (user.get("email", "").lower() == ADMIN_EMAIL.lower())
-
 
 def fetch_post(post_id):
     conn = get_db()
@@ -173,7 +216,6 @@ def fetch_post(post_id):
     conn.close()
     return post
 
-
 def delete_image_file(filename):
     if not filename:
         return
@@ -183,7 +225,6 @@ def delete_image_file(filename):
             os.remove(path)
     except Exception:
         pass
-
 
 def get_recent_posts(limit=6):
     conn = get_db()
@@ -198,7 +239,6 @@ def get_recent_posts(limit=6):
     conn.close()
     return [dict(r) for r in rows]
 
-
 # ------------------- HOME -------------------
 @app.route("/", methods=["GET"])
 def index():
@@ -208,7 +248,7 @@ def index():
 
 app.add_url_rule("/", endpoint="home", view_func=index)
 
-
+# ------------------- BREAKER -------------------
 # ------------------- BREAKER -------------------
 @app.route("/breaker", methods=["GET", "POST"])
 def breaker():
@@ -227,42 +267,75 @@ def breaker():
                     if ciph and plain:
                         fixed_map[ciph.strip().upper()] = plain.strip().upper()
 
-        # Determine which cipher to use
-        if cipher_type == "caesar":
-            key, plaintext = caesar_break(text)
-        elif cipher_type == "vigenere":
-            key, plaintext = vigenere_break(text)
-        elif cipher_type == "permutation":
-            key, plaintext = permutation_break(text)
-        elif cipher_type == "columnar":
-            key, plaintext = columnar_break(text)
-        elif cipher_type == "affine":
-            key, plaintext = affine_break(text)
-        elif cipher_type == "amsco":
-            key, plaintext = amsco_break(text)
-        elif cipher_type == "railfence":
-            key, plaintext = railfence_break(text)
-        elif cipher_type == "polybius":
-            key, plaintext = substitution_break(
-                polybius_standardize(text),
-                max_restarts=16, sa_steps=6000, seed=42,
-                time_limit_seconds=25, threads=None,
-                fixed=fixed_map, verbose=True
-            )
-        elif cipher_type == "substitution":
-            key, plaintext = substitution_break(
-                text,
-                max_restarts=24, sa_steps=6000, seed=42,
-                time_limit_seconds=25, threads=None,
-                fixed=fixed_map, verbose=True
-            )
-        else:
-            key, plaintext = None, text
+        
+        key, plaintext, detected_cipher = None, text, cipher_type
 
-        return jsonify({"key": key, "text": plaintext})
+        try:
+            # ======================
+            # Main breaker switch
+            # ======================
+            if cipher_type == "caesar":
+                key, plaintext = caesar_break(text)
+            elif cipher_type == "vigenere":
+                key, plaintext = vigenere_break(text)
+            elif cipher_type == "affine":
+                key, plaintext = affine_break(text)
+            elif cipher_type == "amsco":
+                key, plaintext = amsco_break(text)
+            elif cipher_type == "railfence":
+                key, plaintext = railfence_break(text)
+            elif cipher_type == "columnar":
+                key, plaintext = columnar_break(text)
+            elif cipher_type == "permutation":
+                key, plaintext = permutation_break(text)
+            elif cipher_type == "polybius":
+                key, plaintext = substitution_break(
+                    polybius_standardize(text),
+                    max_restarts=16, sa_steps=6000, seed=42,
+                    time_limit_seconds=25, threads=None,
+                    fixed=fixed_map, verbose=True
+                )
+            elif cipher_type == "substitution":
+                key, plaintext = substitution_break(
+                    text,
+                    max_restarts=24, sa_steps=6000, seed=42,
+                    time_limit_seconds=25, threads=None,
+                    fixed=fixed_map, verbose=True
+                )
 
+            # ===== Non-key ciphers =====
+            elif cipher_type == "atbash":
+                key, plaintext = atbash_break(text)
+            elif cipher_type == "base64":
+                key, plaintext = base64_break(text)
+            elif cipher_type == "hex":
+                key, plaintext = hex_break(text)
+            elif cipher_type == "binary":
+                key, plaintext = binary_break(text)
+            elif cipher_type == "baconian":
+                key, plaintext = baconian_break(text)
+
+            # ===== AUTO-DETECT =====
+            elif cipher_type == "auto":
+                result = auto_break(text)
+                detected_cipher = result.get("cipher", "Unknown")
+                key = result.get("key")
+                plaintext = result.get("plaintext")
+
+            else:
+                key, plaintext = None, "Unsupported cipher type."
+
+        except Exception as e:
+            key, plaintext, detected_cipher = None, f"Error breaking cipher: {e}", "Error"
+
+        return jsonify({
+            "cipher": detected_cipher,
+            "key": key,
+            "text": plaintext
+        })
+
+    # GET request → render template
     return render_template("breaker.html", user=current_user())
-
 
 # ------------------- Tools Page -------------------
 @app.route("/tools", methods=["GET"])
@@ -270,7 +343,6 @@ def tools_page():
     return render_template("tools.html", user=current_user())
 
 app.add_url_rule("/tools", endpoint="tools", view_func=tools_page)
-
 
 # ------------------- Tools API -------------------
 @app.route("/tools/run", methods=["POST"])
@@ -320,7 +392,6 @@ def tools_run():
 
     return jsonify({"text": result_text})
 
-
 # ------------------- Info Page -------------------
 @app.route("/info", methods=["GET"])
 def info_page():
@@ -328,11 +399,14 @@ def info_page():
 
 app.add_url_rule("/info", endpoint="info", view_func=info_page)
 
-
 # ------------------- Posts -------------------
 @app.route("/posts", methods=["GET"])
 def posts_list():
     user = current_user()
+    page = max(int(request.args.get("page", 1)), 1)
+    per_page = 10
+    offset = (page - 1) * per_page
+
     conn = get_db()
     cur = conn.execute("""
         SELECT posts.id,
@@ -345,13 +419,26 @@ def posts_list():
         FROM posts
         JOIN users ON posts.user_id = users.id
         ORDER BY posts.created_at DESC
-    """)
+        LIMIT ? OFFSET ?
+    """, (per_page, offset))
     posts = cur.fetchall()
+
+    cur = conn.execute("SELECT COUNT(*) AS total FROM posts")
+    total_posts = cur.fetchone()["total"]
     conn.close()
-    return render_template("posts.html", posts=posts, user=user, user_is_admin=is_admin(user))
+
+    total_pages = (total_posts + per_page - 1) // per_page
+
+    return render_template(
+        "posts.html",
+        posts=posts,
+        user=user,
+        user_is_admin=is_admin(user),
+        page=page,
+        total_pages=total_pages
+    )
 
 app.add_url_rule("/posts", endpoint="posts", view_func=posts_list)
-
 
 @app.route("/posts/new", methods=["GET", "POST"], endpoint="create_post")
 def posts_new():
@@ -367,12 +454,12 @@ def posts_new():
         image_filename = None
 
         if not title or not body:
-            flash("Title and body are required.", "danger")
+            flash("Title and body are required.", "error")
             return redirect(url_for("create_post"))
 
         if image and image.filename:
             if not allowed_file(image.filename):
-                flash("Unsupported image type.", "danger")
+                flash("Unsupported image type.", "error")
                 return redirect(url_for("create_post"))
             filename = secure_filename(f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{image.filename}")
             image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
@@ -385,13 +472,13 @@ def posts_new():
         )
         conn.commit()
         conn.close()
-        flash("Post created.", "success")
+        flash("Post created successfully.", "success")
         return redirect(url_for("posts_list"))
 
     return render_template("new_post.html", user=user)
 
+# Preserve your alias endpoint (as in your original file)
 app.add_url_rule("/posts/new", endpoint="posts_new", view_func=posts_new)
-
 
 @app.route("/posts/<int:post_id>", methods=["GET"], endpoint="post_detail")
 def post_detail(post_id):
@@ -399,7 +486,6 @@ def post_detail(post_id):
     if not post:
         abort(404)
     return render_template("post_detail.html", post=post, user=current_user())
-
 
 @app.route("/posts/<int:post_id>/edit", methods=["GET", "POST"])
 def posts_edit(post_id):
@@ -412,7 +498,7 @@ def posts_edit(post_id):
     if not post:
         abort(404)
     if (post["user_id"] != user["id"]) and (not is_admin(user)):
-        flash("You can only edit your own post.", "danger")
+        flash("You can only edit your own post.", "error")
         return redirect(url_for("posts_list"))
 
     if request.method == "POST":
@@ -424,7 +510,7 @@ def posts_edit(post_id):
         image_filename = post["image_filename"]
 
         if not title or not body:
-            flash("Title and body are required.", "danger")
+            flash("Title and body are required.", "error")
             return redirect(url_for("posts_edit", post_id=post_id))
 
         if delete_image and image_filename:
@@ -433,7 +519,7 @@ def posts_edit(post_id):
 
         if new_image and new_image.filename:
             if not allowed_file(new_image.filename):
-                flash("Unsupported image type.", "danger")
+                flash("Unsupported image type.", "error")
                 return redirect(url_for("posts_edit", post_id=post_id))
             if image_filename:
                 delete_image_file(image_filename)
@@ -448,11 +534,10 @@ def posts_edit(post_id):
         )
         conn.commit()
         conn.close()
-        flash("Post updated.", "success")
+        flash("Post updated successfully.", "success")
         return redirect(url_for("posts_list"))
 
     return render_template("edit_post.html", post=post, user=user, user_is_admin=is_admin(user))
-
 
 @app.route("/posts/<int:post_id>/delete", methods=["POST"])
 def posts_delete(post_id):
@@ -465,7 +550,7 @@ def posts_delete(post_id):
     if not post:
         abort(404)
     if (post["user_id"] != user["id"]) and (not is_admin(user)):
-        flash("You can only delete your own post.", "danger")
+        flash("You can only delete your own post.", "error")
         return redirect(url_for("posts_list"))
 
     conn = get_db()
@@ -478,7 +563,6 @@ def posts_delete(post_id):
     conn.close()
     flash("Post deleted.", "info")
     return redirect(url_for("posts_list"))
-
 
 # ------------------- Comments (AJAX) -------------------
 @app.route("/comments/list", methods=["GET"])
@@ -515,7 +599,6 @@ def comments_list():
         })
 
     return jsonify({"ok": True, "count": len(comments), "comments": comments})
-
 
 @app.route("/comments/add", methods=["POST"])
 def comments_add():
@@ -565,7 +648,6 @@ def comments_add():
     }
     return jsonify({"ok": True, "comment": comment})
 
-
 @app.route("/comments/<int:comment_id>/delete", methods=["POST"])
 def comments_delete(comment_id):
     user = current_user()
@@ -588,12 +670,10 @@ def comments_delete(comment_id):
     conn.close()
     return jsonify({"ok": True})
 
-
 # Serve uploaded images
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
 
 # ------------------- Accounts -------------------
 @app.route("/register", methods=["GET", "POST"])
@@ -631,7 +711,6 @@ def register():
 
     return render_template('register.html')
 
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -650,11 +729,11 @@ def login():
         conn.close()
 
         if not user:
-            flash("No account found with that username or email.", "danger")
+            flash("No account found with that username or email.", "error")
             return redirect(url_for("login"))
 
         if not check_password_hash(user["password_hash"], password):
-            flash("Incorrect password.", "danger")
+            flash("Incorrect password.", "error")
             return redirect(url_for("login"))
 
         session["user_id"] = user["id"]
@@ -663,18 +742,13 @@ def login():
 
     return render_template("login.html", user=current_user())
 
-from itsdangerous import URLSafeTimedSerializer
-from flask_mail import Mail, Message
-
-# Token generator for password resets
-serializer = URLSafeTimedSerializer(app.secret_key)
-
+# ------------------- Forgot/Reset Password -------------------
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         email = (request.form.get("email") or "").strip().lower()
         if not email:
-            flash("Please enter your email address.", "danger")
+            flash("Please enter your email address.", "warning")
             return render_template("forgot_password.html", user=current_user())
 
         conn = get_db()
@@ -683,7 +757,7 @@ def forgot_password():
         conn.close()
 
         if not user:
-            flash("No account found with that email.", "danger")
+            flash("No account found with that email.", "error")
             return render_template("forgot_password.html", user=current_user())
 
         # Generate token (valid 1 hour)
@@ -692,44 +766,43 @@ def forgot_password():
 
         # --- Send Email ---
         msg = Message(
-            subject="CryptiQ Password Reset",
+            subject="Password Reset — The Cipher Lab",
             recipients=[email],
             html=f"""
             <h2 style="color:#00ffd5;font-weight:700;">Password Reset Requested</h2>
             <p>Hello,</p>
-            <p>We received a request to reset your password for your CryptiQ account.</p>
+            <p>We received a request to reset your password for your Cipher Lab account.</p>
             <p>Click the link below to reset it:</p>
             <p><a href="{reset_link}" style="color:#00ffd5;">Reset your password</a></p>
             <p>This link will expire in 1 hour.</p>
-            <br><p style="color:#888;">– The CryptiQ Team</p>
+            <br><p style="color:#888;">– The Cipher Lab Team</p>
             """
         )
         try:
             mail.send(msg)
             flash("✅ Password reset email sent! Check your inbox for instructions.", "success")
         except Exception as e:
-            flash("⚠️ Error sending email. Please try again later.", "danger")
+            flash("⚠️ Error sending email. Please try again later.", "error")
             print("MAIL ERROR:", e)
 
-        # Instead of redirecting — re-render same page with message
+        # Re-render same page with message
         return render_template("forgot_password.html", user=current_user())
 
     return render_template("forgot_password.html", user=current_user())
-
 
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
     try:
         email = serializer.loads(token, salt="password-reset", max_age=3600)
     except Exception:
-        flash("Invalid or expired reset link.", "danger")
+        flash("Invalid or expired reset link.", "error")
         return redirect(url_for("forgot_password"))
 
     if request.method == "POST":
         new_pass = request.form.get("password", "")
         confirm = request.form.get("confirm", "")
         if new_pass != confirm:
-            flash("Passwords do not match.", "danger")
+            flash("Passwords do not match.", "error")
             return redirect(url_for("reset_password", token=token))
 
         hashed = generate_password_hash(new_pass)
@@ -738,18 +811,16 @@ def reset_password(token):
         conn.commit()
         conn.close()
 
-        flash("Password updated successfully! You can now log in.", "success")
+        flash("🎉 Your password has been reset successfully! You can now log in.", "success")
         return redirect(url_for("login"))
 
     return render_template("reset_password.html", email=email)
 
-
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
-    flash("Logged out.", "info")
+    flash("Logged out successfully.", "info")
     return redirect(url_for("index"))
-
 
 @app.route("/account")
 def account():
@@ -758,23 +829,70 @@ def account():
         flash("Please log in to view your account.", "warning")
         return redirect(url_for("login"))
 
+    # User info + posts
     conn = get_db()
+    cur = conn.execute("SELECT username, email, created_at FROM users WHERE id=?", (user["id"],))
+    user_info = cur.fetchone()
+
     cur = conn.execute("""
         SELECT id, title, body, image_filename, created_at
         FROM posts
-        WHERE user_id = ?
+        WHERE user_id=?
         ORDER BY datetime(created_at) DESC
     """, (user["id"],))
     posts = cur.fetchall()
+
+    # Leaderboard data
+    lb_data = conn.execute("""
+        SELECT username,
+               COUNT(DISTINCT cipher_week) AS weeks_played,
+               SUM(score) AS total_score
+        FROM cipher_submissions
+        WHERE username IS NOT NULL
+        GROUP BY username
+        ORDER BY total_score DESC
+    """).fetchall()
+
+    leaderboard_data = None
+    for i, row in enumerate(lb_data, start=1):
+        if row["username"].lower() == user_info["username"].lower():
+            leaderboard_data = {
+                "rank": i,
+                "weeks_played": row["weeks_played"],
+                "total_score": row["total_score"]
+            }
+            break
+
     conn.close()
+    return render_template("account.html", user=user, user_info=user_info, posts=posts, leaderboard_data=leaderboard_data)
+
+@app.route("/api/leaderboard_data")
+def leaderboard_data_api():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Not logged in"}), 403
 
     conn = get_db()
-    cur = conn.execute("SELECT username, email, created_at FROM users WHERE id = ?", (user["id"],))
-    user_info = cur.fetchone()
+    lb_data = conn.execute("""
+        SELECT username,
+               COUNT(DISTINCT cipher_week) AS weeks_played,
+               SUM(score) AS total_score
+        FROM cipher_submissions
+        WHERE username IS NOT NULL
+        GROUP BY username
+        ORDER BY total_score DESC
+    """).fetchall()
     conn.close()
 
-    return render_template("account.html", user=user, user_info=user_info, posts=posts)
+    for i, row in enumerate(lb_data, start=1):
+        if row["username"].lower() == user["username"].lower():
+            return jsonify({
+                "rank": i,
+                "total_score": row["total_score"],
+                "weeks_played": row["weeks_played"]
+            })
 
+    return jsonify({"rank": None, "total_score": 0, "weeks_played": 0})
 
 # ===== Weekly Cipher: DB helpers and routes =====
 def init_weekly_tables():
@@ -827,21 +945,20 @@ def get_current_weekly():
 init_weekly_tables()
 migrate_weekly_tables()
 
-
 @app.before_request
 def clear_flash_on_login():
     """
-    Prevent old flash messages (like 'Post created') from stacking
-    when visiting the login page again.
+    Prevent old flashes on login only if no redirect brought new ones.
     """
     if request.endpoint == "login" and request.method == "GET":
-        session.pop("_flashes", None)
+        # Only clear old flashes if there aren't any active ones
+        if "_flashes" not in session:
+            session.pop("_flashes", None)
 
 
 @app.route("/weekly")
 def weekly_page():
     user = current_user()  # ✅ Fetch user properly from DB
-
     user_is_admin = is_admin(user)  # ✅ Use your helper function
 
     conn = get_db()
@@ -856,9 +973,6 @@ def weekly_page():
         user=user,
         user_is_admin=user_is_admin
     )
-
-import re
-
 @app.route("/weekly/submit", methods=["POST"])
 def weekly_submit():
     data = request.get_json(silent=True) or {}
@@ -880,6 +994,7 @@ def weekly_submit():
     # Determine correctness
     correct = 1 if answer_clean == solution_clean else 0
     score = 0
+    solve_time_seconds = None
 
     if correct:
         # Parse when puzzle was posted
@@ -887,6 +1002,9 @@ def weekly_submit():
             posted_time = datetime.fromisoformat(wc["posted_at"])
         except Exception:
             posted_time = now
+
+        # Calculate elapsed solve time (seconds from posting to correct answer)
+        solve_time_seconds = int((now - posted_time).total_seconds())
 
         total_window = 7 * 24 * 3600  # 7 days in seconds
         elapsed = (now - posted_time).total_seconds()
@@ -924,8 +1042,11 @@ def weekly_submit():
     # Record submission
     conn = get_db()
     conn.execute("""
-        INSERT INTO cipher_submissions (user_id, username, cipher_week, answer, is_correct, score, submitted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO cipher_submissions (
+            user_id, username, cipher_week, answer, is_correct, score, 
+            submitted_at, created_at, season, solve_time_seconds
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?)
     """, (
         (user["id"] if user else None),
         (user["username"] if user else None),
@@ -933,7 +1054,9 @@ def weekly_submit():
         answer,
         correct,
         score,
-        now.isoformat()
+        now.isoformat(),
+        get_current_season(),     # <-- helper to define current leaderboard season
+        solve_time_seconds
     ))
     conn.commit()
     conn.close()
@@ -944,7 +1067,7 @@ def weekly_submit():
 def admin_weekly():
     user = current_user()
     if not is_admin(user):
-        flash("Admin access required.", "danger")
+        flash("Admin access required.", "error")
         return redirect(url_for("index"))
 
     if request.method == "POST":
@@ -956,7 +1079,7 @@ def admin_weekly():
         hint = (request.form.get("hint") or "").strip()
 
         if not ciphertext or not solution:
-            flash("Ciphertext and solution are required.", "danger")
+            flash("Ciphertext and solution are required.", "error")
             return redirect(url_for("admin_weekly"))
 
         conn = get_db()
@@ -976,28 +1099,184 @@ def admin_weekly():
         conn.commit()
         conn.close()
 
-        flash("Weekly cipher updated.", "success")
+        flash("Weekly cipher updated successfully.", "success")
         return redirect(url_for("weekly_page"))
 
     wc = get_current_weekly()
     return render_template("admin_weekly.html", user=user, wc=wc)
 
+from flask import render_template, session
+from datetime import datetime
+
+def get_current_season():
+    """Each season lasts 2 months, starting January."""
+    now = datetime.utcnow()
+    return ((now.month - 1) // 2) + 1 + (6 * (now.year - 2025))
 
 @app.route("/leaderboard")
 def leaderboard():
-    user = current_user()
+    user = session.get("user")  # however you store logged-in user
+    username = user["username"] if user else None
+
     conn = get_db()
-    cur = conn.execute("""
-        SELECT username, SUM(score) AS total_score, COUNT(DISTINCT cipher_week) AS weeks_played
+
+    # === 1️⃣ All-Time Leaderboard ===
+    all_time = conn.execute("""
+        SELECT username,
+               SUM(score) AS total_score,
+               COUNT(DISTINCT cipher_week) AS weeks_played
         FROM cipher_submissions
-        WHERE is_correct = 1
         GROUP BY username
         ORDER BY total_score DESC
-    """)
-    rows = cur.fetchall()
+        LIMIT 50
+    """).fetchall()
+
+    # === 2️⃣ Current Season Leaderboard ===
+    current_season = get_current_season()
+    seasonal = conn.execute("""
+        SELECT username,
+               SUM(score) AS total_score,
+               COUNT(DISTINCT cipher_week) AS weeks_played
+        FROM cipher_submissions
+        WHERE season=?
+        GROUP BY username
+        ORDER BY total_score DESC
+        LIMIT 50
+    """, (current_season,)).fetchall()
+
+    # === 3️⃣ Weekly Fastest Solvers ===
+    weekly = conn.execute("""
+        SELECT username,
+               MIN(solve_time_seconds) AS best_time,
+               MAX(score) AS score
+        FROM cipher_submissions
+        WHERE DATE(created_at) >= DATE('now', '-7 days')
+        GROUP BY username
+        ORDER BY best_time ASC
+        LIMIT 50
+    """).fetchall()
+
     conn.close()
 
-    return render_template("leaderboard.html", user=user, leaderboard=rows)
+    return render_template(
+        "leaderboard.html",
+        all_time=all_time,
+        seasonal=seasonal,
+        weekly=weekly,
+        current_season=current_season,
+        current_user=username
+    )
+@app.route("/encode-decode")
+def encode_decode():
+    user = current_user()
+    return render_template("encode_decode.html", user=user)
+
+# ==============================
+#  ENCODER / DECODER API ROUTES
+# ==============================
+from cipher_tools import encoders  # must resolve to your encoders.py
+
+@app.route("/api/encode", methods=["POST"])
+def api_encode():
+    data = request.get_json(force=True) or {}
+    text = data.get("text", "")
+    cipher = (data.get("cipher") or "").strip().lower()
+    key = (data.get("key") or "").strip()
+
+    try:
+        result = perform_cipher(cipher, text, key, mode="encode")
+        return jsonify({"result": result})
+    except Exception as e:
+        print("Encode error:", e)
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/decode", methods=["POST"])
+def api_decode():
+    data = request.get_json(force=True) or {}
+    text = data.get("text", "")
+    cipher = (data.get("cipher") or "").strip().lower()
+    key = (data.get("key") or "").strip()
+
+    try:
+        result = perform_cipher(cipher, text, key, mode="decode")
+        return jsonify({"result": result})
+    except Exception as e:
+        print("Decode error:", e)
+        return jsonify({"error": str(e)}), 400
+
+
+# ==============================
+#  Helper Function
+# ==============================
+def perform_cipher(cipher, text, key, mode="encode"):
+    """
+    Centralized encoder/decoder. Soft-fails (returns a readable warning) rather than crashing.
+    Defaults are chosen to match the UI (e.g., Caesar shift 7).
+    """
+    fn_map = {
+        "caesar":     (encoders.caesar_encode,     encoders.caesar_decode),
+        "vigenere":   (encoders.vigenere_encode,   encoders.vigenere_decode),
+        "affine":     (encoders.affine_encode,     encoders.affine_decode),
+        "atbash":     (encoders.atbash_encode,     encoders.atbash_decode),
+        "railfence":  (encoders.railfence_encode,  encoders.railfence_decode),
+        "columnar":   (encoders.columnar_encode,   encoders.columnar_decode),
+        "polybius":   (encoders.polybius_encode,   encoders.polybius_decode),
+        "base64":     (encoders.base64_encode,     encoders.base64_decode),
+        "hex":        (encoders.hex_encode,        encoders.hex_decode),
+        "binary":     (encoders.binary_encode,     encoders.binary_decode),
+        "permutation":(encoders.permutation_encode,encoders.permutation_decode),
+        "amsco":      (encoders.amsco_encode,      encoders.amsco_decode),
+        "baconian":   (encoders.baconian_encode,   encoders.baconian_decode),
+    }
+
+    if cipher not in fn_map:
+        return f"⚠️ Unsupported cipher: {cipher}"
+
+    encode_func, decode_func = fn_map[cipher]
+    func = encode_func if mode == "encode" else decode_func
+
+    # small helpers
+    def to_int(def_val):
+        try:
+            return int(key)
+        except Exception:
+            return def_val
+
+    try:
+        # Caesar: default shift = 7 (UI shows a→h)
+        if cipher == "caesar":
+            shift = to_int(7)
+            return func(text, shift)
+
+        # Affine: expects "a,b" — default (5,8)
+        if cipher == "affine":
+            a, b = 5, 8
+            if key and "," in key:
+                parts = [p.strip() for p in key.split(",", 1)]
+                if len(parts) == 2:
+                    try:
+                        a, b = int(parts[0]), int(parts[1])
+                    except Exception:
+                        pass
+            return func(text, a, b)
+
+        # Rail Fence: default 3 rails
+        if cipher == "railfence":
+            rails = to_int(3)
+            return func(text, rails)
+
+        # Keyed ciphers that truly need a key
+        if cipher in ("vigenere", "columnar", "permutation", "amsco"):
+            if not key:
+                return "⚠️ Key required for this cipher."
+            return func(text, key)
+
+        # Keyless ciphers
+        return func(text)
+
+    except Exception as e:
+        return f"⚠️ Error: {str(e)}"
 
 
 # ------------------- Run -------------------

@@ -1,3 +1,23 @@
+<!-- === FLASH MESSAGE BAR === -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-bar flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    <script>
+      setTimeout(() => {
+        document.querySelectorAll('.flash-bar').forEach(el => {
+          el.classList.add('hide');
+          setTimeout(() => el.remove(), 500);
+        });
+      }, 4000);
+    </script>
+  {% endif %}
+{% endwith %}
+
+<!-- === NAVBAR === -->
 <nav class="navbar">
   <div class="nav-left">
     <a href="{{ url_for('index') }}" class="nav-logo">The Cipher Lab</a>
@@ -8,33 +28,23 @@
     <span></span><span></span><span></span>
   </button>
 
-  {% if request.endpoint not in ['login', 'register'] %}
-    {% if user %}
-      <!-- logged-in status -->
-    {% else %}
-      <!-- logged-out status -->
-    {% endif %}
-  {% endif %}
-
   <ul class="nav-items" id="nav-menu">
-
     {% if user %}
-    <!-- Account at the top -->
-    <li class="nav-account-mobile">
-      <div class="profile-dropdown mobile">
-        <button class="profile-btn" id="profile-btn-mobile">
-          <div class="avatar">{{ user['username'][0].upper() }}</div>
-        </button>
-        <div class="dropdown-menu mobile-menu" id="profile-menu-mobile">
-          <p class="dropdown-username">{{ user['username'] }}</p>
-          <a href="{{ url_for('account') }}">Account</a>
-          <a href="{{ url_for('posts_new') }}">New Post</a>
-          <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+      <li class="nav-account-mobile">
+        <div class="profile-dropdown mobile">
+          <button class="profile-btn" id="profile-btn-mobile">
+            <div class="avatar">{{ user['username'][0].upper() }}</div>
+          </button>
+          <div class="dropdown-menu mobile-menu" id="profile-menu-mobile">
+            <p class="dropdown-username">{{ user['username'] }}</p>
+            <a href="{{ url_for('account') }}">Account</a>
+            <a href="{{ url_for('posts_new') }}">New Post</a>
+            <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+          </div>
         </div>
-      </div>
-    </li>
+      </li>
     {% endif %}
-
+    <li><a href="{{ url_for('encode_decode') }}">Encode/Decode</a></li>
     <li><a href="{{ url_for('breaker') }}">Cipher Breaker</a></li>
     <li><a href="{{ url_for('tools_page') }}">Tools</a></li>
     <li><a href="{{ url_for('info_page') }}">Info</a></li>
@@ -47,7 +57,6 @@
       <li><a href="{{ url_for('register') }}">Register</a></li>
     {% endif %}
 
-    <!-- Theme toggle inline -->
     <li class="nav-extra-mobile">
       <button id="theme-toggle-mobile" aria-label="Toggle theme" title="Toggle theme">
         <svg id="theme-icon-mobile" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
@@ -58,7 +67,7 @@
     </li>
   </ul>
 
-  <!-- Desktop right side -->
+  <!-- Right side desktop -->
   <div class="nav-right">
     <button id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
       <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
@@ -83,12 +92,14 @@
   </div>
 </nav>
 
+<!-- === STYLES === -->
 <style>
 /* === NAVBAR === */
 .navbar {
   position: fixed;
   top: 0; left: 0;
-  width: 100%; height: 68px;
+  width: 100%;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -132,6 +143,7 @@ body { padding-top: 80px; }
 }
 .nav-items li a:hover { color: var(--accent); }
 
+/* Right side */
 .nav-right {
   display: flex;
   align-items: center;
@@ -193,11 +205,7 @@ body { padding-top: 80px; }
 }
 
 /* Dropdown menu */
-.profile-dropdown {
-  position: relative;
-}
-
-/* === Dropdown Menu Modern Look === */
+.profile-dropdown { position: relative; }
 .dropdown-menu {
   position: absolute;
   right: 0;
@@ -207,7 +215,6 @@ body { padding-top: 80px; }
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,255,213,0.05);
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   padding: 10px 0;
   min-width: 200px;
   z-index: 1001;
@@ -218,14 +225,11 @@ body { padding-top: 80px; }
   pointer-events: none;
   transition: opacity .25s ease, transform .25s ease;
 }
-
 .profile-dropdown.open .dropdown-menu {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: all;
 }
-
-/* Username Header — tighter, elegant */
 .dropdown-username {
   font-weight: 700;
   color: var(--accent);
@@ -235,12 +239,7 @@ body { padding-top: 80px; }
   padding: 8px 16px 10px;
   font-size: 0.95rem;
   text-align: left;
-  letter-spacing: .02em;
-  border-top-left-radius: 14px;
-  border-top-right-radius: 14px;
 }
-
-/* Links */
 .dropdown-menu a {
   color: var(--text);
   text-decoration: none;
@@ -249,15 +248,12 @@ body { padding-top: 80px; }
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 .dropdown-menu a:hover {
   background: var(--accent);
   color: #0f0f0f;
-  transform: translateX(3px);
 }
-
-/* Logout — distinct visual cue */
 .logout-link {
   color: #ff6b6b !important;
   font-weight: 600;
@@ -265,29 +261,8 @@ body { padding-top: 80px; }
   margin-top: 6px;
   padding-top: 10px;
 }
-.logout-link:hover {
-  background: #ff6b6b !important;
-  color: #0f0f0f !important;
-  transform: none;
-}
 
-/* Light mode refinement */
-[data-theme="light"] .dropdown-menu {
-  background: color-mix(in srgb, #ffffff 92%, #00ffd5 4%);
-  border: 1px solid rgba(0,0,0,0.08);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-[data-theme="light"] .dropdown-username {
-  color: #00bfae;
-  background: linear-gradient(90deg, rgba(0,255,213,0.08), transparent);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-}
-[data-theme="light"] .dropdown-menu a:hover {
-  background: #00e6c2;
-  color: #0f0f0f;
-}
-
-/* Hamburger + mobile */
+/* Mobile */
 .hamburger {
   display: none;
   position: absolute;
@@ -315,7 +290,6 @@ body { padding-top: 80px; }
 .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 .nav-extra-mobile, .nav-account-mobile { display: none; }
-
 @media (max-width: 900px) {
   .hamburger { display: flex; }
   .nav-right { display: none; }
@@ -333,31 +307,17 @@ body { padding-top: 80px; }
     height: calc(100vh - 60px);
     padding: 20px;
     gap: 14px;
-    box-shadow: -6px 0 25px rgba(0,0,0,0.4);
     transition: right 0.35s cubic-bezier(0.25, 1, 0.3, 1);
   }
   .nav-items.open { right: 0; }
-
-  .nav-account-mobile { display: block; margin-bottom: 4px; }
+  .nav-account-mobile { display: block; }
   .nav-extra-mobile { display: block; }
-
-  .mobile-menu {
-    position: static;
-    display: none;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 6px 0;
-  }
-  .profile-dropdown.mobile.open .mobile-menu {
-    display: flex;
-    flex-direction: column;
-  }
 }
 </style>
 
+<!-- === SCRIPT === -->
 <script>
-(function () {
+(function() {
   const burger = document.getElementById("hamburger");
   const menu = document.getElementById("nav-menu");
   const btn = document.getElementById("theme-toggle");
@@ -369,7 +329,7 @@ body { padding-top: 80px; }
   const root = document.documentElement;
   const SUN = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
   const MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>';
-  const STORAGE_KEY = "cryptiq.theme";
+  const STORAGE_KEY = "cipherlab.theme";
 
   function applyTheme(theme) {
     const isLight = theme === "light";
@@ -410,8 +370,7 @@ body { padding-top: 80px; }
     }
   });
 
-  const dropdowns = document.querySelectorAll(".profile-dropdown");
-  dropdowns.forEach(dd => {
+  document.querySelectorAll(".profile-dropdown").forEach(dd => {
     const btn = dd.querySelector(".profile-btn");
     btn?.addEventListener("click", e => {
       e.stopPropagation();

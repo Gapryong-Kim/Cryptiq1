@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Cipher Lab — Encoder / Decoder</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg, #0a0a0a);
+      color: var(--text, #f0f0f0);
+      font-family: "Inter", "Segoe UI", sans-serif;
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    main {
+      min-height: calc(100dvh - 1dvh);
+      display: flex;    
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 16px 40px;
+    }
+
+    .ed-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 95vw;
+      max-width: 1500px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line, #2a2a2a);
+    }
+
+    .ed-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent, #00ffd5);
+      box-shadow: 0 0 10px var(--accent-soft, #00ffd57c);
+    }
+
+    .ed-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .ed-body {
+      display: grid;
+      grid-template-columns: 1fr 0.5fr 1fr;
+      gap: 18px;
+      width: 95vw;
+      max-width: 1500px;
+      padding: 24px 0;
+      box-sizing: border-box;
+      transition: all 0.4s ease;
+    }
+
+    .decode-mode { grid-template-columns: 1fr 0.5fr 1fr; direction: rtl; }
+    .decode-mode .ed-panel, .decode-mode .ed-controls { direction: ltr; }
+
+    .ed-panel {
+      background: var(--panel-2, #151515);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      height: 60vh;
+      min-height: 360px;
+    }
+
+    .ed-panel h3 {
+      background: var(--panel, #1d1d1d);
+      color: var(--accent, #00ffd5);
+      font-size: 0.95rem;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line, #2a2a2a);
+      margin: 0;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    textarea {
+      flex: 1;
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--input-bg, #0e0e0e);
+      color: var(--text, #f0f0f0);
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      font-size: 15px;
+      line-height: 1.55;
+      border-radius: 0 0 10px 10px;
+    }
+
+    .ed-controls {
+      background: var(--panel-2, #151515);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 12px;
+      transition: transform 0.4s ease;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 10px 0;
+      border: 1px solid var(--line, #2a2a2a);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--accent, #00ffd5);
+      color: #0f0f0f;
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 8px var(--accent-soft, #00ffd57c);
+    }
+
+    select, input {
+      width: 100%;
+      background: var(--input-bg, #0e0e0e);
+      border: 1px solid var(--input-border, #343434);
+      border-radius: 8px;
+      color: var(--text, #f0f0f0);
+      padding: 10px 12px;
+      font-size: 15px;
+    }
+
+    .shift-display {
+      text-align: center;
+      color: var(--accent, #00ffd5);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      padding: 6px;
+      background: var(--input-bg, #0e0e0e);
+      border-radius: 6px;
+      min-height: 1.8em;
+    }
+
+    .polybius-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .polybius-grid input {
+      text-align: center;
+      background: var(--input-bg, #0e0e0e);
+      border: 1px solid var(--input-border, #343434);
+      color: var(--text, #f0f0f0);
+      font-family: 'JetBrains Mono', monospace;
+      border-radius: 6px;
+      font-size: 15px;
+      padding: 6px 0;
+    }
+
+    .polybius-grid input:focus {
+      border-color: var(--accent, #00ffd5);
+      outline: none;
+      background: var(--input-focus, #161616);
+    }
+
+    .breaker-link {
+      text-align: center;
+      margin-top: 12px;
+      color: var(--muted, #a0a0a0);
+      font-size: .9rem;
+    }
+
+    .breaker-link a {
+      color: var(--accent, #00ffd5);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .breaker-link a:hover { text-decoration: underline; }
+
+    @media (max-width: 980px) {
+      .ed-body { grid-template-columns: 1fr; direction: ltr !important; }
+      .ed-panel { height: 40vh; }
+      .ed-controls { order: -1; }
+      main { padding: 60px 10px 20px; }
+    }
+  </style>
+</head>
+
+<body>
+  {% include 'base_nav.html' %}
+  <main>
+    <div class="ed-header">
+      <span class="ed-dot"></span>
+      <h1 class="ed-title">Encoder / Decoder</h1>
+    </div>
+
+    <div id="bodyWrap" class="ed-body">
+      <div class="ed-panel" id="leftPanel">
+        <h3>Plaintext</h3>
+        <textarea id="leftBox" placeholder="Enter plaintext..."></textarea>
+      </div>
+
+      <div class="ed-controls">
+        <div class="mode-toggle">
+          <button id="encodeMode" class="mode-btn active">Encode</button>
+          <button id="decodeMode" class="mode-btn">Decode</button>
+        </div>
+
+        <div>
+          <label for="cipher-select">Cipher</label>
+          <select id="cipher-select">
+            <option value="caesar" selected>Caesar Cipher</option>
+            <option value="vigenere">Vigenère Cipher</option>
+            <option value="affine">Affine Cipher</option>
+            <option value="railfence">Rail Fence</option>
+            <option value="columnar">Columnar Transposition</option>
+            <option value="polybius">Polybius Square</option>
+            <option value="base64">Base64</option>
+            <option value="hex">Hexadecimal</option>
+            <option value="binary">Binary</option>
+            <option value="permutation">Permutation</option>
+            <option value="amsco">Amsco Cipher</option>
+            <option value="baconian">Baconian</option>
+            <option value="atbash">Atbash</option>
+          </select>
+        </div>
+
+        <div id="key-group">
+          <label for="cipher-key">Key</label>
+          <input id="cipher-key" type="text" value="7" placeholder="Enter key" />
+        </div>
+
+        <div id="polybius-grid-wrapper" style="display:none;">
+          <label>Polybius Square</label>
+          <div class="polybius-grid" id="polybius-grid"></div>
+        </div>
+
+        <div class="shift-display" id="shift-display"></div>
+      </div>
+
+      <div class="ed-panel" id="rightPanel">
+        <h3>Ciphertext</h3>
+        <textarea id="rightBox" placeholder="Enter ciphertext..."></textarea>
+      </div>
+    </div>
+
+    <p class="breaker-link">
+      Want to decode with no key? <a href="/breaker">Try our Cipher Breaker →</a>
+    </p>
+  </main>
+
+  <script>
+    const leftBox = document.getElementById("leftBox");
+    const rightBox = document.getElementById("rightBox");
+    const cipherSelect = document.getElementById("cipher-select");
+    const cipherKey = document.getElementById("cipher-key");
+    const shiftDisplay = document.getElementById("shift-display");
+    const encodeBtn = document.getElementById("encodeMode");
+    const decodeBtn = document.getElementById("decodeMode");
+    const bodyWrap = document.getElementById("bodyWrap");
+    const keyGroup = document.getElementById("key-group");
+    const polybiusGridWrapper = document.getElementById("polybius-grid-wrapper");
+    const polybiusGrid = document.getElementById("polybius-grid");
+
+    let debounce;
+
+    async function callAPI(endpoint, text, cipher, key) {
+      const res = await fetch(`/api/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, cipher, key })
+      });
+      const data = await res.json();
+      return data.result || "";
+    }
+
+    function schedule(fn) {
+      clearTimeout(debounce);
+      debounce = setTimeout(fn, 70);
+    }
+
+    async function encodeLeftToRight() {
+      const key = getCurrentKey();
+      const result = await callAPI("encode", leftBox.value, cipherSelect.value, key);
+      rightBox.value = result;
+    }
+
+    async function decodeRightToLeft() {
+      const key = getCurrentKey();
+      const result = await callAPI("decode", rightBox.value, cipherSelect.value, key);
+      leftBox.value = result;
+    }
+
+    function getCurrentKey() {
+      if (cipherSelect.value === "polybius") {
+        return Array.from(polybiusGrid.querySelectorAll("input"))
+          .map(i => i.value.trim().toUpperCase() || "?")
+          .join("");
+      }
+      return cipherKey.value;
+    }
+
+    leftBox.addEventListener("input", () => schedule(encodeLeftToRight));
+    rightBox.addEventListener("input", () => schedule(decodeRightToLeft));
+    cipherSelect.addEventListener("change", () => {
+      updateKeyInput();
+      schedule(encodeLeftToRight);
+    });
+    cipherKey.addEventListener("input", () => schedule(encodeLeftToRight));
+
+    function setMode(newMode) {
+      const isDecode = newMode === "decode";
+      encodeBtn.classList.toggle("active", !isDecode);
+      decodeBtn.classList.toggle("active", isDecode);
+      bodyWrap.classList.toggle("decode-mode", isDecode);
+      if (isDecode) rightBox.focus();
+      else leftBox.focus();
+    }
+
+    encodeBtn.onclick = () => setMode("encode");
+    decodeBtn.onclick = () => setMode("decode");
+
+    function generatePolybiusGrid() {
+      polybiusGrid.innerHTML = "";
+      const letters = "ABCDEFGHIKLMNOPQRSTUVWXYZ"; 
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement("input");
+        cell.maxLength = 1;
+        cell.value = letters[i];
+        polybiusGrid.appendChild(cell);
+      }
+    }
+
+    function updateKeyInput() {
+      const cipher = cipherSelect.value;
+      polybiusGridWrapper.style.display = cipher === "polybius" ? "block" : "none";
+      keyGroup.style.display = cipher === "polybius" ? "none" : "block";
+
+      if (cipher === "polybius") generatePolybiusGrid();
+      if (["base64", "hex", "binary", "atbash", "baconian"].includes(cipher)) keyGroup.style.display = "none";
+      if (cipher === "caesar") {
+        cipherKey.type = "number";
+        cipherKey.placeholder = "Enter shift";
+        shiftDisplay.style.display = "block";
+        updateShiftPreview();
+      } else {
+        shiftDisplay.textContent = "";
+      }
+    }
+
+    function updateShiftPreview() {
+      if (cipherSelect.value !== "caesar") return shiftDisplay.textContent = "";
+      const keyVal = parseInt(cipherKey.value);
+      if (!isNaN(keyVal)) {
+        const shift = ((keyVal % 26) + 26) % 26;
+        shiftDisplay.textContent = `a → ${String.fromCharCode(97 + shift)}`;
+      } else shiftDisplay.textContent = "";
+    }
+
+    cipherKey.addEventListener("input", updateShiftPreview);
+    cipherSelect.addEventListener("change", updateShiftPreview);
+
+    // 🧩 Playful random demo text (expanded pool)
+    const funSamples = [
+      "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
+      "This sentence knows it’s about to be encrypted and is very nervous.",
+      "My secret code is hidden in plain sight, but even I forgot the key.",
+      "Somewhere, a potato is learning Morse code faster than I can learn Python.",
+      "Warning: decoding this message may summon unintended consequences.",
+      "The cake is a cipher. You just haven’t decrypted it yet.",
+      "Behind every random string lies someone trying to be mysterious.",
+      "Sometimes I encrypt my thoughts just so I can feel like a secret agent.",
+      "I whispered my password to a pigeon. I regret everything.",
+      "My diary is written entirely in base64. Even I can’t read it anymore.",
+      "The vending machine only accepts encrypted coins.",
+      "Somewhere, a cat just brute-forced the Wi-Fi.",
+      "My coffee tastes like ciphertext and regret.",
+      "I accidentally encrypted my shopping list. Now I just buy random stuff.",
+      "Trust no one. Except maybe the hash function.",
+      "I lost my key… literally. It’s somewhere in the cipher.",
+      "The real ciphertext was the friends we made along the way.",
+      "I asked for a decryption key and got a therapy session instead.",
+      "The key was under the doormat the whole time."
+    ];
+    leftBox.value = funSamples[Math.floor(Math.random() * funSamples.length)];
+
+    window.addEventListener("DOMContentLoaded", () => {
+      updateKeyInput();
+      updateShiftPreview();
+      schedule(encodeLeftToRight);
+    });
+  </script>
+</body>
+</html>

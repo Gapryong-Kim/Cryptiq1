@@ -15,16 +15,18 @@
       transition: background 0.3s ease;
     }
 
-    /* Sidebar */
+    /* === Sidebar === */
     .account-sidebar {
       width: 260px;
-      background: var(--panel);
+      background: color-mix(in oklab, var(--panel) 92%, transparent);
       border-right: 1px solid var(--border);
       padding: 28px 22px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       box-shadow: 4px 0 24px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       transition: background 0.3s ease;
     }
 
@@ -51,7 +53,6 @@
     }
 
     .logout-btn {
-      display: block;
       text-decoration: none;
       text-align: center;
       background: #ff6b6b;
@@ -63,14 +64,14 @@
     }
     .logout-btn:hover { background: #ff4a4a; transform: scale(1.02); }
 
-    /* Content */
+    /* === Main Content === */
     .account-content {
       flex: 1;
       padding: 50px 70px;
     }
 
     .profile-card {
-      background: var(--panel);
+      background: color-mix(in oklab, var(--panel) 92%, transparent);
       border-radius: 14px;
       border: 1px solid var(--border);
       padding: 30px;
@@ -78,7 +79,9 @@
       align-items: center;
       gap: 24px;
       box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-      margin-bottom: 50px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .profile-avatar {
@@ -93,6 +96,7 @@
       font-size: 2rem;
       font-weight: 700;
       box-shadow: 0 0 18px rgba(0,255,213,0.2);
+      flex-shrink: 0;
     }
 
     .profile-info h1 {
@@ -106,18 +110,75 @@
       color: var(--subtext);
     }
 
+    /* === Leaderboard Summary === */
+    .leaderboard-card {
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 28px;
+      margin-bottom: 50px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .leaderboard-card h2 {
+      color: var(--accent);
+      margin: 0 0 8px;
+      font-size: 1.3rem;
+    }
+
+    .leaderboard-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .lb-item {
+      flex: 1 1 120px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: center;
+      transition: background 0.2s ease;
+    }
+
+    .lb-item:hover {
+      background: rgba(0,255,213,0.08);
+    }
+
+    .lb-label {
+      color: var(--subtext);
+      font-size: 0.85rem;
+      margin-bottom: 2px;
+    }
+
+    .lb-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* === Posts === */
     .post-grid {
       display: grid;
       gap: 20px;
     }
 
     .post-card {
-      background: var(--panel);
+      background: color-mix(in oklab, var(--panel) 92%, transparent);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 24px;
       transition: transform 0.2s ease;
       box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
 
     .post-card:hover { transform: translateY(-3px); }
@@ -154,11 +215,24 @@
       color: #0f0f0f;
     }
 
+    /* === Animations & Responsive === */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     @media (max-width: 900px) {
       main { flex-direction: column; }
-      .account-sidebar { width: 100%; flex-direction: row; align-items: center; }
+      .account-sidebar {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
       .account-content { padding: 30px 20px; }
       .profile-card { flex-direction: column; text-align: center; }
+      .leaderboard-stats { flex-direction: column; }
+      .lb-item { width: 100%; }
     }
   </style>
 </head>
@@ -172,6 +246,7 @@
         <h2>Account</h2>
         <div class="sidebar-links">
           <a href="#profile">Profile</a>
+          <a href="#leaderboard">Leaderboard</a>
           <a href="#posts">My Posts</a>
           <a href="#settings">Settings</a>
         </div>
@@ -180,6 +255,7 @@
     </aside>
 
     <section class="account-content">
+      <!-- === Profile === -->
       <div id="profile" class="profile-card">
         <div class="profile-avatar">{{ user_info['username'][0].upper() }}</div>
         <div class="profile-info">
@@ -189,6 +265,31 @@
         </div>
       </div>
 
+      <!-- === Leaderboard Section === -->
+      <div id="leaderboard" class="leaderboard-card">
+        <h2>Your Leaderboard Position</h2>
+
+        {% if leaderboard_data %}
+          <div class="leaderboard-stats">
+            <div class="lb-item">
+              <div class="lb-label">Rank</div>
+              <div class="lb-value">#{{ leaderboard_data['rank'] }}</div>
+            </div>
+            <div class="lb-item">
+              <div class="lb-label">Total Score</div>
+              <div class="lb-value">{{ leaderboard_data['total_score'] }}</div>
+            </div>
+            <div class="lb-item">
+              <div class="lb-label">Weeks Played</div>
+              <div class="lb-value">{{ leaderboard_data['weeks_played'] }}</div>
+            </div>
+          </div>
+        {% else %}
+          <p style="color:var(--subtext);">You haven't appeared on the leaderboard yet. Solve the Weekly Cipher to earn points!</p>
+        {% endif %}
+      </div>
+
+      <!-- === Posts === -->
       <div id="posts">
         <h2 style="color:var(--accent)">My Posts</h2>
         {% if posts %}
@@ -216,5 +317,42 @@
       </div>
     </section>
   </main>
+  <script>
+(async function updateLeaderboard() {
+  const rankEl = document.querySelector("#leaderboard .lb-value[data-field='rank']");
+  const scoreEl = document.querySelector("#leaderboard .lb-value[data-field='score']");
+  const weeksEl = document.querySelector("#leaderboard .lb-value[data-field='weeks']");
+
+  if (!rankEl || !scoreEl || !weeksEl) return;
+
+  async function fetchData() {
+    try {
+      const res = await fetch("/api/leaderboard_data");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.error) return;
+
+      // Animate value changes for smoothness
+      const fade = (el, val) => {
+        el.style.opacity = 0;
+        setTimeout(() => {
+          el.textContent = val ?? "—";
+          el.style.opacity = 1;
+        }, 200);
+      };
+
+      fade(rankEl, data.rank ? "#" + data.rank : "—");
+      fade(scoreEl, data.total_score ?? "0");
+      fade(weeksEl, data.weeks_played ?? "0");
+    } catch (err) {
+      console.error("Error updating leaderboard:", err);
+    }
+  }
+
+  await fetchData();
+  setInterval(fetchData, 30000); // refresh every 30s
+})();
+</script>
+
 </body>
 </html>

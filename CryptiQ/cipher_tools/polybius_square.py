@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # substitution_solver_fast.py
 # Fast + accurate monoalphabetic substitution solver (Windows-safe threading)
-# Tuned for LONG ciphertexts: stronger 4-grams, larger corpus, 2-phase polish.
-# Now robust to mixed ciphers: ignores long two-letter runs (e.g. Baconian) for scoring.
+# Tuned for ALL ciphertext lengths: adaptive weights, mini-reheats, light polish.
+# Robust to mixed ciphers: ignores long two-letter runs (e.g. Baconian) for scoring.
 
 import math, random, re, time, sys, os
 from collections import Counter
@@ -10,6 +10,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 alphabet = list("abcdefghijklmnopqrstuvwxyz")
 
+# =========================
+#   Helper: Polybius Standardization
+# =========================
 def polybius_standardize(message):
     message = message.replace(" ", "")
     coords, coord = [], ""
@@ -26,11 +29,12 @@ def polybius_standardize(message):
         standardized += alphabet[unique_coords.index(i)]
     return standardized.upper()
 
+
 # =========================
-#   Public API (2 funcs)
+#   Public API
 # =========================
 def apply_substitution(text, key_cipher_to_plain):
-    """Apply cipher→plain key to text, preserving non-letters and input case."""
+    """Apply cipher→plain key to text, preserving non-letters and case."""
     out = []
     for ch in text:
         if ch.isalpha():
@@ -41,45 +45,33 @@ def apply_substitution(text, key_cipher_to_plain):
             out.append(ch)
     return "".join(out)
 
+
 def _find_two_letter_runs(CT_UP, min_run=40):
-    """
-    Return a boolean mask (len = len(CT_UP)) where True marks positions
-    that belong to long “two-letter” runs (e.g., {E,U}, {A,B}, {0,1}).
-    We only consider alphabetic chars for membership; other chars break the run.
-    """
+    """Find long two-letter-only runs (like Baconian) and mask them out."""
     n = len(CT_UP)
     mask = [False] * n
-
-    # sets to consider as "binary alphabets"
-    binary_sets = [
-        set("AB"), set("BA"),
-        set("EU"), set("UE"),
-        set("OI"), set("IO"),  # sometimes people use O/I
-        set("01"),
-        set("XO"), set("OX"),
-    ]
+    binary_sets = [set("AB"), set("BA"), set("EU"), set("UE"), set("OI"), set("IO"), set("01"), set("XO"), set("OX")]
 
     i = 0
     while i < n:
         if not CT_UP[i].isalpha():
             i += 1
             continue
-        # extend j while letters remain, then analyze that contiguous alpha run
         j = i
         while j < n and CT_UP[j].isalpha():
             j += 1
         run = CT_UP[i:j]
         uniq = set(run)
-
-        # If the run's unique set is only two letters and long enough, mark it
         if len(uniq) == 2 and len(run) >= min_run and any(uniq == s for s in binary_sets):
             for k in range(i, j):
                 mask[k] = True
-
         i = j
-
     return mask
 
+
+# =========================
+#   Core Solver
+# =========================
 def substitution_break(ciphertext,
                        max_restarts=14,
                        sa_steps=9000,
@@ -90,16 +82,7 @@ def substitution_break(ciphertext,
                        verbose=True,
                        ignore_twoletter_runs=True,
                        min_twoletter_run_len=40):
-    """
-    Fast + accurate monoalphabetic substitution solver (delta scoring + threaded restarts).
-    Tuned for LONG texts (150+ letters):
-      • Larger embedded corpus for n-grams
-      • Heavier tetragram weight
-      • SA with light reheating
-      • Greedy delta polish + semantic polish (tiny word bonus)
-    Now also:
-      • Ignores long two-letter runs (Baconian-like) when scoring so mixed ciphers won't derail the search.
-    """
+    """Adaptive monoalphabetic substitution solver with threaded restarts."""
     if seed is not None:
         random.seed(seed)
 
@@ -107,20 +90,18 @@ def substitution_break(ciphertext,
     AZ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     A2I = {c: i for i, c in enumerate(AZ)}
 
-    # --------- Normalize ciphertext to int array (letters-only) ---------
+    # Normalize ciphertext
     CT = ciphertext
     CT_UP = CT.upper()
 
-    # Optionally mask out long two-letter runs for scoring
     excluded = [False] * len(CT_UP)
     if ignore_twoletter_runs:
         excluded = _find_two_letter_runs(CT_UP, min_run=min_twoletter_run_len)
         if verbose and any(excluded):
             run_len = sum(1 for i, ch in enumerate(CT_UP) if ch.isalpha() and excluded[i])
-            print(f"[note] Detected ~{run_len} letters inside long two-letter runs; excluding from scoring.")
+            print(f"[note] Ignoring ~{run_len} letters inside long two-letter runs.")
 
-    letters_idx = []
-    kept_pos = []  # original indices that are kept for scoring
+    letters_idx, kept_pos = [], []
     for idx, ch in enumerate(CT_UP):
         if 'A' <= ch <= 'Z' and not excluded[idx]:
             letters_idx.append(A2I[ch])
@@ -129,7 +110,7 @@ def substitution_break(ciphertext,
     L = letters_idx
     nL = len(L)
 
-    # Quick fallback for very short texts
+    # Quick fallback
     if nL < 8:
         key = _freq_start_key(CT, AZ)
         if fixed:
@@ -137,7 +118,7 @@ def substitution_break(ciphertext,
         plain = apply_substitution(CT, key)
         return key, plain
 
-    # --------- Larger English model ---------
+    # --------- English model ---------
     CORPUS = """
     IT IS A TRUTH UNIVERSALLY ACKNOWLEDGED THAT A SINGLE MAN IN POSSESSION OF A GOOD FORTUNE
     MUST BE IN WANT OF A WIFE. HOWEVER LITTLE KNOWN THE FEELINGS OR VIEWS OF SUCH A MAN MAY BE
@@ -157,13 +138,18 @@ def substitution_break(ciphertext,
     lp3, _ = _ngram_logprobs_dense(CORPUS, 3, k=0.5)
     lp4, _ = _ngram_logprobs_dense(CORPUS, 4, k=0.5)
 
-    # Weight bias for long texts (4-gram dominant)
-    W4, W3, W2 = 1.20, 0.22, 0.06
+    # Adaptive weights by ciphertext length
+    if nL < 120:
+        W4, W3, W2 = 0.7, 0.25, 0.05
+    elif nL < 250:
+        W4, W3, W2 = 1.0, 0.22, 0.06
+    else:
+        W4, W3, W2 = 1.20, 0.22, 0.06
     _scale_dense(lp4, W4)
     _scale_dense(lp3, W3)
     _scale_dense(lp2, W2)
 
-    # --------- Structures for fast delta scoring ---------
+    # Precompute structures
     pos_by_c = [[] for _ in range(26)]
     for i, c in enumerate(L):
         pos_by_c[c].append(i)
@@ -192,7 +178,7 @@ def substitution_break(ciphertext,
         return p
 
     def freq_start_key_list():
-        d = _freq_start_key(CT, AZ)  # cipher->plain (letters across whole CT)
+        d = _freq_start_key(CT, AZ)
         arr = [0] * 26
         inv = {A2I[c]: A2I[p] for c, p in d.items()}
         for c_idx in range(26):
@@ -216,23 +202,21 @@ def substitution_break(ciphertext,
                 P[c_idx] = free_plain.pop(0)
             seen.add(P[c_idx])
 
+    # Scoring functions
     def full_score(P):
         s = 0.0
         if nL >= 4:
             for i in range(nL - 3):
                 a, b, c, d = P[L[i]], P[L[i + 1]], P[L[i + 2]], P[L[i + 3]]
-                idx = ((a * 26 + b) * 26 + c) * 26 + d
-                s += lp4[idx]
+                s += lp4[((a * 26 + b) * 26 + c) * 26 + d]
         if nL >= 3:
             for i in range(nL - 2):
                 a, b, c = P[L[i]], P[L[i + 1]], P[L[i + 2]]
-                idx = (a * 26 + b) * 26 + c
-                s += lp3[idx]
+                s += lp3[(a * 26 + b) * 26 + c]
         if nL >= 2:
             for i in range(nL - 1):
                 a, b = P[L[i]], P[L[i + 1]]
-                idx = a * 26 + b
-                s += lp2[idx]
+                s += lp2[a * 26 + b]
         return s
 
     def delta_swap(P, a, b):
@@ -246,42 +230,34 @@ def substitution_break(ciphertext,
         for kind, s in affected:
             if kind == 'q':
                 x0, x1, x2, x3 = P[L[s]], P[L[s + 1]], P[L[s + 2]], P[L[s + 3]]
-                idx = ((x0 * 26 + x1) * 26 + x2) * 26 + x3
-                old_s += lp4[idx]
+                old_s += lp4[((x0 * 26 + x1) * 26 + x2) * 26 + x3]
                 y0 = Pb if L[s] == a else (Pa if L[s] == b else x0)
                 y1 = Pb if L[s + 1] == a else (Pa if L[s + 1] == b else x1)
                 y2 = Pb if L[s + 2] == a else (Pa if L[s + 2] == b else x2)
                 y3 = Pb if L[s + 3] == a else (Pa if L[s + 3] == b else x3)
-                idx2 = ((y0 * 26 + y1) * 26 + y2) * 26 + y3
-                new_s += lp4[idx2]
+                new_s += lp4[((y0 * 26 + y1) * 26 + y2) * 26 + y3]
             elif kind == 't':
                 x0, x1, x2 = P[L[s]], P[L[s + 1]], P[L[s + 2]]
-                idx = (x0 * 26 + x1) * 26 + x2
-                old_s += lp3[idx]
+                old_s += lp3[(x0 * 26 + x1) * 26 + x2]
                 y0 = Pb if L[s] == a else (Pa if L[s] == b else x0)
                 y1 = Pb if L[s + 1] == a else (Pa if L[s + 1] == b else x1)
                 y2 = Pb if L[s + 2] == a else (Pa if L[s + 2] == b else x2)
-                idx2 = (y0 * 26 + y1) * 26 + y2
-                new_s += lp3[idx2]
+                new_s += lp3[(y0 * 26 + y1) * 26 + y2]
             else:
                 x0, x1 = P[L[s]], P[L[s + 1]]
-                idx = x0 * 26 + x1
-                old_s += lp2[idx]
+                old_s += lp2[x0 * 26 + x1]
                 y0 = Pb if L[s] == a else (Pa if L[s] == b else x0)
                 y1 = Pb if L[s + 1] == a else (Pa if L[s + 1] == b else x1)
-                idx2 = y0 * 26 + y1
-                new_s += lp2[idx2]
+                new_s += lp2[y0 * 26 + y1]
         return new_s - old_s
 
-    # ---- Tiny semantic word bonus (used in final polish) ----
     COMMON_WORDS = (
         "the and to of a in that it is was for on with as you at be this have not are but he his they we by from or an "
         "one all their there what so up out if about who get which go me when make can like no just him her said had were "
         "them then some into more time would your now only little very than people could first over after also even because "
         "new where most use work find give long day man woman life"
     ).split()
-    WORD_BONUS = 0.3
-    ONE_LETTER_BONUS = 0.12
+    WORD_BONUS, ONE_LETTER_BONUS = 0.15, 0.12
 
     def semantic_bonus(plaintext: str) -> float:
         t = plaintext.lower()
@@ -297,7 +273,7 @@ def substitution_break(ciphertext,
         plain = apply_substitution(CT, key_dict)
         return base + semantic_bonus(plain)
 
-    # --------- One restart (thread-friendly) ---------
+    # Single restart
     def one_restart(ridx, init_kind):
         rng = random.Random((seed or 0) + 1337 * ridx + hash(init_kind))
         P = freq_start_key_list() if init_kind == 'freq' else new_random_key(rng)
@@ -312,6 +288,9 @@ def substitution_break(ciphertext,
         for step in range(1, steps + 1):
             if time.time() - start_time > time_limit_seconds:
                 break
+            # Mini-reheat every few thousand steps
+            if step % 2000 == 0:
+                T0 *= 0.9
             if step == reheat_at:
                 T0 *= 0.9
             T = T0 * ((T_end / T0) ** (step / steps))
@@ -356,39 +335,18 @@ def substitution_break(ciphertext,
                 P[a], P[b] = P[b], P[a]
                 improved = True
 
-        # Final semantic polish
+        # Final semantic + pattern polish
         curr_score = combined_score(P)
-        improved = True
-        while improved and (time.time() - start_time) <= time_limit_seconds:
-            improved = False
-            best_gain = 0.0
-            best_pair = None
-            for a in range(26):
-                for b in range(a + 1, 26):
-                    if fixed and (_is_locked_idx(a, fixed, A2I) or _is_locked_idx(b, fixed, A2I)):
-                        continue
-                    d_ng = delta_swap(P, a, b)
-                    if d_ng < -4.0:
-                        continue
-                    P[a], P[b] = P[b], P[a]
-                    sc = combined_score(P)
-                    P[a], P[b] = P[b], P[a]
-                    gain = sc - curr_score
-                    if gain > best_gain:
-                        best_gain, best_pair = gain, (a, b)
-            if best_pair:
-                a, b = best_pair
-                P[a], P[b] = P[b], P[a]
-                curr_score += best_gain
-                improved = True
+        if nL > 50:
+            text_guess = apply_substitution(CT, {AZ[c]: AZ[P[c]] for c in range(26)})
+            pattern_bonus = sum(1 for i in range(len(text_guess)-3) if text_guess[i:i+3] == text_guess[i+3:i+6])
+            curr_score += pattern_bonus * 0.2
 
         return P, curr_score
 
-    # --------- Run restarts (parallel) ---------
+    # Parallel restarts
     jobs = [('freq' if i == 0 else 'rand') for i in range(max_restarts)]
-    if threads is None:
-        threads = min(8, (os.cpu_count() or 2))
-    threads = max(1, threads)
+    threads = min(8, (os.cpu_count() or 2)) if threads is None else max(1, threads)
 
     results = []
     if threads == 1:
@@ -419,11 +377,11 @@ def substitution_break(ciphertext,
 
     return key_dict, plain
 
+
 # =========================
-#   Internal helpers
+#   Helpers
 # =========================
 def _ngram_logprobs_dense(corpus, n, k=0.5):
-    """Build dense log-prob table for n-grams."""
     AZ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     A2I = {c: i for i, c in enumerate(AZ)}
     t = re.sub(r"[^A-Z]", "", corpus.upper())
@@ -444,14 +402,15 @@ def _ngram_logprobs_dense(corpus, n, k=0.5):
         arr[idx] = math.log((c + k) / denom)
     return arr, floor
 
+
 def _scale_dense(arr, w):
     if abs(w - 1.0) < 1e-12:
         return
     for i in range(len(arr)):
         arr[i] *= w
 
+
 def _freq_start_key(text, AZ):
-    """Return dict cipher→plain based on frequency order."""
     ENGLISH_FREQ_ORDER = "ETAOINSHRDLCUMWFGYPBVKJXQZ"
     t = re.sub(r"[^A-Z]", "", text.upper())
     cnt = Counter(t)
@@ -461,20 +420,21 @@ def _freq_start_key(text, AZ):
             order.append(a)
     return {order[i]: ENGLISH_FREQ_ORDER[i] for i in range(26)}
 
+
 def _apply_fixed(key_dict, fixed):
-    """Mutate key_dict to enforce cipher→plain locks."""
     for c, p in fixed.items():
         key_dict[c] = p
+
 
 def _is_locked_idx(c_idx, fixed, A2I):
     return fixed is not None and (list(A2I.keys())[c_idx] in fixed)
 
+
 # =========================
-#   CLI for Testing
+#   CLI
 # =========================
 if __name__ == "__main__":
-    print("=== Monoalphabetic Substitution Solver (long-text tuned; mixed-cipher aware) ===")
-    print("Paste your ciphertext, then press Enter.\n")
+    print("=== Monoalphabetic Substitution Solver (adaptive) ===")
     cipher = input("> ").strip()
     if not cipher:
         print("No ciphertext provided.")
@@ -482,9 +442,9 @@ if __name__ == "__main__":
 
     key, plain = substitution_break(
         cipher,
-        max_restarts=14,       # more restarts for long text
-        sa_steps=9000,         # deeper search
-        time_limit_seconds=35, # runtime cap
+        max_restarts=14,
+        sa_steps=9000,
+        time_limit_seconds=35,
         seed=42,
         verbose=True
     )
@@ -496,4 +456,3 @@ if __name__ == "__main__":
     AZ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     print(" ".join(AZ))
     print(" ".join(key.get(c, '?') for c in AZ))
-    print("\n" + "  ".join(f"{c}→{key[c]}" for c in AZ))
