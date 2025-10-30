@@ -5,7 +5,7 @@
   <title>Weekly Cipher — The Cipher Lab</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
+  <style>
     body {
       background: var(--bg);
       color: var(--text);
@@ -38,6 +38,7 @@
       align-items: flex-start;
       flex-wrap: wrap;
       gap: 14px;
+      position: relative;
     }
 
     .weekly-title {
@@ -53,6 +54,110 @@
       font-weight: 500;
       letter-spacing: 0.02em;
     }
+
+    .info-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 255, 213, 0.08);
+  border: none;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  transition: all 0.25s ease;
+}
+
+.info-btn:hover {
+  background: var(--accent);
+  color: #0f0f0f;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 0 12px var(--accent-soft);
+}
+
+
+    /* === Info Modal === */
+    .info-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+    }
+
+    .info-modal.open { display: flex; animation: fadeIn 0.3s ease; }
+
+    .info-box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      max-width: 520px;
+      padding: 26px 30px;
+      color: var(--text);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+      animation: fadeInUp 0.3s ease;
+      line-height: 1.6;
+      text-align: left;
+      position: relative;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .info-box h2 {
+      color: var(--accent);
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .info-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 22px;
+      cursor: pointer;
+      transition: color 0.25s;
+    }
+    .info-close:hover { color: var(--accent); }
+
+    .info-box p {
+      font-size: 0.96rem;
+      margin-bottom: 10px;
+    }
+
+    .info-box ul {
+      margin: 10px 0 0 18px;
+      padding: 0;
+      list-style-type: disc;
+    }
+
+    .info-box ul li {
+      margin-bottom: 6px;
+      color: var(--text-dim);
+    }
+    .info-box {
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
+}
 
     /* === Admin Dropdown === */
     .admin-menu { position: relative; flex-shrink: 0; }
@@ -136,91 +241,87 @@
     }
 
     /* === Hint Section === */
-.hint-wrap {
-  margin-top: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+    .hint-wrap {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-.hint-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
+    .hint-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
 
-.hint-toggle {
-  background: transparent;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.25s, color 0.25s;
-}
+    .hint-toggle {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.25s, color 0.25s;
+    }
 
-.hint-toggle:hover {
-  background: var(--accent);
-  color: #0f0f0f;
-}
+    .hint-toggle:hover {
+      background: var(--accent);
+      color: #0f0f0f;
+    }
 
-/* Full-width hint box like before */
-.hint-box {
-  display: none;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 14px 16px;
-  color: var(--text);
-  line-height: 1.6;
-  font-size: 0.96rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  animation: fadeIn 0.25s ease;
-  width: 100%;
-}
+    .hint-box {
+      display: none;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 0.96rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      animation: fadeIn 0.25s ease;
+      width: 100%;
+    }
 
-.hint-box.open {
-  display: block;
-}
+    .hint-box.open {
+      display: block;
+    }
 
-/* Inline help */
-.hint-helper {
-  color: var(--text-dim);
-  font-size: 0.9rem;
-  line-height: 1.4;
-  flex: 1;
-  text-align: right;
-}
+    .hint-helper {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      line-height: 1.4;
+      flex: 1;
+      text-align: right;
+    }
 
-.help-link {
-  color: var(--accent);
-  font-weight: 600;
-  text-decoration: none;
-  border-bottom: 1px dashed var(--accent);
-  transition: color 0.25s ease;
-}
+    .help-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px dashed var(--accent);
+      transition: color 0.25s ease;
+    }
 
-.help-link:hover {
-  color: var(--accent-strong, var(--accent));
-}
+    .help-link:hover {
+      color: var(--accent-strong, var(--accent));
+    }
 
-/* Mobile layout */
-@media (max-width: 700px) {
-  .hint-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
+    @media (max-width: 700px) {
+      .hint-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
 
-  .hint-helper {
-    text-align: left;
-    margin-top: 2px;
-  }
-}
-
+      .hint-helper {
+        text-align: left;
+        margin-top: 2px;
+      }
+    }
 
     /* === Submit Section === */
     .submit-card {
@@ -286,69 +387,7 @@
       75% { transform: translateX(6px); }
     }
     .shake { animation: shake 0.3s ease; }
-      /* === Help Section === */
-    .weekly-help {
-      background: var(--panel);
-      border: 1px dashed var(--line);
-      border-radius: 12px;
-      padding: 18px 22px;
-      margin-top: 12px;
-      color: var(--text-dim);
-      font-size: 0.95rem;
-      line-height: 1.6;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      text-align: center;
-      animation: fadeIn 0.4s ease;
-    }
 
-    .weekly-help strong {
-      color: var(--accent);
-      font-weight: 700;
-    }
-
-    .weekly-help .help-link {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-      border-bottom: 1px dashed var(--accent);
-      transition: color 0.25s ease, border-color 0.25s ease;
-    }
-
-    .weekly-help .help-link:hover {
-      color: var(--accent);
-      
-    }
-
-        /* === Inline Help next to Hint === */
-    .hint-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-      justify-content: space-between;
-    }
-
-    .hint-helper {
-      color: var(--text-dim);
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-
-    .help-link {
-      color: var(--accent);
-      font-weight: 600;
-      text-decoration: none;
-      border-bottom: 1px dashed var(--accent);
-      transition: color 0.25s ease;
-    }
-
-    .help-link:hover {
-      color: var(--accent-strong, var(--accent));
-      text-decoration: none;
-    }
-
-  
-  
   </style>
 </head>
 
@@ -363,6 +402,9 @@
           Week #{{ wc.week_number }} · Posted {{ wc.posted_at[:19].replace('T',' ') }}
         </div>
       </div>
+
+      <!-- Info Button -->
+      <button class="info-btn" title="About the Weekly Cipher">i</button>
 
       {% if user_is_admin %}
       <div class="admin-menu">
@@ -386,16 +428,13 @@
         {% endif %}
 
         {% if wc.hint %}
-<div class="hint-wrap">
-  <div class="hint-row">
-    <button class="hint-toggle" id="hint-toggle">Show hint</button>
-    
-  </div>
-  <div class="hint-box" id="hint-box">{{ wc.hint }}</div>
-</div>
-{% endif %}
-
-
+        <div class="hint-wrap">
+          <div class="hint-row">
+            <button class="hint-toggle" id="hint-toggle">Show hint</button>
+          </div>
+          <div class="hint-box" id="hint-box">{{ wc.hint }}</div>
+        </div>
+        {% endif %}
       </div>
 
       <div class="submit-card">
@@ -416,86 +455,180 @@
         {% endif %}
       </div>
     </section>
-    
-  
+  </main>
 
-</main>
+  <!-- Info Modal -->
+<div class="info-modal" id="info-modal">
+  <div class="info-box">
+    <button class="info-close" title="Close">&times;</button>
+    <h2>About the Weekly Cipher</h2>
+    <p>
+      The <strong>Weekly Cipher</strong> is The Cipher Lab’s rotating cryptographic challenge.
+      Each week, a new puzzle is released — ranging from simple substitution ciphers
+      to advanced transpositions and polyalphabetic encryption.
+    </p>
 
-  <script>
-  (() => {
-    const hintBtn = document.getElementById('hint-toggle');
-    const hintBox = document.getElementById('hint-box');
-    if (hintBtn && hintBox) {
-      hintBtn.addEventListener('click', () => {
-        const open = hintBox.classList.toggle('open');
-        hintBtn.textContent = open ? 'Hide hint' : 'Show hint';
-      });
+    <ul>
+      <li>🔐 <strong>Weekly Challenges</strong><br>
+        Every Monday, a new cipher is posted. You can solve it and submit your plaintext or keyword.
+        Correct answers earn points — faster solves earn more.
+      </li>
+
+      <li>🏆 <strong>Seasons</strong><br>
+        The year is divided into multiple <em>seasons</em> (each lasting a few months).  
+        Seasonal leaderboards reset at the start of each season, giving everyone a fresh chance to climb.
+      </li>
+
+      <li>⚡ <strong>Fastest Weekly Solvers</strong><br>
+        Each week, the quickest correct submissions are featured on the <strong>Weekly Fastest</strong> board —
+        rewarding both speed and accuracy.  
+        Only your fastest solve per week counts.
+      </li>
+
+      <li>📊 <strong>All-Time Rankings</strong><br>
+        Your total score across all seasons is tracked in the <strong>All-Time Leaderboard</strong>,
+        showcasing the most consistent and dedicated solvers.
+      </li>
+
+      <li>💡 <strong>Hints & Scoring</strong><br>
+        Some puzzles have hints. You can reveal them anytime — but each hint slightly reduces
+        the points you can earn for that week’s cipher.
+      </li>
+    </ul>
+
+    <p style="margin-top:14px;color:var(--text-dim);font-size:0.94rem;">
+      🧠 <em>Tip:</em> Each challenge may use different classical ciphers — Caesar, Vigenère, Affine,
+      Railfence, AMSCO, or others. Pay attention to patterns, letter frequencies, and clues in the text.
+    </p>
+
+    <p style="margin-top:10px;">New puzzles appear every <strong>Monday at 12:00 UTC</strong> — good luck, and happy decrypting!</p>
+  </div>
+</div>
+
+<script>
+  const ALREADY_SOLVED = {{ "true" if already_solved else "false" }};
+  const SOLVED_SCORE = {{ solved_score or 0 }};
+</script>
+
+<script>
+(() => {
+  // === Info modal ===
+  const infoBtn = document.querySelector(".info-btn");
+  const infoModal = document.getElementById("info-modal");
+  const infoClose = document.querySelector(".info-close");
+
+  if (infoBtn && infoModal && infoClose) {
+    infoBtn.addEventListener("click", () => infoModal.classList.add("open"));
+    infoClose.addEventListener("click", () => infoModal.classList.remove("open"));
+    infoModal.addEventListener("click", (e) => {
+      if (e.target === infoModal) infoModal.classList.remove("open");
+    });
+  }
+
+  // === Hint toggle ===
+  const hintBtn = document.getElementById("hint-toggle");
+  const hintBox = document.getElementById("hint-box");
+  if (hintBtn && hintBox) {
+    hintBtn.addEventListener("click", () => {
+      const open = hintBox.classList.toggle("open");
+      hintBtn.textContent = open ? "Hide hint" : "Show hint";
+    });
+  }
+
+  // === Admin dropdown ===
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".kebab-btn");
+    const menus = document.querySelectorAll(".menu");
+    if (btn) {
+      const menu = btn.nextElementSibling;
+      const isOpen = menu.classList.contains("open");
+      menus.forEach((m) => m.classList.remove("open"));
+      if (!isOpen) menu.classList.add("open");
+    } else {
+      menus.forEach((m) => m.classList.remove("open"));
     }
+  });
 
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('.kebab-btn');
-      const menus = document.querySelectorAll('.menu');
-      if (btn) {
-        const menu = btn.nextElementSibling;
-        const isOpen = menu.classList.contains('open');
-        menus.forEach(m => m.classList.remove('open'));
-        if (!isOpen) menu.classList.add('open');
-      } else {
-        menus.forEach(m => m.classList.remove('open'));
+  // === Submission system ===
+  const submitBtn = document.getElementById("submit");
+  const answerEl = document.getElementById("answer");
+  const feedback = document.getElementById("feedback");
+
+  // === Restore solved state from server variables ===
+  const alreadySolved = (typeof ALREADY_SOLVED !== "undefined") && (ALREADY_SOLVED === true || ALREADY_SOLVED === "true");
+  const solvedScore = (typeof SOLVED_SCORE !== "undefined") ? SOLVED_SCORE : 0;
+
+  if (alreadySolved && submitBtn && answerEl && feedback) {
+    answerEl.disabled = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Solved!";
+    feedback.style.color = "var(--accent)";
+    feedback.textContent = `✅ Already solved — ${solvedScore} points earned.`;
+    return; // stop further logic
+  }
+
+  if (submitBtn && answerEl) {
+    const resetButton = (msg) => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit";
+      if (msg) {
+        feedback.style.color = "#ff4e4e";
+        feedback.textContent = msg;
+      }
+      answerEl.classList.add("shake");
+      setTimeout(() => answerEl.classList.remove("shake"), 400);
+    };
+
+    submitBtn.addEventListener("click", async () => {
+      const answer = (answerEl.value || "").trim();
+      if (!answer) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Checking…";
+      feedback.textContent = "";
+
+      try {
+        const res = await fetch("{{ url_for('weekly_submit') }}", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answer }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          resetButton("⚠️ Server error. Try again.");
+          return;
+        }
+
+        if (!data.ok) {
+          resetButton(data.error || "❌ Incorrect. Try again!");
+          return;
+        }
+
+        if (data.correct) {
+          feedback.style.color = "var(--accent)";
+          feedback.textContent = `✅ Correct — nice work! You earned ${data.score || 0} points.`;
+          answerEl.disabled = true;
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Solved!";
+        } else {
+          resetButton("❌ Incorrect. Try again!");
+        }
+      } catch (e) {
+        console.error(e);
+        resetButton("⚠️ Network error. Try again.");
       }
     });
 
-    const submitBtn = document.getElementById('submit');
-    const answerEl = document.getElementById('answer');
-    const feedback = document.getElementById('feedback');
-
-    if (submitBtn) {
-      submitBtn.addEventListener('click', async () => {
-        const answer = (answerEl.value || '').trim();
-        if (!answer) return;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Checking…';
-        feedback.textContent = '';
-
-        try {
-          const res = await fetch('{{ url_for("weekly_submit") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ answer })
-          });
-          const data = await res.json();
-
-          if (!data.ok) {
-            feedback.style.color = '#ff4e4e';
-            feedback.textContent = data.error || '❌ Incorrect. Try again!';
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit';
-            answerEl.classList.add('shake');
-            setTimeout(() => answerEl.classList.remove('shake'), 400);
-            return;
-          }
-
-          if (data.correct) {
-            feedback.style.color = 'var(--accent)';
-            feedback.textContent = `✅ Correct — nice work! You earned ${data.score || 0} points.`;
-            answerEl.disabled = true;
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Solved!';
-          }
-
-        } catch (e) {
-          feedback.style.color = '#ff9f9f';
-          feedback.textContent = 'Error submitting your answer.';
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit';
-        }
-      });
-
-      answerEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') submitBtn.click();
-      });
-    }
-  })();
-  </script>
+    answerEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submitBtn.click();
+    });
+  }
+})();
+</script>
+ 
 </body>
 </html>
+
+    

@@ -74,7 +74,6 @@ def get_current_season():
 
 
 
-
 # ----- Configuration -----
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
@@ -191,13 +190,14 @@ def current_user():
     if "user_id" in session:
         conn = get_db()
         cur = conn.execute(
-            "SELECT id, username, email, is_admin FROM users WHERE id = ?",
+            "SELECT id, username, email, is_admin, banned FROM users WHERE id = ?",
             (session["user_id"],)
         )
         row = cur.fetchone()
         conn.close()
         return dict(row) if row else None
     return None
+
 
 def is_admin(user):
     if not user:
@@ -409,6 +409,8 @@ def posts_list():
     offset = (page - 1) * per_page
 
     conn = get_db()
+
+    # --- Main posts query ---
     cur = conn.execute("""
         SELECT 
             posts.id,
@@ -420,21 +422,23 @@ def posts_list():
             posts.pinned,
             users.username,
             users.email,
-            users.is_admin
+            users.is_admin,
+            users.banned  -- ✅ new column
         FROM posts
         JOIN users ON posts.user_id = users.id
         ORDER BY posts.pinned DESC, datetime(posts.created_at) DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset))
-
     posts = cur.fetchall()
 
-    # Total post count for pagination
+    # --- Total count query (safe fallback) ---
     cur = conn.execute("SELECT COUNT(*) AS total FROM posts")
-    total_posts = cur.fetchone()["total"]
+    row = cur.fetchone()
+    total_posts = row["total"] if row else 0
+
     conn.close()
 
-    total_pages = (total_posts + per_page - 1) // per_page
+    total_pages = max((total_posts + per_page - 1) // per_page, 1)
 
     return render_template(
         "posts.html",
@@ -445,21 +449,30 @@ def posts_list():
         total_pages=total_pages
     )
 
+
 app.add_url_rule("/posts", endpoint="posts", view_func=posts_list)
 
-@app.route("/posts/new", methods=["GET", "POST"], endpoint="create_post")
+@app.route("/posts/new", methods=["GET", "POST"], endpoint="posts_new")
 def posts_new():
     user = current_user()
+
+    # 🔒 1. Must check login first — otherwise user could be None and cause error
     if not user:
         flash("You must be logged in to create a post.", "warning")
         return redirect(url_for("login"))
 
+    # 🚫 2. Then check if banned
+    if user.get("banned"):
+        flash("You are banned from posting or commenting.", "error")
+        return redirect(url_for("posts_list"))
+
+    # ✍️ 3. Handle post creation
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         body = request.form.get("body", "").strip()
         image = request.files.get("image")
         image_filename = None
-        pinned = 1 if (request.form.get("pinned") and is_admin(user)) else 0  # ✅ NEW
+        pinned = 1 if (request.form.get("pinned") and is_admin(user)) else 0
 
         if not title or not body:
             flash("Title and body are required.", "error")
@@ -469,26 +482,29 @@ def posts_new():
             if not allowed_file(image.filename):
                 flash("Unsupported image type.", "error")
                 return redirect(url_for("create_post"))
-            filename = secure_filename(f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{image.filename}")
+            filename = secure_filename(
+                f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{image.filename}"
+            )
             image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             image_filename = filename
 
         conn = get_db()
         conn.execute(
-            "INSERT INTO posts (user_id, title, body, image_filename, pinned, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            """
+            INSERT INTO posts (user_id, title, body, image_filename, pinned, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
             (user["id"], title, body, image_filename, pinned, datetime.utcnow().isoformat())
         )
         conn.commit()
         conn.close()
+        print("DEBUG current_user:", user)
 
         flash("Post created successfully.", "success")
         return redirect(url_for("posts_list"))
 
+    # 🖼️ Render post form
     return render_template("new_post.html", user=user, user_is_admin=is_admin(user))
-
-# Preserve your alias endpoint (as in your original file)
-app.add_url_rule("/posts/new", endpoint="posts_new", view_func=posts_new)
-
 
 @app.route("/posts/<int:post_id>/edit", methods=["GET", "POST"])
 def posts_edit(post_id):
@@ -631,6 +647,10 @@ def comments_list():
 @app.route("/comments/add", methods=["POST"])
 def comments_add():
     user = current_user()
+    user = current_user()
+    if user and user.get("banned"):
+        return jsonify({"ok": False, "error": "You are banned from posting or commenting."}), 403
+
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
 
@@ -1010,21 +1030,41 @@ def clear_flash_on_login():
 
 @app.route("/weekly")
 def weekly_page():
-    user = current_user()  # ✅ Fetch user properly from DB
-    user_is_admin = is_admin(user)  # ✅ Use your helper function
+    user = current_user()
+    user_is_admin = is_admin(user)
 
     conn = get_db()
     cur = conn.cursor()
+
+    # Fetch latest cipher
     cur.execute("SELECT * FROM weekly_cipher ORDER BY week_number DESC LIMIT 1")
     wc = cur.fetchone()
+
+    # Check if user already solved it
+    solved = False
+    user_score = 0
+    if user and wc:
+        cur.execute("""
+            SELECT score FROM cipher_submissions
+            WHERE user_id=? AND cipher_week=? AND is_correct=1
+            LIMIT 1
+        """, (user["id"], wc["week_number"]))
+        row = cur.fetchone()
+        if row:
+            solved = True
+            user_score = row["score"]
+
     conn.close()
 
     return render_template(
         "weekly_cipher.html",
         wc=wc,
         user=user,
-        user_is_admin=user_is_admin
+        user_is_admin=user_is_admin,
+        already_solved=solved,
+        solved_score=user_score
     )
+
 @app.route("/weekly/submit", methods=["POST"])
 def weekly_submit():
     data = request.get_json(silent=True) or {}
@@ -1036,84 +1076,80 @@ def weekly_submit():
     user = current_user()
     now = datetime.utcnow()
 
-    # --- Normalize text: ignore spaces, punctuation, case ---
     def normalize(text):
-        return re.sub(r'[^A-Z0-9]', '', (text or "").upper())
+        return re.sub(r"[^A-Z0-9]", "", (text or "").upper())
 
     answer_clean = normalize(answer)
     solution_clean = normalize(wc["solution"])
 
-    # Determine correctness
     correct = 1 if answer_clean == solution_clean else 0
     score = 0
     solve_time_seconds = None
 
+    # === Compute score only if correct ===
     if correct:
-        # Parse when puzzle was posted
         try:
             posted_time = datetime.fromisoformat(wc["posted_at"])
         except Exception:
             posted_time = now
 
-        # Calculate elapsed solve time (seconds from posting to correct answer)
         solve_time_seconds = int((now - posted_time).total_seconds())
-
-        total_window = 7 * 24 * 3600  # 7 days in seconds
+        total_window = 7 * 24 * 3600
         elapsed = (now - posted_time).total_seconds()
         remaining = max(total_window - elapsed, 0)
 
-        # Base score (out of 100, decreasing linearly over the week)
-        base_score = int((remaining / total_window) * 100)
-        base_score = max(1, base_score)
+        base_score = max(1, int((remaining / total_window) * 100))
 
-        # Determine rank among correct solvers this week
         conn = get_db()
-        cur = conn.execute("""
-            SELECT COUNT(*) AS correct_count
-            FROM cipher_submissions
-            WHERE cipher_week=? AND is_correct=1
-        """, (wc["week_number"],))
+        cur = conn.execute(
+            "SELECT COUNT(*) AS correct_count FROM cipher_submissions WHERE cipher_week=? AND is_correct=1",
+            (wc["week_number"],),
+        )
         correct_count = cur.fetchone()["correct_count"]
+        conn.close()
 
-        # Apply bonus
         if correct_count == 0:
-            bonus = 25  # First solver bonus
+            bonus = 25
         elif correct_count == 1:
-            bonus = 15  # Second solver
+            bonus = 15
         elif correct_count == 2:
-            bonus = 10  # Third solver
+            bonus = 10
         else:
             bonus = 0
-
         score = base_score + bonus
-        conn.close()
-    else:
-        conn = get_db()
-        conn.close()
 
-    # Record submission
+    # === Always record submission ===
     conn = get_db()
-    conn.execute("""
+    conn.execute(
+        """
         INSERT INTO cipher_submissions (
-            user_id, username, cipher_week, answer, is_correct, score, 
+            user_id, username, cipher_week, answer, is_correct, score,
             submitted_at, created_at, season, solve_time_seconds
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?)
-    """, (
-        (user["id"] if user else None),
-        (user["username"] if user else None),
-        wc["week_number"],
-        answer,
-        correct,
-        score,
-        now.isoformat(),
-        get_current_season(),     # <-- helper to define current leaderboard season
-        solve_time_seconds
-    ))
+        """,
+        (
+            (user["id"] if user else None),
+            (user["username"] if user else None),
+            wc["week_number"],
+            answer,
+            correct,
+            score,
+            now.isoformat(),
+            get_current_season(),
+            solve_time_seconds,
+        ),
+    )
     conn.commit()
     conn.close()
 
-    return jsonify({"ok": True, "correct": bool(correct), "score": score})
+    # === Always return a response ===
+    return jsonify({
+        "ok": True,
+        "correct": bool(correct),
+        "score": score
+    })
+
 
 @app.route("/admin/weekly", methods=["GET", "POST"])
 def admin_weekly():
@@ -1121,6 +1157,9 @@ def admin_weekly():
     if not is_admin(user):
         flash("Admin access required.", "error")
         return redirect(url_for("index"))
+
+    conn = get_db()
+    wc = get_current_weekly()  # Get the existing cipher for comparison
 
     if request.method == "POST":
         week_number = int(request.form.get("week_number") or 1)
@@ -1132,10 +1171,19 @@ def admin_weekly():
 
         if not ciphertext or not solution:
             flash("Ciphertext and solution are required.", "error")
+            conn.close()
             return redirect(url_for("admin_weekly"))
 
-        conn = get_db()
-        # Upsert id=1 row
+        # --- Detect change (only reset if cipher or solution differ) ---
+        reset_needed = False
+        if wc:
+            if (
+                ciphertext.strip() != (wc.get("ciphertext") or "").strip()
+                or solution.strip() != (wc.get("solution") or "").strip()
+            ):
+                reset_needed = True
+
+        # --- Upsert into weekly_cipher ---
         conn.execute("""
             INSERT INTO weekly_cipher (id, week_number, title, description, ciphertext, solution, hint, posted_at)
             VALUES (1, ?, ?, ?, ?, ?, ?, datetime('now'))
@@ -1148,14 +1196,24 @@ def admin_weekly():
                 hint=excluded.hint,
                 posted_at=excluded.posted_at
         """, (week_number, title, description, ciphertext, solution, hint))
+
+        # --- Reset submissions only if needed ---
+        if reset_needed:
+            conn.execute("DELETE FROM cipher_submissions WHERE cipher_week=?", (week_number,))
+            flash("Ciphertext or solution changed — previous submissions have been reset.", "warning")
+        else:
+            flash("Weekly cipher updated successfully.", "success")
+
         conn.commit()
         conn.close()
-
-        flash("Weekly cipher updated successfully.", "success")
         return redirect(url_for("weekly_page"))
 
-    wc = get_current_weekly()
+    conn.close()
     return render_template("admin_weekly.html", user=user, wc=wc)
+
+
+
+
 
 from flask import render_template, session
 from datetime import datetime
@@ -1167,7 +1225,7 @@ def get_current_season():
 
 @app.route("/leaderboard")
 def leaderboard():
-    user = session.get("user")  # however you store logged-in user
+    user = current_user()  # ✅ Properly fetch logged-in user for navbar
     username = user["username"] if user else None
 
     conn = get_db()
@@ -1210,14 +1268,17 @@ def leaderboard():
 
     conn.close()
 
+    # === Render the leaderboard page ===
     return render_template(
         "leaderboard.html",
+        user=user,  # ✅ for base_nav.html
         all_time=all_time,
         seasonal=seasonal,
         weekly=weekly,
         current_season=current_season,
         current_user=username
     )
+
 @app.route("/encode-decode")
 def encode_decode():
     user = current_user()
@@ -1334,6 +1395,50 @@ def perform_cipher(cipher, text, key, mode="encode"):
 
     except Exception as e:
         return f"⚠️ Error: {str(e)}"
+
+
+@app.route("/admin/ban_user", methods=["POST"])
+def admin_ban_user():
+    user = current_user()
+    if not user or not is_admin(user):
+        return jsonify({"ok": False, "error": "Unauthorized"}), 403
+
+    data = request.get_json(force=True)
+    username = data.get("username", "").strip()
+    new_ban_state = data.get("banned")
+
+    if username == "":
+        return jsonify({"ok": False, "error": "Missing username"}), 400
+
+    conn = get_db()
+    cur = conn.execute("SELECT id, banned, is_admin FROM users WHERE username = ?", (username,))
+    target = cur.fetchone()
+
+    if not target:
+        conn.close()
+        return jsonify({"ok": False, "error": "User not found"}), 404
+
+    if target["is_admin"]:
+        conn.close()
+        return jsonify({"ok": False, "error": "You cannot ban another admin."}), 400
+
+    # Determine toggle if not explicitly passed
+    if new_ban_state is None:
+        new_ban_state = 0 if target["banned"] else 1
+
+    conn.execute("UPDATE users SET banned = ? WHERE username = ?", (int(new_ban_state), username))
+    conn.commit()
+    conn.close()
+
+    action = "banned" if new_ban_state else "unbanned"
+    return jsonify({
+        "ok": True,
+        "message": f"User '{username}' has been {action}.",
+        "banned": int(new_ban_state)
+    })
+
+
+
 
 
 # ------------------- Run -------------------

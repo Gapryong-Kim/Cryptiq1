@@ -100,6 +100,49 @@
       filter: brightness(1.05);
     }
 
+    /* Quick Hint Section */
+    .quick-hint-section {
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+      margin-top: 20px;
+    }
+
+    .quick-hint-title {
+      color: var(--accent);
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .quick-hint-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+
+    .quick-hint-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    #quick-hint {
+      flex: 1;
+      min-height: 80px;
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--input-bg);
+      color: var(--text);
+      border: 1px solid var(--input-border);
+      resize: vertical;
+    }
+
+    #hint-update-feedback {
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
     @media (max-width: 720px) {
       .admin-wrap {
         margin: 90px auto 60px;
@@ -159,6 +202,52 @@
         <button class="btn-primary" type="submit">Save Weekly Cipher</button>
       </div>
     </form>
+
+    <!-- Quick Hint Update Section -->
+    <section class="quick-hint-section">
+      <div class="quick-hint-title">Quick Hint Update</div>
+      <div class="quick-hint-desc">
+        Instantly change the current hint without affecting submissions or ciphertext.
+      </div>
+
+
+
+      <div id="hint-update-feedback"></div>
+    </section>
   </main>
+
+  <script>
+  document.getElementById('hint-update-btn').addEventListener('click', async () => {
+    const hint = document.getElementById('quick-hint').value.trim();
+    const feedback = document.getElementById('hint-update-feedback');
+    if (!hint) {
+      feedback.textContent = "Please enter a hint first.";
+      feedback.style.color = "#ff6b6b";
+      return;
+    }
+
+    feedback.textContent = "Updating...";
+    feedback.style.color = "var(--muted)";
+
+    try {
+      const res = await fetch("/admin/weekly/hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hint })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        feedback.textContent = "✅ Hint updated successfully!";
+        feedback.style.color = "var(--accent)";
+      } else {
+        feedback.textContent = "❌ " + (data.error || "Failed to update hint.");
+        feedback.style.color = "#ff6b6b";
+      }
+    } catch {
+      feedback.textContent = "❌ Network error while updating hint.";
+      feedback.style.color = "#ff6b6b";
+    }
+  });
+  </script>
 </body>
 </html>
