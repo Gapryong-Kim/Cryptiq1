@@ -370,14 +370,15 @@
         <div>
           <div class="post-title">{{ p.title }}</div>
           <div class="post-author">
-            by {{ p.username }}
-            {% if p.is_admin %}
-              <span class="admin-badge">Admin</span>
-            {% endif %}
-            {% if p.banned %}
-              <span class="banned-badge">BANNED</span>
-            {% endif %}
-          </div>
+  by {{ p.username or '[Deleted User]' }}
+  {% if p.is_admin %}
+    <span class="admin-badge">Admin</span>
+  {% endif %}
+  {% if p.banned %}
+    <span class="banned-badge">BANNED</span>
+  {% endif %}
+</div>
+
         </div>
         <div class="post-right">
           <div class="post-meta">

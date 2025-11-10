@@ -51,6 +51,6 @@ def analyse(message):
         subs = Counter(message[i:i+ngram_len] for i in range(len(message)-ngram_len+1))
         top = sorted(subs.items(), key=lambda x: x[1], reverse=True)[:10]
         ngrams.append(top)
-
+        freq_dist=sorted(freq_dist,key=lambda x: x[1],reverse=True)
     trigrams, bigrams = ngrams
     return trigrams, bigrams, freq_dist, cipher_type

@@ -31,7 +31,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 24px 26px;
+      padding: 24px 26px ;
       box-shadow: 0 8px 24px rgba(0,0,0,0.25);
       display: flex;
       justify-content: space-between;
@@ -387,6 +387,10 @@
       75% { transform: translateX(6px); }
     }
     .shake { animation: shake 0.3s ease; }
+    /* Disable navbar spacing on certain pages */
+body.no-nav-padding {
+  padding-top: 0 !important;
+}
 
   </style>
 </head>

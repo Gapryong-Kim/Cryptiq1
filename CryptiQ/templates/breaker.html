@@ -137,7 +137,7 @@
       padding: 12px 14px;
       resize: vertical;
       line-height: 1.5;
-      font-family: 'Inter';
+      font-family: ''Fira Code','JetBrains Mono','Courier New',monospace';
       font-size: 15px;
       scrollbar-gutter: stable both-edges;
     }
@@ -213,6 +213,12 @@
     @media (max-width: 480px) {
       .cb-shell { padding: 80px 12px 32px; }
     }
+    .cb-textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+  font-style: italic;
+}
+
   </style>
 </head>
 
@@ -262,9 +268,10 @@
               <button type="submit" id="break-btn" class="btn">Break Cipher</button>
               <button type="button" id="clear-btn" class="btn secondary">Clear</button>
               <div id="loading" class="cb-loading" aria-live="polite">
-                <span class="spinner" aria-hidden="true"></span>
-                <span>Analyzing…</span>
-              </div>
+  <span class="spinner" aria-hidden="true"></span>
+  <span>Initializing analysis…</span>
+</div>
+
             </div>
 
             <div id="error-banner" class="cb-error" aria-live="polite">Something went wrong. Please try again.</div>
@@ -284,105 +291,136 @@
     </section>
   </main>
 
-  <script>
-    const form = document.getElementById("breaker-form");
-    const breakBtn = document.getElementById("break-btn");
-    const clearBtn = document.getElementById("clear-btn");
-    const loading = document.getElementById("loading");
-    const resultText = document.getElementById("result-text");
-    const resultKey = document.getElementById("result-key");
-    const copyBtn = document.getElementById("copy-btn");
-    const errorBanner = document.getElementById("error-banner");
-    const textarea = document.getElementById("ciphertext");
+<script>
+  const form = document.getElementById("breaker-form");
+  const breakBtn = document.getElementById("break-btn");
+  const clearBtn = document.getElementById("clear-btn");
+  const loading = document.getElementById("loading");
+  const resultText = document.getElementById("result-text");
+  const resultKey = document.getElementById("result-key");
+  const copyBtn = document.getElementById("copy-btn");
+  const errorBanner = document.getElementById("error-banner");
+  const textarea = document.getElementById("ciphertext");
 
-    const funSamples = [
-      "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
-      "This sentence knows it’s about to be encrypted and is very nervous.",
-      "My secret code is hidden in plain sight, but even I forgot the key.",
-      "Somewhere, a potato is learning Morse code faster than I can learn Python.",
-      "Warning: decoding this message may summon unintended consequences.",
-      "The cake is a cipher. You just haven’t decrypted it yet.",
-      "Behind every random string lies someone trying to be mysterious.",
-      "Sometimes I encrypt my thoughts just so I can feel like a secret agent.",
-      "I whispered my password to a pigeon. I regret everything.",
-      "My diary is written entirely in base64. Even I can’t read it anymore.",
-      "The vending machine only accepts encrypted coins.",
-      "Somewhere, a cat just brute-forced the Wi-Fi.",
-      "My coffee tastes like ciphertext and regret.",
-      "I accidentally encrypted my shopping list. Now I just buy random stuff.",
-      "Trust no one. Except maybe the hash function.",
-      "I lost my key… literally. It’s somewhere in the cipher.",
-      "The real ciphertext was the friends we made along the way.",
-      "I asked for a decryption key and got a therapy session instead.",
-      "The key was under the doormat the whole time."
-    ];
+  // Fun placeholder samples
+  const funSamples = [
+    "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
+    "This sentence knows it’s about to be encrypted and is very nervous.",
+    "My secret code is hidden in plain sight, but even I forgot the key.",
+    "Somewhere, a potato is learning Morse code faster than I can learn Python.",
+    "The cake is a cipher. You just haven’t decrypted it yet.",
+    "My diary is written entirely in base64. Even I can’t read it anymore.",
+    "Trust no one. Except maybe the hash function."
+  ];
 
+  // Placeholder logic
+  const randomPlaceholder = funSamples[Math.floor(Math.random() * funSamples.length)];
+  textarea.placeholder = randomPlaceholder;
+  textarea.addEventListener("focus", () => textarea.placeholder = "");
+  textarea.addEventListener("blur", () => {
+    if (!textarea.value.trim()) textarea.placeholder = randomPlaceholder;
+  });
+
+  function showError(msg) {
+    errorBanner.textContent = msg || "Something went wrong. Please try again.";
+    errorBanner.classList.add("show");
+  }
+
+  function clearError() { errorBanner.classList.remove("show"); }
+
+  // === Loading message cycling ===
+  const loadingMessages = [
+    "Analyzing ciphertext…",
+    "Estimating key lengths…",
+    "Testing frequency profiles…",
+    "Constructing potential keys…",
+    "Decrypting sample blocks…",
+    "Comparing pattern likelihoods…",
+    "Optimizing for best match…",
+    "Cross-validating letter maps…",
+    "Refining substitution mapping…",
+    "Finalizing plaintext reconstruction…"
+  ];
+
+  let loadingInterval = null;
+  let msgIndex = 0;
+
+  function startLoadingCycle() {
+    msgIndex = 0;
+    const msgEl = loading.querySelector("span:last-child");
+    msgEl.textContent = loadingMessages[0];
+    loading.classList.add("show");
+
+    loadingInterval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % loadingMessages.length;
+      msgEl.textContent = loadingMessages[msgIndex];
+    }, 6000); // every 6 seconds
+  }
+
+  function stopLoadingCycle() {
+    clearInterval(loadingInterval);
+    loading.classList.remove("show");
+  }
+
+  function setLoading(isLoading) {
+    if (isLoading) startLoadingCycle();
+    else stopLoadingCycle();
+    breakBtn.disabled = isLoading;
+    clearBtn.disabled = isLoading;
+  }
+
+  clearBtn.addEventListener("click", () => {
     textarea.value = funSamples[Math.floor(Math.random() * funSamples.length)];
+    resultText.textContent = "";
+    resultKey.style.display = "none";
+    copyBtn.style.display = "none";
+    clearError();
+    textarea.focus();
+  });
 
-    function showError(msg) {
-      errorBanner.textContent = msg || "Something went wrong. Please try again.";
-      errorBanner.classList.add("show");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError();
+    const text = textarea.value.trim();
+    if (!text) {
+      showError("Please paste some ciphertext first.");
+      return;
     }
 
-    function clearError() { errorBanner.classList.remove("show"); }
+    setLoading(true);
+    try {
+      const formData = new FormData(form);
+      const res = await fetch('{{ url_for("breaker") }}', { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Network error");
+      const data = await res.json();
 
-    function setLoading(isLoading) {
-      loading.classList.toggle("show", isLoading);
-      breakBtn.disabled = isLoading;
-      clearBtn.disabled = isLoading;
+      resultText.textContent = data.text || "";
+      if (data.key) {
+        resultKey.style.display = "block";
+        resultKey.textContent = `Key: ${typeof data.key === 'string' ? data.key : JSON.stringify(data.key)}`;
+      } else {
+        resultKey.style.display = "none";
+      }
+      copyBtn.style.display = data.text ? "inline-flex" : "none";
+      if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
+    } catch (err) {
+      showError("Unable to reach the server. Please try again.");
+    } finally {
+      setLoading(false);
     }
+  });
 
-    clearBtn.addEventListener("click", () => {
-      textarea.value = funSamples[Math.floor(Math.random() * funSamples.length)];
-      resultText.textContent = "";
-      resultKey.style.display = "none";
-      copyBtn.style.display = "none";
-      clearError();
-      textarea.focus();
-    });
+  copyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(resultText.textContent || "");
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
+    } catch {
+      copyBtn.textContent = "Failed to copy";
+      setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
+    }
+  });
+</script>
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearError();
-      const text = textarea.value.trim();
-      if (!text) {
-        showError("Please paste some ciphertext first.");
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const formData = new FormData(form);
-        const res = await fetch('{{ url_for("breaker") }}', { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Network error");
-        const data = await res.json();
-
-        resultText.textContent = data.text || "";
-        if (data.key) {
-          resultKey.style.display = "block";
-          resultKey.textContent = `Key: ${typeof data.key === 'string' ? data.key : JSON.stringify(data.key)}`;
-        } else {
-          resultKey.style.display = "none";
-        }
-        copyBtn.style.display = data.text ? "inline-flex" : "none";
-        if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
-      } catch (err) {
-        showError("Unable to reach the server. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    copyBtn.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(resultText.textContent || "");
-        copyBtn.textContent = "Copied!";
-        setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
-      } catch {
-        copyBtn.textContent = "Failed to copy";
-        setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
-      }
-    });
-  </script>
 </body>
 </html>

@@ -86,7 +86,7 @@
       display: block;
     }
 
-    select, textarea, input[type="number"] {
+    select, textarea, input[type="number"], input[type="text"] {
       width: 100%;
       box-sizing: border-box;
       background: var(--input-bg);
@@ -98,8 +98,9 @@
       font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
       transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
     }
-    select:hover, textarea:hover, input[type="number"]:hover { background: var(--input-hover); }
-    select:focus, textarea:focus, input[type="number"]:focus {
+
+    select:hover, textarea:hover, input:hover { background: var(--input-hover); }
+    select:focus, textarea:focus, input:focus {
       outline: none;
       border-color: var(--accent);
       background: var(--input-focus);
@@ -135,6 +136,20 @@
       box-shadow: 0 0 0 2px var(--accent-soft);
     }
 
+    .btn.copy-btn {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-size: .9rem;
+      margin-top: 10px;
+      align-self: flex-end;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .btn.copy-btn:hover { background: var(--accent); color: #0f0f0f; }
+
     .result-box {
       background: var(--input-bg);
       border: 1px solid var(--input-border);
@@ -146,6 +161,7 @@
       min-height: 48px;
       white-space: pre-wrap;
       word-break: break-word;
+      margin-top: 10px;
     }
 
     .sub-letter-box {
@@ -160,7 +176,7 @@
       border-radius: 10px;
     }
 
-    .sub-top { color: var(--text-dim); font-size: .85rem; font-weight: 700; }
+    .sub-top { color: var(--text-dim); font-size: .85rem; font-weight: 700; text-transform: lowercase; }
     .sub-arrow { font-size: .8rem; color: var(--muted-2); }
     .sub-input {
       width: 36px;
@@ -197,6 +213,7 @@
       .cb-shell { padding: 80px 12px 32px; }
       .cb-panel { padding: 14px; }
       .btn { width: 100%; }
+      .btn.copy-btn { width: 100%; text-align: center; }
     }
   </style>
 </head>
@@ -212,7 +229,6 @@
       </header>
 
       <div class="tools-grid">
-        <!-- Select Tool -->
         <div class="cb-panel">
           <h3>Select Tool</h3>
           <select id="tool-select">
@@ -221,10 +237,10 @@
             <option value="substitution">Substitution Cipher Analyzer</option>
             <option value="unique">Unique Symbol Finder</option>
             <option value="text_spacer">Text Spacer</option>
+            <option value="text_replacer">Text Replacer</option>
           </select>
         </div>
 
-        <!-- Tool Container -->
         <div id="tool-container" class="cb-panel" style="display:none;"></div>
       </div>
     </section>
@@ -234,31 +250,51 @@
   (function () {
     const toolSelect = document.getElementById("tool-select");
     const toolContainer = document.getElementById("tool-container");
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
     const toolExplanations = {
       frequency: "Counts how often each letter appears. Great first step for substitution-style ciphers.",
       polybius: "Normalizes Polybius outputs to a clean letter stream you can feed into other tools.",
-      substitution: "Map each ciphertext letter to a plaintext guess. Cipher (top) → your guess (bottom).",
+      substitution: "Map each plaintext letter (top) to a ciphertext letter (input).",
       unique: "Splits text into blocks of length n and counts unique blocks. Helpful for pattern hunting.",
-      text_spacer: "Removes spaces, then re-blocks your text into fixed-size chunks for readability."
+      text_spacer: "Removes spaces, then re-blocks your text into fixed-size chunks for readability.",
+      text_replacer: "Replaces every occurrence of one substring with another. Case-sensitive."
     };
 
     const showCard = () => { toolContainer.style.display = 'flex'; toolContainer.style.flexDirection = 'column'; };
+
+    function addCopyButton(targetId) {
+      const btn = document.createElement("button");
+      btn.className = "btn copy-btn";
+      btn.textContent = "Copy";
+      btn.onclick = () => {
+        const text = document.getElementById(targetId).innerText;
+        navigator.clipboard.writeText(text);
+        btn.textContent = "Copied!";
+        btn.style.background = "var(--accent)";
+        btn.style.color = "#0f0f0f";
+        setTimeout(() => {
+          btn.textContent = "Copy";
+          btn.style.background = "transparent";
+          btn.style.color = "var(--accent)";
+        }, 1000);
+      };
+      return btn;
+    }
 
     function renderTool(selected) {
       toolContainer.innerHTML = "";
       if (!selected) { toolContainer.style.display = 'none'; return; }
       showCard();
 
-      /* ---------- Substitution Analyzer ---------- */
+      // --- Substitution ---
       if (selected === "substitution") {
         toolContainer.innerHTML = `
           <p style="color:var(--muted);font-size:.95rem;margin:0 0 10px;">${toolExplanations['substitution']}</p>
           <textarea id="ciphertext" placeholder="Paste ciphertext here…" style="min-height:160px;"></textarea>
           <div id="substitution-row" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:10px;margin-top:10px;"></div>
           <div class="helper-bar">
-            <div>Tip: lowercase plaintext guesses work best. Use Frequency Analyzer for hints.</div>
+            <div>Tip: Ciphertext input goes <strong>below</strong> each lowercase letter marker.</div>
             <div style="display:flex;gap:8px;">
               <button class="btn secondary" id="clear-mapping" type="button">Clear Mapping</button>
               <button class="btn secondary" id="reset-text" type="button">Reset Text</button>
@@ -266,6 +302,8 @@
           </div>
           <div id="frequency-output" class="result-box"></div>
         `;
+        const copyBtn = addCopyButton("frequency-output");
+        toolContainer.appendChild(copyBtn);
 
         const substitutionRow = document.getElementById("substitution-row");
         const mapping = {};
@@ -273,29 +311,29 @@
         const textarea = document.getElementById("ciphertext");
         const freqOutput = document.getElementById("frequency-output");
 
-        alphabet.forEach(cipherLetter => {
+        alphabet.forEach(plainLetter => {
           const box = document.createElement("div");
           box.className = "sub-letter-box";
           const top = document.createElement("span");
           top.className = "sub-top";
-          top.textContent = cipherLetter;
+          top.textContent = plainLetter;
           const arrow = document.createElement("span");
           arrow.className = "sub-arrow";
           arrow.textContent = "↓";
           const input = document.createElement("input");
           input.className = "sub-input";
           input.maxLength = 1;
-          input.dataset.cipher = cipherLetter;
+          input.dataset.plain = plainLetter;
           input.placeholder = "…";
           input.addEventListener("input", () => {
-            const cipher = input.dataset.cipher;
-            const plain = (input.value || "").toLowerCase();
-            mapping[cipher] = plain;
+            const plain = input.dataset.plain;
+            const cipher = (input.value || "").toUpperCase();
+            mapping[plain] = cipher;
             updateTextarea();
           });
           box.append(top, arrow, input);
           substitutionRow.appendChild(box);
-          mapping[cipherLetter] = "";
+          mapping[plainLetter] = "";
         });
 
         textarea.addEventListener("input", async () => {
@@ -309,55 +347,97 @@
               const res = await fetch("/tools/run", { method: "POST", body: formData });
               const data = await res.json();
               freqOutput.innerText = data.text || "";
-            } catch {
-              freqOutput.innerText = "Error fetching frequency analysis.";
-            }
+            } catch { freqOutput.innerText = "Error fetching frequency analysis."; }
           } else freqOutput.innerText = "";
         });
 
         function updateTextarea() {
           let out = "";
           for (let ch of originalText) {
-            out += mapping[ch] !== undefined && mapping[ch] !== "" ? mapping[ch] : ch;
+            let replaced = false;
+            for (const [plain, cipher] of Object.entries(mapping)) {
+              if (ch === cipher) { out += plain; replaced = true; break; }
+            }
+            if (!replaced) out += ch;
           }
           textarea.value = out;
         }
 
-        document.getElementById("clear-mapping").addEventListener("click", () => {
+        document.getElementById("clear-mapping").onclick = () => {
           substitutionRow.querySelectorAll(".sub-input").forEach(inp => inp.value = "");
           Object.keys(mapping).forEach(k => mapping[k] = "");
           updateTextarea();
-        });
-        document.getElementById("reset-text").addEventListener("click", () => {
+        };
+        document.getElementById("reset-text").onclick = () => {
           textarea.value = originalText;
           freqOutput.innerText = "";
-        });
+        };
       }
 
-      /* ---------- Frequency / Polybius / Unique / Text Spacer ---------- */
-      else if (["frequency", "polybius", "unique", "text_spacer"].includes(selected)) {
+      // --- Text Replacer ---
+      else if (selected === "text_replacer") {
+        toolContainer.innerHTML = `
+          <p style="color:var(--muted);font-size:.95rem;margin-bottom:10px;">${toolExplanations['text_replacer']}</p>
+          <label class="cipher-label">Input Text</label>
+          <textarea id="replace-text" placeholder="Paste your text here…" style="min-height:120px;"></textarea>
+          <label class="cipher-label">Find</label>
+          <input type="text" id="replace-find" placeholder="Text to find">
+          <label class="cipher-label">Replace With</label>
+          <input type="text" id="replace-with" placeholder="Replacement text">
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button id="replace-run" class="btn">Run</button>
+            <button id="replace-clear" class="btn secondary">Clear</button>
+          </div>
+          <div id="replace-result" class="result-box"></div>
+        `;
+        const copyBtn = addCopyButton("replace-result");
+        toolContainer.appendChild(copyBtn);
+
+        document.getElementById("replace-run").onclick = async () => {
+          const text = document.getElementById("replace-text").value;
+          const find = document.getElementById("replace-find").value;
+          const replacement = document.getElementById("replace-with").value;
+          const formData = new FormData();
+          formData.append("text", text);
+          formData.append("tool_type", "text_replacer");
+          formData.append("to_replace", find);
+          formData.append("replacement", replacement);
+          const res = await fetch("/tools/run", { method: "POST", body: formData });
+          const data = await res.json();
+          document.getElementById("replace-result").innerText = data.text || "";
+        };
+        document.getElementById("replace-clear").onclick = () => {
+          ["replace-text","replace-find","replace-with"].forEach(id => document.getElementById(id).value = "");
+          document.getElementById("replace-result").innerText = "";
+        };
+      }
+
+      // --- Other Tools ---
+      else if (["frequency","polybius","unique","text_spacer"].includes(selected)) {
         let extra = "";
         if (selected === "text_spacer" || selected === "unique") {
-          const defaultValue = selected === "unique" ? 2 : 5;
+          const defaultVal = selected === "unique" ? 2 : 5;
           extra = `
             <div style="display:flex;align-items:center;gap:10px;margin-top:12px;">
               <label for="block-length" class="cipher-label" style="width:auto;">Block Length</label>
-              <input type="number" id="block-length" min="1" value="${defaultValue}" style="width:100px;">
+              <input type="number" id="block-length" min="1" value="${defaultVal}" style="width:100px;">
             </div>`;
         }
 
         toolContainer.innerHTML = `
-          <p style="color:var(--muted);font-size:.95rem;margin:0 0 10px;">${toolExplanations[selected]}</p>
+          <p style="color:var(--muted);font-size:.95rem;margin-bottom:10px;">${toolExplanations[selected]}</p>
           <textarea id="tool-text" placeholder="Paste or type your text…" style="min-height:160px;"></textarea>
           ${extra}
           <div style="display:flex;gap:10px;margin-top:10px;">
             <button id="tools-run" class="btn">Run</button>
             <button id="tools-clear" class="btn secondary">Clear</button>
           </div>
-          <div id="tool-result" class="result-box" aria-live="polite"></div>
+          <div id="tool-result" class="result-box"></div>
         `;
+        const copyBtn = addCopyButton("tool-result");
+        toolContainer.appendChild(copyBtn);
 
-        document.getElementById("tools-run").addEventListener("click", async () => {
+        document.getElementById("tools-run").onclick = async () => {
           const text = document.getElementById("tool-text").value;
           const formData = new FormData();
           formData.append("text", text);
@@ -367,12 +447,11 @@
           const res = await fetch("/tools/run", { method: "POST", body: formData });
           const data = await res.json();
           document.getElementById("tool-result").innerText = data.text || "";
-        });
-
-        document.getElementById("tools-clear").addEventListener("click", () => {
+        };
+        document.getElementById("tools-clear").onclick = () => {
           document.getElementById("tool-text").value = "";
           document.getElementById("tool-result").innerText = "";
-        });
+        };
       }
     }
 
@@ -380,8 +459,8 @@
     toolSelect.addEventListener("change", () => renderTool(toolSelect.value));
   })();
 
-  // === Fun random samples (same as Cipher Breaker) ===
-    const funSamples = [
+  // Fun samples
+  const funSamples = [
     "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
     "This sentence knows it’s about to be encrypted and is very nervous.",
     "My secret code is hidden in plain sight, but even I forgot the key.",
@@ -401,19 +480,13 @@
     "The real ciphertext was the friends we made along the way.",
     "I asked for a decryption key and got a therapy session instead.",
     "The key was under the doormat the whole time."
-    ];
+  ];
 
-    // === Inject funny samples when page loads ===
-    document.addEventListener("DOMContentLoaded", () => {
-    const textareas = document.querySelectorAll("textarea");
-    textareas.forEach(area => {
-        if (!area.value.trim()) {
-        area.value = funSamples[Math.floor(Math.random() * funSamples.length)];
-        }
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("textarea").forEach(area => {
+      if (!area.value.trim()) area.value = funSamples[Math.floor(Math.random()*funSamples.length)];
     });
-    });
-
-
+  });
   </script>
 </body>
 </html>

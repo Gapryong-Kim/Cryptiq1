@@ -127,11 +127,12 @@ common_words = [
 
 def columnar_break(message):
     final_possibilities = []
-    original_message = message
     message=''.join(i for i in message if i.isalpha()).lower()
+
+    original_message = message
     message = message.replace(" ", "")
     preserved_message = message
-    for key_length in range(1, 9):
+    for key_length in range(1, 8):
         print(key_length)
         message = preserved_message
         while len(message) % key_length != 0:

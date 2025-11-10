@@ -4,248 +4,305 @@
   <meta charset="utf-8" />
   <title>Account — The Cipher Lab</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251104">
 
   <style>
-  :root {
-    --radius: 14px;
-  }
+  :root { --radius: 14px; }
 
-  main {
-    display: flex;
-    min-height: calc(100vh - 68px);
-    margin-top: 0px;
+  body {
     background: var(--bg);
-    overflow-x: hidden;
+    color: var(--text);
+    margin: 0;
+    padding: 0;
   }
 
-  /* === Sidebar === */
-  .account-sidebar {
-    position: fixed;
-    top: 68px;
-    left: 0;
-    width: 260px;
-    height: calc(100vh - 68px);
-    background: var(--panel);
-    border-right: 1px solid var(--border);
-    padding: 40px 26px;
+  /* === Page scaffold === */
+  main {
+    min-height: calc(100vh - 68px);
+    padding: 0 16px 60px; /* no top gap */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
-    z-index: 2;
+    align-items: center;
+    gap: 28px;
   }
 
-  .sidebar-top h2 {
+  .container {
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  /* ======= HERO (Account + Profile unified) ======= */
+  .account-hero {
+    position: relative;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--panel) 92%, var(--bg));
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    padding: 28px clamp(16px, 4vw, 32px);
+    margin-top: 8px;
+  }
+
+  /* Subtle ambient perimeter glow, login-style */
+  .account-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(1000px 800px at 50% 50%,
+        rgba(0,255,213,0.05) 0%,
+        rgba(0,255,213,0.04) 25%,
+        rgba(0,255,213,0.02) 60%,
+        transparent 90%);
+    opacity: 1;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  .hero-title {
+    text-align: center;
     color: var(--accent);
-    font-size: 1.35rem;
-    margin-bottom: 22px;
-    letter-spacing: 0.3px;
+    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+    font-weight: 800;
+    letter-spacing: .3px;
+    margin: 0 0 16px 0;
   }
 
-  .sidebar-links {
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: clamp(16px, 3vw, 28px);
+    align-items: center;
+  }
+
+  .avatar-wrap {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+  }
+
+  .avatar-wrap::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 999px;
+    background: radial-gradient(100px 100px at 50% 50%,
+      rgba(0,255,213,0.12) 0%,
+      rgba(0,255,213,0.04) 60%,
+      transparent 80%);
+    filter: blur(3px);
+    pointer-events: none;
+  }
+
+  .avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #0f0f0f;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 2rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  }
+
+  .hero-info h2 {
+    margin: 0 0 4px 0;
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+    color: var(--accent);
+  }
+
+  .hero-info p {
+    margin: 2px 0;
+    color: var(--subtext);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-weight: 700;
+    border: 1px solid transparent;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
+    user-select: none;
+  }
+
+  .btn:active { transform: translateY(1px) scale(.995); }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+  }
+
+  .btn-accent:hover {
+    box-shadow: 0 0 0 3px rgba(0,255,213,0.15);
+  }
+
+  .btn-danger {
+    background: transparent;
+    color: #ff5a5a;
+    border-color: #ff5a5a;
+  }
+
+  .btn-danger:hover {
+    background: #ff5a5a;
+    color: #0f0f0f;
+    box-shadow: 0 0 0 3px rgba(255,90,90,0.18);
+  }
+
+  /* Section links under hero */
+  .hero-links {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .hero-links a {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    font-weight: 600;
+    color: var(--text);
+    transition: background .18s ease, color .18s ease;
+  }
+
+  .hero-links a:hover {
+    background: var(--accent);
+    color: #0f0f0f;
+  }
+
+  /* ======= SECTIONS ======= */
+  .section {
+    margin-top: 22px;
+  }
+
+  .section h3 {
+    color: var(--accent);
+    font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+    margin: 0 0 10px 0;
+    padding-left: 4px;
+  }
+
+  .card {
+    background: color-mix(in srgb, var(--panel) 92%, var(--bg));
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.32);
+    padding: clamp(18px, 3vw, 28px);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.38);
+  }
+
+  /* Leaderboard mini-cards */
+  .lb-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+    gap: 14px;
+  }
+
+  .lb-item {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .lb-label {
+    color: var(--subtext);
+    font-size: .92rem;
+  }
+
+  .lb-value {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin-top: 6px;
+  }
+
+  /* Rank colors */
+  .lb-value.rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.35); }
+  .lb-value.rank-2 { color: #c0c0c0; text-shadow: 0 0 10px rgba(192,192,192,0.25); }
+  .lb-value.rank-3 { color: #c08a4c; text-shadow: 0 0 10px rgba(192,138,76,0.25); }
+
+  /* Posts grid */
+  .post-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .post {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 14px 12px;
+    background: color-mix(in srgb, var(--panel) 90%, var(--bg));
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
 
-  .sidebar-links a {
-    padding: 10px 12px;
-    border-radius: var(--radius);
-    color: var(--text);
-    text-decoration: none;
-    font-weight: 600;
-    transition: background 0.25s, color 0.25s;
-  }
-
-  .sidebar-links a:hover {
-    background: var(--accent);
-    color: #0f0f0f;
-  }
-
-  .sidebar-bottom {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .logout-btn,
-  .delete-btn {
-    text-align: center;
-    font-weight: 700;
-    padding: 12px 0;
-    border-radius: var(--radius);
-    text-decoration: none;
-    transition: all 0.25s ease;
-  }
-
-  .logout-btn {
-    background: var(--accent);
-    color: #0f0f0f;
-    border: 1px solid var(--accent);
-  }
-
-  .logout-btn:hover {
-    background: var(--accent-strong, var(--accent));
-    transform: scale(1.02);
-  }
-
-  .delete-btn {
-    border: 1px solid #ff4a4a;
-    color: #ff4a4a;
-    background: transparent;
-  }
-
-  .delete-btn:hover {
-    background: #ff4a4a;
-    color: #0f0f0f;
-    transform: scale(1.02);
-    box-shadow: 0 0 16px rgba(255, 74, 74, 0.4);
-  }
-
-  /* === Content Wrapper === */
-  .account-content {
-    margin-left: 260px;
-    flex: 1;
-    padding: 60px 80px;
-    display: flex;
-    flex-direction: column;
-    gap: 60px;
-    background: var(--panel);
-    box-shadow: inset 1px 0 0 var(--border), -4px 0 16px rgba(0, 0, 0, 0.15);
-    border-left: 1px solid var(--border);
-    border-top-left-radius: 18px;
-    border-bottom-left-radius: 18px;
-    box-sizing: border-box;
-  }
-
-  section h2 {
-    color: var(--accent);
-    font-size: 1.4rem;
-    margin-bottom: 18px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 6px;
-  }
-
-  /* === Cards === */
-  .profile-card,
-  .leaderboard-card,
-  .post-card {
-    background: color-mix(in srgb, var(--panel) 90%, var(--bg));
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: 0 3px 14px rgba(0,0,0,0.08);
-    padding: 28px 32px;
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
-  }
-
-  .profile-card:hover,
-  .leaderboard-card:hover,
-  .post-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 22px rgba(0,0,0,0.12);
-  }
-
-  .profile-card {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-  }
-
-  .profile-avatar {
-    width: 84px;
-    height: 84px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #0f0f0f;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 2rem;
-  }
-
-  .profile-info h1 {
+  .post h4 {
     margin: 0;
-    font-size: 1.6rem;
     color: var(--accent);
   }
 
-  .profile-info p {
-    margin: 3px 0;
-    color: var(--subtext);
-  }
-
-  .leaderboard-stats {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .lb-item {
-    background: rgba(0,0,0,0.02);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    text-align: center;
-    flex: 1 1 120px;
-  }
-
-  .lb-label {
-    font-size: 0.9rem;
-    color: var(--subtext);
-  }
-
-  .lb-value {
-    color: var(--accent);
-    font-weight: 700;
-    font-size: 1.2rem;
-  }
-
-  .post-grid {
-    display: grid;
-    gap: 24px;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-
-  .post-card h3 {
-    color: var(--accent);
-    margin-bottom: 8px;
-  }
-
-  .post-card p {
+  .post p {
+    margin: 0;
     color: var(--text);
-    margin-bottom: 10px;
-    line-height: 1.55;
+    line-height: 1.5;
   }
 
-  .post-meta {
+  .post .meta {
     color: var(--subtext);
-    font-size: 0.85rem;
+    font-size: .9rem;
   }
 
-  .post-actions {
-    margin-top: 8px;
+  .post .actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    margin-top: 6px;
   }
 
-  .post-actions a {
+  .post .actions a {
     text-decoration: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
     border: 1px solid var(--accent);
     color: var(--accent);
-    transition: all 0.2s ease;
+    font-weight: 600;
+    transition: background .18s ease, color .18s ease;
   }
 
-  .post-actions a:hover {
+  .post .actions a:hover {
     background: var(--accent);
     color: #0f0f0f;
   }
 
-  /* === Light mode === */
+  /* Light theme */
   [data-theme="light"], body.light {
     --bg: #f7f7f7;
     --panel: #ffffff;
@@ -254,104 +311,131 @@
     --border: #e0e0e0;
   }
 
-  /* === Responsive === */
-  @media (max-width: 950px) {
-    .account-sidebar {
-      position: relative;
-      width: 100%;
-      height: auto;
-      flex-direction: row;
-      justify-content: space-between;
-      padding: 20px;
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .account-content {
-      margin-left: 0;
-      padding: 30px 20px;
-      border-radius: 0;
-      box-shadow: none;
-    }
-
-    .profile-card {
-      flex-direction: column;
+  /* ===== Responsive ===== */
+  @media (max-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
       text-align: center;
     }
-  }
-</style>    
 
+    .hero-actions {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .avatar {
+      width: 76px;
+      height: 76px;
+      font-size: 1.6rem;
+    }
+
+    .lb-stats {
+      grid-template-columns: 1fr;
+    }
+  }
+  </style>
 </head>
 
-<body>
+<body class="no-nav-padding">
   {% include 'base_nav.html' %}
   <main>
-    <aside class="account-sidebar">
-      <div class="sidebar-top">
-        <h2>Account</h2>
-        <div class="sidebar-links">
+    <div class="container">
+
+      <section class="account-hero">
+        <h1 class="hero-title">Account</h1>
+
+        <div class="hero-grid">
+          <div class="avatar-wrap">
+            <div class="avatar">{{ user_info['username'][0].upper() }}</div>
+          </div>
+
+          <div class="hero-info">
+            <h2>{{ user_info['username'] }}</h2>
+            <p>Email: {{ user_info['email'] }}</p>
+            <p>Member since: {{ user_info['created_at'][:10] }}</p>
+          </div>
+
+          <div class="hero-actions">
+            <a href="{{ url_for('logout') }}" class="btn btn-accent">Logout</a>
+            <a href="{{ url_for('delete_account') }}" class="btn btn-danger"
+               onclick="return confirm('Are you sure you want to permanently delete your account? This cannot be undone.');">
+              Delete Account
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-links">
           <a href="#profile">Profile</a>
           <a href="#leaderboard">Leaderboard</a>
           <a href="#posts">My Posts</a>
         </div>
-      </div>
-      <div class="sidebar-bottom">
-        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
-        <a href="{{ url_for('delete_account') }}" class="delete-btn"
-           onclick="return confirm('Are you sure you want to permanently delete your account? This cannot be undone.');">
-          Delete Account
-        </a>
-      </div>
-    </aside>
+      </section>
 
-    <div class="account-content">
-      <section id="profile">
-        <h2>Profile</h2>
-        <div class="profile-card">
-          <div class="profile-avatar">{{ user_info['username'][0].upper() }}</div>
-          <div class="profile-info">
-            <h1>{{ user_info['username'] }}</h1>
-            <p>Email: {{ user_info['email'] }}</p>
-            <p>Member since: {{ user_info['created_at'][:10] }}</p>
-          </div>
+      <section id="profile" class="section">
+        <h3>Profile</h3>
+        <div class="card">
+          <p style="color:var(--subtext); margin:0;">
+            Your profile summary appears in the Account header. More options coming soon.
+          </p>
         </div>
       </section>
 
-      <section id="leaderboard">
-        <h2>Leaderboard</h2>
-        <div class="leaderboard-card">
+      <section id="leaderboard" class="section">
+        <h3>Leaderboard</h3>
+        <div class="card">
           {% if leaderboard_data %}
-            <div class="leaderboard-stats">
-              <div class="lb-item"><div class="lb-label">Rank</div><div class="lb-value">#{{ leaderboard_data['rank'] }}</div></div>
-              <div class="lb-item"><div class="lb-label">Total Score</div><div class="lb-value">{{ leaderboard_data['total_score'] }}</div></div>
-              <div class="lb-item"><div class="lb-label">Weeks Played</div><div class="lb-value">{{ leaderboard_data['weeks_played'] }}</div></div>
+            <div class="lb-stats">
+              <div class="lb-item">
+                <div class="lb-label">Rank</div>
+                <div class="lb-value 
+                  {% if leaderboard_data['rank'] == 1 %}rank-1{% 
+                     elif leaderboard_data['rank'] == 2 %}rank-2{% 
+                     elif leaderboard_data['rank'] == 3 %}rank-3{% 
+                     endif %}">
+                  #{{ leaderboard_data['rank'] }}
+                </div>
+              </div>
+              <div class="lb-item">
+                <div class="lb-label">Total Score</div>
+                <div class="lb-value">{{ leaderboard_data['total_score'] }}</div>
+              </div>
+              <div class="lb-item">
+                <div class="lb-label">Weeks Played</div>
+                <div class="lb-value">{{ leaderboard_data['weeks_played'] }}</div>
+              </div>
             </div>
           {% else %}
-            <p style="color:var(--subtext); margin: 10px 0;">You haven't appeared on the leaderboard yet. Solve the Weekly Cipher to earn points!</p>
+            <p style="color:var(--subtext); margin: 2px 0;">
+              You haven't appeared on the leaderboard yet. Solve the Weekly Cipher to earn points!
+            </p>
           {% endif %}
         </div>
       </section>
 
-      <section id="posts">
-        <h2>My Posts</h2>
-        {% if posts %}
-          <div class="post-grid">
-            {% for post in posts %}
-              <div class="post-card">
-                <h3>{{ post['title'] }}</h3>
-                <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
-                <p class="post-meta">Posted on {{ post['created_at'][:10] }}</p>
-                <div class="post-actions">
+      <section id="posts" class="section">
+        <h3>My Posts</h3>
+        <div class="card">
+          {% if posts %}
+            <div class="post-grid">
+              {% for post in posts %}
+                <article class="post" id="post-{{ post['id'] }}">
+                  <h4>{{ post['title'] }}</h4>
+                  <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
+                  <div class="meta">Posted on {{ post['created_at'][:10] }}</div>
+                  <div class="actions">
                     <a href="{{ url_for('posts_list') }}#post-{{ post['id'] }}">View</a>
                     <a href="{{ url_for('posts_edit', post_id=post['id']) }}">Edit</a>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <p>You haven’t created any posts yet.</p>
-        {% endif %}
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p style="color:var(--subtext); margin: 2px 0;">You haven’t created any posts yet.</p>
+          {% endif %}
+        </div>
       </section>
+
     </div>
   </main>
 </body>

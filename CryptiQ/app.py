@@ -30,6 +30,7 @@ from cipher_tools.amsco import amsco_break
 from cipher_tools.railfence import railfence_break
 from cipher_tools.polybius_square import *
 from utility.unique import unique
+from cipher_tools.replace import replace
 
 
 from datetime import datetime
@@ -345,6 +346,7 @@ def tools_page():
 app.add_url_rule("/tools", endpoint="tools", view_func=tools_page)
 
 # ------------------- Tools API -------------------
+
 @app.route("/tools/run", methods=["POST"])
 def tools_run():
     text = request.form.get("text", "")
@@ -359,6 +361,7 @@ def tools_run():
             f"Letter frequencies: {unigrams_str}\n\n"
             f"Likely cipher type: {cipher_type}"
         )
+
     elif tool_type == "polybius":
         initial_text = polybius_standardize(text)
         trigrams, bigrams, unigrams, cipher_type = analyse(initial_text)
@@ -367,26 +370,26 @@ def tools_run():
         result_text += f"Common trigrams: {trigrams}\n"
         result_text += f"Common bigrams: {bigrams}\n"
         result_text += f"Letter frequencies: {unigrams_str}\n"
+
     elif tool_type == "unique":
         result_text = '\n'.join(unique(text))
+
     elif tool_type == "text_spacer":
         try:
             block_length = int(request.form.get("block_length", 5))
         except Exception:
             block_length = 5
+        message = text.replace(' ', '')
+        result_text = ' '.join(message[i:i+block_length] for i in range(0, len(message), block_length))
 
-        def text_spacer(message, block_length):
-            message = message.replace(' ', '')
-            blocked = ""
-            for index, ch in enumerate(message):
-                if index % block_length == 0 and index != 0:
-                    blocked += " "
-                blocked += ch
-            return blocked
+    elif tool_type == "text_replacer":
+        to_replace = request.form.get("to_replace", "")
+        replacement = request.form.get("replacement", "")
+        result_text = replace(text, to_replace, replacement)
 
-        result_text = text_spacer(text, block_length)
     elif tool_type == "substitution":
         result_text = text.upper()
+
     else:
         result_text = "Unknown tool selected."
 
@@ -410,7 +413,7 @@ def posts_list():
 
     conn = get_db()
 
-    # --- Main posts query ---
+    # --- Main posts query (LEFT JOIN keeps posts even if user deleted) ---
     cur = conn.execute("""
         SELECT 
             posts.id,
@@ -423,22 +426,31 @@ def posts_list():
             users.username,
             users.email,
             users.is_admin,
-            users.banned  -- ✅ new column
+            users.banned
         FROM posts
-        JOIN users ON posts.user_id = users.id
+        LEFT JOIN users ON posts.user_id = users.id
         ORDER BY posts.pinned DESC, datetime(posts.created_at) DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset))
-    posts = cur.fetchall()
+    rows = cur.fetchall()
 
-    # --- Total count query (safe fallback) ---
+    # --- Convert sqlite3.Row objects into mutable dicts ---
+    posts = [dict(row) for row in rows]
+
+    # --- Total count query ---
     cur = conn.execute("SELECT COUNT(*) AS total FROM posts")
     row = cur.fetchone()
     total_posts = row["total"] if row else 0
-
     conn.close()
 
     total_pages = max((total_posts + per_page - 1) // per_page, 1)
+
+    # --- Replace missing usernames so templates don't break ---
+    for p in posts:
+        if not p.get("username"):
+            p["username"] = "[Deleted User]"
+            p["is_admin"] = 0
+            p["banned"] = 0
 
     return render_template(
         "posts.html",
@@ -621,28 +633,41 @@ def comments_list():
 
     conn = get_db()
     cur = conn.execute("""
-        SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, u.username
+        SELECT 
+            c.id, 
+            c.post_id, 
+            c.user_id, 
+            c.body, 
+            c.created_at,
+            u.username
         FROM comments c
-        JOIN users u ON c.user_id = u.id
+        LEFT JOIN users u ON c.user_id = u.id  -- ✅ LEFT JOIN keeps comments after deletion
         WHERE c.post_id = ?
-        ORDER BY c.created_at DESC
+        ORDER BY datetime(c.created_at) DESC
     """, (post_id,))
     rows = cur.fetchall()
     conn.close()
 
+    # Convert sqlite3.Row to dict and handle deleted users
     comments = []
     for r in rows:
+        username = r["username"] if r["username"] else "[Deleted User]"
+        user_id = r["user_id"]
         comments.append({
             "id": r["id"],
             "post_id": r["post_id"],
-            "user_id": r["user_id"],
-            "username": r["username"],
+            "user_id": user_id,
+            "username": username,
             "body": r["body"],
             "created_at": r["created_at"],
-            "can_delete": admin or (uid == r["user_id"])
+            "can_delete": bool(admin or (uid and uid == user_id))
         })
 
-    return jsonify({"ok": True, "count": len(comments), "comments": comments})
+    return jsonify({
+        "ok": True,
+        "count": len(comments),
+        "comments": comments
+    })
 
 @app.route("/comments/add", methods=["POST"])
 def comments_add():
@@ -923,19 +948,24 @@ def delete_account():
         return redirect(url_for("login"))
 
     conn = get_db()
-    conn.execute("DELETE FROM users WHERE id = ?", (user["id"],))
-    conn.execute("DELETE FROM posts WHERE user_id = ?", (user["id"],))
-    conn.execute("DELETE FROM cipher_submissions WHERE username = ?", (user["username"],))
+    cur = conn.cursor()
+
+    # Keep posts, just unlink user_id
+    cur.execute("""
+        UPDATE posts
+        SET user_id = NULL
+        WHERE user_id = ?
+    """, (user["id"],))
+
+    # Delete user data
+    cur.execute("DELETE FROM cipher_submissions WHERE username = ?", (user["username"],))
+    cur.execute("DELETE FROM users WHERE id = ?", (user["id"],))
     conn.commit()
     conn.close()
 
     session.clear()
-    flash("Your account and all associated data have been permanently deleted.", "success")
+    flash("Your account has been deleted. Your posts remain visible as '[Deleted User]'.", "info")
     return redirect(url_for("register"))
-
-
-
-
 
 
 @app.route("/api/leaderboard_data")
