@@ -27,12 +27,14 @@
       text-align: center;
       margin-bottom: 12px;
     }
+
     .posts-header h2 {
       font-size: clamp(1.6rem, 4vw, 2rem);
       font-weight: 800;
       color: var(--accent);
       margin-bottom: 6px;
     }
+
     .posts-header p {
       color: var(--muted);
       font-size: clamp(0.9rem, 2vw, 1rem);
@@ -49,6 +51,7 @@
       transition: transform .16s ease, box-shadow .2s ease;
       word-break: break-word;
     }
+
     .post-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(0,0,0,.28);
@@ -87,6 +90,7 @@
       font-weight: 700;
       color: var(--text);
     }
+
     .post-author {
       color: var(--text-dim);
       font-size: .95rem;
@@ -132,7 +136,10 @@
       gap: 8px;
     }
 
-    .post-menu { position: relative; }
+    .post-menu {
+      position: relative;
+    }
+
     .kebab-btn {
       background: transparent;
       border: none;
@@ -143,6 +150,7 @@
       padding: 4px 6px;
       transition: color .2s ease;
     }
+
     .kebab-btn:hover { color: var(--text-dim); }
 
     .menu {
@@ -158,6 +166,7 @@
       display: none;
       z-index: 20;
     }
+
     .menu.open { display: block; }
 
     .menu a,
@@ -175,13 +184,16 @@
       text-decoration: none;
       transition: background .15s;
     }
+
     .menu a:hover,
     .menu button:hover { background: var(--input-hover); }
+
     .menu .danger { color: #ff6b6b; }
 
     .menu .ban-user {
       color: #ff7070;
     }
+
     .menu .ban-user:hover {
       background: #ff7070;
       color: #0f0f0f;
@@ -210,6 +222,7 @@
       transform: translateY(-5px);
       transition: max-height .4s ease, opacity .35s ease, transform .35s ease;
     }
+
     .comments.open {
       opacity: 1;
       transform: translateY(0);
@@ -223,9 +236,15 @@
       padding: 12px 14px;
       border-bottom: 1px solid var(--line);
     }
+
     .comments-count { font-weight: 600; color: var(--accent); }
 
-    .comment-list { list-style: none; margin: 0; padding: 0; }
+    .comment-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
     .comment {
       display: flex;
       flex-wrap: wrap;
@@ -233,6 +252,7 @@
       padding: 10px 14px;
       border-bottom: 1px solid var(--line);
     }
+
     .comment:last-child { border-bottom: none; }
 
     .comment-avatar {
@@ -247,6 +267,7 @@
       font-weight: 700;
       color: var(--accent);
     }
+
     .comment-body {
       flex: 1 1 100%;
       color: var(--text);
@@ -263,6 +284,7 @@
       background: var(--panel);
       flex-wrap: wrap;
     }
+
     .comment-input {
       flex: 1;
       border: 1px solid var(--input-border);
@@ -274,6 +296,7 @@
       resize: vertical;
       font: inherit;
     }
+
     .comment-submit {
       background: var(--accent);
       color: #0f0f0f;
@@ -284,6 +307,7 @@
       cursor: pointer;
       transition: transform .08s;
     }
+
     .comment-submit:hover { transform: translateY(-1px); }
 
     .comments-toggle {
@@ -297,6 +321,7 @@
       font-weight: 600;
       transition: background .15s, color .15s;
     }
+
     .comments-toggle:hover { background: var(--accent); color: #0f0f0f; }
 
     .pagination {
@@ -307,6 +332,7 @@
       margin-top: 22px;
       font-size: 0.95rem;
     }
+
     .page-btn {
       background: var(--accent);
       color: #0f0f0f;
@@ -316,7 +342,9 @@
       font-weight: 700;
       transition: background 0.2s ease;
     }
+
     .page-btn:hover { background: var(--accent-strong, #00e6c0); }
+
     .pagination span { color: var(--text-dim); }
 
     .fab {
@@ -338,7 +366,9 @@
       box-shadow: 0 6px 14px rgba(0,0,0,0.25);
       transition: transform .12s ease, box-shadow .15s ease;
     }
+
     .fab span { font-size: 1.8rem; font-weight: 500; }
+
     .fab:hover { transform: translateY(-2px); }
 
     @media (max-width: 700px) {
@@ -370,15 +400,14 @@
         <div>
           <div class="post-title">{{ p.title }}</div>
           <div class="post-author">
-  by {{ p.username or '[Deleted User]' }}
-  {% if p.is_admin %}
-    <span class="admin-badge">Admin</span>
-  {% endif %}
-  {% if p.banned %}
-    <span class="banned-badge">BANNED</span>
-  {% endif %}
-</div>
-
+            by {{ p.username or '[Deleted User]' }}
+            {% if p.is_admin %}
+              <span class="admin-badge">Admin</span>
+            {% endif %}
+            {% if p.banned %}
+              <span class="banned-badge">BANNED</span>
+            {% endif %}
+          </div>
         </div>
         <div class="post-right">
           <div class="post-meta">
@@ -420,11 +449,15 @@
 
       <div class="post-body">{{ p.body }}</div>
 
-      <button class="comments-toggle" data-state="closed">Show comments</button>
+      <button class="comments-toggle" data-state="closed" id="comments-toggle-{{ p.id }}">
+        Show comments (<span id="comments-num-{{ p.id }}">0</span>)
+      </button>
+
       <div class="comments" id="comments-{{ p.id }}">
         <div class="comments-header">
           <div class="comments-count" id="comments-count-{{ p.id }}">0 comments</div>
         </div>
+
         {% if user %}
         <div class="comment-add">
           <textarea class="comment-input" id="comment-input-{{ p.id }}" placeholder="Add a comment…" rows="1"></textarea>
@@ -439,6 +472,7 @@
           </em>
         </div>
         {% endif %}
+
         <ul class="comment-list" id="comment-list-{{ p.id }}"></ul>
       </div>
     </article>
@@ -462,243 +496,265 @@
     </a>
   </main>
 
-<script>
-/* ===============================
-   🔹 Admin + Comment UI Logic
-   =============================== */
-
-// === Menu toggle ===
-document.addEventListener("click", e => {
-  const btn = e.target.closest(".kebab-btn");
-  const allMenus = document.querySelectorAll(".menu");
-  if (btn) {
-    const menu = btn.nextElementSibling;
-    const isOpen = menu.classList.contains("open");
-    allMenus.forEach(m => m.classList.remove("open"));
-    if (!isOpen) menu.classList.add("open");
-  } else allMenus.forEach(m => m.classList.remove("open"));
-});
-
-// === Comments toggle ===
-document.querySelectorAll(".comments-toggle").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const postId = btn.closest(".post-card").dataset.postId;
-    const box = document.getElementById(`comments-${postId}`);
-    const open = btn.dataset.state === "open";
-    if (open) {
-      box.classList.remove("open");
-      btn.dataset.state = "closed";
-      btn.textContent = "Show comments";
-    } else {
-      box.classList.add("open");
-      btn.dataset.state = "open";
-      btn.textContent = "Hide comments";
-      await loadComments(postId);
-    }
-  });
-});
-
-// === Load comments ===
-async function loadComments(postId) {
-  const list = document.getElementById(`comment-list-${postId}`);
-  const count = document.getElementById(`comments-count-${postId}`);
-  list.innerHTML =
-    '<li class="comment"><em style="color:var(--muted);">Loading…</em></li>';
-  try {
-    const res = await fetch(`/comments/list?post_id=${postId}`);
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error);
-    list.innerHTML = "";
-    data.comments.forEach(c => list.appendChild(renderComment(c)));
-    count.textContent = `${data.count} comment${data.count !== 1 ? "s" : ""}`;
-  } catch {
-    list.innerHTML =
-      '<li class="comment"><em style="color:#ff9f9f;">Failed to load comments</em></li>';
-  }
-}
-
-function renderComment(c) {
-  const li = document.createElement("li");
-  li.className = "comment";
-  li.dataset.commentId = c.id;
-  li.innerHTML = `
-    <div class="comment-avatar">${(c.username || "?")[0].toUpperCase()}</div>
-    <div class="comment-body">${escapeHtml(c.body)}</div>
-    ${
-      c.can_delete
-        ? `<button class="comment-delete" data-id="${c.id}">Delete</button>`
-        : ""
-    }`;
-  return li;
-}
-
-function escapeHtml(str) {
-  return (str || "").replace(/[&<>"']/g, s =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s])
-  );
-}
-
-// === Post comment ===
-document.addEventListener("click", async e => {
-  const postBtn = e.target.closest(".comment-submit");
-  if (!postBtn) return;
-  const postId = postBtn.dataset.postId;
-  const input = document.getElementById(`comment-input-${postId}`);
-  const body = input.value.trim();
-  if (!body) return;
-
-  postBtn.disabled = true;
-  const old = postBtn.textContent;
-  postBtn.textContent = "Posting…";
-
-  try {
-    const res = await fetch("/comments/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ post_id: Number(postId), body })
+  <script>
+    // === Menu toggle ===
+    document.addEventListener("click", e => {
+      const btn = e.target.closest(".kebab-btn");
+      const allMenus = document.querySelectorAll(".menu");
+      if (btn) {
+        const menu = btn.nextElementSibling;
+        const isOpen = menu.classList.contains("open");
+        allMenus.forEach(m => m.classList.remove("open"));
+        if (!isOpen) menu.classList.add("open");
+      } else allMenus.forEach(m => m.classList.remove("open"));
     });
-    const data = await res.json();
 
-    if (data.ok && data.comment) {
+    // === Comments toggle ===
+    document.querySelectorAll(".comments-toggle").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const postId = btn.closest(".post-card").dataset.postId;
+        const box = document.getElementById(`comments-${postId}`);
+        const open = btn.dataset.state === "open";
+        const numSpan = document.getElementById(`comments-num-${postId}`);
+        const num = numSpan ? numSpan.textContent : "0";
+        if (open) {
+          box.classList.remove("open");
+          btn.dataset.state = "closed";
+          btn.innerHTML = `Show comments (<span id="comments-num-${postId}">${num}</span>)`;
+        } else {
+          box.classList.add("open");
+          btn.dataset.state = "open";
+          btn.innerHTML = `Hide comments (<span id="comments-num-${postId}">${num}</span>)`;
+          await loadComments(postId);
+        }
+      });
+    });
+
+    // === Load comments ===
+    async function loadComments(postId) {
       const list = document.getElementById(`comment-list-${postId}`);
-      list.prepend(renderComment(data.comment));
-      input.value = "";
-
-      // Update count
-      const countEl = document.getElementById(`comments-count-${postId}`);
-      const match = /(\d+)/.exec(countEl.textContent);
-      if (match) {
-        const n = Number(match[1]) + 1;
-        countEl.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
+      const count = document.getElementById(`comments-count-${postId}`);
+      const numSpan = document.getElementById(`comments-num-${postId}`);
+      list.innerHTML = '<li class="comment"><em style="color:var(--muted);">Loading…</em></li>';
+      try {
+        const res = await fetch(`/comments/list?post_id=${postId}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        list.innerHTML = "";
+        data.comments.forEach(c => list.appendChild(renderComment(c)));
+        count.textContent = `${data.count} comment${data.count !== 1 ? "s" : ""}`;
+        if (numSpan) numSpan.textContent = data.count;
+      } catch {
+        list.innerHTML = '<li class="comment"><em style="color:#ff9f9f;">Failed to load comments</em></li>';
       }
-    } else {
-      alert(data.error || "Failed to comment.");
     }
-  } catch {
-    alert("Failed to comment (network error).");
-  } finally {
-    postBtn.disabled = false;
-    postBtn.textContent = old;
-  }
-});
 
-// === Delete comment ===
-document.addEventListener("click", async e => {
-  const delBtn = e.target.closest(".comment-delete");
-  if (!delBtn) return;
+    // === Render Comment ===
+    function renderComment(c) {
+      const li = document.createElement("li");
+      li.className = "comment";
+      li.dataset.commentId = c.id;
+      li.innerHTML = `
+        <div class="comment-avatar">${(c.username || "?")[0].toUpperCase()}</div>
+        <div class="comment-body">${escapeHtml(c.body)}</div>
+        ${
+          c.can_delete
+            ? `<button class="comment-delete" data-id="${c.id}">Delete</button>`
+            : ""
+        }`;
+      return li;
+    }
 
-  const commentId = delBtn.dataset.id;
-  const li = delBtn.closest(".comment");
-  const postId = li.closest(".post-card")?.dataset.postId;
+    function escapeHtml(str) {
+      return (str || "").replace(/[&<>"']/g, s =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s])
+      );
+    }
 
-  delBtn.disabled = true;
-  const old = delBtn.textContent;
-  delBtn.textContent = "Deleting…";
+    // === Post comment ===
+    document.addEventListener("click", async e => {
+      const postBtn = e.target.closest(".comment-submit");
+      if (!postBtn) return;
+      const postId = postBtn.dataset.postId;
+      const input = document.getElementById(`comment-input-${postId}`);
+      const body = input.value.trim();
+      if (!body) return;
 
-  try {
-    const res = await fetch(`/comments/${commentId}/delete`, { method: "POST" });
-    const data = await res.json();
-    if (data.ok) {
-      li.remove();
+      postBtn.disabled = true;
+      const old = postBtn.textContent;
+      postBtn.textContent = "Posting…";
 
-      const countEl = document.getElementById(`comments-count-${postId}`);
-      const match = /(\d+)/.exec(countEl.textContent);
-      if (match) {
-        const n = Math.max(0, Number(match[1]) - 1);
-        countEl.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
+      try {
+        const res = await fetch("/comments/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ post_id: Number(postId), body })
+        });
+        const data = await res.json();
+        if (data.ok && data.comment) {
+          const list = document.getElementById(`comment-list-${postId}`);
+          list.prepend(renderComment(data.comment));
+          input.value = "";
+
+          // Update count in both places
+          const countEl = document.getElementById(`comments-count-${postId}`);
+          const numSpan = document.getElementById(`comments-num-${postId}`);
+          const match = /(\d+)/.exec(countEl.textContent);
+          if (match) {
+            const n = Number(match[1]) + 1;
+            countEl.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
+            if (numSpan) numSpan.textContent = n;
+          }
+        } else {
+          alert(data.error || "Failed to comment.");
+        }
+      } catch {
+        alert("Failed to comment (network error).");
+      } finally {
+        postBtn.disabled = false;
+        postBtn.textContent = old;
       }
-    } else {
-      alert(data.error || "Failed to delete comment.");
-    }
-  } catch {
-    alert("Network error deleting comment.");
-  } finally {
-    delBtn.disabled = false;
-    delBtn.textContent = old;
-  }
-});
-
-// === Ban / Unban user ===
-document.addEventListener("click", async e => {
-  const banBtn = e.target.closest(".ban-user");
-  if (!banBtn) return;
-
-  const username = banBtn.dataset.username;
-  const banned = banBtn.dataset.banned === "1";
-  const confirmMsg = banned
-    ? `Unban ${username}? They will regain posting privileges.`
-    : `Ban ${username}? They will no longer be able to post or comment.`;
-  if (!confirm(confirmMsg)) return;
-
-  banBtn.disabled = true;
-  banBtn.textContent = banned ? "Unbanning…" : "Banning…";
-
-  try {
-    const res = await fetch("/admin/ban_user", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, banned: !banned })
     });
-    const data = await res.json();
-    if (data.ok) {
-      banBtn.textContent = banned ? "Ban user" : "Unban user";
-      banBtn.dataset.banned = banned ? "0" : "1";
-      location.reload();
-    } else {
-      alert(data.error || "Failed to update ban status.");
+
+    // === Delete comment ===
+    document.addEventListener("click", async e => {
+      const delBtn = e.target.closest(".comment-delete");
+      if (!delBtn) return;
+      const commentId = delBtn.dataset.id;
+      const li = delBtn.closest(".comment");
+      const postId = li.closest(".post-card")?.dataset.postId;
+
+      delBtn.disabled = true;
+      const old = delBtn.textContent;
+      delBtn.textContent = "Deleting…";
+
+      try {
+        const res = await fetch(`/comments/${commentId}/delete`, { method: "POST" });
+        const data = await res.json();
+        if (data.ok) {
+          li.remove();
+          const countEl = document.getElementById(`comments-count-${postId}`);
+          const numSpan = document.getElementById(`comments-num-${postId}`);
+          const match = /(\d+)/.exec(countEl.textContent);
+          if (match) {
+            const n = Math.max(0, Number(match[1]) - 1);
+            countEl.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
+            if (numSpan) numSpan.textContent = n;
+          }
+        } else {
+          alert(data.error || "Failed to delete comment.");
+        }
+      } catch {
+        alert("Network error deleting comment.");
+      } finally {
+        delBtn.disabled = false;
+        delBtn.textContent = old;
+      }
+    });
+
+    // === Ban / Unban user ===
+    document.addEventListener("click", async e => {
+      const banBtn = e.target.closest(".ban-user");
+      if (!banBtn) return;
+
+      const username = banBtn.dataset.username;
+      const banned = banBtn.dataset.banned === "1";
+      const confirmMsg = banned
+        ? `Unban ${username}? They will regain posting privileges.`
+        : `Ban ${username}? They will no longer be able to post or comment.`;
+      if (!confirm(confirmMsg)) return;
+
+      banBtn.disabled = true;
+      banBtn.textContent = banned ? "Unbanning…" : "Banning…";
+
+      try {
+        const res = await fetch("/admin/ban_user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, banned: !banned })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          banBtn.textContent = banned ? "Ban user" : "Unban user";
+          banBtn.dataset.banned = banned ? "0" : "1";
+          location.reload();
+        } else {
+          alert(data.error || "Failed to update ban status.");
+        }
+      } catch {
+        alert("Error updating ban (network).");
+      } finally {
+        banBtn.disabled = false;
+      }
+    });
+
+    // === Pin / Unpin posts ===
+    document.addEventListener("click", async e => {
+      const btn = e.target.closest(".toggle-pin");
+      if (!btn) return;
+
+      const postId = btn.dataset.id;
+      const state = btn.dataset.state === "1";
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = state ? "Unpinning…" : "Pinning…";
+
+      try {
+        const res = await fetch(`/posts/${postId}/pin`, { method: "POST" });
+        const data = await res.json();
+        if (data.ok) {
+          btn.textContent = data.pinned ? "Unpin" : "Pin";
+          btn.dataset.state = data.pinned ? "1" : "0";
+          location.reload();
+        } else {
+          alert(data.error || "Failed to pin post.");
+          btn.textContent = old;
+        }
+      } catch {
+        alert("Network error while pinning.");
+        btn.textContent = old;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // === Smooth scroll to highlighted post ===
+    document.addEventListener("DOMContentLoaded", () => {
+      document.documentElement.style.scrollBehavior = "smooth";
+      const hash = window.location.hash;
+      if (hash.startsWith("#post-")) {
+        const post = document.querySelector(hash);
+        if (post) {
+          post.scrollIntoView({ behavior: "smooth", block: "center" });
+          post.style.boxShadow = "0 0 18px var(--accent)";
+          post.style.transition = "box-shadow 0.8s ease-out";
+          setTimeout(() => (post.style.boxShadow = ""), 1200);
+        }
+      }
+    });
+
+    // === Initial comment count load ===
+document.addEventListener("DOMContentLoaded", async () => {
+  const buttons = document.querySelectorAll(".comments-toggle");
+  for (const btn of buttons) {
+    const postId = btn.closest(".post-card").dataset.postId;
+    const numSpan = document.getElementById(`comments-num-${postId}`);
+    const countEl = document.getElementById(`comments-count-${postId}`);
+
+    try {
+      const res = await fetch(`/comments/count?post_id=${postId}`);
+      const data = await res.json();
+      if (data.ok) {
+        const n = data.count || 0;
+        numSpan.textContent = n;
+        countEl.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
+      }
+    } catch (err) {
+      console.warn("Failed to load count for post", postId, err);
     }
-  } catch {
-    alert("Error updating ban (network).");
-  } finally {
-    banBtn.disabled = false;
   }
 });
 
-// === Pin / Unpin posts ===
-document.addEventListener("click", async e => {
-  const btn = e.target.closest(".toggle-pin");
-  if (!btn) return;
-
-  const postId = btn.dataset.id;
-  const state = btn.dataset.state === "1";
-  btn.disabled = true;
-  const old = btn.textContent;
-  btn.textContent = state ? "Unpinning…" : "Pinning…";
-
-  try {
-    const res = await fetch(`/posts/${postId}/pin`, { method: "POST" });
-    const data = await res.json();
-    if (data.ok) {
-      btn.textContent = data.pinned ? "Unpin" : "Pin";
-      btn.dataset.state = data.pinned ? "1" : "0";
-      location.reload();
-    } else {
-      alert(data.error || "Failed to pin post.");
-      btn.textContent = old;
-    }
-  } catch {
-    alert("Network error while pinning.");
-    btn.textContent = old;
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-// === Smooth scroll + glow to highlighted post ===
-document.addEventListener("DOMContentLoaded", () => {
-  document.documentElement.style.scrollBehavior = "smooth";
-  const hash = window.location.hash;
-  if (hash.startsWith("#post-")) {
-    const post = document.querySelector(hash);
-    if (post) {
-      post.scrollIntoView({ behavior: "smooth", block: "center" });
-      post.style.boxShadow = "0 0 18px var(--accent)";
-      post.style.transition = "box-shadow 0.8s ease-out";
-      setTimeout(() => (post.style.boxShadow = ""), 1200);
-    }
-  }
-});
-</script>
-
+  </script>
 </body>
 </html>

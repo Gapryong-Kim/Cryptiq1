@@ -1469,6 +1469,14 @@ def admin_ban_user():
 
 
 
+@app.route("/comments/count")
+def comment_count():
+    post_id = request.args.get("post_id", type=int)
+    conn = get_db()
+    cur = conn.execute("SELECT COUNT(*) AS n FROM comments WHERE post_id = ?", (post_id,))
+    row = cur.fetchone()
+    conn.close()
+    return jsonify({"ok": True, "count": row["n"] if row else 0})
 
 
 # ------------------- Run -------------------

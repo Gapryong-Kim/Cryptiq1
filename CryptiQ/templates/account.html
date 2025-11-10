@@ -4,439 +4,430 @@
   <meta charset="utf-8" />
   <title>Account — The Cipher Lab</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251104">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251110">
 
   <style>
-  :root { --radius: 14px; }
+    :root { --radius: 14px; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    margin: 0;
-    padding: 0;
-  }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-  /* === Page scaffold === */
-  main {
-    min-height: calc(100vh - 68px);
-    padding: 0 16px 60px; /* no top gap */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 28px;
-  }
+    main.account-viewport {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 100px 20px 60px;
+      position: relative;
+      overflow: hidden;
+    }
 
-  .container {
-    width: 100%;
-    max-width: 1000px;
-  }
+    /* ===== Background Aura ===== */
+    .account-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(50% 40% at 85% 15%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+        radial-gradient(45% 45% at 15% 25%, rgba(0,255,213,.1) 0%, rgba(0,255,213,0) 60%),
+        linear-gradient(to bottom, rgba(0,255,213,0.05), transparent 40%);
+      filter: blur(22px);
+      opacity: 0.9;
+    }
 
-  /* ======= HERO (Account + Profile unified) ======= */
-  .account-hero {
-    position: relative;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--panel) 92%, var(--bg));
-    border: 1px solid var(--border);
-    border-radius: 22px;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
-    padding: 28px clamp(16px, 4vw, 32px);
-    margin-top: 8px;
-  }
+    /* ===== Main Card ===== */
+    .account-card {
+      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      backdrop-filter: blur(6px);
+      padding: clamp(28px, 4vw, 36px);
+      width: min(950px, 95vw);
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      z-index: 1;
+    }
 
-  /* Subtle ambient perimeter glow, login-style */
-  .account-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background:
-      radial-gradient(1000px 800px at 50% 50%,
-        rgba(0,255,213,0.05) 0%,
-        rgba(0,255,213,0.04) 25%,
-        rgba(0,255,213,0.02) 60%,
-        transparent 90%);
-    opacity: 1;
-    mix-blend-mode: screen;
-    pointer-events: none;
-  }
+    .account-title {
+      text-align: center;
+      color: var(--accent);
+      font-size: clamp(1.6rem, 2.4vw, 2rem);
+      font-weight: 800;
+      margin: 0 0 20px;
+    }
 
-  .hero-title {
-    text-align: center;
-    color: var(--accent);
-    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
-    font-weight: 800;
-    letter-spacing: .3px;
-    margin: 0 0 16px 0;
-  }
+    /* ===== Hero Section ===== */
+    .account-hero {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
 
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 120px 1fr auto;
-    gap: clamp(16px, 3vw, 28px);
-    align-items: center;
-  }
+    .avatar {
+      width: 150px;
+      height: 150px;
+      border-radius: 90%;
+      background: var(--accent);
+      color: #0f0f0f;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 2rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
 
-  .avatar-wrap {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    border-radius: 999px;
-    display: grid;
-    place-items: center;
-  }
-
-  .avatar-wrap::before {
-    content: "";
-    position: absolute;
-    inset: -8px;
-    border-radius: 999px;
-    background: radial-gradient(100px 100px at 50% 50%,
-      rgba(0,255,213,0.12) 0%,
-      rgba(0,255,213,0.04) 60%,
-      transparent 80%);
-    filter: blur(3px);
-    pointer-events: none;
-  }
-
-  .avatar {
-    width: 88px;
-    height: 88px;
-    border-radius: 999px;
-    background: var(--accent);
-    color: #0f0f0f;
-    display: grid;
-    place-items: center;
-    font-weight: 800;
-    font-size: 2rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  }
-
-  .hero-info h2 {
-    margin: 0 0 4px 0;
-    font-size: clamp(1.1rem, 2vw, 1.4rem);
-    color: var(--accent);
-  }
-
-  .hero-info p {
-    margin: 2px 0;
-    color: var(--subtext);
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 18px;
-    border-radius: var(--radius);
-    text-decoration: none;
-    font-weight: 700;
-    border: 1px solid transparent;
-    transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
-    user-select: none;
-  }
-
-  .btn:active { transform: translateY(1px) scale(.995); }
-
-  .btn-accent {
-    background: var(--accent);
-    color: #0f0f0f;
-    border-color: var(--accent);
-  }
-
-  .btn-accent:hover {
-    box-shadow: 0 0 0 3px rgba(0,255,213,0.15);
-  }
-
-  .btn-danger {
-    background: transparent;
-    color: #ff5a5a;
-    border-color: #ff5a5a;
-  }
-
-  .btn-danger:hover {
-    background: #ff5a5a;
-    color: #0f0f0f;
-    box-shadow: 0 0 0 3px rgba(255,90,90,0.18);
-  }
-
-  /* Section links under hero */
-  .hero-links {
-    margin-top: 18px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .hero-links a {
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    text-decoration: none;
-    font-weight: 600;
-    color: var(--text);
-    transition: background .18s ease, color .18s ease;
-  }
-
-  .hero-links a:hover {
-    background: var(--accent);
-    color: #0f0f0f;
-  }
-
-  /* ======= SECTIONS ======= */
-  .section {
-    margin-top: 22px;
-  }
-
-  .section h3 {
-    color: var(--accent);
-    font-size: clamp(1.05rem, 1.8vw, 1.25rem);
-    margin: 0 0 10px 0;
-    padding-left: 4px;
-  }
-
-  .card {
-    background: color-mix(in srgb, var(--panel) 92%, var(--bg));
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    box-shadow: 0 10px 26px rgba(0,0,0,0.32);
-    padding: clamp(18px, 3vw, 28px);
-    transition: transform .18s ease, box-shadow .18s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 16px 34px rgba(0,0,0,0.38);
-  }
-
-  /* Leaderboard mini-cards */
-  .lb-stats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(140px, 1fr));
-    gap: 14px;
-  }
-
-  .lb-item {
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
-    background: rgba(255,255,255,0.02);
-  }
-
-  .lb-label {
-    color: var(--subtext);
-    font-size: .92rem;
-  }
-
-  .lb-value {
-    color: var(--accent);
-    font-weight: 800;
-    font-size: 1.25rem;
-    margin-top: 6px;
-  }
-
-  /* Rank colors */
-  .lb-value.rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.35); }
-  .lb-value.rank-2 { color: #c0c0c0; text-shadow: 0 0 10px rgba(192,192,192,0.25); }
-  .lb-value.rank-3 { color: #c08a4c; text-shadow: 0 0 10px rgba(192,138,76,0.25); }
-
-  /* Posts grid */
-  .post-grid {
-    display: grid;
-    gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  }
-
-  .post {
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 14px 12px;
-    background: color-mix(in srgb, var(--panel) 90%, var(--bg));
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .post h4 {
-    margin: 0;
-    color: var(--accent);
-  }
-
-  .post p {
-    margin: 0;
-    color: var(--text);
-    line-height: 1.5;
-  }
-
-  .post .meta {
-    color: var(--subtext);
-    font-size: .9rem;
-  }
-
-  .post .actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 6px;
-  }
-
-  .post .actions a {
-    text-decoration: none;
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    font-weight: 600;
-    transition: background .18s ease, color .18s ease;
-  }
-
-  .post .actions a:hover {
-    background: var(--accent);
-    color: #0f0f0f;
-  }
-
-  /* Light theme */
-  [data-theme="light"], body.light {
-    --bg: #f7f7f7;
-    --panel: #ffffff;
-    --text: #202020;
-    --subtext: #606060;
-    --border: #e0e0e0;
-  }
-
-  /* ===== Responsive ===== */
-  @media (max-width: 900px) {
-    .hero-grid {
-      grid-template-columns: 1fr;
+    .hero-info h2 {
+      margin: 0 0 6px;
+      color: var(--accent);
+      font-size: 1.4rem;
+      font-weight: 800;
       text-align: center;
     }
 
-    .hero-actions {
+    .hero-info p {
+      margin: 2px 0;
+      color: var(--muted);
+      font-size: .95rem;
+      text-align: center;
+    }
+
+    /* ===== Tabs / Links ===== */
+    .account-links {
+      display: flex;
       justify-content: center;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .avatar {
-      width: 76px;
-      height: 76px;
-      font-size: 1.6rem;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
+    .account-links a {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      transition: background .18s ease, color .18s ease, border-color .18s ease;
+    }
+
+    .account-links a:hover {
+      background: var(--accent);
+      color: #0f0f0f;
+      border-color: var(--accent);
+    }
+
+    /* ===== Sections ===== */
+    .section {
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+    }
+
+    .section h3 {
+      color: var(--accent);
+      margin: 0 0 8px;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .section p {
+      color: var(--subtext);
+      margin: 0;
+      font-size: .95rem;
+    }
+
+    /* ===== Leaderboard Mini ===== */
     .lb-stats {
-      grid-template-columns: 1fr;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 10px;
     }
-  }
+
+    .lb-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      background: rgba(255,255,255,0.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lb-label { color: var(--subtext); font-size: .9rem; }
+    .lb-value {
+      font-weight: 800;
+      font-size: 1.25rem;
+      margin-top: 6px;
+    }
+
+    /* === Podium Glow === */
+    .lb-value.rank-1 {
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255,215,0,0.35);
+    }
+    .lb-value.rank-2 {
+      color: #c0c0c0;
+      text-shadow: 0 0 10px rgba(192,192,192,0.3);
+    }
+    .lb-value.rank-3 {
+      color: #c08a4c;
+      text-shadow: 0 0 10px rgba(192,138,76,0.3);
+    }
+
+    /* Shimmer for top 3 */
+    .lb-item.rank-1::after,
+    .lb-item.rank-2::after,
+    .lb-item.rank-3::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 80%;
+      height: 100%;
+      background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255,255,255,0.25) 50%,
+        transparent 100%
+      );
+      transform: skewX(-25deg);
+      animation: shimmer 3s infinite ease-in-out;
+    }
+
+    @keyframes shimmer {
+      0% { left: -150%; }
+      50% { left: 150%; }
+      100% { left: 150%; }
+    }
+
+    /* ===== Posts ===== */
+    .post-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      margin-top: 10px;
+    }
+
+    .post {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      background: rgba(255,255,255,0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .post h4 { margin: 0; color: var(--accent); font-size: 1rem; }
+    .post p { margin: 0; color: var(--text); line-height: 1.5; }
+    .post .meta { color: var(--subtext); font-size: .9rem; }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #0f0f0f;
+      border-color: var(--accent);
+    }
+
+    .btn-accent:hover {
+      box-shadow: 0 0 0 3px rgba(0,255,213,0.15);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #ff5a5a;
+      border-color: #ff5a5a;
+    }
+
+    .btn-danger:hover {
+      background: #ff5a5a;
+      color: #0f0f0f;
+      box-shadow: 0 0 0 3px rgba(255,90,90,0.18);
+      transform: translateY(-1px);
+    }
+
+    .bottom-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    /* ===== Modals ===== */
+    .confirm-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+    }
+
+    .confirm-modal.open { display: flex; animation: fadeIn .25s ease; }
+
+    .confirm-box {
+      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      max-width: 420px;
+      padding: 26px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .confirm-box h2 { color: var(--accent); margin: 0 0 8px; font-weight: 800; }
+    .confirm-box p { color: var(--text); margin-bottom: 20px; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(6px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    @media (max-width: 700px) {
+      .account-card { width: 94vw; padding: 22px 18px; }
+      .hero-info h2, .account-title { font-size: 1.4rem; text-align: center; }
+      .account-hero { flex-direction: column; }
+    }
   </style>
 </head>
 
 <body class="no-nav-padding">
   {% include 'base_nav.html' %}
-  <main>
-    <div class="container">
 
-      <section class="account-hero">
-        <h1 class="hero-title">Account</h1>
+  <main class="account-viewport">
+    <div class="account-bg"></div>
 
-        <div class="hero-grid">
-          <div class="avatar-wrap">
-            <div class="avatar">{{ user_info['username'][0].upper() }}</div>
-          </div>
+    <div class="account-card">
+      <h1 class="account-title">Account Overview</h1>
 
-          <div class="hero-info">
-            <h2>{{ user_info['username'] }}</h2>
-            <p>Email: {{ user_info['email'] }}</p>
-            <p>Member since: {{ user_info['created_at'][:10] }}</p>
-          </div>
-
-          <div class="hero-actions">
-            <a href="{{ url_for('logout') }}" class="btn btn-accent">Logout</a>
-            <a href="{{ url_for('delete_account') }}" class="btn btn-danger"
-               onclick="return confirm('Are you sure you want to permanently delete your account? This cannot be undone.');">
-              Delete Account
-            </a>
-          </div>
+      <div class="account-hero">
+        <div class="avatar">{{ user_info['username'][0].upper() }}</div>
+        <div class="hero-info">
+          <h2>{{ user_info['username'] }}</h2>
+          <p>Email: {{ user_info['email'] }}</p>
+          <p>Member since: {{ user_info['created_at'][:10] }}</p>
         </div>
+      </div>
 
-        <div class="hero-links">
-          <a href="#profile">Profile</a>
-          <a href="#leaderboard">Leaderboard</a>
-          <a href="#posts">My Posts</a>
-        </div>
-      </section>
+      <div class="account-links">
+        <a href="#profile">Profile</a>
+        <a href="#leaderboard">Leaderboard</a>
+        <a href="#posts">My Posts</a>
+      </div>
 
-      <section id="profile" class="section">
+      <!-- ===== Profile ===== -->
+      <div id="profile" class="section">
         <h3>Profile</h3>
-        <div class="card">
-          <p style="color:var(--subtext); margin:0;">
-            Your profile summary appears in the Account header. More options coming soon.
-          </p>
-        </div>
-      </section>
+        <p>Your profile summary appears above. More options coming soon.</p>
+      </div>
 
-      <section id="leaderboard" class="section">
+      <!-- ===== Leaderboard ===== -->
+      <div id="leaderboard" class="section">
         <h3>Leaderboard</h3>
-        <div class="card">
-          {% if leaderboard_data %}
-            <div class="lb-stats">
-              <div class="lb-item">
-                <div class="lb-label">Rank</div>
-                <div class="lb-value 
-                  {% if leaderboard_data['rank'] == 1 %}rank-1{% 
-                     elif leaderboard_data['rank'] == 2 %}rank-2{% 
-                     elif leaderboard_data['rank'] == 3 %}rank-3{% 
-                     endif %}">
-                  #{{ leaderboard_data['rank'] }}
-                </div>
-              </div>
-              <div class="lb-item">
-                <div class="lb-label">Total Score</div>
-                <div class="lb-value">{{ leaderboard_data['total_score'] }}</div>
-              </div>
-              <div class="lb-item">
-                <div class="lb-label">Weeks Played</div>
-                <div class="lb-value">{{ leaderboard_data['weeks_played'] }}</div>
-              </div>
-            </div>
-          {% else %}
-            <p style="color:var(--subtext); margin: 2px 0;">
-              You haven't appeared on the leaderboard yet. Solve the Weekly Cipher to earn points!
-            </p>
-          {% endif %}
+        {% if leaderboard_data %}
+        <div class="lb-stats">
+          <div class="lb-item rank-{{ leaderboard_data['rank'] }}">
+            <div class="lb-label">Rank</div>
+            <div class="lb-value rank-{{ leaderboard_data['rank'] }}">#{{ leaderboard_data['rank'] }}</div>
+          </div>
+          <div class="lb-item">
+            <div class="lb-label">Total Score</div>
+            <div class="lb-value">{{ leaderboard_data['total_score'] }}</div>
+          </div>
+          <div class="lb-item">
+            <div class="lb-label">Weeks Played</div>
+            <div class="lb-value">{{ leaderboard_data['weeks_played'] }}</div>
+          </div>
         </div>
-      </section>
+        {% else %}
+        <p>You haven’t appeared on the leaderboard yet.</p>
+        {% endif %}
+      </div>
 
-      <section id="posts" class="section">
+      <!-- ===== Posts ===== -->
+      <div id="posts" class="section">
         <h3>My Posts</h3>
-        <div class="card">
-          {% if posts %}
-            <div class="post-grid">
-              {% for post in posts %}
-                <article class="post" id="post-{{ post['id'] }}">
-                  <h4>{{ post['title'] }}</h4>
-                  <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
-                  <div class="meta">Posted on {{ post['created_at'][:10] }}</div>
-                  <div class="actions">
-                    <a href="{{ url_for('posts_list') }}#post-{{ post['id'] }}">View</a>
-                    <a href="{{ url_for('posts_edit', post_id=post['id']) }}">Edit</a>
-                  </div>
-                </article>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p style="color:var(--subtext); margin: 2px 0;">You haven’t created any posts yet.</p>
-          {% endif %}
+        {% if posts %}
+        <div class="post-grid">
+          {% for post in posts %}
+          <article class="post">
+            <h4>{{ post['title'] }}</h4>
+            <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
+            <div class="meta">Posted on {{ post['created_at'][:10] }}</div>
+          </article>
+          {% endfor %}
         </div>
-      </section>
+        {% else %}
+        <p>You haven’t created any posts yet.</p>
+        {% endif %}
+      </div>
 
+      <!-- ===== Bottom Actions ===== -->
+      <div class="bottom-actions">
+        <a href="#" class="btn btn-accent" id="logout-btn">Logout</a>
+        <a href="#" class="btn btn-danger" id="delete-btn">Delete Account</a>
+      </div>
     </div>
   </main>
+
+  <!-- ===== Modals ===== -->
+  <div class="confirm-modal" id="confirm-logout">
+    <div class="confirm-box">
+      <h2>Logout</h2>
+      <p>Are you sure you want to log out?</p>
+      <div class="confirm-actions">
+        <a href="{{ url_for('logout') }}" class="btn btn-accent">Yes</a>
+        <button class="btn btn-danger" data-close>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-modal" id="confirm-delete">
+    <div class="confirm-box">
+      <h2>Delete Account</h2>
+      <p>This will permanently delete your account and all associated data.</p>
+      <div class="confirm-actions">
+        <a href="{{ url_for('delete_account') }}" class="btn btn-danger">Delete</a>
+        <button class="btn btn-accent" data-close>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const logoutBtn = document.getElementById('logout-btn');
+    const deleteBtn = document.getElementById('delete-btn');
+    const logoutModal = document.getElementById('confirm-logout');
+    const deleteModal = document.getElementById('confirm-delete');
+    const open = (m)=>m.classList.add('open');
+    const close = (m)=>m.classList.remove('open');
+    logoutBtn.onclick=e=>{e.preventDefault();open(logoutModal)};
+    deleteBtn.onclick=e=>{e.preventDefault();open(deleteModal)};
+    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>[logoutModal,deleteModal].forEach(close));
+    [logoutModal,deleteModal].forEach(m=>m.addEventListener('click',e=>{if(e.target===m)close(m)}));
+  </script>
 </body>
 </html>
