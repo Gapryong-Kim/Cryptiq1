@@ -158,6 +158,32 @@
   overflow-y: auto;
   scrollbar-gutter: stable both-edges;
 }
+/* === Custom Scrollbar Styling for Info Modal === */
+.info-box::-webkit-scrollbar {
+  width: 10px;
+}
+
+.info-box::-webkit-scrollbar-track {
+  background: color-mix(in oklab, var(--panel) 90%, black);
+  border-radius: 10px;
+}
+
+.info-box::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--accent) 30%, #0f0f0f);
+  border-radius: 10px;
+  border: 2px solid var(--panel);
+  transition: background 0.3s ease;
+}
+
+.info-box::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Firefox (uses scrollbar-color and width) */
+.info-box {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--accent) 35%, #0f0f0f) var(--panel);
+}
 
     /* === Admin Dropdown === */
     .admin-menu { position: relative; flex-shrink: 0; }
