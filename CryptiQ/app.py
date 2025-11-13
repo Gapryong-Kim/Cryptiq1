@@ -299,8 +299,8 @@ def breaker():
             elif cipher_type == "substitution":
                 key, plaintext = substitution_break(
                     text,
-                    max_restarts=24, sa_steps=6000, seed=42,
-                    time_limit_seconds=25, threads=None,
+                    max_restarts=20, sa_steps=6000, seed=42,
+                    time_limit_seconds=14, threads=None,
                     fixed=fixed_map, verbose=True
                 )
 
