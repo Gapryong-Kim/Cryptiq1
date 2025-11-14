@@ -328,8 +328,19 @@ def substitution_break(
         improved = True
         while improved and time.time() - start_time < time_limit_seconds:
             improved = False
-            for a in range(26):
-                for b in range(a + 1, 26):
+            # Reduced deterministic cleanup search space (Render-safe ~80% speedup)
+            CANDIDATES = list(range(26))
+            # Shuffle so we don't always favour same letters
+            random.shuffle(CANDIDATES)
+
+            # Only check first 14 letters instead of all 26
+            LIMIT = 14
+
+            for a_i in range(LIMIT):
+                for b_i in range(a_i + 1, LIMIT):
+                    a = CANDIDATES[a_i]
+                    b = CANDIDATES[b_i]
+
                     d = delta_swap(P, a, b)
                     if d > 1e-6:
                         P[a], P[b] = P[b], P[a]
