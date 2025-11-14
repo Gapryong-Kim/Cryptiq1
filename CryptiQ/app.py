@@ -300,9 +300,9 @@ def breaker():
                 key, plaintext = substitution_break(
     text,
     max_restarts=6,    # ← solid balance
-    sa_steps=4500,     # ← still enough for convergence
+    sa_steps=6000,     # ← still enough for convergence
     seed=42,
-    time_limit_seconds=8,   # ← stays under Render deadline reliably
+    time_limit_seconds=7,   # ← stays under Render deadline reliably
     threads=None,
     fixed=fixed_map,
     verbose=False
@@ -1480,4 +1480,5 @@ def admin_ban_user():
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
