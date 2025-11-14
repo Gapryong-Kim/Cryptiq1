@@ -303,7 +303,7 @@ def breaker():
     sa_steps=6000,     # ← still enough for convergence
     seed=42,
     time_limit_seconds=7,   # ← stays under Render deadline reliably
-    threads=None,
+    threads=2,
     fixed=fixed_map,
     verbose=False
 )
@@ -1480,6 +1480,7 @@ def admin_ban_user():
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
