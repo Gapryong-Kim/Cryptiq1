@@ -292,17 +292,22 @@ def breaker():
             elif cipher_type == "polybius":
                 key, plaintext = substitution_break(
                     polybius_standardize(text),
-                    max_restarts=16, sa_steps=6000, seed=42,
-                    time_limit_seconds=25, threads=None,
+                    max_restarts=1, sa_steps=3200, seed=42,
+                    time_limit_seconds=8, threads=None,
                     fixed=fixed_map, verbose=True
                 )
             elif cipher_type == "substitution":
                 key, plaintext = substitution_break(
-                    text,
-                    max_restarts=2, sa_steps=4000, seed=42,
-                    time_limit_seconds=7, threads=None,
-                    fixed=fixed_map, verbose=True
-                )
+                text,
+                max_restarts=6,    # ← solid balance
+                sa_steps=4500,     # ← still enough for convergence
+                seed=42,
+                time_limit_seconds=7,   # ← stays under Render deadline reliably
+                threads=None,
+                fixed=fixed_map,
+                verbose=False
+            )
+
 
             # ===== Non-key ciphers =====
             elif cipher_type == "atbash":
@@ -1474,8 +1479,3 @@ def admin_ban_user():
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
