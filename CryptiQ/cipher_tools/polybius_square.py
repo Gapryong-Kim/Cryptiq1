@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-# substitution_solver_fast.py — ULTRA-FINAL VERSION
+# substitution_solver_fast.py — ULTRA-FINAL VERSION (Render-optimised)
 # Accurate monoalphabetic substitution solver with deterministic final cleanup.
-# Simulated annealing + adaptive restarts + exhaustive last-phase sweep.
+# Simulated annealing + adaptive restarts + conservative last-phase sweep.
 
 import math, random, re, time, sys, os
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 alphabet = list("abcdefghijklmnopqrstuvwxyz")
 
@@ -14,6 +13,10 @@ alphabet = list("abcdefghijklmnopqrstuvwxyz")
 #   Helper: Polybius Standardization
 # =========================
 def polybius_standardize(message):
+    """
+    Convert Polybius-like coordinate text (e.g. '11 21 32 ...') into a
+    pseudo-alphabet ciphertext so we can piggyback on substitution_break.
+    """
     message = message.replace(" ", "")
     coords, coord = [], ""
     for i, k in enumerate(message):
@@ -25,29 +28,9 @@ def polybius_standardize(message):
         coords.append(coord)
     unique_coords = list(set(coords))
     standardized = ""
-    for i in coords:
-        standardized += alphabet[unique_coords.index(i)]
+    for c in coords:
+        standardized += alphabet[unique_coords.index(c)]
     return standardized.upper()
-
-
-# =========================
-#   Environment Helper (Render detection)
-# =========================
-def _running_on_render():
-    """
-    Best-effort detection of Render environment.
-    We keep this very lightweight and non-invasive.
-    """
-    env = os.environ
-    return any(
-        key in env
-        for key in (
-            "RENDER",
-            "RENDER_SERVICE_ID",
-            "RENDER_EXTERNAL_HOSTNAME",
-            "RENDER_INSTANCE_ID",
-        )
-    )
 
 
 # =========================
@@ -70,17 +53,8 @@ def _find_two_letter_runs(CT_UP, min_run=40):
     """Mask long two-letter-only sequences (e.g., Baconian) from scoring."""
     n = len(CT_UP)
     mask = [False] * n
-    binary_sets = [
-        set("AB"),
-        set("BA"),
-        set("EU"),
-        set("UE"),
-        set("OI"),
-        set("IO"),
-        set("01"),
-        set("XO"),
-        set("OX"),
-    ]
+    binary_sets = [set("AB"), set("BA"), set("EU"), set("UE"),
+                   set("OI"), set("IO"), set("01"), set("XO"), set("OX")]
     i = 0
     while i < n:
         if not CT_UP[i].isalpha():
@@ -101,33 +75,21 @@ def _find_two_letter_runs(CT_UP, min_run=40):
 # =========================
 #   Core Solver
 # =========================
-def substitution_break(
-    ciphertext,
-    max_restarts=14,
-    sa_steps=9000,
-    seed=None,
-    time_limit_seconds=35,
-    threads=None,
-    fixed=None,
-    verbose=True,
-    ignore_twoletter_runs=True,
-    min_twoletter_run_len=40,
-):
+def substitution_break(ciphertext,
+                       max_restarts=14,
+                       sa_steps=9000,
+                       seed=None,
+                       time_limit_seconds=35,
+                       threads=None,
+                       fixed=None,
+                       verbose=True,
+                       ignore_twoletter_runs=True,
+                       min_twoletter_run_len=40):
+
     if seed is not None:
         random.seed(seed)
-
-    # --- Thread selection: Option B ---
-    # If caller passes threads explicitly, honour it (>=1).
-    # Otherwise:
-    #   - On Render: force threads=1
-    #   - Local:     threads = min(8, cpu_cores)
-    if threads is None:
-        if _running_on_render():
-            threads_local = 1
-        else:
-            threads_local = min(8, (os.cpu_count() or 2))
-    else:
-        threads_local = max(1, threads)
+    # For Render, always run single-threaded: simpler and more predictable.
+    threads = 1
 
     start_time = time.time()
     AZ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -143,8 +105,8 @@ def substitution_break(
             run_len = sum(1 for i, ch in enumerate(CT_UP) if ch.isalpha() and excluded[i])
             print(f"[note] Ignoring ~{run_len} letters inside long two-letter runs.")
 
-    # Clean and map
-    L = [A2I[ch] for i, ch in enumerate(CT_UP) if "A" <= ch <= "Z" and not excluded[i]]
+    # Clean and map (only letters that are not excluded)
+    L = [A2I[ch] for i, ch in enumerate(CT_UP) if 'A' <= ch <= 'Z' and not excluded[i]]
     nL = len(L)
     if nL < 8:
         key = _freq_start_key(CT, AZ)
@@ -190,13 +152,13 @@ def substitution_break(
         starts = set()
         if nL >= 4:
             for s in range(max(0, j - 3), min(nL - 3, j + 1)):
-                starts.add(("q", s))
+                starts.add(('q', s))
         if nL >= 3:
             for s in range(max(0, j - 2), min(nL - 2, j + 1)):
-                starts.add(("t", s))
+                starts.add(('t', s))
         if nL >= 2:
             for s in range(max(0, j - 1), min(nL - 1, j + 1)):
-                starts.add(("b", s))
+                starts.add(('b', s))
         return starts
 
     pre_affects = [affected_starts_for_pos(j) for j in range(nL)]
@@ -221,7 +183,7 @@ def substitution_break(
         for c_idx, p_idx in locked.items():
             P[c_idx] = p_idx
 
-    # --- Scoring ---
+    # --- Scoring (pure n-gram) ---
     def full_score(P):
         s = 0.0
         if nL >= 4:
@@ -247,21 +209,15 @@ def substitution_break(
         old_s = new_s = 0.0
         Pa, Pb = P[a], P[b]
         for kind, s in affected:
-            if kind == "q":
+            if kind == 'q':
                 x = [P[L[s + k]] for k in range(4)]
                 old_s += lp4[((x[0] * 26 + x[1]) * 26 + x[2]) * 26 + x[3]]
-                y = [
-                    Pb if L[s + k] == a else Pa if L[s + k] == b else x[k]
-                    for k in range(4)
-                ]
+                y = [Pb if L[s + k] == a else Pa if L[s + k] == b else x[k] for k in range(4)]
                 new_s += lp4[((y[0] * 26 + y[1]) * 26 + y[2]) * 26 + y[3]]
-            elif kind == "t":
+            elif kind == 't':
                 x = [P[L[s + k]] for k in range(3)]
                 old_s += lp3[(x[0] * 26 + x[1]) * 26 + x[2]]
-                y = [
-                    Pb if L[s + k] == a else Pa if L[s + k] == b else x[k]
-                    for k in range(3)
-                ]
+                y = [Pb if L[s + k] == a else Pa if L[s + k] == b else x[k] for k in range(3)]
                 new_s += lp3[(y[0] * 26 + y[1]) * 26 + y[2]]
             else:
                 x0, x1 = P[L[s]], P[L[s + 1]]
@@ -271,6 +227,7 @@ def substitution_break(
                 new_s += lp2[y0 * 26 + y1]
         return new_s - old_s
 
+    # --- Optional semantic bonus (kept for experimentation, not used in final sweep) ---
     COMMON_WORDS = (
         "the and to of a in that it is was for on with as you at be this have not are but he his they we by from or an "
         "one all their there what so up out if about who get which go me when make can like no just him her said had were "
@@ -288,10 +245,11 @@ def substitution_break(
 
     # --- Single restart ---
     def one_restart(ridx, init_kind):
-        rng = random.Random((seed or 0) + 1337 * ridx + hash(init_kind))
+        rng = random.Random((seed or 0) + 1337 * ridx)
         P = freq_start_key_list() if init_kind == "freq" else new_random_key(rng)
         apply_fixed_list(P)
         best = full_score(P)
+
         T0, T_end = 6.2, 0.32
         stag, stag_limit = 0, 1400
         steps = sa_steps
@@ -305,6 +263,7 @@ def substitution_break(
             if step == reheat_at:
                 T0 *= 0.9
             T = T0 * ((T_end / T0) ** (step / steps))
+
             a, b = rng.randrange(26), rng.randrange(26)
             if a == b:
                 continue
@@ -315,6 +274,7 @@ def substitution_break(
                 stag = 0
             else:
                 stag += 1
+
             if stag >= stag_limit:
                 stag = 0
                 for _ in range(10):
@@ -324,81 +284,66 @@ def substitution_break(
                         P[x], P[y] = P[y], P[x]
                         best += dd
 
-        # Greedy local polish
+        # Greedy local polish (n-gram only)
         improved = True
         while improved and time.time() - start_time < time_limit_seconds:
             improved = False
-            # Reduced deterministic cleanup search space (Render-safe ~80% speedup)
-            CANDIDATES = list(range(26))
-            # Shuffle so we don't always favour same letters
-            random.shuffle(CANDIDATES)
-
-            # Only check first 14 letters instead of all 26
-            LIMIT = 14
-
-            for a_i in range(LIMIT):
-                for b_i in range(a_i + 1, LIMIT):
-                    a = CANDIDATES[a_i]
-                    b = CANDIDATES[b_i]
-
+            for a in range(26):
+                for b in range(a + 1, 26):
                     d = delta_swap(P, a, b)
                     if d > 1e-6:
                         P[a], P[b] = P[b], P[a]
                         improved = True
 
-        # --- Final deterministic cleanup ---
+        # --- Final conservative deterministic cleanup (Render-safe) ---
         def total_value(P_):
-            kd = {AZ[c]: AZ[P_[c]] for c in range(26)}
-            pt = apply_substitution(CT, kd)
-            return full_score(P_) + semantic_bonus(pt)
+            # Only n-gram score for final swaps: avoids weird last "semantic" nudges.
+            return full_score(P_)
 
         EPS = 1e-9
-        improved = True
-        while improved and time.time() - start_time < time_limit_seconds:
-            improved = False
+        passes = 0
+        max_passes = 5  # enough to clean up without overfitting
+
+        while (time.time() - start_time < time_limit_seconds and passes < max_passes):
+            passes += 1
             base_val = total_value(P)
-            best_gain, best_pair = 0.0, None
+            best_gain = 0.0
+            best_pair = None
+
             for a in range(26):
                 for b in range(a + 1, 26):
+                    # Only consider swaps that look locally promising.
                     d_est = delta_swap(P, a, b)
+                    if d_est <= 0:
+                        continue
+
                     P[a], P[b] = P[b], P[a]
                     cand_val = total_value(P)
                     P[a], P[b] = P[b], P[a]
                     gain = cand_val - base_val
-                    if gain > best_gain + EPS or (
-                        abs(gain - best_gain) <= EPS and d_est > 0
-                    ):
-                        best_gain, best_pair = gain, (a, b)
+
+                    if gain > best_gain + EPS:
+                        best_gain = gain
+                        best_pair = (a, b)
+
             if best_pair and best_gain > EPS:
                 a, b = best_pair
                 P[a], P[b] = P[b], P[a]
-                improved = True
+            else:
+                # No improving swap found on this pass -> stop
+                break
 
         return P, total_value(P)
 
-    # --- Multi-restart (Render-safe) ---
+    # --- Multi-restart (serial, Render-friendly) ---
     jobs = [("freq" if i == 0 else "rand") for i in range(max_restarts)]
     results = []
 
-    if threads_local == 1:
-        # Sequential (Render / single-core safe)
-        for ridx, kind in enumerate(jobs):
-            results.append(one_restart(ridx, kind))
-            if verbose:
-                sys.stdout.write(f"\r[restart {ridx + 1}/{len(jobs)} done]")
-                sys.stdout.flush()
-    else:
-        # Parallel (local, multi-core)
-        with ThreadPoolExecutor(max_workers=threads_local) as exe:
-            futs = {
-                exe.submit(one_restart, ridx, kind): (ridx, kind)
-                for ridx, kind in enumerate(jobs)
-            }
-            for n, f in enumerate(as_completed(futs), 1):
-                results.append(f.result())
-                if verbose:
-                    sys.stdout.write(f"\r[completed {n}/{len(jobs)} restarts]")
-                    sys.stdout.flush()
+    for ridx, kind in enumerate(jobs):
+        results.append(one_restart(ridx, kind))
+        if verbose:
+            sys.stdout.write(f"\r[restart {ridx + 1}/{len(jobs)} done]")
+            sys.stdout.flush()
 
     if verbose:
         print("")
@@ -409,9 +354,7 @@ def substitution_break(
 
     if verbose:
         dur = time.time() - start_time
-        print(
-            f"[done in {dur:.1f}s | restarts={len(jobs)} | threads={threads_local}]"
-        )
+        print(f"[done in {dur:.1f}s | restarts={len(jobs)} | threads=1]")
 
     return key_dict, plain
 
@@ -432,10 +375,10 @@ def _ngram_logprobs_dense(corpus, n, k=0.5):
             idx = idx * 26 + A2I[t[i + j]]
         counts[idx] += 1
     total = sum(counts.values())
-    vocab = 26**n
+    vocab = 26 ** n
     denom = total + k * vocab
     floor = math.log(k / denom)
-    arr = [floor] * (26**n)
+    arr = [floor] * (26 ** n)
     for idx, c in counts.items():
         arr[idx] = math.log((c + k) / denom)
     return arr, floor
@@ -460,6 +403,8 @@ def _freq_start_key(text, AZ):
 
 
 def _apply_fixed(key_dict, fixed):
+    if not fixed:
+        return
     for c, p in fixed.items():
         key_dict[c] = p
 
@@ -479,7 +424,7 @@ if __name__ == "__main__":
         sa_steps=9000,
         time_limit_seconds=35,
         seed=42,
-        verbose=True,
+        verbose=True
     )
     print("\n--- Best Guess Plaintext ---")
     print(plain)
