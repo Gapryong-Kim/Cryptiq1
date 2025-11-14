@@ -298,16 +298,15 @@ def breaker():
                 )
             elif cipher_type == "substitution":
                 key, plaintext = substitution_break(
-    text,
-    max_restarts=6,       # solid accuracy, safe time budget
-    sa_steps=4500,        # enough for convergence
-    seed=42,
-    time_limit_seconds=8, # MUST stay under ~10s on Render
-    threads=1,            # RENDER HATES MULTI-THREADING (IMPORTANT!)
-    fixed=fixed_map,
-    verbose=False
-)
-
+        text,
+        max_restarts=24,
+        sa_steps=6000,
+        seed=42,
+        time_limit_seconds=25,
+        threads=None,   # auto: Render → 1, local → cores
+        fixed=fixed_map,
+        verbose=True
+    )
 
 
 
@@ -1481,9 +1480,3 @@ def admin_ban_user():
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
-

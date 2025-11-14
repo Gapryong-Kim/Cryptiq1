@@ -10,24 +10,44 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 alphabet = list("abcdefghijklmnopqrstuvwxyz")
 
 
-    # =========================
-    #   Helper: Polybius Standardization
-    # =========================
+# =========================
+#   Helper: Polybius Standardization
+# =========================
 def polybius_standardize(message):
-        message = message.replace(" ", "")
-        coords, coord = [], ""
-        for i, k in enumerate(message):
-            if i % 2 == 0 and coord:
-                coords.append(coord)
-                coord = ""
-            coord += k
-        if coord:
+    message = message.replace(" ", "")
+    coords, coord = [], ""
+    for i, k in enumerate(message):
+        if i % 2 == 0 and coord:
             coords.append(coord)
-        unique_coords = list(set(coords))
-        standardized = ""
-        for i in coords:
-            standardized += alphabet[unique_coords.index(i)]
-        return standardized.upper()
+            coord = ""
+        coord += k
+    if coord:
+        coords.append(coord)
+    unique_coords = list(set(coords))
+    standardized = ""
+    for i in coords:
+        standardized += alphabet[unique_coords.index(i)]
+    return standardized.upper()
+
+
+# =========================
+#   Environment Helper (Render detection)
+# =========================
+def _running_on_render():
+    """
+    Best-effort detection of Render environment.
+    We keep this very lightweight and non-invasive.
+    """
+    env = os.environ
+    return any(
+        key in env
+        for key in (
+            "RENDER",
+            "RENDER_SERVICE_ID",
+            "RENDER_EXTERNAL_HOSTNAME",
+            "RENDER_INSTANCE_ID",
+        )
+    )
 
 
 # =========================
@@ -50,8 +70,17 @@ def _find_two_letter_runs(CT_UP, min_run=40):
     """Mask long two-letter-only sequences (e.g., Baconian) from scoring."""
     n = len(CT_UP)
     mask = [False] * n
-    binary_sets = [set("AB"), set("BA"), set("EU"), set("UE"),
-                   set("OI"), set("IO"), set("01"), set("XO"), set("OX")]
+    binary_sets = [
+        set("AB"),
+        set("BA"),
+        set("EU"),
+        set("UE"),
+        set("OI"),
+        set("IO"),
+        set("01"),
+        set("XO"),
+        set("OX"),
+    ]
     i = 0
     while i < n:
         if not CT_UP[i].isalpha():
@@ -72,19 +101,33 @@ def _find_two_letter_runs(CT_UP, min_run=40):
 # =========================
 #   Core Solver
 # =========================
-def substitution_break(ciphertext,
-                       max_restarts=14,
-                       sa_steps=9000,
-                       seed=None,
-                       time_limit_seconds=35,
-                       threads=None,
-                       fixed=None,
-                       verbose=True,
-                       ignore_twoletter_runs=True,
-                       min_twoletter_run_len=40):
-
+def substitution_break(
+    ciphertext,
+    max_restarts=14,
+    sa_steps=9000,
+    seed=None,
+    time_limit_seconds=35,
+    threads=None,
+    fixed=None,
+    verbose=True,
+    ignore_twoletter_runs=True,
+    min_twoletter_run_len=40,
+):
     if seed is not None:
         random.seed(seed)
+
+    # --- Thread selection: Option B ---
+    # If caller passes threads explicitly, honour it (>=1).
+    # Otherwise:
+    #   - On Render: force threads=1
+    #   - Local:     threads = min(8, cpu_cores)
+    if threads is None:
+        if _running_on_render():
+            threads_local = 1
+        else:
+            threads_local = min(8, (os.cpu_count() or 2))
+    else:
+        threads_local = max(1, threads)
 
     start_time = time.time()
     AZ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -101,7 +144,7 @@ def substitution_break(ciphertext,
             print(f"[note] Ignoring ~{run_len} letters inside long two-letter runs.")
 
     # Clean and map
-    L = [A2I[ch] for i, ch in enumerate(CT_UP) if 'A' <= ch <= 'Z' and not excluded[i]]
+    L = [A2I[ch] for i, ch in enumerate(CT_UP) if "A" <= ch <= "Z" and not excluded[i]]
     nL = len(L)
     if nL < 8:
         key = _freq_start_key(CT, AZ)
@@ -147,13 +190,13 @@ def substitution_break(ciphertext,
         starts = set()
         if nL >= 4:
             for s in range(max(0, j - 3), min(nL - 3, j + 1)):
-                starts.add(('q', s))
+                starts.add(("q", s))
         if nL >= 3:
             for s in range(max(0, j - 2), min(nL - 2, j + 1)):
-                starts.add(('t', s))
+                starts.add(("t", s))
         if nL >= 2:
             for s in range(max(0, j - 1), min(nL - 1, j + 1)):
-                starts.add(('b', s))
+                starts.add(("b", s))
         return starts
 
     pre_affects = [affected_starts_for_pos(j) for j in range(nL)]
@@ -204,22 +247,28 @@ def substitution_break(ciphertext,
         old_s = new_s = 0.0
         Pa, Pb = P[a], P[b]
         for kind, s in affected:
-            if kind == 'q':
+            if kind == "q":
                 x = [P[L[s + k]] for k in range(4)]
-                old_s += lp4[((x[0]*26+x[1])*26+x[2])*26+x[3]]
-                y = [Pb if L[s+k]==a else Pa if L[s+k]==b else x[k] for k in range(4)]
-                new_s += lp4[((y[0]*26+y[1])*26+y[2])*26+y[3]]
-            elif kind == 't':
+                old_s += lp4[((x[0] * 26 + x[1]) * 26 + x[2]) * 26 + x[3]]
+                y = [
+                    Pb if L[s + k] == a else Pa if L[s + k] == b else x[k]
+                    for k in range(4)
+                ]
+                new_s += lp4[((y[0] * 26 + y[1]) * 26 + y[2]) * 26 + y[3]]
+            elif kind == "t":
                 x = [P[L[s + k]] for k in range(3)]
-                old_s += lp3[(x[0]*26+x[1])*26+x[2]]
-                y = [Pb if L[s+k]==a else Pa if L[s+k]==b else x[k] for k in range(3)]
-                new_s += lp3[(y[0]*26+y[1])*26+y[2]]
+                old_s += lp3[(x[0] * 26 + x[1]) * 26 + x[2]]
+                y = [
+                    Pb if L[s + k] == a else Pa if L[s + k] == b else x[k]
+                    for k in range(3)
+                ]
+                new_s += lp3[(y[0] * 26 + y[1]) * 26 + y[2]]
             else:
                 x0, x1 = P[L[s]], P[L[s + 1]]
-                old_s += lp2[x0*26 + x1]
-                y0 = Pb if L[s]==a else Pa if L[s]==b else x0
-                y1 = Pb if L[s+1]==a else Pa if L[s+1]==b else x1
-                new_s += lp2[y0*26 + y1]
+                old_s += lp2[x0 * 26 + x1]
+                y0 = Pb if L[s] == a else Pa if L[s] == b else x0
+                y1 = Pb if L[s + 1] == a else Pa if L[s + 1] == b else x1
+                new_s += lp2[y0 * 26 + y1]
         return new_s - old_s
 
     COMMON_WORDS = (
@@ -239,8 +288,8 @@ def substitution_break(ciphertext,
 
     # --- Single restart ---
     def one_restart(ridx, init_kind):
-        rng = random.Random((seed or 0) + 1337*ridx + hash(init_kind))
-        P = freq_start_key_list() if init_kind == 'freq' else new_random_key(rng)
+        rng = random.Random((seed or 0) + 1337 * ridx + hash(init_kind))
+        P = freq_start_key_list() if init_kind == "freq" else new_random_key(rng)
         apply_fixed_list(P)
         best = full_score(P)
         T0, T_end = 6.2, 0.32
@@ -305,7 +354,9 @@ def substitution_break(ciphertext,
                     cand_val = total_value(P)
                     P[a], P[b] = P[b], P[a]
                     gain = cand_val - base_val
-                    if gain > best_gain + EPS or (abs(gain - best_gain) <= EPS and d_est > 0):
+                    if gain > best_gain + EPS or (
+                        abs(gain - best_gain) <= EPS and d_est > 0
+                    ):
                         best_gain, best_pair = gain, (a, b)
             if best_pair and best_gain > EPS:
                 a, b = best_pair
@@ -314,25 +365,30 @@ def substitution_break(ciphertext,
 
         return P, total_value(P)
 
-    # --- Multi-restart parallel ---
-    jobs = [('freq' if i == 0 else 'rand') for i in range(max_restarts)]
-    threads = min(8, (os.cpu_count() or 2)) if threads is None else max(1, threads)
+    # --- Multi-restart (Render-safe) ---
+    jobs = [("freq" if i == 0 else "rand") for i in range(max_restarts)]
     results = []
 
-    if threads == 1:
+    if threads_local == 1:
+        # Sequential (Render / single-core safe)
         for ridx, kind in enumerate(jobs):
             results.append(one_restart(ridx, kind))
             if verbose:
-                sys.stdout.write(f"\r[restart {ridx+1}/{len(jobs)} done]")
+                sys.stdout.write(f"\r[restart {ridx + 1}/{len(jobs)} done]")
                 sys.stdout.flush()
     else:
-        with ThreadPoolExecutor(max_workers=threads) as exe:
-            futs = {exe.submit(one_restart, ridx, kind): (ridx, kind) for ridx, kind in enumerate(jobs)}
+        # Parallel (local, multi-core)
+        with ThreadPoolExecutor(max_workers=threads_local) as exe:
+            futs = {
+                exe.submit(one_restart, ridx, kind): (ridx, kind)
+                for ridx, kind in enumerate(jobs)
+            }
             for n, f in enumerate(as_completed(futs), 1):
                 results.append(f.result())
                 if verbose:
                     sys.stdout.write(f"\r[completed {n}/{len(jobs)} restarts]")
                     sys.stdout.flush()
+
     if verbose:
         print("")
 
@@ -342,7 +398,9 @@ def substitution_break(ciphertext,
 
     if verbose:
         dur = time.time() - start_time
-        print(f"[done in {dur:.1f}s | restarts={len(jobs)} | threads={threads}]")
+        print(
+            f"[done in {dur:.1f}s | restarts={len(jobs)} | threads={threads_local}]"
+        )
 
     return key_dict, plain
 
@@ -363,10 +421,10 @@ def _ngram_logprobs_dense(corpus, n, k=0.5):
             idx = idx * 26 + A2I[t[i + j]]
         counts[idx] += 1
     total = sum(counts.values())
-    vocab = 26 ** n
+    vocab = 26**n
     denom = total + k * vocab
     floor = math.log(k / denom)
-    arr = [floor] * (26 ** n)
+    arr = [floor] * (26**n)
     for idx, c in counts.items():
         arr[idx] = math.log((c + k) / denom)
     return arr, floor
@@ -404,15 +462,17 @@ if __name__ == "__main__":
     if not cipher:
         print("No ciphertext provided.")
         sys.exit(0)
-    key, plain = substitution_break(cipher,
-                                    max_restarts=14,
-                                    sa_steps=9000,
-                                    time_limit_seconds=35,
-                                    seed=42,
-                                    verbose=True)
+    key, plain = substitution_break(
+        cipher,
+        max_restarts=14,
+        sa_steps=9000,
+        time_limit_seconds=35,
+        seed=42,
+        verbose=True,
+    )
     print("\n--- Best Guess Plaintext ---")
     print(plain)
     print("\n--- Cipher → Plain Key ---")
     AZ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     print(" ".join(AZ))
-    print(" ".join(key.get(c, '?') for c in AZ))
+    print(" ".join(key.get(c, "?") for c in AZ))
