@@ -299,8 +299,8 @@ def breaker():
             elif cipher_type == "substitution":
                 key, plaintext = substitution_break(
                     text,
-                    max_restarts=20, sa_steps=6000, seed=42,
-                    time_limit_seconds=14, threads=None,
+                    max_restarts=1, sa_steps=3500, seed=42,
+                    time_limit_seconds=10, threads=None,
                     fixed=fixed_map, verbose=True
                 )
 
@@ -1469,14 +1469,6 @@ def admin_ban_user():
 
 
 
-@app.route("/comments/count")
-def comment_count():
-    post_id = request.args.get("post_id", type=int)
-    conn = get_db()
-    cur = conn.execute("SELECT COUNT(*) AS n FROM comments WHERE post_id = ?", (post_id,))
-    row = cur.fetchone()
-    conn.close()
-    return jsonify({"ok": True, "count": row["n"] if row else 0})
 
 
 # ------------------- Run -------------------

@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-# substitution_solver_fast.py — ULTRA-FINAL + "Option A" TUNED
+# substitution_solver_fast.py — ULTRA-FINAL VERSION
 # Accurate monoalphabetic substitution solver with deterministic final cleanup.
 # Simulated annealing + adaptive restarts + exhaustive last-phase sweep.
-# Now with:
-#  - Adaptive tuning for short ciphertexts
-#  - Stronger semantic + dictionary scoring
 
 import math, random, re, time, sys, os
 from collections import Counter
@@ -13,28 +10,24 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 alphabet = list("abcdefghijklmnopqrstuvwxyz")
 
 
-# =========================
-#   Helper: Polybius Standardization
-# =========================
+    # =========================
+    #   Helper: Polybius Standardization
+    # =========================
 def polybius_standardize(message):
-    """
-    For special Polybius-style inputs (not used in normal substitution solving).
-    Converts coordinate pairs into a normalized alphabet A..Z.
-    """
-    message = message.replace(" ", "")
-    coords, coord = [], ""
-    for i, k in enumerate(message):
-        if i % 2 == 0 and coord:
+        message = message.replace(" ", "")
+        coords, coord = [], ""
+        for i, k in enumerate(message):
+            if i % 2 == 0 and coord:
+                coords.append(coord)
+                coord = ""
+            coord += k
+        if coord:
             coords.append(coord)
-            coord = ""
-        coord += k
-    if coord:
-        coords.append(coord)
-    unique_coords = list(set(coords))
-    standardized = ""
-    for c in coords:
-        standardized += alphabet[unique_coords.index(c)]
-    return standardized.upper()
+        unique_coords = list(set(coords))
+        standardized = ""
+        for i in coords:
+            standardized += alphabet[unique_coords.index(i)]
+        return standardized.upper()
 
 
 # =========================
@@ -57,10 +50,8 @@ def _find_two_letter_runs(CT_UP, min_run=40):
     """Mask long two-letter-only sequences (e.g., Baconian) from scoring."""
     n = len(CT_UP)
     mask = [False] * n
-    binary_sets = [
-        set("AB"), set("BA"), set("EU"), set("UE"),
-        set("OI"), set("IO"), set("01"), set("XO"), set("OX")
-    ]
+    binary_sets = [set("AB"), set("BA"), set("EU"), set("UE"),
+                   set("OI"), set("IO"), set("01"), set("XO"), set("OX")]
     i = 0
     while i < n:
         if not CT_UP[i].isalpha():
@@ -91,13 +82,6 @@ def substitution_break(ciphertext,
                        verbose=True,
                        ignore_twoletter_runs=True,
                        min_twoletter_run_len=40):
-    """
-    Break a monoalphabetic substitution cipher.
-
-    Returns:
-        key_dict: {cipher_letter: plain_letter}
-        plaintext: best decrypted text
-    """
 
     if seed is not None:
         random.seed(seed)
@@ -109,58 +93,23 @@ def substitution_break(ciphertext,
     CT = ciphertext
     CT_UP = CT.upper()
 
-    # Optionally ignore long binary-letter runs (Baconian etc.)
     excluded = [False] * len(CT_UP)
     if ignore_twoletter_runs:
         excluded = _find_two_letter_runs(CT_UP, min_run=min_twoletter_run_len)
         if verbose and any(excluded):
-            run_len = sum(
-                1 for i, ch in enumerate(CT_UP)
-                if ch.isalpha() and excluded[i]
-            )
+            run_len = sum(1 for i, ch in enumerate(CT_UP) if ch.isalpha() and excluded[i])
             print(f"[note] Ignoring ~{run_len} letters inside long two-letter runs.")
 
-    # Extract usable letters
-    L = [
-        A2I[ch]
-        for i, ch in enumerate(CT_UP)
-        if 'A' <= ch <= 'Z' and not excluded[i]
-    ]
+    # Clean and map
+    L = [A2I[ch] for i, ch in enumerate(CT_UP) if 'A' <= ch <= 'Z' and not excluded[i]]
     nL = len(L)
-
-    # Too short to anneal sensibly: just frequency-match
     if nL < 8:
         key = _freq_start_key(CT, AZ)
         if fixed:
             _apply_fixed(key, fixed)
         return key, apply_substitution(CT, key)
 
-    # =========================
-    #   Adaptive tuning (Option A)
-    # =========================
-    # We keep the caller's arguments as "base" but adapt slightly for very short texts.
-    base_restarts = max_restarts
-    base_sa_steps = sa_steps
-    base_time_limit = time_limit_seconds
-
-    if nL < 40:
-        # Very short: we lean on more semantics + a bit more compute
-        max_restarts = max(base_restarts, 18)
-        sa_steps = int(base_sa_steps * 1.6)
-        time_limit_seconds = base_time_limit * 1.7
-    elif nL < 80:
-        max_restarts = max(base_restarts, 16)
-        sa_steps = int(base_sa_steps * 1.3)
-        time_limit_seconds = base_time_limit * 1.4
-    elif nL < 140:
-        max_restarts = max(base_restarts, 15)
-        sa_steps = int(base_sa_steps * 1.1)
-        time_limit_seconds = base_time_limit * 1.15
-    # For long texts we just honour user-provided defaults
-
-    # =========================
-    #   English language model
-    # =========================
+    # --- English model ---
     CORPUS = """
     IT IS A TRUTH UNIVERSALLY ACKNOWLEDGED THAT A SINGLE MAN IN POSSESSION OF A GOOD FORTUNE
     MUST BE IN WANT OF A WIFE. HOWEVER LITTLE KNOWN THE FEELINGS OR VIEWS OF SUCH A MAN MAY BE
@@ -176,23 +125,20 @@ def substitution_break(ciphertext,
     PARTICULAR TO INTEREST ME ON SHORE I THOUGHT I WOULD SAIL ABOUT A LITTLE AND SEE THE WATERY PART OF THE WORLD.
     THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.
     """
-
     lp2, _ = _ngram_logprobs_dense(CORPUS, 2, k=0.5)
     lp3, _ = _ngram_logprobs_dense(CORPUS, 3, k=0.5)
     lp4, _ = _ngram_logprobs_dense(CORPUS, 4, k=0.5)
 
-    # Weighting of 2/3/4-grams depending on ciphertext length
     if nL < 120:
-        W4, W3, W2 = 0.7, 0.35, 0.20   # short texts: more bigram/semantic heavy
+        W4, W3, W2 = 0.7, 0.25, 0.05
     elif nL < 250:
-        W4, W3, W2 = 1.0, 0.25, 0.10
+        W4, W3, W2 = 1.0, 0.22, 0.06
     else:
         W4, W3, W2 = 1.2, 0.22, 0.06
     _scale_dense(lp4, W4)
     _scale_dense(lp3, W3)
     _scale_dense(lp2, W2)
 
-    # Precompute positions by cipher letter index
     pos_by_c = [[] for _ in range(26)]
     for i, c in enumerate(L):
         pos_by_c[c].append(i)
@@ -212,7 +158,6 @@ def substitution_break(ciphertext,
 
     pre_affects = [affected_starts_for_pos(j) for j in range(nL)]
 
-    # Initial key generators
     def new_random_key(rng):
         p = list(range(26))
         rng.shuffle(p)
@@ -233,7 +178,7 @@ def substitution_break(ciphertext,
         for c_idx, p_idx in locked.items():
             P[c_idx] = p_idx
 
-    # --- Scoring core ---
+    # --- Scoring ---
     def full_score(P):
         s = 0.0
         if nL >= 4:
@@ -251,36 +196,23 @@ def substitution_break(ciphertext,
         return s
 
     def delta_swap(P, a, b):
-        """
-        Score delta when swapping plaintext letters for cipher-indices a,b.
-        Uses cached 'affected' n-gram regions for speed.
-        """
         affected = set()
         for j in pos_by_c[a]:
             affected |= pre_affects[j]
         for j in pos_by_c[b]:
             affected |= pre_affects[j]
-
         old_s = new_s = 0.0
         Pa, Pb = P[a], P[b]
         for kind, s in affected:
             if kind == 'q':
                 x = [P[L[s + k]] for k in range(4)]
                 old_s += lp4[((x[0]*26+x[1])*26+x[2])*26+x[3]]
-                y = [
-                    Pb if L[s+k]==a else
-                    Pa if L[s+k]==b else
-                    x[k] for k in range(4)
-                ]
+                y = [Pb if L[s+k]==a else Pa if L[s+k]==b else x[k] for k in range(4)]
                 new_s += lp4[((y[0]*26+y[1])*26+y[2])*26+y[3]]
             elif kind == 't':
                 x = [P[L[s + k]] for k in range(3)]
                 old_s += lp3[(x[0]*26+x[1])*26+x[2]]
-                y = [
-                    Pb if L[s+k]==a else
-                    Pa if L[s+k]==b else
-                    x[k] for k in range(3)
-                ]
+                y = [Pb if L[s+k]==a else Pa if L[s+k]==b else x[k] for k in range(3)]
                 new_s += lp3[(y[0]*26+y[1])*26+y[2]]
             else:
                 x0, x1 = P[L[s]], P[L[s + 1]]
@@ -290,9 +222,6 @@ def substitution_break(ciphertext,
                 new_s += lp2[y0*26 + y1]
         return new_s - old_s
 
-    # =========================
-    #   Semantic & dictionary bonus (Option A)
-    # =========================
     COMMON_WORDS = (
         "the and to of a in that it is was for on with as you at be this have not are but he his they we by from or an "
         "one all their there what so up out if about who get which go me when make can like no just him her said had were "
@@ -300,63 +229,21 @@ def substitution_break(ciphertext,
         "new where most use work find give long day man woman life"
     ).split()
 
-    # Small dictionary-like list to push real English-looking phrases
-    DICT_WORDS = [
-        "cipher", "message", "secret", "letter", "letters", "code", "crypt", "hidden",
-        "solve", "solved", "solver", "puzzle", "answer", "text", "plain", "plaintext",
-        "clue", "word", "words", "hello", "world", "today", "tomorrow", "yesterday",
-        "friend", "enemy", "number", "school", "garden", "house", "street", "river"
-    ]
-
-    # Scale semantic weight more for short ciphertexts
-    if nL < 50:
-        semantic_scale = 1.8
-    elif nL < 120:
-        semantic_scale = 1.35
-    else:
-        semantic_scale = 1.0
-
-    def semantic_bonus(text: str) -> float:
-        """
-        Reward plausible English:
-          - matches of common short words (the/and/to/of/etc)
-          - small dictionary list of medium words
-          - standalone 'a' / 'i'
-        """
+    def semantic_bonus(text):
         t = text.lower()
         b = 0.0
-
-        # common small words
         for w in COMMON_WORDS:
-            b += 0.18 * len(re.findall(rf"\b{re.escape(w)}\b", t))
+            b += 0.15 * len(re.findall(rf"\b{re.escape(w)}\b", t))
+        b += 0.12 * len(re.findall(r"\b(a|i)\b", t))
+        return b
 
-        # dictionary-level words
-        for w in DICT_WORDS:
-            b += 0.35 * len(re.findall(rf"\b{re.escape(w)}\b", t))
-
-        # single-letter words
-        b += 0.15 * len(re.findall(r"\b(a|i)\b", t))
-
-        return semantic_scale * b
-
-    # --- Single restart (SA + deterministic cleanup) ---
+    # --- Single restart ---
     def one_restart(ridx, init_kind):
         rng = random.Random((seed or 0) + 1337*ridx + hash(init_kind))
-
-        if init_kind == 'freq':
-            P = freq_start_key_list()
-        else:
-            P = new_random_key(rng)
+        P = freq_start_key_list() if init_kind == 'freq' else new_random_key(rng)
         apply_fixed_list(P)
-
         best = full_score(P)
-
-        # Cooling schedule (slight tweak for short lengths)
-        if nL < 80:
-            T0, T_end = 6.5, 0.30
-        else:
-            T0, T_end = 6.2, 0.32
-
+        T0, T_end = 6.2, 0.32
         stag, stag_limit = 0, 1400
         steps = sa_steps
         reheat_at = steps // 2
@@ -364,14 +251,11 @@ def substitution_break(ciphertext,
         for step in range(1, steps + 1):
             if time.time() - start_time > time_limit_seconds:
                 break
-
             if step % 2000 == 0:
                 T0 *= 0.9
             if step == reheat_at:
                 T0 *= 0.9
-
             T = T0 * ((T_end / T0) ** (step / steps))
-
             a, b = rng.randrange(26), rng.randrange(26)
             if a == b:
                 continue
@@ -382,10 +266,8 @@ def substitution_break(ciphertext,
                 stag = 0
             else:
                 stag += 1
-
             if stag >= stag_limit:
                 stag = 0
-                # Small greedy nudge
                 for _ in range(10):
                     x, y = rng.randrange(26), rng.randrange(26)
                     dd = delta_swap(P, x, y)
@@ -393,7 +275,7 @@ def substitution_break(ciphertext,
                         P[x], P[y] = P[y], P[x]
                         best += dd
 
-        # Local greedy polish on n-gram score
+        # Greedy local polish
         improved = True
         while improved and time.time() - start_time < time_limit_seconds:
             improved = False
@@ -404,7 +286,7 @@ def substitution_break(ciphertext,
                         P[a], P[b] = P[b], P[a]
                         improved = True
 
-        # --- Final deterministic cleanup: combine n-gram + semantics ---
+        # --- Final deterministic cleanup ---
         def total_value(P_):
             kd = {AZ[c]: AZ[P_[c]] for c in range(26)}
             pt = apply_substitution(CT, kd)
@@ -418,15 +300,12 @@ def substitution_break(ciphertext,
             best_gain, best_pair = 0.0, None
             for a in range(26):
                 for b in range(a + 1, 26):
-                    # use delta as a cheap heuristic to focus on promising swaps
                     d_est = delta_swap(P, a, b)
                     P[a], P[b] = P[b], P[a]
                     cand_val = total_value(P)
                     P[a], P[b] = P[b], P[a]
                     gain = cand_val - base_val
-                    if gain > best_gain + EPS or (
-                        abs(gain - best_gain) <= EPS and d_est > 0
-                    ):
+                    if gain > best_gain + EPS or (abs(gain - best_gain) <= EPS and d_est > 0):
                         best_gain, best_pair = gain, (a, b)
             if best_pair and best_gain > EPS:
                 a, b = best_pair
@@ -435,7 +314,7 @@ def substitution_break(ciphertext,
 
         return P, total_value(P)
 
-    # --- Multi-restart with optional threading ---
+    # --- Multi-restart parallel ---
     jobs = [('freq' if i == 0 else 'rand') for i in range(max_restarts)]
     threads = min(8, (os.cpu_count() or 2)) if threads is None else max(1, threads)
     results = []
@@ -448,10 +327,7 @@ def substitution_break(ciphertext,
                 sys.stdout.flush()
     else:
         with ThreadPoolExecutor(max_workers=threads) as exe:
-            futs = {
-                exe.submit(one_restart, ridx, kind): (ridx, kind)
-                for ridx, kind in enumerate(jobs)
-            }
+            futs = {exe.submit(one_restart, ridx, kind): (ridx, kind) for ridx, kind in enumerate(jobs)}
             for n, f in enumerate(as_completed(futs), 1):
                 results.append(f.result())
                 if verbose:
@@ -466,10 +342,7 @@ def substitution_break(ciphertext,
 
     if verbose:
         dur = time.time() - start_time
-        print(
-            f"[done in {dur:.1f}s | restarts={len(jobs)} | "
-            f"steps={sa_steps} | len={nL}]"
-        )
+        print(f"[done in {dur:.1f}s | restarts={len(jobs)} | threads={threads}]")
 
     return key_dict, plain
 
@@ -523,24 +396,20 @@ def _apply_fixed(key_dict, fixed):
 
 
 # =========================
-#   CLI (for local testing)
+#   CLI
 # =========================
 if __name__ == "__main__":
-    print("=== Monoalphabetic Substitution Solver (Option A tuned) ===")
+    print("=== Monoalphabetic Substitution Solver (Ultra-Final) ===")
     cipher = input("> ").strip()
     if not cipher:
         print("No ciphertext provided.")
         sys.exit(0)
-
-    key, plain = substitution_break(
-        cipher,
-        max_restarts=14,
-        sa_steps=9000,
-        time_limit_seconds=35,
-        seed=42,
-        verbose=True,
-    )
-
+    key, plain = substitution_break(cipher,
+                                    max_restarts=14,
+                                    sa_steps=9000,
+                                    time_limit_seconds=35,
+                                    seed=42,
+                                    verbose=True)
     print("\n--- Best Guess Plaintext ---")
     print(plain)
     print("\n--- Cipher → Plain Key ---")
