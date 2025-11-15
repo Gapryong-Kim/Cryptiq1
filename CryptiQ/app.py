@@ -314,7 +314,27 @@ def breaker():
                     max_restarts=1,
                     sa_steps=2000,
                     seed=42,
-                    time_limit_seconds=10,
+                    time_limit_seconds=20,
+                    threads=None,   # auto: Render → 1, local → cores
+                    fixed=fixed_map,
+                    verbose=True
+                )
+                key, plaintext = substitution_break(
+                    text,
+                    max_restarts=1,
+                    sa_steps=2000,
+                    seed=42,
+                    time_limit_seconds=20,
+                    threads=None,   # auto: Render → 1, local → cores
+                    fixed=fixed_map,
+                    verbose=True
+                )
+                key, plaintext = substitution_break(
+                    text,
+                    max_restarts=1,
+                    sa_steps=2000,
+                    seed=42,
+                    time_limit_seconds=20,
                     threads=None,   # auto: Render → 1, local → cores
                     fixed=fixed_map,
                     verbose=True

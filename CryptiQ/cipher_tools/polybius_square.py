@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-# substitution_solver_fast.py — ULTRA-FINAL VERSION
+# substitution_solver_fast.py — ULTRA-FINAL VERSION (Patched)
 # Accurate monoalphabetic substitution solver with deterministic final cleanup.
-# Simulated annealing + adaptive restarts + exhaustive last-phase sweep.
+# Simulated annealing + adaptive restarts + exhaustive last-phase sweep with
+# a full global pair-swap disambiguation pass to fix last-letter mistakes.
 
 import math, random, re, time, sys, os
 from collections import Counter
@@ -286,6 +287,12 @@ def substitution_break(
         b += 0.12 * len(re.findall(r"\b(a|i)\b", t))
         return b
 
+    # --- Combined value (ngram + semantic) for a permutation ---
+    def total_value_perm(P_):
+        kd = {AZ[c]: AZ[P_[c]] for c in range(26)}
+        pt = apply_substitution(CT, kd)
+        return full_score(P_) + semantic_bonus(pt)
+
     # --- Single restart ---
     def one_restart(ridx, init_kind):
         rng = random.Random((seed or 0) + 1337 * ridx + hash(init_kind))
@@ -335,45 +342,61 @@ def substitution_break(
                         P[a], P[b] = P[b], P[a]
                         improved = True
 
-        # --- Final deterministic cleanup ---
-        def total_value(P_):
-            kd = {AZ[c]: AZ[P_[c]] for c in range(26)}
-            pt = apply_substitution(CT, kd)
-            return full_score(P_) + semantic_bonus(pt)
+        # --- Limited deterministic cleanup (fast, biased search) ---
+        def total_value_local(P_):
+            return total_value_perm(P_)
 
         EPS = 1e-9
         improved = True
         while improved and time.time() - start_time < time_limit_seconds:
             improved = False
-            base_val = total_value(P)
+            base_val = total_value_local(P)
             best_gain, best_pair = 0.0, None
-            # Reduced deterministic cleanup search space (Render-safe ~80% speedup)
             CANDIDATES = list(range(26))
-            # Shuffle so we don't always favour same letters
             random.shuffle(CANDIDATES)
-
-            # Only check first 14 letters instead of all 26
-            LIMIT = 14
+            LIMIT = 14  # reduced subset for speed
 
             for a_i in range(LIMIT):
                 for b_i in range(a_i + 1, LIMIT):
                     a = CANDIDATES[a_i]
                     b = CANDIDATES[b_i]
-                    d_est = delta_swap(P, a, b)
                     P[a], P[b] = P[b], P[a]
-                    cand_val = total_value(P)
+                    cand_val = total_value_local(P)
                     P[a], P[b] = P[b], P[a]
                     gain = cand_val - base_val
-                    if gain > best_gain + EPS or (
-                        abs(gain - best_gain) <= EPS and d_est > 0
-                    ):
+                    if gain > best_gain + EPS:
                         best_gain, best_pair = gain, (a, b)
-            if best_pair and best_gain > EPS:
+
+            if best_pair:
                 a, b = best_pair
                 P[a], P[b] = P[b], P[a]
                 improved = True
 
-        return P, total_value(P)
+        # --- GLOBAL FULL-PAIR DISAMBIGUATION ---
+        # This is the bit that fixes "one pair wrong" cases like C/P.
+        # We now try *all* 26C2 swaps repeatedly until no improvement.
+        while time.time() - start_time < time_limit_seconds:
+            base_val = total_value_perm(P)
+            best_gain = 0.0
+            best_pair = None
+
+            for a in range(26):
+                for b in range(a + 1, 26):
+                    P[a], P[b] = P[b], P[a]
+                    cand_val = total_value_perm(P)
+                    P[a], P[b] = P[b], P[a]
+                    gain = cand_val - base_val
+                    if gain > best_gain + EPS:
+                        best_gain = gain
+                        best_pair = (a, b)
+
+            if best_pair is None:
+                break  # no further improvement; we're done
+
+            a, b = best_pair
+            P[a], P[b] = P[b], P[a]
+
+        return P, total_value_perm(P)
 
     # --- Multi-restart (Render-safe) ---
     jobs = [("freq" if i == 0 else "rand") for i in range(max_restarts)]
@@ -411,6 +434,8 @@ def substitution_break(
         print(
             f"[done in {dur:.1f}s | restarts={len(jobs)} | threads={threads_local}]"
         )
+    key_dict = {v: k for k, v in key_dict.items()}
+
 
     return key_dict, plain
 
@@ -461,5 +486,3 @@ def _freq_start_key(text, AZ):
 def _apply_fixed(key_dict, fixed):
     for c, p in fixed.items():
         key_dict[c] = p
-
-
