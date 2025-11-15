@@ -464,6 +464,65 @@ def _apply_fixed(key_dict, fixed):
         key_dict[c] = p
 
 
+# =====================================================
+#   NEW: Two-stage wrappers for Flask (Stage 1 + Stage 2)
+# =====================================================
+
+def substitution_stage1(
+    ciphertext,
+    fixed=None,
+    seed=42,
+    verbose=True,
+):
+    """
+    Stage 1: fast-ish run to get a decent key/plaintext.
+    Tuned for ~5–7s depending on text length & Render speed.
+    """
+    return substitution_break(
+        ciphertext,
+        max_restarts=1,
+        sa_steps=2000,
+        time_limit_seconds=7,
+        seed=seed,
+        threads=None,   # auto: Render -> 1, local -> cores
+        fixed=fixed,
+        verbose=verbose,
+    )
+
+
+def substitution_stage2(
+    ciphertext,
+    base_key,
+    fixed=None,
+    seed=1337,
+    verbose=True,
+):
+    """
+    Stage 2: refine using the original ciphertext, seeding from Stage 1 key.
+    We merge the Stage 1 key with any user-provided fixed_map.
+    User hints (fixed) override automatic mappings where they conflict.
+    """
+    # Merge: start from stage-1 key, then overlay user fixed_map.
+    merged_fixed = {}
+    if base_key:
+        for c, p in base_key.items():
+            merged_fixed[c] = p
+    if fixed:
+        for c, p in fixed.items():
+            merged_fixed[c] = p
+
+    return substitution_break(
+        ciphertext,
+        max_restarts=1,
+        sa_steps=3000,
+        time_limit_seconds=7,
+        seed=seed,
+        threads=None,
+        fixed=merged_fixed,
+        verbose=verbose,
+    )
+
+
 # =========================
 #   CLI
 # =========================
