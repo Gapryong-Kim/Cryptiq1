@@ -328,7 +328,7 @@ def breaker():
                     threads=None,   # auto: Render → 1, local → cores
                     fixed=fixed_map,
                     verbose=True
-             
+                )
             # Non-key ciphers
             # ======================
             elif cipher_type == "atbash":
@@ -1501,4 +1501,5 @@ def admin_ban_user():
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
