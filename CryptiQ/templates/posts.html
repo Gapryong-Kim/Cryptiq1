@@ -211,6 +211,41 @@
       word-wrap: break-word;
     }
 
+    /* --- Auto-collapse long bodies --- */
+    .post-body.collapsed {
+      max-height: 160px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .post-body.collapsed::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--panel-2));
+    }
+
+    .show-more-btn {
+      margin-top: 8px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background .15s, color .15s;
+    }
+
+    .show-more-btn:hover {
+      background: var(--accent);
+      color: #0f0f0f;
+    }
+
     .comments {
       margin-top: 16px;
       background: var(--panel-2);
@@ -245,9 +280,10 @@
       padding: 0;
     }
 
+    /* === Twitter-style comment layout (option B) === */
     .comment {
       display: flex;
-      flex-wrap: wrap;
+      align-items: flex-start;
       gap: 10px;
       padding: 10px 14px;
       border-bottom: 1px solid var(--line);
@@ -258,7 +294,7 @@
     .comment-avatar {
       flex: 0 0 34px;
       height: 34px;
-      border-radius: 50%;
+      border-radius: 999px;
       background: var(--input-bg);
       border: 1px solid var(--line);
       display: flex;
@@ -266,13 +302,65 @@
       justify-content: center;
       font-weight: 700;
       color: var(--accent);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+    }
+
+    .comment-main {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+
+    .comment-user {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .comment-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .comment-time {
+      opacity: 0.9;
+    }
+
+    .comment-delete {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .comment-delete:hover {
+      background: rgba(255, 107, 107, 0.12);
+      color: #ff8b8b;
     }
 
     .comment-body {
-      flex: 1 1 100%;
+      margin-top: 2px;
       color: var(--text);
       line-height: 1.5;
       word-break: break-word;
+      font-size: 0.9rem;
     }
 
     .comment-add {
@@ -288,11 +376,11 @@
     .comment-input {
       flex: 1;
       border: 1px solid var(--input-border);
-      border-radius: 8px;
+      border-radius: 999px;
       background: var(--input-bg);
       color: var(--text);
-      padding: 10px 12px;
-      min-height: 44px;
+      padding: 9px 14px;
+      min-height: 40px;
       resize: vertical;
       font: inherit;
     }
@@ -302,10 +390,13 @@
       color: #0f0f0f;
       font-weight: 700;
       border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
+      border-radius: 999px;
+      padding: 9px 16px;
       cursor: pointer;
-      transition: transform .08s;
+      font-size: 0.9rem;
+      transition: transform .08s, box-shadow .12s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      white-space: nowrap;
     }
 
     .comment-submit:hover { transform: translateY(-1px); }
@@ -316,10 +407,11 @@
       border: 1px solid var(--accent);
       color: var(--accent);
       padding: 8px 12px;
-      border-radius: 8px;
+      border-radius: 999px;
       cursor: pointer;
       font-weight: 600;
       transition: background .15s, color .15s;
+      font-size: 0.9rem;
     }
 
     .comments-toggle:hover { background: var(--accent); color: #0f0f0f; }
@@ -377,11 +469,15 @@
       .fab { bottom: 20px; right: 20px; width: 48px; height: 48px; }
       .pagination { flex-wrap: wrap; gap: 8px; }
       .page-btn { padding: 8px 12px; font-size: 0.9rem; }
+
+      .comment {
+        padding: 8px 10px;
+      }
     }
   </style>
 </head>
 
-<body>
+<body >
   {% include 'base_nav.html' %}
 
   <main class="posts-container">
@@ -497,6 +593,31 @@
   </main>
 
   <script>
+    // === Collapse long post bodies ===
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".post-body").forEach(body => {
+        if (body.textContent.trim().length > 350) {
+          body.classList.add("collapsed");
+
+          const btn = document.createElement("button");
+          btn.className = "show-more-btn";
+          btn.textContent = "Show more";
+
+          btn.addEventListener("click", () => {
+            if (body.classList.contains("collapsed")) {
+              body.classList.remove("collapsed");
+              btn.textContent = "Show less";
+            } else {
+              body.classList.add("collapsed");
+              btn.textContent = "Show more";
+            }
+          });
+
+          body.insertAdjacentElement("afterend", btn);
+        }
+      });
+    });
+
     // === Menu toggle ===
     document.addEventListener("click", e => {
       const btn = e.target.closest(".kebab-btn");
@@ -506,7 +627,9 @@
         const isOpen = menu.classList.contains("open");
         allMenus.forEach(m => m.classList.remove("open"));
         if (!isOpen) menu.classList.add("open");
-      } else allMenus.forEach(m => m.classList.remove("open"));
+      } else {
+        allMenus.forEach(m => m.classList.remove("open"));
+      }
     });
 
     // === Comments toggle ===
@@ -529,6 +652,20 @@
         }
       });
     });
+
+    // === Time formatter for comments ===
+    function formatCommentTime(ts) {
+      if (!ts) return "";
+      // Try to parse ISO; fallback to raw
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return ts;
+      return d.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).replace(",", "");
+    }
 
     // === Load comments ===
     async function loadComments(postId) {
@@ -554,14 +691,27 @@
       const li = document.createElement("li");
       li.className = "comment";
       li.dataset.commentId = c.id;
+
+      const initial = (c.username || "?")[0].toUpperCase();
+      const time = formatCommentTime(c.created_at);
+
       li.innerHTML = `
-        <div class="comment-avatar">${(c.username || "?")[0].toUpperCase()}</div>
-        <div class="comment-body">${escapeHtml(c.body)}</div>
-        ${
-          c.can_delete
-            ? `<button class="comment-delete" data-id="${c.id}">Delete</button>`
-            : ""
-        }`;
+        <div class="comment-avatar">${initial}</div>
+        <div class="comment-main">
+          <div class="comment-header">
+            <div class="comment-user">${escapeHtml(c.username || "[Deleted User]")}</div>
+            <div class="comment-meta">
+              <span class="comment-time">${time}</span>
+              ${
+                c.can_delete
+                  ? `<button class="comment-delete" data-id="${c.id}">Delete</button>`
+                  : ""
+              }
+            </div>
+          </div>
+          <div class="comment-body">${escapeHtml(c.body)}</div>
+        </div>
+      `;
       return li;
     }
 
@@ -596,7 +746,6 @@
           list.prepend(renderComment(data.comment));
           input.value = "";
 
-          // Update count in both places
           const countEl = document.getElementById(`comments-count-${postId}`);
           const numSpan = document.getElementById(`comments-num-${postId}`);
           const match = /(\d+)/.exec(countEl.textContent);
@@ -626,7 +775,7 @@
 
       delBtn.disabled = true;
       const old = delBtn.textContent;
-      delBtn.textContent = "Deleting…";
+      delBtn.textContent = "…";
 
       try {
         const res = await fetch(`/comments/${commentId}/delete`, { method: "POST" });
@@ -643,12 +792,13 @@
           }
         } else {
           alert(data.error || "Failed to delete comment.");
+          delBtn.textContent = old;
         }
       } catch {
         alert("Network error deleting comment.");
+        delBtn.textContent = old;
       } finally {
         delBtn.disabled = false;
-        delBtn.textContent = old;
       }
     });
 
@@ -734,27 +884,26 @@
     });
 
     // === Initial comment count load ===
-document.addEventListener("DOMContentLoaded", async () => {
-  const buttons = document.querySelectorAll(".comments-toggle");
-  for (const btn of buttons) {
-    const postId = btn.closest(".post-card").dataset.postId;
-    const numSpan = document.getElementById(`comments-num-${postId}`);
-    const countEl = document.getElementById(`comments-count-${postId}`);
+    document.addEventListener("DOMContentLoaded", async () => {
+      const buttons = document.querySelectorAll(".comments-toggle");
+      for (const btn of buttons) {
+        const postId = btn.closest(".post-card").dataset.postId;
+        const numSpan = document.getElementById(`comments-num-${postId}`);
+        const countEl = document.getElementById(`comments-count-${postId}`);
 
-    try {
-      const res = await fetch(`/comments/count?post_id=${postId}`);
-      const data = await res.json();
-      if (data.ok) {
-        const n = data.count || 0;
-        numSpan.textContent = n;
-        countEl.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
+        try {
+          const res = await fetch(`/comments/count?post_id=${postId}`);
+          const data = await res.json();
+          if (data.ok) {
+            const n = data.count || 0;
+            numSpan.textContent = n;
+            countEl.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
+          }
+        } catch (err) {
+          console.warn("Failed to load count for post", postId, err);
+        }
       }
-    } catch (err) {
-      console.warn("Failed to load count for post", postId, err);
-    }
-  }
-});
-
+    });
   </script>
 </body>
 </html>

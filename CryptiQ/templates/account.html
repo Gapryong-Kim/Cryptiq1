@@ -208,11 +208,25 @@
     }
 
     /* ===== Posts ===== */
+    
     .post-grid {
       display: grid;
       gap: 16px;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       margin-top: 10px;
+    }
+
+    /* Clickable post cards */
+    a.post-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    a.post-link:hover .post {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(0,255,213,0.18);
+      transform: translateY(-2px);
     }
 
     .post {
@@ -223,7 +237,21 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      height: 100%;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
     }
+    .post {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 18px;
+  margin-top: 10px;
+}
+
 
     .post h4 { margin: 0; color: var(--accent); font-size: 1rem; }
     .post p { margin: 0; color: var(--text); line-height: 1.5; }
@@ -312,6 +340,47 @@
       .hero-info h2, .account-title { font-size: 1.4rem; text-align: center; }
       .account-hero { flex-direction: column; }
     }
+    /* === FIX — Restore Podium Shimmer / Glow Priority === */
+
+.lb-item {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.lb-value.rank-1 {
+  color: #ffd700 !important;
+  text-shadow: 0 0 10px rgba(255,215,0,0.35) !important;
+}
+
+.lb-value.rank-2 {
+  color: #c0c0c0 !important;
+  text-shadow: 0 0 10px rgba(192,192,192,0.3) !important;
+}
+
+.lb-value.rank-3 {
+  color: #c08a4c !important;
+  text-shadow: 0 0 10px rgba(192,138,76,0.3) !important;
+}
+
+.lb-item.rank-1::after,
+.lb-item.rank-2::after,
+.lb-item.rank-3::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255,255,255,0.25) 50%,
+    transparent 100%
+  );
+  transform: skewX(-25deg);
+  animation: shimmer 3s infinite ease-in-out;
+}
+
   </style>
 </head>
 
@@ -374,11 +443,13 @@
         {% if posts %}
         <div class="post-grid">
           {% for post in posts %}
-          <article class="post">
-            <h4>{{ post['title'] }}</h4>
-            <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
-            <div class="meta">Posted on {{ post['created_at'][:10] }}</div>
-          </article>
+<a href="{{ url_for('posts_list') }}#post-{{ post['id'] }}" class="post-link">
+            <article class="post">
+              <h4>{{ post['title'] }}</h4>
+              <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
+              <div class="meta">Posted on {{ post['created_at'][:10] }}</div>
+            </article>
+          </a>
           {% endfor %}
         </div>
         {% else %}

@@ -238,6 +238,9 @@
             <option value="unique">Unique Symbol Finder</option>
             <option value="text_spacer">Text Spacer</option>
             <option value="text_replacer">Text Replacer</option>
+            <option value="remove_spaces">Space Remover</option>
+            <option value="remove_punctuation">Punctuation Remover</option>
+
           </select>
         </div>
 
@@ -258,7 +261,10 @@
       substitution: "Map each plaintext letter (top) to a ciphertext letter (input).",
       unique: "Splits text into blocks of length n and counts unique blocks. Helpful for pattern hunting.",
       text_spacer: "Removes spaces, then re-blocks your text into fixed-size chunks for readability.",
-      text_replacer: "Replaces every occurrence of one substring with another. Case-sensitive."
+      text_replacer: "Replaces every occurrence of one substring with another. Case-sensitive.",
+      remove_spaces: "Removes all spaces",
+      remove_punctuation: "Removes all punctuation"
+
     };
 
     const showCard = () => { toolContainer.style.display = 'flex'; toolContainer.style.flexDirection = 'column'; };
@@ -413,7 +419,7 @@
       }
 
       // --- Other Tools ---
-      else if (["frequency","polybius","unique","text_spacer"].includes(selected)) {
+      else if (["frequency","polybius","unique","text_spacer","remove_spaces","remove_punctuation"].includes(selected)) {
         let extra = "";
         if (selected === "text_spacer" || selected === "unique") {
           const defaultVal = selected === "unique" ? 2 : 5;

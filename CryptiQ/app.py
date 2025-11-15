@@ -31,7 +31,7 @@ from cipher_tools.railfence import railfence_break
 from cipher_tools.polybius_square import *
 from utility.unique import unique
 from cipher_tools.replace import replace
-
+from cipher_tools.random_tools import *
 
 from datetime import datetime
 from cipher_tools.breakers import (
@@ -42,7 +42,8 @@ from cipher_tools.breakers import (
             baconian_break
         )
 from cipher_tools.auto_break import auto_break  # ✅ new auto detector
-
+from cipher_tools.random_tools import nospace
+from cipher_tools.random_tools import remove_punc
 
 
 
@@ -312,7 +313,7 @@ def breaker():
                 key, plaintext = substitution_break(
                     text,
                     max_restarts=2,
-                    sa_steps=2500,
+                    sa_steps=3000,
                     seed=42,
                     time_limit_seconds=10,
                     threads=1,   # auto: Render → 1, local → cores
@@ -408,6 +409,14 @@ def tools_run():
 
     elif tool_type == "substitution":
         result_text = text.upper()
+
+    elif tool_type == "remove_spaces":
+        # remove only spaces, do NOT strip punctuation
+        result_text = nospace(text, remove_punctuation=False)
+
+    elif tool_type == "remove_punctuation":
+        # use your remove_punc function
+        result_text = remove_punc(text)
 
     else:
         result_text = "Unknown tool selected."
@@ -637,6 +646,14 @@ def posts_toggle_pin(post_id):
     return jsonify({"ok": True, "pinned": new_value})
 
 
+@app.route("/posts/<int:post_id>")
+def posts_view(post_id):
+    user = current_user()
+    post = fetch_post(post_id)
+    if not post:
+        abort(404)
+
+    return render_template("post_view.html", post=post, user=user)
 
 
 # ------------------- Comments (AJAX) -------------------
@@ -802,6 +819,18 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+@app.route("/comments/count")
+def comments_count():
+    post_id = request.args.get("post_id", type=int)
+    if not post_id:
+        return jsonify({"ok": False, "error": "post_id required"}), 400
+
+    conn = get_db()
+    cur = conn.execute("SELECT COUNT(*) AS c FROM comments WHERE post_id=?", (post_id,))
+    row = cur.fetchone()
+    conn.close()
+
+    return jsonify({"ok": True, "count": row["c"] if row else 0})
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -1493,4 +1522,3 @@ def admin_ban_user():
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
-

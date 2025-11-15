@@ -78,6 +78,7 @@
 
     .cb-help {
       margin-top: 8px;
+      padding-bottom: 0px;
       color: var(--muted);
       font-size: .92rem;
       line-height: 1.5;
@@ -233,6 +234,7 @@
       </header>
 
       <div class="cb-grid">
+        
         <!-- LEFT: Input -->
         <div class="cb-panel input-panel">
           <h3>Input</h3>
@@ -258,11 +260,31 @@
               </select>
             </div>
 
-            <div class="cb-row">
-              <label for="ciphertext" class="cb-label">Ciphertext</label>
-              <textarea id="ciphertext" name="text" class="cb-textarea"></textarea>
-              <p class="cb-help">Tip: longer samples produce better results for classical ciphers.</p>
-            </div>
+            <div class="cb-row" style="gap: 4px; margin-bottom: 0;">
+  <label for="ciphertext" class="cb-label">Ciphertext</label>
+  <textarea id="ciphertext" name="text" class="cb-textarea"></textarea>
+  <p class="cb-help">Tip: longer samples produce better results for classical ciphers.</p>
+</div>
+
+
+<div style="
+  margin: 0px 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px dashed var(--line);
+  background: var(--panel-2);
+  text-align: center;
+  font-size: .92rem;
+  color: var(--muted);
+">
+  Not sure what cipher you're dealing with?
+  <a href="{{ url_for('tools') }}" 
+     style="color: var(--accent); font-weight: 600; text-decoration: none;">
+     Try our Frequency Analyzer
+  </a>
+  to get an idea.
+</div>
+
 
             <div class="cb-actions">
               <button type="submit" id="break-btn" class="btn">Break Cipher</button>
