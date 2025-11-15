@@ -313,9 +313,9 @@ def breaker():
                 key, plaintext = substitution_break(
                     text,
                     max_restarts=4,
-                    sa_steps=2600,
+                    sa_steps=2650,
                     seed=42,
-                    time_limit_seconds=12,
+                    time_limit_seconds=13,
                     threads=1,   # auto: Render → 1, local → cores
                     fixed=fixed_map,
                     verbose=True
@@ -1494,6 +1494,7 @@ def admin_ban_user():
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
