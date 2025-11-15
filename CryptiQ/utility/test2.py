@@ -1,2 +1,4 @@
-nums=[1,2,3,4,5,6]
-print(nums  + [1,2,3,4])
+from nltk.corpus import words
+
+word_list = words.words()
+print(word_list[:50])

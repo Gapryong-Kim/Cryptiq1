@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# substitution_solver_fast.py — ULTRA-FINAL VERSION (Patched)
+# substitution_solver_fast.py — ULTRA-FINAL VERSION (Stronger scoring)
 # Accurate monoalphabetic substitution solver with deterministic final cleanup.
-# Simulated annealing + adaptive restarts + exhaustive last-phase sweep with
-# a full global pair-swap disambiguation pass to fix last-letter mistakes.
+# Simulated annealing + adaptive restarts + global pair-swap disambiguation,
+# with a beefed-up English scoring model for fewer last-letter mistakes.
 
 import math, random, re, time, sys, os
 from collections import Counter
@@ -117,11 +117,7 @@ def substitution_break(
     if seed is not None:
         random.seed(seed)
 
-    # --- Thread selection: Option B ---
-    # If caller passes threads explicitly, honour it (>=1).
-    # Otherwise:
-    #   - On Render: force threads=1
-    #   - Local:     threads = min(8, cpu_cores)
+    # --- Thread selection ---
     if threads is None:
         if _running_on_render():
             threads_local = 1
@@ -153,7 +149,7 @@ def substitution_break(
             _apply_fixed(key, fixed)
         return key, apply_substitution(CT, key)
 
-    # --- English model ---
+    # --- English model: n-grams ---
     CORPUS = """
     IT IS A TRUTH UNIVERSALLY ACKNOWLEDGED THAT A SINGLE MAN IN POSSESSION OF A GOOD FORTUNE
     MUST BE IN WANT OF A WIFE. HOWEVER LITTLE KNOWN THE FEELINGS OR VIEWS OF SUCH A MAN MAY BE
@@ -222,7 +218,7 @@ def substitution_break(
         for c_idx, p_idx in locked.items():
             P[c_idx] = p_idx
 
-    # --- Scoring ---
+    # --- Scoring: pure n-gram part ---
     def full_score(P):
         s = 0.0
         if nL >= 4:
@@ -272,26 +268,65 @@ def substitution_break(
                 new_s += lp2[y0 * 26 + y1]
         return new_s - old_s
 
+    # --- Semantic / dictionary-style bonus ---
     COMMON_WORDS = (
-        "the and to of a in that it is was for on with as you at be this have not are but he his they we by from or an "
-        "one all their there what so up out if about who get which go me when make can like no just him her said had were "
-        "them then some into more time would your now only little very than people could first over after also even because "
-        "new where most use work find give long day man woman life"
+        "the and to of a in that it is was for on with as you at be this have not are but he his "
+        "they we by from or an one all their there what so up out if about who get which go me when "
+        "make can like no just him her said had were them then some into more time would your now "
+        "only little very than people could first over after also even because new where most use "
+        "work find give long day man woman life world government country system telegraph message "
+        "signal liberty freedom human men women power letter matter england america union army "
+        "president minister"
     ).split()
+
+    GOOD_NGRAMS = re.compile(r"(th|he|in|er|an|re|on|at|en|nd|tion|ment|ally|ence|able)")
+    BAD_DOUBLE = re.compile(r"(qq|jj|vv|ww|xx|zz)")
+
+    # English single-letter frequency (rough) for chi-square profile
+    EN_FREQ = {
+        "E": 0.127, "T": 0.091, "A": 0.082, "O": 0.075, "I": 0.070,
+        "N": 0.067, "S": 0.063, "H": 0.061, "R": 0.060, "D": 0.043,
+        "L": 0.040, "C": 0.028, "U": 0.028, "M": 0.024, "W": 0.024,
+        "F": 0.022, "G": 0.020, "Y": 0.020, "P": 0.019, "B": 0.015,
+        "V": 0.010, "K": 0.008, "X": 0.002, "J": 0.002, "Q": 0.001, "Z": 0.001,
+    }
 
     def semantic_bonus(text):
         t = text.lower()
         b = 0.0
+        # common words
         for w in COMMON_WORDS:
-            b += 0.15 * len(re.findall(rf"\b{re.escape(w)}\b", t))
-        b += 0.12 * len(re.findall(r"\b(a|i)\b", t))
+            b += 0.18 * len(re.findall(rf"\b{re.escape(w)}\b", t))
+        # standalone a / i
+        b += 0.15 * len(re.findall(r"\b(a|i)\b", t))
+        # good English ngrams
+        b += 0.04 * len(GOOD_NGRAMS.findall(t))
+        # bad doubles
+        b -= 0.3 * len(BAD_DOUBLE.findall(t))
         return b
 
-    # --- Combined value (ngram + semantic) for a permutation ---
+    def freq_profile_bonus(text):
+        """
+        Penalise decrypts whose single-letter distribution is far from English.
+        Helps choose between 'C' vs 'P' type swaps that both fit local n-grams.
+        """
+        t = [ch for ch in text.upper() if "A" <= ch <= "Z"]
+        n = len(t)
+        if n == 0:
+            return 0.0
+        counts = Counter(t)
+        chi2 = 0.0
+        for c, p in EN_FREQ.items():
+            obs = counts.get(c, 0) / n
+            chi2 += (obs - p) * (obs - p) / (p + 1e-9)
+        # negative because lower chi² (closer to English) is better
+        return -3.8 * chi2
+
+    # --- Combined value (ngram + semantic + freq-profile) for a permutation ---
     def total_value_perm(P_):
         kd = {AZ[c]: AZ[P_[c]] for c in range(26)}
         pt = apply_substitution(CT, kd)
-        return full_score(P_) + semantic_bonus(pt)
+        return full_score(P_) + semantic_bonus(pt) + freq_profile_bonus(pt)
 
     # --- Single restart ---
     def one_restart(ridx, init_kind):
@@ -331,7 +366,7 @@ def substitution_break(
                         P[x], P[y] = P[y], P[x]
                         best += dd
 
-        # Greedy local polish
+        # Greedy local polish on pure n-gram score
         improved = True
         while improved and time.time() - start_time < time_limit_seconds:
             improved = False
@@ -342,15 +377,12 @@ def substitution_break(
                         P[a], P[b] = P[b], P[a]
                         improved = True
 
-        # --- Limited deterministic cleanup (fast, biased search) ---
-        def total_value_local(P_):
-            return total_value_perm(P_)
-
+        # --- Limited deterministic cleanup (fast) on combined score ---
         EPS = 1e-9
         improved = True
         while improved and time.time() - start_time < time_limit_seconds:
             improved = False
-            base_val = total_value_local(P)
+            base_val = total_value_perm(P)
             best_gain, best_pair = 0.0, None
             CANDIDATES = list(range(26))
             random.shuffle(CANDIDATES)
@@ -361,7 +393,7 @@ def substitution_break(
                     a = CANDIDATES[a_i]
                     b = CANDIDATES[b_i]
                     P[a], P[b] = P[b], P[a]
-                    cand_val = total_value_local(P)
+                    cand_val = total_value_perm(P)
                     P[a], P[b] = P[b], P[a]
                     gain = cand_val - base_val
                     if gain > best_gain + EPS:
@@ -373,9 +405,12 @@ def substitution_break(
                 improved = True
 
         # --- GLOBAL FULL-PAIR DISAMBIGUATION ---
-        # This is the bit that fixes "one pair wrong" cases like C/P.
-        # We now try *all* 26C2 swaps repeatedly until no improvement.
-        while time.time() - start_time < time_limit_seconds:
+        # Repeatedly try all 26C2 swaps to fix "one pair wrong" cases.
+        # Limit passes so Render doesn't murder us.
+        max_passes = 3
+        for _ in range(max_passes):
+            if time.time() - start_time > time_limit_seconds:
+                break
             base_val = total_value_perm(P)
             best_gain = 0.0
             best_pair = None
@@ -434,8 +469,9 @@ def substitution_break(
         print(
             f"[done in {dur:.1f}s | restarts={len(jobs)} | threads={threads_local}]"
         )
-    key_dict = {v: k for k, v in key_dict.items()}
 
+    # Invert mapping for display if you prefer plain→cipher:
+    key_dict = {v: k for k, v in key_dict.items()}
 
     return key_dict, plain
 
