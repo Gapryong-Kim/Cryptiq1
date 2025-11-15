@@ -313,7 +313,7 @@ def breaker():
                 key, plaintext = substitution_break(
                     text,
                     max_restarts=4,
-                    sa_steps=2700,
+                    sa_steps=2000,
                     seed=42,
                     time_limit_seconds=10,
                     threads=1,   # auto: Render → 1, local → cores
