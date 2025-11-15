@@ -307,7 +307,7 @@ def breaker():
         fixed=fixed_map,
         verbose=True
     )
-                new_key,plaintext=key, plaintext = substitution_break(
+                new_key,plaintext = substitution_break(
         plaintext,
         max_restarts=1,
         sa_steps=2000,
@@ -1490,3 +1490,4 @@ def admin_ban_user():
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
