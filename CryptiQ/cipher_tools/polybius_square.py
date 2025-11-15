@@ -328,19 +328,8 @@ def substitution_break(
         improved = True
         while improved and time.time() - start_time < time_limit_seconds:
             improved = False
-            # Reduced deterministic cleanup search space (Render-safe ~80% speedup)
-            CANDIDATES = list(range(26))
-            # Shuffle so we don't always favour same letters
-            random.shuffle(CANDIDATES)
-
-            # Only check first 14 letters instead of all 26
-            LIMIT = 14
-
-            for a_i in range(LIMIT):
-                for b_i in range(a_i + 1, LIMIT):
-                    a = CANDIDATES[a_i]
-                    b = CANDIDATES[b_i]
-
+            for a in range(26):
+                for b in range(a + 1, 26):
                     d = delta_swap(P, a, b)
                     if d > 1e-6:
                         P[a], P[b] = P[b], P[a]
@@ -358,8 +347,18 @@ def substitution_break(
             improved = False
             base_val = total_value(P)
             best_gain, best_pair = 0.0, None
-            for a in range(26):
-                for b in range(a + 1, 26):
+            # Reduced deterministic cleanup search space (Render-safe ~80% speedup)
+            CANDIDATES = list(range(26))
+            # Shuffle so we don't always favour same letters
+            random.shuffle(CANDIDATES)
+
+            # Only check first 14 letters instead of all 26
+            LIMIT = 14
+
+            for a_i in range(LIMIT):
+                for b_i in range(a_i + 1, LIMIT):
+                    a = CANDIDATES[a_i]
+                    b = CANDIDATES[b_i]
                     d_est = delta_swap(P, a, b)
                     P[a], P[b] = P[b], P[a]
                     cand_val = total_value(P)
@@ -464,85 +463,3 @@ def _apply_fixed(key_dict, fixed):
         key_dict[c] = p
 
 
-# =====================================================
-#   NEW: Two-stage wrappers for Flask (Stage 1 + Stage 2)
-# =====================================================
-
-def substitution_stage1(
-    ciphertext,
-    fixed=None,
-    seed=42,
-    verbose=True,
-):
-    """
-    Stage 1: fast-ish run to get a decent key/plaintext.
-    Tuned for ~5–7s depending on text length & Render speed.
-    """
-    return substitution_break(
-        ciphertext,
-        max_restarts=1,
-        sa_steps=2000,
-        time_limit_seconds=7,
-        seed=seed,
-        threads=None,   # auto: Render -> 1, local -> cores
-        fixed=fixed,
-        verbose=verbose,
-    )
-
-
-def substitution_stage2(
-    ciphertext,
-    base_key,
-    fixed=None,
-    seed=1337,
-    verbose=True,
-):
-    """
-    Stage 2: refine using the original ciphertext, seeding from Stage 1 key.
-    We merge the Stage 1 key with any user-provided fixed_map.
-    User hints (fixed) override automatic mappings where they conflict.
-    """
-    # Merge: start from stage-1 key, then overlay user fixed_map.
-    merged_fixed = {}
-    if base_key:
-        for c, p in base_key.items():
-            merged_fixed[c] = p
-    if fixed:
-        for c, p in fixed.items():
-            merged_fixed[c] = p
-
-    return substitution_break(
-        ciphertext,
-        max_restarts=1,
-        sa_steps=3000,
-        time_limit_seconds=7,
-        seed=seed,
-        threads=None,
-        fixed=merged_fixed,
-        verbose=verbose,
-    )
-
-
-# =========================
-#   CLI
-# =========================
-if __name__ == "__main__":
-    print("=== Monoalphabetic Substitution Solver (Ultra-Final) ===")
-    cipher = input("> ").strip()
-    if not cipher:
-        print("No ciphertext provided.")
-        sys.exit(0)
-    key, plain = substitution_break(
-        cipher,
-        max_restarts=14,
-        sa_steps=9000,
-        time_limit_seconds=35,
-        seed=42,
-        verbose=True,
-    )
-    print("\n--- Best Guess Plaintext ---")
-    print(plain)
-    print("\n--- Cipher → Plain Key ---")
-    AZ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    print(" ".join(AZ))
-    print(" ".join(key.get(c, "?") for c in AZ))

@@ -258,6 +258,7 @@ def breaker():
         cipher_type = request.form.get("cipher_type", "vigenere").lower()
         known_plaintext = request.form.get("known_plaintext", "").strip()
 
+        # --- Parse fixed map ---
         fixed_map = None
         if known_plaintext and "=" in known_plaintext:
             fixed_map = {}
@@ -272,76 +273,68 @@ def breaker():
 
         try:
             # ======================
-            # Main breaker switch
+            # Standard breakers
             # ======================
             if cipher_type == "caesar":
                 key, plaintext = caesar_break(text)
-
             elif cipher_type == "vigenere":
                 key, plaintext = vigenere_break(text)
-
             elif cipher_type == "affine":
                 key, plaintext = affine_break(text)
-
             elif cipher_type == "amsco":
                 key, plaintext = amsco_break(text)
-
             elif cipher_type == "railfence":
                 key, plaintext = railfence_break(text)
-
             elif cipher_type == "columnar":
                 key, plaintext = columnar_break(text)
-
             elif cipher_type == "permutation":
                 key, plaintext = permutation_break(text)
 
+            # ======================
+            # Polybius (standardize → 2-stage substitution)
+            # ======================
             elif cipher_type == "polybius":
-                key, plaintext = substitution_break(
-                    polybius_standardize(text),
-                    max_restarts=1,
-                    sa_steps=3200,
-                    seed=42,
-                    time_limit_seconds=8,
-                    threads=None,
-                    fixed=fixed_map or {},
-                    verbose=True,
-                )
-
+                    key, plaintext = substitution_break(
+                        polybius_standardize(text),
+                        max_restarts=3,
+                        sa_steps=2000,
+                        seed=42,
+                        time_limit_seconds=25,
+                        threads=None,   # auto: Render → 1, local → cores
+                        fixed=fixed_map,
+                        verbose=True
+                    )
+                    
+            # ======================
+            # Substitution (true 2-stage pipeline)
+            # ======================
             elif cipher_type == "substitution":
-                # ---- Stage 1: quick solve to get a decent key ----
-                stage1_key, stage1_plain = substitution_stage1(
+                key, plaintext = substitution_break(
                     text,
-                    fixed=fixed_map or {},
+                    max_restarts=1,
+                    sa_steps=2000,
                     seed=42,
-                    verbose=True,
+                    time_limit_seconds=10,
+                    threads=None,   # auto: Render → 1, local → cores
+                    fixed=fixed_map,
+                    verbose=True
                 )
-
-                # ---- Stage 2: refine using original ciphertext + stage1 key ----
-                key, plaintext = substitution_stage2(
-                    text,
-                    base_key=stage1_key,
-                    fixed=fixed_map or {},
-                    seed=1337,
-                    verbose=True,
-                )
-
-            # ===== Non-key ciphers =====
+            # Non-key ciphers
+            # ======================
             elif cipher_type == "atbash":
                 key, plaintext = atbash_break(text)
-
             elif cipher_type == "base64":
                 key, plaintext = base64_break(text)
-
             elif cipher_type == "hex":
                 key, plaintext = hex_break(text)
-
             elif cipher_type == "binary":
                 key, plaintext = binary_break(text)
-
             elif cipher_type == "baconian":
                 key, plaintext = baconian_break(text)
 
-            # ===== AUTO-DETECT =====
+            # ======================
+            # AUTO-DETECT
+            # ======================
             elif cipher_type == "auto":
                 result = auto_break(text)
                 detected_cipher = result.get("cipher", "Unknown")
@@ -357,10 +350,9 @@ def breaker():
         return jsonify({
             "cipher": detected_cipher,
             "key": key,
-            "text": plaintext,
+            "text": plaintext
         })
 
-    # GET request → render template
     return render_template("breaker.html", user=current_user())
 
 # ------------------- Tools Page -------------------
