@@ -771,7 +771,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 /* ============================================================
-   Toggle Kebab Menu (delegated)
+   Kebab Menu Toggle (delegated)
 ============================================================ */
 document.addEventListener("click", e => {
   const btn = e.target.closest(".kebab-btn");
@@ -789,23 +789,23 @@ document.addEventListener("click", e => {
 
 
 /* ============================================================
-   COMMENT UTILITIES
+   COMMENT UTIL FUNCTIONS
 ============================================================ */
+function escapeHtml(str) {
+  return (str || "").replace(/[&<>"']/g, s =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s])
+  );
+}
+
 function formatCommentTime(ts) {
   const d = new Date(ts);
-  if (isNaN(d.getTime())) return ts;
+  if (isNaN(d)) return ts;
   return d.toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
   }).replace(",", "");
-}
-
-function escapeHtml(str) {
-  return (str || "").replace(/[&<>"']/g, s =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[s])
-  );
 }
 
 function renderComment(c) {
@@ -820,17 +820,23 @@ function renderComment(c) {
     <div class="comment-avatar">${initial}</div>
     <div class="comment-main">
       <div class="comment-header">
-        <div class="comment-user">${escapeHtml(c.username || "[Deleted User]")}</div>
+        <div class="comment-user">${escapeHtml(c.username || "[Deleted]")}</div>
         <div class="comment-meta">
           <span class="comment-time">${time}</span>
           ${c.can_delete ? `<button class="comment-delete" data-id="${c.id}">Delete</button>` : ""}
         </div>
       </div>
       <div class="comment-body">${escapeHtml(c.body)}</div>
-    </div>`;
+    </div>
+  `;
+
   return li;
 }
 
+
+/* ============================================================
+   LOAD COMMENTS
+============================================================ */
 async function loadComments(postId) {
   const list = document.getElementById(`comment-list-${postId}`);
   const count = document.getElementById(`comments-count-${postId}`);
@@ -841,25 +847,23 @@ async function loadComments(postId) {
   try {
     const res = await fetch(`/comments/list?post_id=${postId}`);
     const data = await res.json();
-    if (!data.ok) throw new Error();
 
     list.innerHTML = "";
     data.comments.forEach(c => list.appendChild(renderComment(c)));
 
-    const n = data.count;
-    count.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
-    if (numSpan) numSpan.textContent = n;
+    count.textContent = `${data.count} comment${data.count !== 1 ? "s" : ""}`;
+    if (numSpan) numSpan.textContent = data.count;
   } catch {
-    list.innerHTML = `<li class="comment"><em style="color:#ff9f9f;">Failed to load comments</em></li>`;
+    list.innerHTML = `<li><em style="color:#ff9f9f;">Failed to load comments.</em></li>`;
   }
 }
 
 
 /* ============================================================
-   COMMENT ACTIONS (delegated)
+   COMMENTS (toggle, post, delete)
 ============================================================ */
 document.addEventListener("click", async e => {
-  /* Toggle comments */
+  /* Toggle */
   const toggle = e.target.closest(".comments-toggle");
   if (toggle) {
     const card = toggle.closest(".post-card");
@@ -905,12 +909,8 @@ document.addEventListener("click", async e => {
         const list = document.getElementById(`comment-list-${id}`);
         list.prepend(renderComment(data.comment));
         input.value = "";
-      } else {
-        alert(data.error);
       }
-    } catch {
-      alert("Failed.");
-    }
+    } catch {}
 
     postBtn.disabled = false;
     postBtn.textContent = old;
@@ -921,7 +921,6 @@ document.addEventListener("click", async e => {
   if (delBtn) {
     const id = delBtn.dataset.id;
     const el = delBtn.closest(".comment");
-
     delBtn.disabled = true;
 
     try {
@@ -936,7 +935,7 @@ document.addEventListener("click", async e => {
 
 
 /* ============================================================
-   BAN / UNBAN + PIN / UNPIN
+   Ban / Unban + Pin / Unpin
 ============================================================ */
 document.addEventListener("click", async e => {
   const ban = e.target.closest(".ban-user");
@@ -944,20 +943,17 @@ document.addEventListener("click", async e => {
     const u = ban.dataset.username;
     const b = ban.dataset.banned === "1";
     if (!confirm(b ? `Unban ${u}?` : `Ban ${u}?`)) return;
-
     await fetch("/admin/ban_user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: u, banned: !b })
     });
-
     location.reload();
   }
 
   const pin = e.target.closest(".toggle-pin");
   if (pin) {
     const id = pin.dataset.id;
-
     await fetch(`/posts/${id}/pin`, { method: "POST" });
     location.reload();
   }
@@ -965,7 +961,7 @@ document.addEventListener("click", async e => {
 
 
 /* ============================================================
-   GLOW ON HASH NAVIGATION
+   Glow on hash navigation
 ============================================================ */
 document.addEventListener("DOMContentLoaded", () => {
   const h = window.location.hash;
@@ -985,6 +981,7 @@ document.addEventListener("DOMContentLoaded", () => {
 ============================================================ */
 async function loadAllCommentCounts(root = document) {
   const toggles = root.querySelectorAll(".comments-toggle");
+
   for (const t of toggles) {
     const card = t.closest(".post-card");
     const id = card.dataset.postId;
@@ -992,13 +989,12 @@ async function loadAllCommentCounts(root = document) {
     try {
       const res = await fetch(`/comments/count?post_id=${id}`);
       const data = await res.json();
-      if (data.ok) {
-        const n = data.count;
-        const num = document.getElementById(`comments-num-${id}`);
-        const c = document.getElementById(`comments-count-${id}`);
-        if (num) num.textContent = n;
-        if (c) c.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
-      }
+      const n = data.count;
+
+      const num = document.getElementById(`comments-num-${id}`);
+      const c = document.getElementById(`comments-count-${id}`);
+      if (num) num.textContent = n;
+      if (c) c.textContent = `${n} comment${n !== 1 ? "s" : ""}`;
     } catch {}
   }
 }
@@ -1007,7 +1003,7 @@ document.addEventListener("DOMContentLoaded", () => loadAllCommentCounts());
 
 
 /* ============================================================
-   LEVENSHTEIN
+   Levenshtein
 ============================================================ */
 function levenshtein(a, b) {
   const la = a.length, lb = b.length;
@@ -1015,7 +1011,6 @@ function levenshtein(a, b) {
   if (!lb) return la;
 
   const dp = Array.from({ length: lb + 1 }, () => Array(la + 1).fill(0));
-
   for (let i = 0; i <= lb; i++) dp[i][0] = i;
   for (let j = 0; j <= la; j++) dp[0][j] = j;
 
@@ -1023,9 +1018,9 @@ function levenshtein(a, b) {
     for (let j = 1; j <= la; j++) {
       const cost = a[j - 1] === b[i - 1] ? 0 : 1;
       dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + cost
+        dp[i-1][j] + 1,
+        dp[i][j-1] + 1,
+        dp[i-1][j-1] + cost
       );
     }
   }
@@ -1034,92 +1029,68 @@ function levenshtein(a, b) {
 
 
 /* ============================================================
-   TITLE-STRONG, FAIR SCORING  (Mode B)
+   SCORING MODEL — TITLE STRONG, NO PIN BIAS
 ============================================================ */
 function scoredPost(p, rawQuery) {
   const q = rawQuery.trim().toLowerCase();
-  const title = (p.title || "").toLowerCase();
-  const body  = (p.body  || "").toLowerCase();
-
   if (!q) return 0;
 
+  const title = (p.title || "").toLowerCase();
+  const body  = (p.body  || "").toLowerCase();
   const qWords = q.split(/\s+/).filter(Boolean);
-
-  const titleWords = title.split(/\W+/).filter(Boolean);
-  const bodyWords  = body.split(/\W+/).filter(Boolean);
 
   let score = 0;
 
-  // 1) Super priority: exact title match (should basically always win)
-  if (title === q) score += 200000;
+  // Exact match dominates everything
+  if (title === q) return 10_000_000;
 
-  // 2) Strong partial / prefix matches on whole title
-  if (title.startsWith(q)) score += 80000;
-  if (title.includes(q))   score += 50000;
+  // Title starts-with or contains
+  if (title.startsWith(q)) score += 5_000_000;
+  if (title.includes(q))   score += 3_000_000;
 
-  // 3) Title contains ALL query words → strong bonus
-  const titleContainsAll = qWords.every(w => title.includes(w));
-  if (titleContainsAll && qWords.length) score += 20000;
+  // Levenshtein on full title
+  const dt = levenshtein(title, q);
+  if (dt === 1) score += 1_000_000;
+  if (dt === 2) score += 500_000;
 
-  // 4) Per-word scoring
+  const tWords = title.split(/\W+/).filter(Boolean);
+  const bWords = body.split(/\W+/).filter(Boolean);
+
   for (const qw of qWords) {
-    const len = qw.length;
+    if (qw.length <= 1) continue;
 
-    // ignore 1-char query "words" (stops the space/letter bug)
-    if (len === 1) continue;
-
-    const titleExactBoost   = (len >= 3 ? 6000 : 2500);
-    const titlePrefixBoost  = (len >= 3 ? 4000 : 1500);
-    const titleInsideBoost  = (len >= 3 ? 2500 : 1000);
-    const bodyExactBoost    = (len >= 3 ? 250 : 80);
-    const bodyPrefixBoost   = (len >= 3 ? 140 : 50);
-    const bodyInsideBoost   = (len >= 3 ? 80 : 30);
-
-    // --- TITLE words (heavy weight) ---
-    for (const tw of titleWords) {
-      if (!tw) continue;
-      if (tw === qw) {
-        score += titleExactBoost;
-      } else if (tw.startsWith(qw)) {
-        score += titlePrefixBoost;
-      } else if (tw.includes(qw)) {
-        score += titleInsideBoost;
-      } else if (len >= 4) {
+    for (const tw of tWords) {
+      if (tw === qw) score += 50_000;
+      else if (tw.startsWith(qw)) score += 20_000;
+      else if (tw.includes(qw)) score += 10_000;
+      else {
         const d = levenshtein(tw, qw);
-        if (d === 1) score += 900;
-        else if (d === 2) score += 400;
+        if (d === 1) score += 5_000;
+        if (d === 2) score += 2_000;
       }
     }
 
-    // --- BODY words (lower weight) ---
-    for (const bw of bodyWords) {
-      if (!bw) continue;
-      if (bw === qw) {
-        score += bodyExactBoost;
-      } else if (bw.startsWith(qw)) {
-        score += bodyPrefixBoost;
-      } else if (bw.includes(qw)) {
-        score += bodyInsideBoost;
-      } else if (len >= 4) {
+    for (const bw of bWords) {
+      if (bw === qw) score += 400;
+      else if (bw.startsWith(qw)) score += 180;
+      else if (bw.includes(qw)) score += 120;
+      else {
         const d = levenshtein(bw, qw);
-        if (d === 1) score += 20;
-        else if (d === 2) score += 8;
+        if (d === 1) score += 30;
+        if (d === 2) score += 10;
       }
     }
   }
-
-  // 5) Small bump for pinned posts, but nowhere near title weight
-  if (p.pinned) score += 500;
 
   return score;
 }
 
 
 /* ============================================================
-   RENDER A POST (full interactive)
+   RENDER POST (full functionality)
 ============================================================ */
 function renderPostHTML(p, isAdmin, isLogged) {
-  const created = (p.created_at || "").replace("T", " ").slice(0, 19);
+  const created = (p.created_at || "").replace("T", " ").slice(0,19);
 
   return `
 <article id="post-${p.id}" class="post-card${p.pinned ? " pinned" : ""}" data-post-id="${p.id}">
@@ -1144,21 +1115,17 @@ function renderPostHTML(p, isAdmin, isLogged) {
           ? `<div class="post-menu">
                <button class="kebab-btn">⋯</button>
                <div class="menu">
-                 ${isAdmin
-                   ? `
-                     <button class="toggle-pin" data-id="${p.id}" data-state="${p.pinned ? "1" : "0"}">${p.pinned ? "Unpin" : "Pin"}</button>
-                     <button class="ban-user" data-username="${p.username}" data-banned="${p.banned ? "1" : "0"}">${p.banned ? "Unban user" : "Ban user"}</button>
-                     `
-                   : ""
-                 }
+                 ${isAdmin ? `
+                   <button class="toggle-pin" data-id="${p.id}" data-state="${p.pinned ? "1" : "0"}">${p.pinned ? "Unpin" : "Pin"}</button>
+                   <button class="ban-user" data-username="${p.username}" data-banned="${p.banned ? "1" : "0"}">${p.banned ? "Unban user" : "Ban user"}</button>
+                 ` : ""}
+
                  ${p.can_edit ? `<a href="/posts/${p.id}/edit">Edit</a>` : ""}
-                 ${
-                   p.can_delete
-                     ? `<form method="post" action="/posts/${p.id}/delete" onsubmit="return confirm('Delete this post?')">
-                          <button class="danger">Delete</button>
-                        </form>`
-                     : ""
-                 }
+                 ${p.can_delete ? `
+                   <form method="post" action="/posts/${p.id}/delete" onsubmit="return confirm('Delete this post?')">
+                     <button class="danger">Delete</button>
+                   </form>
+                 ` : ""}
                </div>
              </div>`
           : ""
@@ -1197,26 +1164,26 @@ function renderPostHTML(p, isAdmin, isLogged) {
 
 
 /* ============================================================
-   GLOBAL SEARCH
+   GLOBAL SEARCH (clean & strict)
 ============================================================ */
 (function () {
   const input = document.getElementById("post-search-input");
   const noRes = document.getElementById("no-results");
   const container = document.querySelector(".posts-container");
-  const header = container ? container.querySelector(".posts-header") : null;
+  const header = container?.querySelector(".posts-header");
 
   if (!input || !container || !header) return;
 
   async function runSearch() {
     const raw = input.value;
-    const trimmed = raw.trim().toLowerCase();
+    const q = raw.trim().toLowerCase();
 
-    if (!trimmed) {
-      // Back to normal list (no query)
+    if (!q) {
       window.location.href = window.location.pathname;
       return;
     }
 
+    // Grab all posts (no pin sorting)
     const res = await fetch("/api/search");
     const data = await res.json();
 
@@ -1224,15 +1191,17 @@ function renderPostHTML(p, isAdmin, isLogged) {
     const isLogged = data.viewer_logged_in;
     const posts = data.posts || [];
 
-    // Score + sort
     const ranked = posts
-      .map(p => ({ post: p, score: scoredPost(p, raw) }))
+      .map(p => ({
+        post: p,
+        score: scoredPost(p, raw)
+      }))
       .filter(r => r.score > 0)
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.score - a.score); // strict best→worst
 
-    // Clear existing posts + pagination
     container.querySelectorAll(".post-card").forEach(e => e.remove());
     container.querySelectorAll(".pagination").forEach(e => e.remove());
+    document.querySelectorAll(".pinned").forEach(e => e.remove()); // REMOVE pinned leftovers
 
     if (!ranked.length) {
       noRes.style.display = "block";
@@ -1242,13 +1211,13 @@ function renderPostHTML(p, isAdmin, isLogged) {
     noRes.style.display = "none";
 
     ranked.forEach(r => {
-      header.insertAdjacentHTML(
-        "afterend",
-        renderPostHTML(r.post, isAdmin, isLogged)
-      );
+      container.insertAdjacentHTML(
+  "beforeend",
+  renderPostHTML(r.post, isAdmin, isLogged)
+);
+
     });
 
-    // Re-enable interactions on freshly inserted posts
     setupPostBodyCollapsing(container);
     loadAllCommentCounts(container);
   }
@@ -1257,6 +1226,14 @@ function renderPostHTML(p, isAdmin, isLogged) {
   input.addEventListener("input", () => {
     clearTimeout(debounce);
     debounce = setTimeout(runSearch, 140);
+  });
+
+  // ENTER = final ranked update
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runSearch();
+    }
   });
 })();
 </script>
