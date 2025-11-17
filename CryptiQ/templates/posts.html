@@ -584,6 +584,90 @@
 .post-glow {
   animation: postGlow 1.1s ease-out;
 }
+/* ============================================================
+   DELETE POPUP (Global)
+============================================================ */
+.delete-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  animation: fadeIn .15s ease-out;
+}
+
+.delete-popup-overlay.open {
+  display: flex;
+}
+
+.delete-popup-box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px 26px;
+  width: min(350px, 88%);
+  box-shadow: 0 8px 30px rgba(0,0,0,.35);
+  animation: popIn .18s ease-out;
+  text-align: center;
+}
+
+.delete-popup-box h3 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.delete-popup-box p {
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+.delete-popup-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+#delete-popup-cancel,
+#delete-popup-confirm {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 0.92rem;
+}
+
+#delete-popup-cancel {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+#delete-popup-cancel:hover {
+  background: var(--input-hover);
+}
+
+#delete-popup-confirm {
+  background: #ff6b6b;
+  color: #0f0f0f;
+}
+
+#delete-popup-confirm:hover {
+  background: #ff7f7f;
+}
+
+@keyframes popIn {
+  from { transform: scale(.87); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
       </style>
   </head>
@@ -737,6 +821,21 @@
         class="fab" title="{% if user %}Create a new post{% else %}Log in to post{% endif %}">
         <span>＋</span>
       </a>
+    <!-- ===========================
+     Delete Confirmation Popup
+=========================== -->
+<div id="delete-popup" class="delete-popup-overlay">
+  <div class="delete-popup-box">
+    <h3>Confirm Delete</h3>
+    <p id="delete-popup-text">Are you sure you want to delete this?</p>
+
+    <div class="delete-popup-actions">
+      <button id="delete-popup-cancel">Cancel</button>
+      <button id="delete-popup-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
     </main>
 
 <script>
@@ -1236,6 +1335,67 @@ function renderPostHTML(p, isAdmin, isLogged) {
     }
   });
 })();
+/* ============================================================
+   DELETE POPUP HANDLER
+============================================================ */
+
+const popup = document.getElementById("delete-popup");
+const popupText = document.getElementById("delete-popup-text");
+const btnCancel = document.getElementById("delete-popup-cancel");
+const btnConfirm = document.getElementById("delete-popup-confirm");
+
+let pendingDeleteAction = null;
+
+// Open popup
+function openDeletePopup(message, onConfirm) {
+  popupText.textContent = message;
+  pendingDeleteAction = onConfirm;
+  popup.classList.add("open");
+}
+
+// Close popup
+function closeDeletePopup() {
+  popup.classList.remove("open");
+  pendingDeleteAction = null;
+}
+
+btnCancel.addEventListener("click", closeDeletePopup);
+popup.addEventListener("click", e => {
+  if (e.target === popup) closeDeletePopup();
+});
+
+btnConfirm.addEventListener("click", () => {
+  if (pendingDeleteAction) pendingDeleteAction();
+  closeDeletePopup();
+});
+
+
+/* ============================================================
+   HOOK INTO ALL DELETE BUTTONS (POSTS + COMMENTS)
+============================================================ */
+document.addEventListener("click", e => {
+  const delForm = e.target.closest("form[action*='delete']");
+  const delCommentBtn = e.target.closest(".comment-delete");
+
+  // POST DELETE
+  if (delForm && delForm.tagName === "FORM") {
+    e.preventDefault();
+    openDeletePopup("Delete this post?", () => delForm.submit());
+  }
+
+  // COMMENT DELETE
+  if (delCommentBtn) {
+    e.preventDefault();
+    const commentId = delCommentBtn.dataset.id;
+
+    openDeletePopup("Delete this comment?", async () => {
+      const res = await fetch(`/comments/${commentId}/delete`, { method: "POST" });
+      const data = await res.json();
+      if (data.ok) delCommentBtn.closest(".comment").remove();
+    });
+  }
+});
+
 </script>
 
   </body>
