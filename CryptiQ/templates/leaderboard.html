@@ -9,7 +9,7 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
       margin: 0;
       padding: 0;
     }
@@ -32,7 +32,7 @@
     }
 
     h2 {
-      color: var(--accent); /* 🔹 Updated: matches site’s trademark accent */
+      color: var(--accent);
       font-size: clamp(1.6rem, 4vw, 2rem);
       font-weight: 800;
       text-align: center;
@@ -79,6 +79,31 @@
     }
 
     .lb-section.hidden { display: none; }
+
+    /* === Search Bar === */
+    .lb-search {
+      width: 100%;
+      margin: 0 auto 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .lb-search input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--input-border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 0.95rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .lb-search input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
 
     /* === Tables === */
     table {
@@ -190,14 +215,18 @@
       <div class="tab" data-target="weekly">Fastest Solvers</div>
     </div>
 
-    <!-- === ALL-TIME === -->
+    <!-- ========== ALL-TIME ========== -->
     <section id="all-time" class="lb-section">
+      <div class="lb-search">
+        <input id="search-alltime" placeholder="Search rank or username…">
+      </div>
+
       {% if all_time|length == 0 %}
         <p class="no-submissions">No submissions yet — be the first to claim the top spot!</p>
       {% else %}
       <table>
         <thead><tr><th>Rank</th><th>Username</th><th>Weeks Played</th><th>Total Score</th></tr></thead>
-        <tbody>
+        <tbody id="tbody-alltime">
           {% for row in all_time %}
           <tr class="
             {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}
@@ -214,14 +243,18 @@
       {% endif %}
     </section>
 
-    <!-- === SEASONAL === -->
+    <!-- ========== SEASONAL ========== -->
     <section id="seasonal" class="lb-section hidden">
+      <div class="lb-search">
+        <input id="search-seasonal" placeholder="Search rank or username…">
+      </div>
+
       {% if seasonal|length == 0 %}
         <p class="no-submissions">No submissions yet this season — start cracking!</p>
       {% else %}
       <table>
         <thead><tr><th>Rank</th><th>Username</th><th>Weeks Played</th><th>Total Score</th></tr></thead>
-        <tbody>
+        <tbody id="tbody-seasonal">
           {% for row in seasonal %}
           <tr class="
             {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}
@@ -238,14 +271,18 @@
       {% endif %}
     </section>
 
-    <!-- === WEEKLY === -->
+    <!-- ========== WEEKLY ========== -->
     <section id="weekly" class="lb-section hidden">
+      <div class="lb-search">
+        <input id="search-weekly" placeholder="Search rank or username…">
+      </div>
+
       {% if weekly|length == 0 %}
         <p class="no-submissions">No submissions yet this week — be the first to solve!</p>
       {% else %}
       <table>
         <thead><tr><th>Rank</th><th>Username</th><th>Fastest Time (s)</th><th>Score</th></tr></thead>
-        <tbody>
+        <tbody id="tbody-weekly">
           {% for row in weekly %}
           <tr class="
             {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}
@@ -264,6 +301,7 @@
   </div>
 
   <script>
+    // ---------- TAB HANDLING ----------
     const tabs = document.querySelectorAll(".tab");
     const sections = document.querySelectorAll(".lb-section");
     tabs.forEach(tab => {
@@ -274,6 +312,33 @@
         document.getElementById(tab.dataset.target).classList.remove("hidden");
       });
     });
+
+    // ---------- SIMPLE SEARCH ----------
+    function setupSearch(inputId, tableBodyId) {
+      const input = document.getElementById(inputId);
+      const tbody = document.getElementById(tableBodyId);
+
+      if (!input || !tbody) return;
+
+      input.addEventListener("input", () => {
+        const q = input.value.trim().toLowerCase();
+        const rows = tbody.querySelectorAll("tr");
+
+        rows.forEach(row => {
+          const rank = row.children[0].textContent.toLowerCase();
+          const user = row.children[1].textContent.toLowerCase();
+
+          row.style.display =
+            rank.includes(q) || user.includes(q)
+              ? ""
+              : "none";
+        });
+      });
+    }
+
+    setupSearch("search-alltime", "tbody-alltime");
+    setupSearch("search-seasonal", "tbody-seasonal");
+    setupSearch("search-weekly", "tbody-weekly");
   </script>
 </body>
 </html>

@@ -209,14 +209,18 @@ def is_admin(user):
 def fetch_post(post_id):
     conn = get_db()
     cur = conn.execute("""
-        SELECT p.*, u.username AS author
+        SELECT 
+            p.*,
+            u.username AS author
         FROM posts p
-        JOIN users u ON p.user_id = u.id
+        LEFT JOIN users u ON p.user_id = u.id
         WHERE p.id = ?
     """, (post_id,))
     post = cur.fetchone()
     conn.close()
     return post
+
+
 
 def delete_image_file(filename):
     if not filename:
@@ -708,13 +712,13 @@ def comments_list():
 @app.route("/comments/add", methods=["POST"])
 def comments_add():
     user = current_user()
-    user = current_user()
     if user and user.get("banned"):
         return jsonify({"ok": False, "error": "You are banned from posting or commenting."}), 403
 
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
 
+    # JSON or form
     if request.is_json:
         data = request.get_json(silent=True) or {}
         post_id = int(data.get("post_id") or 0)
@@ -726,24 +730,42 @@ def comments_add():
     if not post_id or not body:
         return jsonify({"ok": False, "error": "post_id and body required"}), 400
 
-    if not fetch_post(post_id):
+    # Use your existing helper to fetch post (includes owner)
+    post = fetch_post(post_id)
+    if not post:
         return jsonify({"ok": False, "error": "post not found"}), 404
+
+    post_owner_id = post["user_id"]  # may be NULL if owner deleted
 
     now = datetime.utcnow().isoformat()
     conn = get_db()
-    conn.execute(
+    cur = conn.cursor()
+
+    # Insert comment
+    cur.execute(
         "INSERT INTO comments (post_id, user_id, body, created_at) VALUES (?, ?, ?, ?)",
         (post_id, user["id"], body, now)
     )
-    conn.commit()
-    cur = conn.execute("""
+    comment_id = cur.lastrowid
+
+    # Fetch it back with username
+    cur.execute("""
         SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, u.username
         FROM comments c
         JOIN users u ON c.user_id = u.id
-        WHERE c.post_id=? AND c.user_id=? AND c.created_at=?
-        ORDER BY c.id DESC LIMIT 1
-    """, (post_id, user["id"], now))
+        WHERE c.id = ?
+    """, (comment_id,))
     row = cur.fetchone()
+
+    # Create notification for post owner (but not if they commented on their own post)
+    if post_owner_id and post_owner_id != user["id"]:
+        message = f"{user['username']} replied to your post"
+        cur.execute("""
+            INSERT INTO notifications (user_id, actor_id, post_id, comment_id, message, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (post_owner_id, user["id"], post_id, comment_id, message, now))
+
+    conn.commit()
     conn.close()
 
     comment = {
@@ -783,6 +805,196 @@ def comments_delete(comment_id):
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+
+
+@app.route("/notifications/unread", methods=["GET"])
+def notifications_unread():
+    """Return notifications for the user (read + unread), and count unread separately."""
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+
+    # Get ALL notifications (so dropdown keeps them)
+    cur = conn.execute("""
+        SELECT
+            n.id,
+            n.post_id,
+            n.comment_id,
+            n.message,
+            n.created_at,
+            n.is_read,
+            p.title AS post_title
+        FROM notifications n
+        JOIN posts p ON n.post_id = p.id
+        WHERE n.user_id = ?
+        ORDER BY datetime(n.created_at) DESC
+        LIMIT 40
+    """, (user["id"],))
+    rows = cur.fetchall()
+
+    # Count UNREAD for the red badge
+    cur2 = conn.execute("""
+        SELECT COUNT(*) AS c
+        FROM notifications
+        WHERE user_id = ? AND is_read = 0
+    """, (user["id"],))
+    unread_count = cur2.fetchone()["c"]
+
+    conn.close()
+
+    notifications = [{
+        "id": r["id"],
+        "post_id": r["post_id"],
+        "comment_id": r["comment_id"],
+        "message": r["message"],
+        "post_title": r["post_title"],
+        "created_at": r["created_at"],
+        "is_read": r["is_read"],
+    } for r in rows]
+
+    return jsonify({
+        "ok": True,
+        "notifications": notifications,
+        "count": unread_count
+    })
+
+
+@app.route("/notifications/mark_read", methods=["POST"])
+def notifications_mark_read():
+    """Mark one or more notifications as read for the current user."""
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    ids = data.get("ids") or []
+
+    # Allow single id or list
+    if isinstance(ids, (int, str)):
+        ids = [ids]
+
+    clean_ids = []
+    for val in ids:
+        try:
+            clean_ids.append(int(val))
+        except (TypeError, ValueError):
+            continue
+
+    if not clean_ids:
+        return jsonify({"ok": False, "error": "no ids provided"}), 400
+
+    placeholders = ",".join("?" for _ in clean_ids)
+    params = [user["id"], *clean_ids]
+
+    conn = get_db()
+    conn.execute(
+        f"UPDATE notifications SET is_read = 1 WHERE user_id = ? AND id IN ({placeholders})",
+        params
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/search_posts")
+def api_search_posts():
+    q = (request.args.get("q") or "").strip().lower()
+    if not q:
+        return jsonify({"ok": True, "posts": []})
+
+    conn = get_db()
+    cur = conn.execute("""
+        SELECT 
+            p.id, p.title, p.body, p.created_at, p.image_filename,
+            u.username,
+            (u.admin) AS is_admin,
+            (u.banned) AS banned
+        FROM posts p
+        LEFT JOIN users u ON u.id = p.user_id
+        ORDER BY p.created_at DESC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    results = []
+    for r in rows:
+        results.append({
+            "id": r["id"],
+            "title": r["title"],
+            "body": r["body"],
+            "username": r["username"] or "[Deleted User]",
+            "created_at": r["created_at"],
+            "pinned": False,  # if you want pin support, tell me
+            "image_filename": r["image_filename"],
+            "is_admin": r["is_admin"],
+            "banned": r["banned"]
+        })
+
+    return jsonify({"ok": True, "posts": results})
+
+
+@app.route("/api/search")
+def api_search():
+    q = (request.args.get("q") or "").strip().lower()
+
+    user = current_user()
+    viewer_logged_in = bool(user)
+    viewer_id = user["id"] if user else None
+    viewer_is_admin = bool(user and user.get("is_admin"))
+
+    conn = get_db()
+    cur = conn.execute("""
+        SELECT 
+            posts.id,
+            posts.title,
+            posts.body,
+            posts.image_filename,
+            posts.created_at,
+            posts.pinned,
+            posts.user_id AS owner_id,
+            users.username,
+            users.is_admin AS is_admin,
+            users.banned
+        FROM posts
+        LEFT JOIN users ON users.id = posts.user_id
+        ORDER BY posts.pinned DESC, datetime(posts.created_at) DESC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    posts = []
+    for r in rows:
+        owner_id = r["owner_id"]
+
+        can_edit = viewer_is_admin or (viewer_logged_in and viewer_id == owner_id)
+        can_delete = can_edit
+
+        posts.append({
+            "id": r["id"],
+            "title": r["title"],
+            "body": r["body"],
+            "image_filename": r["image_filename"],
+            "created_at": r["created_at"],
+            "pinned": bool(r["pinned"]),
+            "owner_id": owner_id,
+            "username": r["username"] or "[Deleted User]",
+            "is_admin": bool(r["is_admin"]),
+            "banned": bool(r["banned"]),
+            "can_edit": bool(can_edit),
+            "can_delete": bool(can_delete),
+        })
+
+    return jsonify({
+        "ok": True,
+        "viewer_is_admin": viewer_is_admin,
+        "viewer_logged_in": viewer_logged_in,
+        "posts": posts,
+    })
+
 
 # ------------------- Accounts -------------------
 @app.route("/register", methods=["GET", "POST"])
