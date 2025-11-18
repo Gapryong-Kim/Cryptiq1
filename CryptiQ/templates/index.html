@@ -62,7 +62,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: calc(40vh);
+      height: calc(70vh);
       width: 100vw;
       padding: 0 8%;
       background: linear-gradient(180deg, var(--bg) 0%, var(--panel) 100%);
@@ -71,7 +71,7 @@
       opacity: 0;
       animation: fadeIn 1.2s ease forwards;
       transition: background 0.4s ease;
-      padding-top:19vh ;
+      padding-top: 19vh;
     }
 
     .hero-text {
@@ -243,7 +243,7 @@
       50% { box-shadow: 0 0 80px rgba(0,255,213,0.25); }
     }
 
-    /* === RESPONSIVE === */
+    /* === RESPONSIVE HERO === */
     @media (max-width: 1000px) {
       body { overflow-y: auto; }
       .hero {
@@ -265,7 +265,204 @@
       .hero-text { padding: 0 10px; }
     }
 
-    /* === FIRST-TIME SECTION === */
+    /* accent span */
+    .hl {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* === LANDING FEATURES SECTION === */
+    .landing-features {
+      width: 100%;
+      padding: 150px 0 130px;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
+      display: flex;
+      justify-content: center;
+    }
+
+    .lf-container {
+      width: min(1100px, 92%);
+      display: flex;
+      flex-direction: column;
+      gap: 110px;
+    }
+
+    .lf-block {
+      display: flex;
+      align-items: center;
+      gap: 70px;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: 0.8s ease;
+    }
+
+    .lf-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .lf-block.reverse {
+      flex-direction: row-reverse;
+    }
+
+    .lf-text {
+    display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+    }
+
+    .lf-label {
+      .lf-label {
+  margin: 0;
+  padding: 0;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+    }
+
+    .lf-text h2 {
+       margin: 0; /* REMOVE original unpredictable margins */
+  padding: 0;
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--text);
+    }
+
+    .lf-text p {
+        margin: 0;
+  padding: 0;
+  font-size: 1.08rem;
+  color: var(--subtext);
+  line-height: 1.7;
+  max-width: 560px;
+    }
+
+    .lf-link {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 6px;
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.98rem;
+      gap: 6px;
+      position: relative;
+    }
+
+    .lf-link::after {
+      content: "→";
+      font-size: 0.95rem;
+      transition: transform 0.2s ease;
+    }
+
+    .lf-link:hover::after {
+      transform: translateX(3px);
+    }
+
+    .lf-graphic {
+      flex: 0.9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 300px;
+    }
+
+    /* ==== FIXED COLOR SCHEME – MATCH HERO CIPHER AESTHETIC ==== */
+    .data-stream {
+      width: 100%;
+      max-width: 340px;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.04), transparent 70%);
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.05);
+      padding: 10px 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .data-inner {
+      position: relative;
+      width: 100%;
+      height: 1.3em;
+    }
+
+    .data-line {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      font-family: "Consolas", monospace;
+      font-size: 0.88rem;
+      letter-spacing: 0.15em;
+      white-space: nowrap;
+      will-change: transform, clip-path, opacity;
+    }
+
+    /* NEW HERO-MATCHED COLORS */
+    .cipher-line {
+      color: var(--subtext);
+      opacity: 0.55;
+    }
+
+    .plain-line {
+      color: var(--accent);
+      font-weight: 600;
+      opacity: 0;
+      clip-path: inset(0 100% 0 0);
+    }
+
+    /* small pill row tokens */
+    .lf-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .lf-pill {
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--subtext);
+    }
+
+    @media (max-width: 900px) {
+      .landing-features {
+        padding: 120px 0 90px;
+      }
+      .lf-block,
+      .lf-block.reverse {
+        flex-direction: column;
+        text-align: center;
+      }
+      .lf-text p {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .lf-graphic {
+        width: 100%;
+      }
+      .data-stream {
+        max-width: 100%;
+      }
+      .lf-pill-row {
+        justify-content: center;
+      }
+    }
+
+    /* (Kept in case you reuse) */
     .first-time {
       width: 100%;
       padding: 120px 0 130px;
@@ -295,8 +492,9 @@
 
     .ft-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 28px;
+      grid-template-columns: repeat(2, minmax(320px, 1fr));
+      gap: 32px;
+      justify-content: center;
     }
 
     .ft-card {
@@ -337,8 +535,55 @@
       margin: 0;
     }
 
-    /* CRITICAL FIX */
     body { display: block !important; }
+  
+
+  /* --- RESTRUCTURED FEATURE TEXT LIKE MOSH --- */
+.lf-label {
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.lf-text h2 {
+  font-size: 2.3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 14px 0;
+  color: var(--text);
+}
+
+.lf-text p {
+  font-size: 1.08rem;
+  color: var(--subtext);
+  line-height: 1.7;
+  margin: 0 0 26px 0;
+  max-width: 560px;
+}
+
+/* Gives a more structured spacing like Mosh */
+.lf-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 900px) {
+  .lf-text h2 {
+    font-size: 1.9rem;
+  }
+  .lf-text p {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+}
+
+  
   </style>
 </head>
 
@@ -347,6 +592,7 @@
   {% include 'base_nav.html' %}
 
   <main>
+    <!-- HERO -->
     <section class="hero">
       <div class="hero-text">
         <h1>
@@ -354,7 +600,8 @@
           Explore The Cipher Lab.
         </h1>
 
-        <p>The Cipher Lab is your all-in-one platform for exploring classical ciphers,
+        <p>
+          The Cipher Lab is your all-in-one platform for exploring classical ciphers,
           analysing cryptographic patterns, and sharing ideas through interactive tools and community posts.
         </p>
 
@@ -383,71 +630,117 @@
         </div>
       </div>
     </section>
-    <section class="first-time">
-    <div class="ft-container">
 
-      <h2 class="ft-heading">New here? Start exploring.</h2>
+    <!-- NEW LANDING FEATURE SECTION -->
+    <section class="landing-features">
+      <div class="lf-container">
 
-      <p class="ft-subheading">
-        Begin your cryptography journey with these essential tools and challenges.
-      </p>
+        <!-- Block 1 -->
+        <div class="lf-block fade-up">
+          <div class="lf-text">
+            <p class="lf-label">Start here</p>
+            <h2>Break <span class="hl">classical ciphers</span> in seconds</h2>
+            <p>
+              Paste in your ciphertext and let The Cipher Lab automatically test
+              and crack <span class="hl">Caesar</span>, <span class="hl">Vigenère</span>,
+              <span class="hl">substitution</span>, transposition and more using
+              tuned frequency data and scoring.
+            </p>
 
-      <div class="ft-cards">
-
-        <!-- Break a Cipher -->
-        <a href="{{ url_for('breaker') }}" class="ft-card">
-          <div class="ft-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--accent)" stroke-width="2">
-              <circle cx="11" cy="11" r="7"></circle>
-              <line x1="16" y1="16" x2="22" y2="22"></line>
-            </svg>
+            <a href="{{ url_for('breaker') }}" class="lf-link">Try the Cipher Breaker</a>
           </div>
-          <h3>Break a Cipher</h3>
-          <p>Automatically detect and crack classical ciphers with one click.</p>
-        </a>
 
-        <!-- Tools -->
-        <a href="{{ url_for('tools') }}" class="ft-card">
-          <div class="ft-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--accent)" stroke-width="2">
-              <rect x="3" y="7" width="18" height="13"></rect>
-              <path d="M8 7V5h8v2"></path>
-            </svg>
+          <div class="lf-graphic">
+            <div class="data-stream">
+              <div class="data-inner" data-plain="BREAK CLASSICAL CIPHERS IN SECONDS">
+                <div class="data-line cipher-line">
+                  XQJ9Z·TLR7·9F@#·MZ1Q·QZ8P·MVL1·7@!K·R3D2
+                </div>
+                <div class="data-line plain-line">
+                  BREAK CLASSICAL CIPHERS IN SECONDS
+                </div>
+              </div>
+            </div>
           </div>
-          <h3>Explore Tools</h3>
-          <p>Use encoders, decoders, analysers and helper utilities.</p>
-        </a>
+        </div>
 
-        <!-- Weekly Challenge -->
-        <a href="{{ url_for('weekly_page') }}" class="ft-card">
-          <div class="ft-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--accent)" stroke-width="2">
-              <path d="M8 21h8"></path>
-              <path d="M12 17v4"></path>
-              <path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
-              <path d="M4 4h3v2a3 3 0 0 1-3 3"></path>
-              <path d="M20 4h-3v2a3 3 0 0 0 3 3"></path>
-            </svg>
+        <!-- Block 2 -->
+        <div class="lf-block reverse fade-up">
+          <div class="lf-text">
+            <p class="lf-label">All your tools</p>
+            <h2>One hub to <span class="hl">encode, decode & analyse</span></h2>
+            <p>
+              Swap quickly between encoders, decoders, frequency analysers,
+              crib tools and helpers without leaving the page. Designed to feel
+              like a focused <span class="hl">cryptography workspace</span> instead
+              of a cluttered toolbox.
+            </p>
+
+            <div class="lf-pill-row">
+              <span class="lf-pill">Encoders / decoders</span>
+              <span class="lf-pill">Frequency analysis</span>
+              <span class="lf-pill">Helper utilities</span>
+            </div>
+
+            <a href="{{ url_for('tools') }}" class="lf-link">Explore all tools</a>
           </div>
-          <h3>Weekly Cipher Challenge</h3>
-          <p>Compete globally and climb the leaderboard.</p>
-        </a>
+
+          <div class="lf-graphic">
+            <div class="data-stream">
+              <div class="data-inner" data-plain="TOOLS · ANALYSERS · HELPERS">
+                <div class="data-line cipher-line">
+                  ENC▶CAESAR▶VIG▶RAIL▶POLY▶AFFINE▶AMSCO▶SUB
+                </div>
+                <div class="data-line plain-line">
+                  TOOLS · ANALYSERS · HELPERS
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block 3 -->
+        <div class="lf-block fade-up">
+          <div class="lf-text">
+            <p class="lf-label">Learn & compete</p>
+            <h2>Understand the ciphers — then <span class="hl">beat the challenge</span></h2>
+            <p>
+              Read clear explanations and walkthroughs, then test yourself in the
+              <span class="hl">weekly cipher challenge</span>. Compete globally,
+              climb the leaderboard and see how your solving speed stacks up.
+            </p>
+
+            <div class="lf-pill-row">
+              <span class="lf-pill">Step-by-step reasoning</span>
+              <span class="lf-pill">Weekly challenges</span>
+              <span class="lf-pill">Global leaderboard</span>
+            </div>
+
+            <a href="{{ url_for('weekly_page') }}" class="lf-link">
+              View the current challenge
+            </a>
+          </div>
+
+          <div class="lf-graphic">
+            <div class="data-stream">
+              <div class="data-inner" data-plain="SOLVE · SUBMIT · CLIMB THE RANKS">
+                <div class="data-line cipher-line">
+                  Z7QX·G4PL·19VK·H2RM·9CJ3·WQ8T
+                </div>
+                <div class="data-line plain-line">
+                  SOLVE · SUBMIT · CLIMB THE RANKS
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
+    </section>
 
-    </div>
-  </section>
-
-  
     <p class="footer-text">© 2025 The Cipher Lab — Tools. Posts. Community.</p>
 
   </main>
-
-
-  <!-- === FIRST-TIME SECTION === -->
 
   <script>
     // === Caesar Cipher Animation ===
@@ -480,6 +773,64 @@
     }
 
     window.addEventListener("load", () => setTimeout(typeDecrypt, 1500));
+
+    // === Scroll reveal for feature blocks ===
+    const lfItems = document.querySelectorAll(".lf-block");
+
+    const lfObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+        }
+      });
+    }, { threshold: 0.25 });
+
+    lfItems.forEach(i => lfObserver.observe(i));
+
+    // === Decrypt tunnel animation ===
+    function runDecryptTunnel(container) {
+      const inner = container.querySelector(".data-inner");
+      if (!inner) return;
+
+      const cipherEl = inner.querySelector(".cipher-line");
+      const plainEl  = inner.querySelector(".plain-line");
+
+      if (!cipherEl || !plainEl) return;
+
+      const totalSteps = 80;
+      let step = 0;
+
+      function frame() {
+        const t = step / totalSteps;
+
+        const slide = -10 * t;
+        cipherEl.style.transform = `translateX(${slide}px)`;
+
+        const reveal = Math.min(100, t * 120);
+        cipherEl.style.clipPath = `inset(0 0 0 ${reveal}%)`;
+        plainEl.style.clipPath  = `inset(0 ${100 - reveal}% 0 0)`;
+
+        cipherEl.style.opacity = String(1 - t * 0.9);
+        plainEl.style.opacity  = String(Math.min(1, t * 1.4));
+
+        step++;
+        if (step <= totalSteps) requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    const tunnels = document.querySelectorAll(".data-stream");
+    const tunnelObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          runDecryptTunnel(e.target);
+          tunnelObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    tunnels.forEach(t => tunnelObserver.observe(t));
   </script>
 
 </body>
