@@ -198,8 +198,12 @@ main {
 }
 .ft-card:hover {
   border-color: var(--accent);
-  transform: translateY(-3px);
+  transform: translateY(-8px);
 }
+.ft-card {
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
 
 .ft-card h3 { color: var(--text); margin: 0; }
 .ft-card p { color: var(--subtext); margin: 0; }
@@ -266,6 +270,18 @@ main {
   from { opacity: 0; transform: translateX(40px); }
   to { opacity: 1; transform: translateX(0); }
 }
+/* === SCROLL REVEAL ANIMATION === */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 </style>
 
@@ -313,58 +329,58 @@ main {
       </div>
     </section>
 
-    <!-- FIRST TIME -->
-    <section class="first-time">
-      <div class="ft-container">
+<!-- FIRST TIME -->
+<section class="first-time">
+  <div class="ft-container">
 
-        <h2 class="ft-heading">New here? Start exploring.</h2>
-        <p class="ft-subheading">Begin your cryptography journey with these essential tools and challenges.</p>
+    <h2 class="ft-heading">New here? Start exploring.</h2>
+    <p class="ft-subheading">Begin your cryptography journey with these essential tools and challenges.</p>
 
-        <div class="ft-cards">
+    <div class="ft-cards">
 
-          <!-- Break a Cipher -->
-          <a href="{{ url_for('breaker') }}" class="ft-card">
-            <div class="ft-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                <circle cx="11" cy="11" r="7"></circle>
-                <line x1="16" y1="16" x2="22" y2="22"></line>
-              </svg>
-            </div>
-            <h3>Break a Cipher</h3>
-            <p>Automatically detect and crack classical ciphers with one click.</p>
-          </a>
-
-          <!-- Tools -->
-          <a href="{{ url_for('tools') }}" class="ft-card">
-            <div class="ft-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                <rect x="3" y="7" width="18" height="13"></rect>
-                <path d="M8 7V5h8v2"></path>
-              </svg>
-            </div>
-            <h3>Explore Tools</h3>
-            <p>Use encoders, decoders, analysers and helper utilities.</p>
-          </a>
-
-          <!-- Weekly Challenge -->
-          <a href="{{ url_for('weekly_page') }}" class="ft-card">
-            <div class="ft-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                <path d="M8 21h8"></path>
-                <path d="M12 17v4"></path>
-                <path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
-                <path d="M4 4h3v2a3 3 0 0 1-3 3"></path>
-                <path d="M20 4h-3v2a3 3 0 0 0 3 3"></path>
-              </svg>
-            </div>
-            <h3>Weekly Cipher Challenge</h3>
-            <p>Compete globally and climb the leaderboard.</p>
-          </a>
-
+      <!-- Break a Cipher -->
+      <a href="{{ url_for('breaker') }}" class="ft-card reveal">
+        <div class="ft-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="16" y1="16" x2="22" y2="22"></line>
+          </svg>
         </div>
+        <h3>Break a Cipher</h3>
+        <p>Automatically detect and crack classical ciphers with one click.</p>
+      </a>
 
-      </div>
-    </section>
+      <!-- Tools -->
+      <a href="{{ url_for('tools') }}" class="ft-card reveal">
+        <div class="ft-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+            <rect x="3" y="7" width="18" height="13"></rect>
+            <path d="M8 7V5h8v2"></path>
+          </svg>
+        </div>
+        <h3>Explore Tools</h3>
+        <p>Use encoders, decoders, analysers and helper utilities.</p>
+      </a>
+
+      <!-- Weekly Challenge -->
+      <a href="{{ url_for('weekly_page') }}" class="ft-card reveal">
+        <div class="ft-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+            <path d="M8 21h8"></path>
+            <path d="M12 17v4"></path>
+            <path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
+            <path d="M4 4h3v2a3 3 0 0 1-3 3"></path>
+            <path d="M20 4h-3v2a3 3 0 0 0 3 3"></path>
+          </svg>
+        </div>
+        <h3>Weekly Cipher Challenge</h3>
+        <p>Compete globally and climb the leaderboard.</p>
+      </a>
+
+    </div>
+
+  </div>
+</section>
 
     <p class="footer-text">© 2025 The Cipher Lab — Tools. Posts. Community.</p>
   </main>
@@ -400,6 +416,25 @@ function typeDecrypt() {
 }
 
 window.addEventListener("load", () => setTimeout(typeDecrypt, 1200));
+</script>
+<script>
+/* === Scroll Reveal for FT Cards === */
+
+const revealElements = document.querySelectorAll('.reveal');
+
+const observer = new IntersectionObserver(
+  entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target); // animate only once
+      }
+    });
+  },
+  { threshold: 0.15 }
+);
+
+revealElements.forEach(el => observer.observe(el));
 </script>
 
 </body>
