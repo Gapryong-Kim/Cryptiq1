@@ -6,131 +6,128 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-  <style>
-    /* === DARK THEME DEFAULT === */
-    :root {
-      --accent: #00ffd5;
-      --bg: #0b0b0b;
-      --text: #f0f0f0;
-      --subtext: #bcbcbc;
-      --panel: #1a1a1a;
-      --border: rgba(255,255,255,0.08);
-    }
 
-    /* === LIGHT THEME OVERRIDES === */
-    html[data-theme="light"] {
-      --accent: #00b3a0;
-      --bg: #f9f9fb;
-      --text: #111;
-      --subtext: #555;
-      --panel: #f3f3f3;
-      --border: rgba(0,0,0,0.08);
-    }
+<style>
+/* === DARK THEME DEFAULT === */
+:root {
+  --accent: #00ffd5;
+  --bg: #0b0b0b;
+  --text: #f0f0f0;
+  --subtext: #bcbcbc;
+  --panel: #1a1a1a;
+  --border: rgba(255,255,255,0.08);
 
-    /* === BASE LAYOUT === */
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      transition: background 0.4s ease, color 0.4s ease;
-      overflow-x: hidden;
-      overflow-y: auto;
-    }
+  --nav-height: 110px; /* desktop */
+}
 
-    @media (min-width: 900px) {
-      ::-webkit-scrollbar { width: 0; background: transparent; }
-      html { scrollbar-width: none; -ms-overflow-style: none; }
-    }
+/* === LIGHT THEME OVERRIDES === */
+html[data-theme="light"] {
+  --accent: #00b3a0;
+  --bg: #f9f9fb;
+  --text: #111;
+  --subtext: #555;
+  --panel: #f3f3f3;
+  --border: rgba(0,0,0,0.08);
+}
 
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: stretch;
-    }
+/* MOBILE NAV HEIGHT */
+@media (max-width: 900px) {
+  :root { --nav-height: 140px; }
+}
 
-    /* === HERO (FIXED) === */
-    .hero {
+/* === BASE LAYOUT === */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* Hide scrollbar on desktop */
+@media (min-width: 900px) {
+  ::-webkit-scrollbar { width: 0; background: transparent; }
+  html { scrollbar-width: none; -ms-overflow-style: none; }
+}
+
+main {
+  flex: 1;
+  padding-top: var(--nav-height);
+}
+
+/* === HERO SECTION === */
+.hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  /* FIXED: don’t collapse behind nav */
   min-height: 70vh;
-
-  width: 100vw;
+  width: 100%;
   padding: 0 8%;
-  padding-top: 22vh;
-  padding-bottom: 10vh;
 
   background: linear-gradient(180deg, var(--bg) 0%, var(--panel) 100%);
-  gap: 60px;
   box-sizing: border-box;
+  gap: 60px;
 
   opacity: 0;
   animation: fadeIn 1.2s ease forwards;
-  transition: background 0.4s ease;
+}
+/* HERO TEXT */
+.hero-text {
+  flex: 1;
+  max-width: 540px;
+  opacity: 0;
+  animation: slideInLeft 1.4s ease forwards;
 }
 
+.hero-text h1 {
+  font-size: 3.2rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 22px;
+  color: var(--text);
+}
 
-    .hero-text {
-      flex: 1;
-      max-width: 540px;
-      animation: slideInLeft 1.4s ease forwards;
-      opacity: 0;
-    }
+.hero-text h1 span {
+  color: var(--accent);
+}
 
-    .hero-text h1 {
-      font-size: 3.2rem;
-      font-weight: 800;
-      line-height: 1.15;
-      margin: 0 0 22px;
-      color: var(--text);
-    }
+.hero-text p {
+  font-size: 1.1rem;
+  color: var(--subtext);
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
 
-    .hero-text h1 span {
-      color: var(--accent);
-    }
+/* CTA */
+.cta {
+  background: var(--accent);
+  color: #0f0f0f;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 34px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.cta:hover {
+  background: #00e6c2;
+  transform: scale(1.05);
+}
 
-    .hero-text p {
-      font-size: 1.1rem;
-      color: var(--subtext);
-      line-height: 1.6;
-      margin-bottom: 36px;
-    }
-
-    .cta {
-      background: var(--accent);
-      color: #0f0f0f;
-      border: none;
-      border-radius: 8px;
-      padding: 14px 34px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .cta:hover {
-      background: #00e6c2;
-      transform: scale(1.05);
-    }
-
-    /* === CIPHER BOX === */
-    .hero-code {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      animation: slideInRight 1.4s ease forwards;
-      opacity: 0;
-    }
+/* === CIPHER BOX === */
+.hero-code {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  animation: slideInRight 1.4s ease forwards;
+}
 
     .cipher-box {
       width: 520px;
@@ -151,157 +148,128 @@
       font-weight: 600;
       letter-spacing: 1.5px;
     }
-
-    /* === FIRST TIME SECTION === */
-    .first-time {
-      width: 100%;
-      padding: 120px 0 130px;
-      background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
-      display: flex;
-      justify-content: center;
-    }
-
-    .ft-container {
-      width: min(1100px, 90%);
-      text-align: center;
-    }
-
-    .ft-heading {
-      font-size: 2.3rem;
-      font-weight: 800;
-      margin-bottom: 14px;
-    }
-
-    .ft-subheading {
-      color: var(--subtext);
-      font-size: 1rem;
-      max-width: 580px;
-      margin: 0 auto 55px;
-      line-height: 1.65;
-    }
-
-    .ft-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 28px;
-    }
-
-    .ft-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 30px 26px;
-      text-align: left;
-      box-shadow: 0 0 20px rgba(0,0,0,0.30);
-      transition: all 0.25s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      text-decoration: none;
-    }
-
-    .ft-card h3 { color: var(--text); margin: 0; }
-    .ft-card p { color: var(--subtext); margin: 0; }
-
-    /* scramble: keep same width as final text */
-   .scramble {
-  display: inline-block;
-  white-space: pre-wrap; /* FIX: allows wrapping while keeping intentional spacing */
+/* ================================
+      FIRST TIME SECTION
+================================ */
+.first-time {
+  width: 100%;
+  padding: 120px 0 130px;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
+  display: flex;
+  justify-content: center;
 }
 
-
-    .footer-text {
-      width: 100%;
-      text-align: center;
-      background: var(--panel);
-      color: var(--subtext);
-      padding: 35px 20px;
-      font-size: 0.9rem;
-      border-top: 1px solid var(--border);
-    }
-
-  
-  /* Fix hero visibility & nav overlap */
-main { padding-top: 90px; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.ft-container {
+  width: min(1100px, 90%);
+  text-align: center;
 }
 
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.ft-heading {
+  font-size: 2.3rem;
+  font-weight: 800;
+  margin-bottom: 14px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-/* === NAVBAR OFFSET FIX === */
-
-/* Declare real navbar height */
-:root {
-  --nav-height: 110px;   /* desktop */
+.ft-subheading {
+  color: var(--subtext);
+  font-size: 1rem;
+  max-width: 580px;
+  margin: 0 auto 55px;
+  line-height: 1.65;
 }
 
-@media (max-width: 900px) {
-  :root {
-    --nav-height: 140px; /* mobile hamburger layout (bigger) */
-  }
+.ft-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px;
 }
 
-/* Push content below navbar */
-main {
-  padding-top: var(--nav-height);
-}
-
-/* Ensure hero never slips under navbar */
-.hero {
-  margin-top: 300px;
-}
-
-  .scramble {
-  display: inline-block;
-  white-space: normal !important;   /* allow wrapping */
-  overflow-wrap: break-word;        /* break long “words” */
-  word-break: break-word;           /* extra safety */
-}
-
-  /* === New Here Cards — Accent Hover Border === */
 .ft-card {
-  position: relative;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 30px 26px;
+  text-align: left;
+  box-shadow: 0 0 20px rgba(0,0,0,0.30);
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-decoration: none;
 }
-
 .ft-card:hover {
   border-color: var(--accent);
   transform: translateY(-3px);
 }
 
-  </style>
+.ft-card h3 { color: var(--text); margin: 0; }
+.ft-card p { color: var(--subtext); margin: 0; }
+
+/* FOOTER */
+.footer-text {
+  width: 100%;
+  text-align: center;
+  background: var(--panel);
+  color: var(--subtext);
+  padding: 35px 20px;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ================================
+        MOBILE HERO FIX  
+================================ */
+@media (max-width: 900px) {
+
+  .hero {
+    flex-direction: column;
+    text-align: center;
+    gap: 32px;
+    padding: calc(var(--nav-height) + 40px) 5% 60px;
+    min-height: auto;
+  }
+
+  .hero-text {
+    max-width: 100%;
+    animation: none;
+    opacity: 1;
+  }
+
+  .hero-text h1 { font-size: 2.3rem; }
+  .hero-text p { font-size: 1rem; margin-bottom: 24px; }
+
+  .hero-code {
+    width: 100%;
+    justify-content: center;
+    animation: none;
+    opacity: 1;
+  }
+
+  .cipher-box {
+    width: 92%;
+    max-width: 380px;
+    padding: 24px;
+  }
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+</style>
+
 </head>
 
 <body>
@@ -310,7 +278,7 @@ main {
 
   <main>
 
-    <!-- HERO FIXED & RESTORED -->
+    <!-- HERO -->
     <section class="hero">
       <div class="hero-text">
         <h1>Discover. <span>Decrypt.</span><br>Explore The Cipher Lab.</h1>
@@ -363,8 +331,8 @@ main {
                 <line x1="16" y1="16" x2="22" y2="22"></line>
               </svg>
             </div>
-            <h3><span class="scramble" data-final="Break a Cipher"></span></h3>
-            <p><span class="scramble" data-final="Automatically detect and crack classical ciphers with one click."></span></p>
+            <h3>Break a Cipher</h3>
+            <p>Automatically detect and crack classical ciphers with one click.</p>
           </a>
 
           <!-- Tools -->
@@ -375,8 +343,8 @@ main {
                 <path d="M8 7V5h8v2"></path>
               </svg>
             </div>
-            <h3><span class="scramble" data-final="Explore Tools"></span></h3>
-            <p><span class="scramble" data-final="Use encoders, decoders, analysers and helper utilities."></span></p>
+            <h3>Explore Tools</h3>
+            <p>Use encoders, decoders, analysers and helper utilities.</p>
           </a>
 
           <!-- Weekly Challenge -->
@@ -390,8 +358,8 @@ main {
                 <path d="M20 4h-3v2a3 3 0 0 0 3 3"></path>
               </svg>
             </div>
-            <h3><span class="scramble" data-final="Weekly Cipher Challenge"></span></h3>
-            <p><span class="scramble" data-final="Compete globally and climb the leaderboard."></span></p>
+            <h3>Weekly Cipher Challenge</h3>
+            <p>Compete globally and climb the leaderboard.</p>
           </a>
 
         </div>
@@ -401,6 +369,8 @@ main {
 
     <p class="footer-text">© 2025 The Cipher Lab — Tools. Posts. Community.</p>
   </main>
+
+
 <script>
 /* ===============================
    Caesar Cipher Typing Animation
@@ -431,113 +401,7 @@ function typeDecrypt() {
 }
 
 window.addEventListener("load", () => setTimeout(typeDecrypt, 1200));
-
-
-
-/* ===============================
-   Scramble → Decrypt
-   (Word-matched, Blue → White)
-================================ */
-
-function randomChar() {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%@&*";
-  return chars[Math.floor(Math.random() * chars.length)];
-}
-
-function generateInitialState(final) {
-  return [...final].map(ch => ch === " " ? " " : randomChar());
-}
-
-const targets = document.querySelectorAll(".scramble");
-
-targets.forEach((el) => {
-  const finalText = el.dataset.final;
-  const length = finalText.length;
-
-  let state = generateInitialState(finalText);
-
-  // Build HTML structure with spans
-  el.innerHTML = state
-    .map((c, i) =>
-      finalText[i] === " "
-        ? " "
-        : `<span data-index="${i}" style="color: var(--accent);">${c}</span>`
-    )
-    .join("");
-
-  const spans = el.querySelectorAll("span");
-
-  // Build reveal list (non-space positions)
-  let revealOrder = [...Array(length).keys()].filter(i => finalText[i] !== " ");
-
-  // Shuffle reveal order (Fisher-Yates)
-  for (let i = revealOrder.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [revealOrder[i], revealOrder[j]] = [revealOrder[j], revealOrder[i]];
-  }
-
-  let idx = 0;
-
-  function animate() {
-    // Scramble all not-yet-revealed chars
-    state.forEach((ch, i) => {
-      if (finalText[i] !== " " && state[i] !== finalText[i]) {
-        const span = el.querySelector(`span[data-index="${i}"]`);
-        if (span) span.textContent = randomChar();
-      }
-    });
-
-    // Reveal one character per frame
-    if (idx < revealOrder.length) {
-      const pos = revealOrder[idx];
-      state[pos] = finalText[pos];
-
-      const span = el.querySelector(`span[data-index="${pos}"]`);
-      if (span) {
-        span.textContent = finalText[pos];
-
-        // 🔥 BLUE → WHITE transition (permanent white)
-        span.style.transition = "color 0.25s ease";
-        span.style.color = "var(--text)";
-      }
-
-      idx++;
-    }
-
-    if (idx < revealOrder.length) {
-      setTimeout(animate, 45 + Math.random() * 25);
-    } else {
-      // Ensure finished state is correct
-      for (let i = 0; i < length; i++) {
-        if (finalText[i] !== " ") {
-          const span = el.querySelector(`span[data-index="${i}"]`);
-          if (span) {
-            span.textContent = finalText[i];
-            span.style.color = "var(--text)"; // final white
-          }
-        }
-      }
-    }
-  }
-
-  // Only start when visible
-  const observer = new IntersectionObserver(
-    entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          animate();
-          observer.unobserve(el);
-        }
-      });
-    },
-    { threshold: 0.25 }
-  );
-
-  observer.observe(el);
-});
 </script>
-
-
 
 </body>
 </html>
