@@ -58,21 +58,18 @@
 
     /* === HERO === */
     .hero {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: calc(40vh);
-      width: 100vw;
-      padding: 0 8%;
-      background: linear-gradient(180deg, var(--bg) 0%, var(--panel) 100%);
-      gap: 60px;
-      box-sizing: border-box;
-      opacity: 0;
-      animation: fadeIn 1.2s ease forwards;
-      transition: background 0.4s ease;
-      padding-top: 19vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100vw;
+  padding: 14vh 8% 10vh;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--panel) 100%);
+  gap: 60px;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: fadeIn 1.2s ease forwards;
+  transition: background 0.4s ease;
     }
-
     .hero-text {
       flex: 1;
       max-width: 540px;
@@ -345,13 +342,28 @@ window.addEventListener("load", () => setTimeout(typeDecrypt, 1500));
 /* ===============================
    Hacker Scramble → Decrypt
 ================================ */
-function generateScramble(len) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%@&*";
-  let s = "";
-  for (let i = 0; i < len; i++) {
-    s += chars[Math.floor(Math.random() * chars.length)];
+function animate() {
+  let output = "";
+  const revealProgress = frame / totalFrames;
+  const revealIndex = Math.floor(revealProgress * length);
+
+  for (let i = 0; i < length; i++) {
+    if (i < revealIndex) {
+      output += finalText[i];
+    } else {
+      output += generateScramble(1); // ALWAYS same length
+    }
   }
-  return s;
+
+  el.textContent = output;
+
+  frame++;
+
+  if (frame <= totalFrames) {
+    setTimeout(animate, 28 + Math.random() * 32);
+  } else {
+    el.textContent = finalText;
+  }
 }
 
 const scrambleTargets = document.querySelectorAll(".scramble");
@@ -405,3 +417,4 @@ scrambleTargets.forEach((el) => {
 
 </body>
 </html>
+
