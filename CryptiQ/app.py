@@ -29,7 +29,7 @@ from cipher_tools.affine import affine_break
 from cipher_tools.amsco import amsco_break
 from cipher_tools.railfence import railfence_break
 from cipher_tools.polybius_square import *
-from utility.unique import unique
+from cipher_tools.unique import unique
 from cipher_tools.replace import replace
 from cipher_tools.random_tools import *
 
