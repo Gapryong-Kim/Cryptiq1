@@ -1,484 +1,522 @@
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Community Posts — The Cipher Lab</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Community Posts — The Cipher Lab</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-      <style>
-        body {
-          background: var(--bg);
-          color: var(--text);
-          font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
-          margin: 0;
-        }
+  <style>
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+      margin: 0;
+    }
 
-        .posts-container {
-          width: min(960px, 94%);
-          margin: 25px auto 80px;
-          display: flex;
-          flex-direction: column;
-          gap: 26px;
-          padding: 0 8px;
-        }
+    .posts-container {
+      width: min(960px, 94%);
+      margin: 25px auto 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      padding: 0 8px;
+    }
 
-        .posts-header {
-          text-align: center;
-          margin-bottom: 12px;
-        }
+    .posts-header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
 
-        .posts-header h2 {
-          font-size: clamp(1.6rem, 4vw, 2rem);
-          font-weight: 800;
-          color: var(--accent);
-          margin-bottom: 6px;
-        }
+    .posts-header h2 {
+      font-size: clamp(1.6rem, 4vw, 2rem);
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
 
-        .posts-header p {
-          color: var(--muted);
-          font-size: clamp(0.9rem, 2vw, 1rem);
-        }
+    .posts-header p {
+      color: var(--muted);
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      margin-top: 6px;
+    }
 
-        .post-card {
-          position: relative;
-          background: var(--panel);
-          border: 1px solid var(--line);
-          border-radius: 14px;
-          padding: 20px 22px;
-          box-shadow: 0 6px 20px rgba(0,0,0,.22);
-          backdrop-filter: blur(6px);
-          transition: transform .16s ease, box-shadow .2s ease;
-          word-break: break-word;
-        }
+    /* === Sort pills (New / Top / Hot) === */
+    .posts-sort {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
 
-        .post-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 28px rgba(0,0,0,.28);
-        }
+    .sort-pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
 
-        .post-card.pinned {
-          border: 1px solid var(--accent);
-        }
+    .sort-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
 
-        .pinned-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          color: var(--accent);
-          padding: 2px 6px;
-          border-radius: 8px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(0,255,213,0.15);
-        }
+    .sort-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+      font-weight: 700;
+    }
 
-        .post-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-bottom: 6px;
-        }
+    .post-card {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.22);
+      backdrop-filter: blur(6px);
+      transition: transform .16s ease, box-shadow .2s ease;
+      word-break: break-word;
+    }
 
-        .post-title {
-          font-size: clamp(1.1rem, 3vw, 1.25rem);
-          font-weight: 700;
-          color: var(--text);
-        }
+    .post-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(0,0,0,.28);
+    }
 
-        .post-author {
-          color: var(--text-dim);
-          font-size: .95rem;
-          margin-top: 2px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
+    .post-card.pinned {
+      border: 1px solid var(--accent);
+    }
 
-        .admin-badge {
-          background: var(--accent);
-          color: #0f0f0f;
-          font-size: 0.75rem;
-          padding: 2px 6px;
-          border-radius: 6px;
-          font-weight: 700;
-          text-transform: uppercase;
-        }
+    .pinned-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(0,255,213,0.15);
+    }
 
-        .banned-badge {
-          background: #ff6b6b;
-          color: #0f0f0f;
-          font-size: 0.75rem;
-          padding: 2px 6px;
-          border-radius: 6px;
-          font-weight: 700;
-          text-transform: uppercase;
-        }
+    .post-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
 
-        .post-right {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-shrink: 0;
-        }
+    .post-title {
+      font-size: clamp(1.1rem, 3vw, 1.25rem);
+      font-weight: 700;
+      color: var(--text);
+    }
 
-        .post-meta {
-          font-size: .85rem;
-          color: var(--muted);
-          white-space: nowrap;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
+    .post-author {
+      color: var(--text-dim);
+      font-size: .95rem;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-        .post-menu {
-          position: relative;
-        }
+    .admin-badge {
+      background: var(--accent);
+      color: #0f0f0f;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
 
-        .kebab-btn {
-          background: transparent;
-          border: none;
-          color: var(--muted);
-          font-size: 20px;
-          cursor: pointer;
-          line-height: 1;
-          padding: 4px 6px;
-          transition: color .2s ease;
-        }
+    .banned-badge {
+      background: #ff6b6b;
+      color: #0f0f0f;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
 
-        .kebab-btn:hover { color: var(--text-dim); }
+    .post-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
 
-        .menu {
-          position: absolute;
-          top: 26px;
-          right: 0;
-          min-width: 140px;
-          background: var(--panel-2);
-          border: 1px solid var(--line);
-          border-radius: 10px;
-          box-shadow: 0 10px 26px rgba(0,0,0,.35);
-          padding: 6px;
-          display: none;
-          z-index: 20;
-        }
+    .post-meta {
+      font-size: .85rem;
+      color: var(--muted);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        .menu.open { display: block; }
+    .post-menu {
+      position: relative;
+    }
 
-        .menu a,
-        .menu button {
-          display: block;
-          width: 100%;
-          text-align: left;
-          background: transparent;
-          border: 0;
-          color: var(--text);
-          padding: 8px 10px;
-          border-radius: 8px;
-          font: inherit;
-          cursor: pointer;
-          text-decoration: none;
-          transition: background .15s;
-        }
+    .kebab-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 6px;
+      transition: color .2s ease;
+    }
 
-        .menu a:hover,
-        .menu button:hover { background: var(--input-hover); }
+    .kebab-btn:hover { color: var(--text-dim); }
 
-        .menu .danger { color: #ff6b6b; }
+    .menu {
+      position: absolute;
+      top: 26px;
+      right: 0;
+      min-width: 140px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      padding: 6px;
+      display: none;
+      z-index: 20;
+    }
 
-        .menu .ban-user {
-          color: #ff7070;
-        }
+    .menu.open { display: block; }
 
-        .menu .ban-user:hover {
-          background: #ff7070;
-          color: #0f0f0f;
-        }
+    .menu a,
+    .menu button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s;
+    }
 
-        .post-body {
-          margin-top: 10px;
-          background: var(--panel-2);
-          border: 1px solid var(--line);
-          border-radius: 10px;
-          padding: 12px 14px;
-          color: var(--text);
-          line-height: 1.55;
-          white-space: pre-wrap;
-          word-wrap: break-word;
-        }
+    .menu a:hover,
+    .menu button:hover { background: var(--input-hover); }
 
-        /* --- Auto-collapse long bodies --- */
-        .post-body.collapsed {
-          max-height: 160px;
-          overflow: hidden;
-          position: relative;
-        }
+    .menu .danger { color: #ff6b6b; }
 
-        .post-body.collapsed::after {
-          content: "";
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 60px;
-          background: linear-gradient(to bottom, transparent, var(--panel-2));
-        }
+    .menu .ban-user {
+      color: #ff7070;
+    }
 
-        .show-more-btn {
-          margin-top: 8px;
-          background: transparent;
-          border: 1px solid var(--accent);
-          color: var(--accent);
-          padding: 6px 12px;
-          border-radius: 8px;
-          cursor: pointer;
-          font-weight: 600;
-          font-size: 0.9rem;
-          transition: background .15s, color .15s;
-        }
+    .menu .ban-user:hover {
+      background: #ff7070;
+      color: #0f0f0f;
+    }
 
-        .show-more-btn:hover {
-          background: var(--accent);
-          color: #0f0f0f;
-        }
+    .post-body {
+      margin-top: 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
 
-        .comments {
-          margin-top: 16px;
-          background: var(--panel-2);
-          border: 1px solid var(--line);
-          border-radius: 10px;
-          overflow: hidden;
-          max-height: 0;
-          opacity: 0;
-          transform: translateY(-5px);
-          transition: max-height .4s ease, opacity .35s ease, transform .35s ease;
-        }
+    /* --- Auto-collapse long bodies --- */
+    .post-body.collapsed {
+      max-height: 160px;
+      overflow: hidden;
+      position: relative;
+    }
 
-        .comments.open {
-          opacity: 1;
-          transform: translateY(0);
-          max-height: 1000px;
-        }
+    .post-body.collapsed::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--panel-2));
+    }
 
-        .comments-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 14px;
-          border-bottom: 1px solid var(--line);
-        }
+    .show-more-btn {
+      margin-top: 8px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background .15s, color .15s;
+    }
 
-        .comments-count { font-weight: 600; color: var(--accent); }
+    .show-more-btn:hover {
+      background: var(--accent);
+      color: #0f0f0f;
+    }
 
-        .comment-list {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-        }
+    .comments {
+      margin-top: 16px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: max-height .4s ease, opacity .35s ease, transform .35s ease;
+    }
 
-        /* === Twitter-style comment layout (option B) === */
-        .comment {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          padding: 10px 14px;
-          border-bottom: 1px solid var(--line);
-        }
+    .comments.open {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 1000px;
+    }
 
-        .comment:last-child { border-bottom: none; }
+    .comments-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
 
-        .comment-avatar {
-          flex: 0 0 34px;
-          height: 34px;
-          border-radius: 999px;
-          background: var(--input-bg);
-          border: 1px solid var(--line);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          color: var(--accent);
-          font-size: 0.9rem;
-          text-transform: uppercase;
-        }
+    .comments-count { font-weight: 600; color: var(--accent); }
 
-        .comment-main {
-          flex: 1 1 auto;
-          min-width: 0;
-        }
+    .comment-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
 
-        .comment-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 2px;
-        }
+    /* === Twitter-style comment layout === */
+    .comment {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+    }
 
-        .comment-user {
-          font-weight: 600;
-          font-size: 0.9rem;
-          color: var(--text);
-        }
+    .comment:last-child { border-bottom: none; }
 
-        .comment-meta {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.78rem;
-          color: var(--muted);
-          flex-shrink: 0;
-        }
+    .comment-avatar {
+      flex: 0 0 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: var(--input-bg);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+    }
 
-        .comment-time {
-          opacity: 0.9;
-        }
+    .comment-main {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
 
-        .comment-delete {
-          background: transparent;
-          border: none;
-          color: var(--muted);
-          font-size: 0.75rem;
-          cursor: pointer;
-          padding: 2px 4px;
-          border-radius: 6px;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
 
-        .comment-delete:hover {
-          background: rgba(255, 107, 107, 0.12);
-          color: #ff8b8b;
-        }
+    .comment-user {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
 
-        .comment-body {
-          margin-top: 2px;
-          color: var(--text);
-          line-height: 1.5;
-          word-break: break-word;
-          font-size: 0.9rem;
-        }
+    .comment-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
 
-        .comment-add {
-          display: flex;
-          align-items: flex-end;
-          gap: 8px;
-          padding: 10px 14px;
-          border-bottom: 1px solid var(--line);
-          background: var(--panel);
-          flex-wrap: wrap;
-        }
+    .comment-time {
+      opacity: 0.9;
+    }
 
-        .comment-input {
-          flex: 1;
-          border: 1px solid var(--input-border);
-          border-radius: 999px;
-          background: var(--input-bg);
-          color: var(--text);
-          padding: 9px 14px;
-          min-height: 40px;
-          resize: vertical;
-          font: inherit;
-        }
+    .comment-delete {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
 
-        .comment-submit {
-          background: var(--accent);
-          color: #0f0f0f;
-          font-weight: 700;
-          border: none;
-          border-radius: 999px;
-          padding: 9px 16px;
-          cursor: pointer;
-          font-size: 0.9rem;
-          transition: transform .08s, box-shadow .12s;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          white-space: nowrap;
-        }
+    .comment-delete:hover {
+      background: rgba(255, 107, 107, 0.12);
+      color: #ff8b8b;
+    }
 
-        .comment-submit:hover { transform: translateY(-1px); }
+    .comment-body {
+      margin-top: 2px;
+      color: var(--text);
+      line-height: 1.5;
+      word-break: break-word;
+      font-size: 0.9rem;
+    }
 
-        .comments-toggle {
-          margin-top: 12px;
-          background: transparent;
-          border: 1px solid var(--accent);
-          color: var(--accent);
-          padding: 8px 12px;
-          border-radius: 999px;
-          cursor: pointer;
-          font-weight: 600;
-          transition: background .15s, color .15s;
-          font-size: 0.9rem;
-        }
+    .comment-add {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      flex-wrap: wrap;
+    }
 
-        .comments-toggle:hover { background: var(--accent); color: #0f0f0f; }
+    .comment-input {
+      flex: 1;
+      border: 1px solid var(--input-border);
+      border-radius: 999px;
+      background: var(--input-bg);
+      color: var(--text);
+      padding: 9px 14px;
+      min-height: 40px;
+      resize: vertical;
+      font: inherit;
+    }
 
-        .pagination {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 12px;
-          margin-top: 22px;
-          font-size: 0.95rem;
-        }
+    .comment-submit {
+      background: var(--accent);
+      color: #0f0f0f;
+      font-weight: 700;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 16px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: transform .08s, box-shadow .12s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      white-space: nowrap;
+    }
 
-        .page-btn {
-          background: var(--accent);
-          color: #0f0f0f;
-          padding: 8px 14px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: 700;
-          transition: background 0.2s ease;
-        }
+    .comment-submit:hover { transform: translateY(-1px); }
 
-        .page-btn:hover { background: var(--accent-strong, #00e6c0); }
+    .comments-toggle {
+      margin-top: 12px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background .15s, color .15s;
+      font-size: 0.9rem;
+    }
 
-        .pagination span { color: var(--text-dim); }
+    .comments-toggle:hover { background: var(--accent); color: #0f0f0f; }
 
-        .fab {
-          position: fixed;
-          bottom: 30px;
-          right: 28px;
-          width: 54px;
-          height: 54px;
-          border-radius: 50%;
-          background: var(--panel);
-          color: var(--text);
-          border: 1px solid var(--line-2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          text-decoration: none;
-          cursor: pointer;
-          z-index: 2500;
-          box-shadow: 0 6px 14px rgba(0,0,0,0.25);
-          transition: transform .12s ease, box-shadow .15s ease;
-        }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 22px;
+      font-size: 0.95rem;
+    }
 
-        .fab span { font-size: 1.8rem; font-weight: 500; }
+    .page-btn {
+      background: var(--accent);
+      color: #0f0f0f;
+      padding: 8px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: background 0.2s ease;
+    }
 
-        .fab:hover { transform: translateY(-2px); }
+    .page-btn:hover { background: var(--accent-strong, #00e6c0); }
 
-        @media (max-width: 700px) {
-          .posts-container { margin: 85px auto 60px; gap: 22px; }
-          .post-card { padding: 16px 14px; border-radius: 12px; }
-          .fab { bottom: 20px; right: 20px; width: 48px; height: 48px; }
-          .pagination { flex-wrap: wrap; gap: 8px; }
-          .page-btn { padding: 8px 12px; font-size: 0.9rem; }
+    .pagination span { color: var(--text-dim); }
 
-          .comment {
-            padding: 8px 10px;
-          }
-        }
-      /* === Search Bar (Google-style) === */
+    .fab {
+      position: fixed;
+      bottom: 30px;
+      right: 28px;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      cursor: pointer;
+      z-index: 2500;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+      transition: transform .12s ease, box-shadow .15s ease;
+    }
+
+    .fab span { font-size: 1.8rem; font-weight: 500; }
+
+    .fab:hover { transform: translateY(-2px); }
+
+    @media (max-width: 700px) {
+      .posts-container { margin: 85px auto 60px; gap: 22px; }
+      .post-card { padding: 16px 14px; border-radius: 12px; }
+      .fab { bottom: 20px; right: 20px; width: 48px; height: 48px; }
+      .pagination { flex-wrap: wrap; gap: 8px; }
+      .page-btn { padding: 8px 12px; font-size: 0.9rem; }
+
+      .comment {
+        padding: 8px 10px;
+      }
+    }
+
+    /* === Search Bar (Google-style) === */
     .posts-search {
       position: relative;
       width: min(620px, 90%);
-      margin: 0 auto 20px;
+      margin: 0 auto 14px;
     }
 
     .posts-search input {
@@ -514,14 +552,7 @@
       color: var(--muted);
     }
 
-    /* Highlight searched text */
-    .highlight-search {
-      background: rgba(0, 255, 213, 0.25);
-      padding: 1px 3px;
-      border-radius: 4px;
-    }
-
-    /* Suggestions dropdown */
+    /* Suggestions dropdown (not wired yet, but styled) */
     .search-suggestions {
       position: absolute;
       top: 48px;
@@ -565,278 +596,452 @@
       color: var(--muted);
     }
 
-    /* === Glow highlight when navigated from a notification === */
-@keyframes postGlow {
-  0% {
-    box-shadow: 0 0 0 rgba(0,255,213,0);
-    border-color: var(--accent);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(0,255,213,0.55);
-    border-color: var(--accent);
-  }
-  100% {
-    box-shadow: 0 0 0 rgba(0,255,213,0);
-    border-color: var(--line);
-  }
+    /* Glow highlight when navigated from a notification */
+    @keyframes postGlow {
+      0% {
+        box-shadow: 0 0 0 rgba(0,255,213,0);
+        border-color: var(--accent);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(0,255,213,0.55);
+        border-color: var(--accent);
+      }
+      100% {
+        box-shadow: 0 0 0 rgba(0,255,213,0);
+        border-color: var(--line);
+      }
+    }
+
+    .post-glow {
+      animation: postGlow 1.1s ease-out;
+    }
+
+    /* =============================
+       HEART SYSTEM STYLES
+       Single SVG with CSS animation
+    ============================== */
+    .heart-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--muted);
+     position:absolute; bottom:12px; right:16px; }
+
+    .heart-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      position: relative;
+    }
+
+    .heart-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+    }
+
+    .heart-icon {
+      width: 18px;
+      height: 18px;
+      fill: transparent;
+      stroke: var(--muted);
+      stroke-width: 1.8;
+      transition: fill 0.18s ease-out, stroke 0.18s ease-out, transform 0.12s ease-out;
+      transform-origin: center;
+    }
+
+    .heart-btn:hover .heart-icon {
+      stroke: var(--accent);
+    }
+
+    .heart-btn.active-heart .heart-icon {
+      fill: var(--accent-strong);
+      stroke: var(--accent);
+      transform: scale(1.08);
+    }
+
+    @keyframes heartPop {
+      0%   { transform: scale(0.85); }
+      45%  { transform: scale(1.22); }
+      100% { transform: scale(1.0); }
+    }
+
+    .heart-pop .heart-icon {
+      animation: heartPop 0.26s ease-out;
+    }
+
+    .heart-unpop .heart-icon {
+      animation: heartPop 0.20s ease-out reverse;
+    }
+
+    .heart-count {
+      min-width: 16px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Small pulse halo on like */
+    .heart-pulse-ring {
+      position: absolute;
+      inset: -2px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,255,213,0.0);
+      pointer-events: none;
+    }
+
+    @keyframes pulseRing {
+      0% {
+        transform: scale(0.9);
+        border-color: rgba(0,255,213,0.45);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.25);
+        border-color: rgba(0,255,213,0);
+        opacity: 0;
+      }
+    }
+
+    .heart-box.pulse .heart-pulse-ring {
+      animation: pulseRing 0.42s ease-out;
+    }
+
+    /* ============================================================
+       DELETE POPUP (Global)
+    ============================================================ */
+    .delete-popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+      animation: fadeIn .15s ease-out;
+    }
+
+    .delete-popup-overlay.open {
+      display: flex;
+    }
+
+    .delete-popup-box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px 26px;
+      width: min(350px, 88%);
+      box-shadow: 0 8px 30px rgba(0,0,0,.35);
+      animation: popIn .18s ease-out;
+      text-align: center;
+    }
+
+    .delete-popup-box h3 {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 1.2rem;
+    }
+
+    .delete-popup-box p {
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .delete-popup-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    #delete-popup-cancel,
+    #delete-popup-confirm {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-size: 0.92rem;
+    }
+
+    #delete-popup-cancel {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    #delete-popup-cancel:hover {
+      background: var(--input-hover);
+    }
+
+    #delete-popup-confirm {
+      background: #ff6b6b;
+      color: #0f0f0f;
+    }
+
+    #delete-popup-confirm:hover {
+      background: #ff7f7f;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(.87); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    /* === Upvote Arrow (clean, bright accent fill) === */
+
+.upvote-svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
-.post-glow {
-  animation: postGlow 1.1s ease-out;
-}
-/* ============================================================
-   DELETE POPUP (Global)
-============================================================ */
-.delete-popup-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(4px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 5000;
-  animation: fadeIn .15s ease-out;
+.upvote-path {
+  fill: transparent;
+  stroke: var(--accent);              /* bright teal outline */
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.55;                      /* subtle outline */
+  transition:
+    fill .22s ease,
+    stroke .22s ease,
+    opacity .22s ease,
+    transform .18s ease,
+    filter .18s ease;
 }
 
-.delete-popup-overlay.open {
-  display: flex;
+/* Hover preview: brighter outline */
+.heart-btn:hover .upvote-path {
+  opacity: 0.85;
 }
 
-.delete-popup-box {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 22px 26px;
-  width: min(350px, 88%);
-  box-shadow: 0 8px 30px rgba(0,0,0,.35);
-  animation: popIn .18s ease-out;
-  text-align: center;
+/* Liked state — fully filled with your accent */
+.heart-btn.active-heart .upvote-path {
+  fill: var(--accent);
+  stroke: var(--accent);
+  opacity: 1;
+  transform: scale(1.16);
 }
 
-.delete-popup-box h3 {
-  margin: 0 0 8px;
-  color: var(--text);
-  font-size: 1.2rem;
+/* Optional glow (looks clean on dark theme) */
+.heart-btn.active-heart .upvote-svg {
+  filter: drop-shadow(0 0 4px rgba(0,255,213,0.55));
 }
 
-.delete-popup-box p {
-  color: var(--muted);
-  margin-bottom: 18px;
-}
+  </style>
+</head>
 
-.delete-popup-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
+<body>
+  {% include 'base_nav.html' %}
 
-#delete-popup-cancel,
-#delete-popup-confirm {
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  font-size: 0.92rem;
-}
-
-#delete-popup-cancel {
-  background: var(--panel-2);
-  color: var(--text);
-}
-
-#delete-popup-cancel:hover {
-  background: var(--input-hover);
-}
-
-#delete-popup-confirm {
-  background: #ff6b6b;
-  color: #0f0f0f;
-}
-
-#delete-popup-confirm:hover {
-  background: #ff7f7f;
-}
-
-@keyframes popIn {
-  from { transform: scale(.87); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-      </style>
-  </head>
-
-  <body >
-    {% include 'base_nav.html' %}
-
-    <main class="posts-container">
+  <main class="posts-container">
     <div class="posts-header">
-    <h2>Community Posts</h2>
+      <h2>Community Posts</h2>
 
-    <div class="posts-search">
-      <input
-        type="text"
-        id="post-search-input"
-        placeholder="Search posts..."
-        autocomplete="off"
-      >
+      <div class="posts-search">
+        <input
+          type="text"
+          id="post-search-input"
+          placeholder="Search posts..."
+          autocomplete="off"
+        >
 
-      <!-- Clean SVG magnifying glass icon -->
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
+        <!-- Clean SVG magnifying glass icon -->
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
 
-      <!-- Suggestions (dropdown) -->
-      <div class="search-suggestions" id="search-suggestions"></div>
-    </div>
-
-    <!-- No results message -->
-    <div id="no-results" style="
-      display:none;
-      text-align:center;
-      margin-top:10px;
-      color:var(--muted);
-      font-size:0.95rem;
-    ">
-      No results found.
-    </div>
-
-    <p>Share your ciphers, solver tips, and cryptic insights with others.</p>
-  </div>
-
-
-
-
+        <!-- Suggestions (dropdown - optional) -->
+        <div class="search-suggestions" id="search-suggestions"></div>
       </div>
 
-      {% if posts|length == 0 %}
-        <p style="text-align:center;">No posts yet — be the first to <a href="{{ url_for('posts_new') }}" style="color:var(--accent);">create one</a>!</p>
-      {% endif %}
+      <!-- No results message -->
+      <div id="no-results" style="
+        display:none;
+        text-align:center;
+        margin-top:4px;
+        color:var(--muted);
+        font-size:0.95rem;
+      ">
+        No results found.
+      </div>
 
-      {% for p in posts %}
-      <article id="post-{{ p.id }}" class="post-card {% if p.pinned %}pinned{% endif %}" data-post-id="{{ p.id }}">
-        <div class="post-top">
-          <div>
-            <div class="post-title">{{ p.title }}</div>
-            <div class="post-author">
-              by {{ p.username or '[Deleted User]' }}
-              {% if p.is_admin %}
-                <span class="admin-badge">Admin</span>
-              {% endif %}
-              {% if p.banned %}
-                <span class="banned-badge">BANNED</span>
-              {% endif %}
-            </div>
-          </div>
-          <div class="post-right">
-            <div class="post-meta">
-              {% if p.pinned %}
-                <span class="pinned-badge" title="Pinned post">
-                  <img src="{{ url_for('static', filename='assets/pin.svg') }}" alt="Pinned"
-                      style="width:14px;height:14px;vertical-align:-2px;filter:invert(63%) sepia(95%) saturate(500%) hue-rotate(125deg) brightness(102%) contrast(101%);">
-                  Pinned
-                </span>
-              {% endif %}
-              <span>{{ p.created_at[:19].replace('T',' ') }}</span>
-            </div>
-            {% if user and (user.id == p.owner_id or user_is_admin) %}
-            <div class="post-menu">
-              <button class="kebab-btn" title="Options">⋯</button>
-              <div class="menu">
-                {% if user_is_admin %}
-                  <button class="toggle-pin" data-id="{{ p.id }}" data-state="{{ 1 if p.pinned else 0 }}">
-                    {% if p.pinned %}Unpin{% else %}Pin{% endif %}
-                  </button>
-                  <button class="ban-user" data-username="{{ p.username }}" data-banned="{{ 1 if p.banned else 0 }}">
-                    {% if p.banned %}Unban user{% else %}Ban user{% endif %}
-                  </button>
-                {% endif %}
-                <a href="{{ url_for('posts_edit', post_id=p.id) }}">Edit</a>
-                <form method="post" action="{{ url_for('posts_delete', post_id=p.id) }}" onsubmit="return confirm('Delete this post?');">
-                  <button type="submit" class="danger">Delete</button>
-                </form>
-              </div>
-            </div>
+      <!-- SORT PILLS (New / Top / Hot) -->
+      <div class="posts-sort">
+        <a href="{{ url_for('posts_list', sort='new') }}"
+           class="sort-pill {% if sort == 'new' %}active{% endif %}">
+          New
+        </a>
+        <a href="{{ url_for('posts_list', sort='top') }}"
+           class="sort-pill {% if sort == 'top' %}active{% endif %}">
+          Top
+        </a>
+        <a href="{{ url_for('posts_list', sort='hot') }}"
+           class="sort-pill {% if sort == 'hot' %}active{% endif %}">
+          Hot
+        </a>
+      </div>
+
+      <p>Share your ciphers, solver tips, and cryptic insights with others.</p>
+    </div>
+
+    {% if posts|length == 0 %}
+      <p style="text-align:center;">
+        No posts yet — be the first to
+        <a href="{{ url_for('posts_new') }}" style="color:var(--accent);">create one</a>!
+      </p>
+    {% endif %}
+
+    {% for p in posts %}
+    <article id="post-{{ p.id }}" class="post-card {% if p.pinned %}pinned{% endif %}" data-post-id="{{ p.id }}">
+      <div class="post-top">
+        <div>
+          <div class="post-title">{{ p.title }}</div>
+          <div class="post-author">
+            by {{ p.username or '[Deleted User]' }}
+            {% if p.is_admin %}
+              <span class="admin-badge">Admin</span>
+            {% endif %}
+            {% if p.banned %}
+              <span class="banned-badge">BANNED</span>
             {% endif %}
           </div>
         </div>
-
-        {% if p.image_filename %}
-        <img src="{{ url_for('uploaded_file', filename=p.image_filename) }}" alt="Post image"
-            style="width:100%;border-radius:10px;margin-top:10px;">
-        {% endif %}
-
-        <div class="post-body">{{ p.body }}</div>
-
-        <button class="comments-toggle" data-state="closed" id="comments-toggle-{{ p.id }}">
-          Show comments (<span id="comments-num-{{ p.id }}">0</span>)
-        </button>
-
-        <div class="comments" id="comments-{{ p.id }}">
-          <div class="comments-header">
-            <div class="comments-count" id="comments-count-{{ p.id }}">0 comments</div>
+        <div class="post-right">
+          <div class="post-meta">
+            {% if p.pinned %}
+              <span class="pinned-badge" title="Pinned post">
+                <img src="{{ url_for('static', filename='assets/pin.svg') }}" alt="Pinned"
+                    style="width:14px;height:14px;vertical-align:-2px;filter:invert(63%) sepia(95%) saturate(500%) hue-rotate(125deg) brightness(102%) contrast(101%);">
+                Pinned
+              </span>
+            {% endif %}
+            <span>{{ p.created_at[:19].replace('T',' ') }}</span>
           </div>
-
-          {% if user %}
-          <div class="comment-add">
-            <textarea class="comment-input" id="comment-input-{{ p.id }}" placeholder="Add a comment…" rows="1"></textarea>
-            <button class="comment-submit" data-post-id="{{ p.id }}">Post</button>
-          </div>
-          {% else %}
-          <div class="comment-add" style="justify-content:center;">
-            <em style="color:var(--muted);">
-              <a href="{{ url_for('login') }}" style="color:var(--accent); text-decoration:none; font-weight:600;">
-                Log in
-              </a> to comment
-            </em>
+          {% if user and (user.id == p.owner_id or user_is_admin) %}
+          <div class="post-menu">
+            <button class="kebab-btn" title="Options">⋯</button>
+            <div class="menu">
+              {% if user_is_admin %}
+                <button class="toggle-pin" data-id="{{ p.id }}" data-state="{{ 1 if p.pinned else 0 }}">
+                  {% if p.pinned %}Unpin{% else %}Pin{% endif %}
+                </button>
+                <button class="ban-user" data-username="{{ p.username }}" data-banned="{{ 1 if p.banned else 0 }}">
+                  {% if p.banned %}Unban user{% else %}Ban user{% endif %}
+                </button>
+              {% endif %}
+              <a href="{{ url_for('posts_edit', post_id=p.id) }}">Edit</a>
+              <form method="post" action="{{ url_for('posts_delete', post_id=p.id) }}">
+                <button type="submit" class="danger">Delete</button>
+              </form>
+            </div>
           </div>
           {% endif %}
-
-          <ul class="comment-list" id="comment-list-{{ p.id }}"></ul>
         </div>
-      </article>
-      {% endfor %}
-
-      {% if total_pages > 1 %}
-      <div class="pagination">
-        {% if page > 1 %}
-          <a href="{{ url_for('posts_list', page=page-1) }}" class="page-btn">‹ Prev</a>
-        {% endif %}
-        <span>Page {{ page }} of {{ total_pages }}</span>
-        {% if page < total_pages %}
-          <a href="{{ url_for('posts_list', page=page+1) }}" class="page-btn">Next ›</a>
-        {% endif %}
       </div>
+
+      {% if p.image_filename %}
+      <img src="{{ url_for('uploaded_file', filename=p.image_filename) }}" alt="Post image"
+          style="width:100%;border-radius:10px;margin-top:10px;">
       {% endif %}
 
-      <a href="{% if user %}{{ url_for('posts_new') }}{% else %}{{ url_for('login') }}{% endif %}"
-        class="fab" title="{% if user %}Create a new post{% else %}Log in to post{% endif %}">
-        <span>＋</span>
-      </a>
-    <!-- ===========================
-     Delete Confirmation Popup
-=========================== -->
-<div id="delete-popup" class="delete-popup-overlay">
-  <div class="delete-popup-box">
-    <h3>Confirm Delete</h3>
-    <p id="delete-popup-text">Are you sure you want to delete this?</p>
+      <div class="post-body">{{ p.body }}</div>
 
-    <div class="delete-popup-actions">
-      <button id="delete-popup-cancel">Cancel</button>
-      <button id="delete-popup-confirm">Delete</button>
+      <!-- Hearts row -->
+      <div class="heart-row">
+        <div class="heart-box" data-post-id="{{ p.id }}">
+          <span class="heart-pulse-ring"></span>
+          <button class="heart-btn {% if p.viewer_hearted %}active-heart{% endif %}"
+                  type="button"
+                  aria-label="Heart this post"
+                  aria-pressed="{% if p.viewer_hearted %}true{% else %}false{% endif %}">
+            <!-- Single SVG -->
+            <svg class="heart-icon" viewBox="0 0 24 24">
+              <path d="M12 4 L18 12 H14 V20 H10 V12 H6 Z"/>
+            </svg>
+          </button>
+          <span class="heart-count" id="heart-count-{{ p.id }}">{{ p.upvotes or 0 }}</span>
+        </div>
+      </div>
+
+      <button class="comments-toggle" data-state="closed" id="comments-toggle-{{ p.id }}">
+        Show comments (<span id="comments-num-{{ p.id }}">0</span>)
+      </button>
+
+      <div class="comments" id="comments-{{ p.id }}">
+        <div class="comments-header">
+          <div class="comments-count" id="comments-count-{{ p.id }}">0 comments</div>
+        </div>
+
+        {% if user %}
+        <div class="comment-add">
+          <textarea class="comment-input" id="comment-input-{{ p.id }}" placeholder="Add a comment…" rows="1"></textarea>
+          <button class="comment-submit" data-post-id="{{ p.id }}">Post</button>
+        </div>
+        {% else %}
+        <div class="comment-add" style="justify-content:center;">
+          <em style="color:var(--muted);">
+            <a href="{{ url_for('login') }}" style="color:var(--accent); text-decoration:none; font-weight:600;">
+              Log in
+            </a> to comment
+          </em>
+        </div>
+        {% endif %}
+
+        <ul class="comment-list" id="comment-list-{{ p.id }}"></ul>
+      </div>
+    </article>
+    {% endfor %}
+
+    {% if total_pages > 1 %}
+    <div class="pagination">
+      {% if page > 1 %}
+        <a href="{{ url_for('posts_list', page=page-1, sort=sort) }}" class="page-btn">‹ Prev</a>
+      {% endif %}
+      <span>Page {{ page }} of {{ total_pages }}</span>
+      {% if page < total_pages %}
+        <a href="{{ url_for('posts_list', page=page+1, sort=sort) }}" class="page-btn">Next ›</a>
+      {% endif %}
     </div>
-  </div>
-</div>
+    {% endif %}
 
-    </main>
+    <a href="{% if user %}{{ url_for('posts_new') }}{% else %}{{ url_for('login') }}{% endif %}"
+      class="fab" title="{% if user %}Create a new post{% else %}Log in to post{% endif %}">
+      <span>＋</span>
+    </a>
+
+    <!-- ===========================
+         Delete Confirmation Popup
+    =========================== -->
+    <div id="delete-popup" class="delete-popup-overlay">
+      <div class="delete-popup-box">
+        <h3>Confirm Delete</h3>
+        <p id="delete-popup-text">Are you sure you want to delete this?</p>
+
+        <div class="delete-popup-actions">
+          <button id="delete-popup-cancel">Cancel</button>
+          <button id="delete-popup-confirm">Delete</button>
+        </div>
+      </div>
+    </div>
+  </main>
 
 <script>
 /* ============================================================
@@ -1102,6 +1307,51 @@ document.addEventListener("DOMContentLoaded", () => loadAllCommentCounts());
 
 
 /* ============================================================
+   HEART SYSTEM — Animated CSS Single-SVG
+============================================================ */
+document.addEventListener("click", async e => {
+  const btn = e.target.closest(".heart-btn");
+  if (!btn) return;
+
+  const box = btn.closest(".heart-box");
+  const postId = box.dataset.postId;
+
+  try {
+    const res = await fetch(`/posts/${postId}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vote: 1 })
+    });
+
+    const data = await res.json();
+    if (!data.ok) return;
+
+    // update count
+    const countEl = document.getElementById(`heart-count-${postId}`);
+    if (countEl) countEl.textContent = data.hearts;
+
+    // clear animations
+    btn.classList.remove("heart-pop", "heart-unpop");
+    box.classList.remove("pulse");
+    void btn.offsetWidth; // force reflow
+
+    if (data.hearted) {
+      btn.classList.add("active-heart", "heart-pop");
+      btn.setAttribute("aria-pressed", "true");
+      box.classList.add("pulse");
+    } else {
+      btn.classList.remove("active-heart");
+      btn.classList.add("heart-unpop");
+      btn.setAttribute("aria-pressed", "false");
+    }
+
+  } catch (err) {
+    console.error("Heart error:", err);
+  }
+});
+
+
+/* ============================================================
    Levenshtein
 ============================================================ */
 function levenshtein(a, b) {
@@ -1186,10 +1436,13 @@ function scoredPost(p, rawQuery) {
 
 
 /* ============================================================
-   RENDER POST (full functionality)
+   RENDER POST (for search results)
+   NOTE: This mirrors the server HTML as close as possible.
 ============================================================ */
 function renderPostHTML(p, isAdmin, isLogged) {
   const created = (p.created_at || "").replace("T", " ").slice(0,19);
+  const hearts = p.upvotes || 0;
+  const viewerHearted = !!p.viewer_hearted;
 
   return `
 <article id="post-${p.id}" class="post-card${p.pinned ? " pinned" : ""}" data-post-id="${p.id}">
@@ -1216,12 +1469,12 @@ function renderPostHTML(p, isAdmin, isLogged) {
                <div class="menu">
                  ${isAdmin ? `
                    <button class="toggle-pin" data-id="${p.id}" data-state="${p.pinned ? "1" : "0"}">${p.pinned ? "Unpin" : "Pin"}</button>
-                   <button class="ban-user" data-username="${p.username}" data-banned="${p.banned ? "1" : "0"}">${p.banned ? "Unban user" : "Ban user"}</button>
+                   <button class="ban-user" data-username="${escapeHtml(p.username || "")}" data-banned="${p.banned ? "1" : "0"}">${p.banned ? "Unban user" : "Ban user"}</button>
                  ` : ""}
 
                  ${p.can_edit ? `<a href="/posts/${p.id}/edit">Edit</a>` : ""}
                  ${p.can_delete ? `
-                   <form method="post" action="/posts/${p.id}/delete" onsubmit="return confirm('Delete this post?')">
+                   <form method="post" action="/posts/${p.id}/delete">
                      <button class="danger">Delete</button>
                    </form>
                  ` : ""}
@@ -1232,9 +1485,24 @@ function renderPostHTML(p, isAdmin, isLogged) {
     </div>
   </div>
 
-  ${p.image_filename ? `<img src="/uploads/${p.image_filename}" class="post-image">` : ""}
+  ${p.image_filename ? `<img src="/uploads/${p.image_filename}" style="width:100%;border-radius:10px;margin-top:10px;">` : ""}
 
   <div class="post-body">${escapeHtml(p.body || "")}</div>
+
+  <div class="heart-row">
+    <div class="heart-box" data-post-id="${p.id}">
+      <span class="heart-pulse-ring"></span>
+      <button class="heart-btn${viewerHearted ? " active-heart" : ""}"
+              type="button"
+              aria-label="Heart this post"
+              aria-pressed="${viewerHearted ? "true" : "false"}">
+        <svg class="heart-icon" viewBox="0 0 24 24">
+          <path d="M12 4 L18 12 H14 V20 H10 V12 H6 Z"/>
+        </svg>
+      </button>
+      <span class="heart-count" id="heart-count-${p.id}">${hearts}</span>
+    </div>
+  </div>
 
   <button class="comments-toggle" data-state="closed">
     Show comments (<span id="comments-num-${p.id}">0</span>)
@@ -1263,7 +1531,9 @@ function renderPostHTML(p, isAdmin, isLogged) {
 
 
 /* ============================================================
-   GLOBAL SEARCH (clean & strict)
+   GLOBAL SEARCH (Option B)
+   - Always searches ALL posts via /api/search
+   - Overrides sort mode visually but pills stay rendered
 ============================================================ */
 (function () {
   const input = document.getElementById("post-search-input");
@@ -1278,47 +1548,52 @@ function renderPostHTML(p, isAdmin, isLogged) {
     const q = raw.trim().toLowerCase();
 
     if (!q) {
-      window.location.href = window.location.pathname;
+      // Reset to whatever server sort is (new/top/hot)
+      window.location.href = window.location.pathname + window.location.search;
       return;
     }
 
-    // Grab all posts (no pin sorting)
-    const res = await fetch("/api/search");
-    const data = await res.json();
+    try {
+      // Grab all posts, independent of current sort
+      const res = await fetch("/api/search");
+      const data = await res.json();
 
-    const isAdmin = data.viewer_is_admin;
-    const isLogged = data.viewer_logged_in;
-    const posts = data.posts || [];
+      const isAdmin = data.viewer_is_admin;
+      const isLogged = data.viewer_logged_in;
+      const posts = data.posts || [];
 
-    const ranked = posts
-      .map(p => ({
-        post: p,
-        score: scoredPost(p, raw)
-      }))
-      .filter(r => r.score > 0)
-      .sort((a, b) => b.score - a.score); // strict best→worst
+      const ranked = posts
+        .map(p => ({
+          post: p,
+          score: scoredPost(p, raw)
+        }))
+        .filter(r => r.score > 0)
+        .sort((a, b) => b.score - a.score); // strict best→worst
 
-    container.querySelectorAll(".post-card").forEach(e => e.remove());
-    container.querySelectorAll(".pagination").forEach(e => e.remove());
-    document.querySelectorAll(".pinned").forEach(e => e.remove()); // REMOVE pinned leftovers
+      // Remove all server-rendered posts & pagination
+      container.querySelectorAll(".post-card").forEach(e => e.remove());
+      container.querySelectorAll(".pagination").forEach(e => e.remove());
 
-    if (!ranked.length) {
-      noRes.style.display = "block";
-      return;
+      if (!ranked.length) {
+        noRes.style.display = "block";
+        return;
+      }
+
+      noRes.style.display = "none";
+
+      ranked.forEach(r => {
+        container.insertAdjacentHTML(
+          "beforeend",
+          renderPostHTML(r.post, isAdmin, isLogged)
+        );
+      });
+
+      // Re-wire collapse & comment counts in the new DOM
+      setupPostBodyCollapsing(container);
+      loadAllCommentCounts(container);
+    } catch (err) {
+      console.error("Search error:", err);
     }
-
-    noRes.style.display = "none";
-
-    ranked.forEach(r => {
-      container.insertAdjacentHTML(
-  "beforeend",
-  renderPostHTML(r.post, isAdmin, isLogged)
-);
-
-    });
-
-    setupPostBodyCollapsing(container);
-    loadAllCommentCounts(container);
   }
 
   let debounce;
@@ -1327,7 +1602,6 @@ function renderPostHTML(p, isAdmin, isLogged) {
     debounce = setTimeout(runSearch, 140);
   });
 
-  // ENTER = final ranked update
   input.addEventListener("keydown", e => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -1335,10 +1609,11 @@ function renderPostHTML(p, isAdmin, isLogged) {
     }
   });
 })();
+
+
 /* ============================================================
    DELETE POPUP HANDLER
 ============================================================ */
-
 const popup = document.getElementById("delete-popup");
 const popupText = document.getElementById("delete-popup-text");
 const btnCancel = document.getElementById("delete-popup-cancel");
@@ -1383,7 +1658,7 @@ document.addEventListener("click", e => {
     openDeletePopup("Delete this post?", () => delForm.submit());
   }
 
-  // COMMENT DELETE
+  // COMMENT DELETE (popup override)
   if (delCommentBtn) {
     e.preventDefault();
     const commentId = delCommentBtn.dataset.id;
@@ -1395,11 +1670,7 @@ document.addEventListener("click", e => {
     });
   }
 });
-
 </script>
 
-  </body>
-  </html>
-
-  </body>
-  </html>
+</body>
+</html>

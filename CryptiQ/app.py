@@ -439,14 +439,50 @@ app.add_url_rule("/info", endpoint="info", view_func=info_page)
 @app.route("/posts", methods=["GET"])
 def posts_list():
     user = current_user()
+
     page = max(int(request.args.get("page", 1)), 1)
     per_page = 10
     offset = (page - 1) * per_page
 
-    conn = get_db()
+    sort = (request.args.get("sort") or "new").lower()
+    if sort not in ("new", "top", "hot"):
+        sort = "new"
 
-    # --- Main posts query (LEFT JOIN keeps posts even if user deleted) ---
-    cur = conn.execute("""
+    search = (request.args.get("search") or "").strip()
+
+    conn = get_db()
+    params = []
+    where_clause = ""
+
+    if search:
+        like = f"%{search}%"
+        where_clause = """
+            WHERE (posts.title LIKE ?
+                   OR posts.body LIKE ?
+                   OR users.username LIKE ?)
+        """
+        params.extend([like, like, like])
+
+    if sort == "new":
+        order_clause = """
+            ORDER BY posts.pinned DESC,
+                     datetime(posts.created_at) DESC
+        """
+    elif sort == "top":
+        order_clause = """
+            ORDER BY posts.pinned DESC,
+                     posts.upvotes DESC,
+                     datetime(posts.created_at) DESC
+        """
+    else:  # hot
+        order_clause = """
+            ORDER BY posts.pinned DESC,
+                     (posts.upvotes * 1.0) /
+                     ( ((julianday('now') - julianday(posts.created_at)) * 24) + 2 )
+                     DESC
+        """
+
+    cur = conn.execute(f"""
         SELECT 
             posts.id,
             posts.user_id AS owner_id,
@@ -455,34 +491,51 @@ def posts_list():
             posts.image_filename,
             posts.created_at,
             posts.pinned,
+            posts.upvotes,
             users.username,
             users.email,
             users.is_admin,
             users.banned
         FROM posts
         LEFT JOIN users ON posts.user_id = users.id
-        ORDER BY posts.pinned DESC, datetime(posts.created_at) DESC
+        {where_clause}
+        {order_clause}
         LIMIT ? OFFSET ?
-    """, (per_page, offset))
-    rows = cur.fetchall()
+    """, (*params, per_page, offset))
+    posts = [dict(r) for r in cur.fetchall()]
 
-    # --- Convert sqlite3.Row objects into mutable dicts ---
-    posts = [dict(row) for row in rows]
+    # Count total posts
+    cur = conn.execute(f"""
+        SELECT COUNT(*) AS total
+        FROM posts
+        LEFT JOIN users ON posts.user_id = users.id
+        {where_clause}
+    """, params)
+    total_posts = cur.fetchone()["total"]
 
-    # --- Total count query ---
-    cur = conn.execute("SELECT COUNT(*) AS total FROM posts")
-    row = cur.fetchone()
-    total_posts = row["total"] if row else 0
-    conn.close()
+    # -----------------------------
+    # ADD THIS BLOCK (persistent upvotes)
+    # -----------------------------
+    uid = user["id"] if user else None
 
-    total_pages = max((total_posts + per_page - 1) // per_page, 1)
-
-    # --- Replace missing usernames so templates don't break ---
     for p in posts:
         if not p.get("username"):
             p["username"] = "[Deleted User]"
             p["is_admin"] = 0
             p["banned"] = 0
+
+        if uid:
+            row = conn.execute("""
+                SELECT vote FROM post_votes
+                WHERE user_id=? AND post_id=?
+            """, (uid, p["id"])).fetchone()
+            p["viewer_hearted"] = (row and row["vote"] == 1)
+        else:
+            p["viewer_hearted"] = False
+
+    conn.close()
+
+    total_pages = max((total_posts + per_page - 1) // per_page, 1)
 
     return render_template(
         "posts.html",
@@ -490,7 +543,9 @@ def posts_list():
         user=user,
         user_is_admin=is_admin(user),
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        sort=sort,
+        search=search,
     )
 
 
@@ -658,6 +713,61 @@ def posts_view(post_id):
         abort(404)
 
     return render_template("post_view.html", post=post, user=user)
+
+@app.route("/posts/<int:post_id>/vote", methods=["POST"])
+def heart_post(post_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    heart = int(data.get("vote", 0))  # always 1 for toggle
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Check if user already hearted
+    cur.execute("""
+        SELECT vote FROM post_votes
+        WHERE user_id=? AND post_id=?
+    """, (user["id"], post_id))
+    row = cur.fetchone()
+
+    old_vote = row["vote"] if row else 0
+
+    # Toggle logic: if already hearted → unheart
+    new_vote = 0 if old_vote == 1 else 1   # ✔ GOOD
+
+    # Update DB
+    if row:
+        cur.execute("""
+            UPDATE post_votes SET vote=?
+            WHERE user_id=? AND post_id=?
+        """, (new_vote, user["id"], post_id))
+    else:
+        cur.execute("""
+            INSERT INTO post_votes (user_id, post_id, vote)
+            VALUES (?, ?, ?)
+        """, (user["id"], post_id, new_vote))
+
+    # Recalculate total hearts
+    cur.execute("""
+        SELECT SUM(vote) as hearts
+        FROM post_votes WHERE post_id=?
+    """, (post_id,))
+    total = cur.fetchone()["hearts"] or 0
+
+    # Save to posts table
+    cur.execute("UPDATE posts SET upvotes=? WHERE id=?", (total, post_id))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "hearted": new_vote == 1,
+        "hearts": total
+    })
 
 
 # ------------------- Comments (AJAX) -------------------
