@@ -41,7 +41,7 @@ from cipher_tools.breakers import (
             binary_break,
             baconian_break
         )
-from cipher_tools.auto_break import auto_break  # ✅ new auto detector
+from cipher_tools.auto_break import auto_break  #  new auto detector
 from cipher_tools.random_tools import nospace
 from cipher_tools.random_tools import remove_punc
 
@@ -158,6 +158,9 @@ def migrate_db():
         cur.execute("ALTER TABLE users ADD COLUMN email TEXT")
     if "is_admin" not in cols:
         cur.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+    if "has_posted" not in cols:
+        cur.execute("ALTER TABLE users ADD COLUMN has_posted INTEGER NOT NULL DEFAULT 0")
+
     conn.commit()
     conn.close()
 
@@ -219,7 +222,6 @@ def fetch_post(post_id):
     post = cur.fetchone()
     conn.close()
     return post
-
 
 
 def delete_image_file(filename):
@@ -565,6 +567,8 @@ def posts_new():
         flash("You are banned from posting or commenting.", "error")
         return redirect(url_for("posts_list"))
 
+    user_id = user["id"]   # <-- REQUIRED FIX
+
     # ✍️ 3. Handle post creation
     if request.method == "POST":
         title = request.form.get("title", "").strip()
@@ -575,12 +579,13 @@ def posts_new():
 
         if not title or not body:
             flash("Title and body are required.", "error")
-            return redirect(url_for("create_post"))
+            return redirect(url_for("posts_new"))
 
+        # Image handling
         if image and image.filename:
             if not allowed_file(image.filename):
                 flash("Unsupported image type.", "error")
-                return redirect(url_for("create_post"))
+                return redirect(url_for("posts_new"))
             filename = secure_filename(
                 f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{image.filename}"
             )
@@ -588,16 +593,21 @@ def posts_new():
             image_filename = filename
 
         conn = get_db()
+
+        # Insert post
         conn.execute(
             """
             INSERT INTO posts (user_id, title, body, image_filename, pinned, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (user["id"], title, body, image_filename, pinned, datetime.utcnow().isoformat())
+            (user_id, title, body, image_filename, pinned, datetime.utcnow().isoformat())
         )
+
+        # Mark user as having posted
+        conn.execute("UPDATE users SET has_posted = 1 WHERE id = ?", (user_id,))
+
         conn.commit()
         conn.close()
-        print("DEBUG current_user:", user)
 
         flash("Post created successfully.", "success")
         return redirect(url_for("posts_list"))

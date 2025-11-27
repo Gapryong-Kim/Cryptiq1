@@ -213,6 +213,26 @@
       .auth-card h2 { font-size: 1.45rem; }
       .auth-form { width: 100%; }
     }
+  .auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  border: 1px solid var(--input-border) !important;
+  -webkit-text-fill-color: var(--text) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Prevent Chrome autofill from bleaching button styles */
+.password-field .toggle-pass {
+  background: var(--panel-2) !important;
+  color: var(--text) !important;
+  border-color: var(--line) !important;
+}
+
+.password-field .toggle-pass:hover {
+  background: var(--accent-soft) !important;
+  border-color: var(--accent) !important;
+}
   </style>
 </head>
 <body>

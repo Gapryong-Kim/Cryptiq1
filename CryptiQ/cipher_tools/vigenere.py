@@ -148,9 +148,9 @@ def vigenere_break(message):
     cleaned_message = ''.join(i for i in message if i.isalpha()).lower()
     messages = (cleaned_message, cleaned_message[::-1])
     possible = []
-
+    
     for msg in messages:
-        lengths = range(1, 20)
+        lengths = range(1, 15)
         key_possibilities = []
         for length in lengths:
             msg = msg.replace(" ", "")

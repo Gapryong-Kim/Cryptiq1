@@ -250,5 +250,107 @@
       }
     });
   </script>
+  <!-- ============================================
+     RULES POPUP
+=============================================== -->
+<div id="rules-popup" class="rules-overlay">
+  <div class="rules-box">
+    <h2>Posting Rules</h2>
+    <p>Please read and agree to the community rules before making your first post.</p>
+
+    <ul class="rules-list">
+      <li>No spam or self-promotion.</li>
+      <li>No malicious code, illegal content, or harmful exploits.</li>
+      <li>Be respectful. No harassment.</li>
+      <li>Keep posts on-topic (ciphers, codebreaking, puzzles, etc.).</li>
+      <li>Include clear explanations where possible.</li>
+    </ul>
+
+    <div class="rules-actions">
+      <button id="rules-agree" class="btn">I Agree</button>
+      <button id="rules-cancel" class="btn secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.rules-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.rules-overlay.show {
+  display: flex;
+}
+
+.rules-box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  width: min(90%, 480px);
+  padding: 26px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 35px rgba(0,0,0,0.5);
+}
+
+.rules-box h2 {
+  margin-top: 0;
+  font-size: 1.6rem;
+  color: var(--accent);
+}
+
+.rules-list {
+  margin: 16px 0;
+  padding-left: 18px;
+}
+
+.rules-list li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.rules-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+</style>
+
+
+<script>
+const HAS_POSTED = {{ 1 if user.has_posted else 0 }};
+const rulesPopup = document.getElementById('rules-popup');
+const agreeBtn = document.getElementById('rules-agree');
+const cancelBtn = document.getElementById('rules-cancel');
+
+// If user has never posted, block form submission with popup
+if (!HAS_POSTED) {
+  form.addEventListener("submit", (e) => {
+    if (!sessionStorage.getItem("agreedToRules")) {
+      e.preventDefault();
+      rulesPopup.classList.add('show');
+    }
+  });
+}
+
+// Agree button
+agreeBtn.addEventListener("click", () => {
+  sessionStorage.setItem("agreedToRules", "1");
+  rulesPopup.classList.remove('show');
+  form.submit(); // continue form submission
+});
+
+// Cancel button → closes popup without submitting
+cancelBtn.addEventListener("click", () => {
+  rulesPopup.classList.remove('show');
+});
+</script>
+
 </body>
 </html>
