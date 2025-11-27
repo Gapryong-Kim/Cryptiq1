@@ -223,7 +223,7 @@
 }
 
 /* Prevent Chrome autofill from bleaching button styles */
-.password-field .toggle-pass {
+.password-field .toggle-pass {  
   background: var(--panel-2) !important;
   color: var(--text) !important;
   border-color: var(--line) !important;
@@ -286,7 +286,7 @@
           <button type="submit" class="auth-button">Create account</button>
 
           <div class="auth-links">
-            <span>Already have an account?</span>
+            <a href="{{ url_for('login') }}">Already Have an Account?</a>
             <a href="{{ url_for('login') }}">Log in</a>
           </div>
         </form>

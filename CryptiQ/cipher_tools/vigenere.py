@@ -150,7 +150,7 @@ def vigenere_break(message):
     possible = []
     
     for msg in messages:
-        lengths = range(1, 10)
+        lengths = range(5, 10)
         key_possibilities = []
         for length in lengths:
             msg = msg.replace(" ", "")
@@ -254,12 +254,4 @@ def vigenere_break(message):
     restored_text = ''.join(restored)
 
     return key, restored_text
-
-def vigenere_break_stepwise(message):
-    yield "Getting lengths…"
-    yield "Constructing key…"
-    key, plaintext = vigenere_break(message)  # call your original function
-    yield "Decoding message…"
-    yield f"DONE|{key}|{plaintext}"
-
 
