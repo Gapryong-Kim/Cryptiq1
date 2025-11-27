@@ -20,7 +20,7 @@ from flask_mail import Mail, Message
 import re
 
 # --- Cipher tools ---
-from cipher_tools.vigenere import vigenere_break
+from cipher_tools.vigenere import *
 from cipher_tools.caesar import caesar_break
 from cipher_tools.permutation import permutation_break
 from cipher_tools.columnar_transposition import columnar_break
@@ -285,7 +285,10 @@ def breaker():
             if cipher_type == "caesar":
                 key, plaintext = caesar_break(text)
             elif cipher_type == "vigenere":
-                key, plaintext = vigenere_break(text)
+                vigenere_part_one = vigenere_break_one(text)
+                vigenere_part_two = vigenere_break_two(text)
+                
+                key, plaintext = final_sort(vigenere_part_one , vigenere_part_two)
             elif cipher_type == "affine":
                 key, plaintext = affine_break(text)
             elif cipher_type == "amsco":

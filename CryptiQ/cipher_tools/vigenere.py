@@ -142,7 +142,7 @@ frequent_letters = [
 
 
 
-def vigenere_break(message):
+def vigenere_break_one(message):
     original_message = message
     # Keep only letters for analysis
     cleaned_message = ''.join(i for i in message if i.isalpha()).lower()
@@ -150,7 +150,7 @@ def vigenere_break(message):
     possible = []
     
     for msg in messages:
-        lengths = range(5, 10)
+        lengths = range(1, 6)
         key_possibilities = []
         for length in lengths:
             msg = msg.replace(" ", "")
@@ -239,6 +239,7 @@ def vigenere_break(message):
     possible.sort(key=lambda x: x[0], reverse=True)
     key = possible[0][1]
     final_msg = possible[0][2]
+    final_prob = possible[0][0]
 
     # === Reinsert punctuation & spaces ===
     restored = []
@@ -253,5 +254,131 @@ def vigenere_break(message):
             restored.append(ch)
     restored_text = ''.join(restored)
 
-    return key, restored_text
+    return (final_prob,key, restored_text)
 
+
+def vigenere_break_two(message):
+    original_message = message
+    # Keep only letters for analysis
+    cleaned_message = ''.join(i for i in message if i.isalpha()).lower()
+    messages = (cleaned_message, cleaned_message[::-1])
+    possible = []
+    
+    for msg in messages:
+        lengths = range(6, 11)
+        key_possibilities = []
+        for length in lengths:
+            msg = msg.replace(" ", "")
+            key = ""
+            columns = ["" for _ in range(length)]
+            for index, letter in enumerate(msg):
+                columns[index % length] += letter
+
+            for column in columns:
+                possibilities = []
+                for shift in range(26):
+                    probability = 0
+                    decoded = ""
+                    for letter in column:
+                        decoded += alphabet[(alphabet.index(letter) - shift) % 26]
+                    frequencies = [(i, decoded.count(i)) for i in alphabet]
+                    frequencies = sorted(frequencies, key=lambda x: x[1], reverse=True)
+                    distribution = [letter for letter, _ in frequencies]
+
+                    for letter in distribution:
+                        if letter != "z" and letter != "e":
+                            if distribution.index(letter) in [
+                                frequent_letters.index(letter),
+                                frequent_letters.index(letter) + 1,
+                                frequent_letters.index(letter) - 1,
+                                frequent_letters.index(letter) - 2,
+                                frequent_letters.index(letter) + 2,
+                            ]:
+                                probability += 1
+                        elif letter == "e":
+                            if distribution.index(letter) in [
+                                frequent_letters.index(letter),
+                                frequent_letters.index(letter) + 1,
+                            ]:
+                                probability += 1
+                        elif letter == "z":
+                            if distribution.index(letter) in [
+                                frequent_letters.index(letter),
+                                frequent_letters.index(letter) - 1,
+                            ]:
+                                probability += 1
+                    key_letter = alphabet[shift]
+                    possibilities.append((probability, key_letter))
+
+                max_prob = 0
+                final_letter = ""
+                for likelihood, letter in possibilities:
+                    if likelihood > max_prob:
+                        max_prob = likelihood
+                        final_letter = letter
+                key += final_letter
+
+            key_possibilities.append(key)
+
+        msg = msg.replace(" ", "")
+        decoded_possibilities = []
+        for key in key_possibilities:
+            decoded = ""
+            current_key = key
+            repeating_index = 0
+            for i in range(len(msg)):
+                current_key += current_key[repeating_index]
+                repeating_index += 1
+            current_key = current_key[len(key):]
+            for ind, letter in enumerate(msg):
+                shift_index = alphabet.index(current_key[ind])
+                new_index = (alphabet.index(letter) - shift_index) % 26
+                new_letter = alphabet[new_index]
+                decoded += new_letter
+
+            for i in decoded:
+                probability = sum(decoded.count(i) for i in common_words)
+            decoded_possibilities.append((probability, decoded, key))
+
+        max_prob = 0
+        final_msg = ""
+        final_key = ""
+        for likelihood, msg_decoded, key in decoded_possibilities:
+            if likelihood > max_prob:
+                max_prob = likelihood
+                final_msg = msg_decoded
+                final_key = key
+
+        possible.append((max_prob, final_key, final_msg))
+
+    possible.sort(key=lambda x: x[0], reverse=True)
+    key = possible[0][1]
+    final_msg = possible[0][2]
+    final_prob = possible[0][0]
+
+    # === Reinsert punctuation & spaces ===
+    restored = []
+    letter_index = 0
+    for ch in original_message:
+        if ch.isalpha():
+            # Preserve original case
+            new_char = final_msg[letter_index]
+            restored.append(new_char.upper() if ch.isupper() else new_char)
+            letter_index += 1
+        else:
+            restored.append(ch)
+    restored_text = ''.join(restored)
+
+    return (final_prob,key, restored_text)
+
+
+def final_sort(one,two):
+    possible=[one,two]
+    possible.sort(key=lambda x:x[0],reverse=True)
+    final_key=possible[0][1]
+    final_msg=possible[0][2]
+    return final_key,final_msg
+
+
+if __name__ == "__main__":
+    print(vigenere_break_one(input('enter text: ')))

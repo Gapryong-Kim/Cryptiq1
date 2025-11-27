@@ -11,7 +11,7 @@ from datetime import datetime
 
 # --- Breakers (keyed) ---
 from cipher_tools.caesar import caesar_break
-from cipher_tools.vigenere import vigenere_break
+from cipher_tools.vigenere import *
 from cipher_tools.affine import affine_break
 from cipher_tools.amsco import amsco_break
 from cipher_tools.railfence import railfence_break
@@ -97,7 +97,7 @@ def auto_break(text: str):
     if broad_type == "Substitution":
         cipher_funcs = [
             ("Caesar",      caesar_break),
-            ("Vigenere",    vigenere_break),
+            ("Vigenere",    final_sort(vigenere_break_one(text),vigenere_break_two(text))),
             ("Affine",      affine_break),
             ("Amsco",       amsco_break),
             ("Substitution",substitution_break),
@@ -112,7 +112,7 @@ def auto_break(text: str):
         # Unknown → try a balanced set
         cipher_funcs = [
             ("Caesar",      caesar_break),
-            ("Vigenere",    vigenere_break),
+            ("Vigenere",    final_sort(vigenere_break_one(text),vigenere_break_two(text))),
             ("Columnar",    columnar_break),
             ("Railfence",   railfence_break),
             ("Affine",      affine_break),
