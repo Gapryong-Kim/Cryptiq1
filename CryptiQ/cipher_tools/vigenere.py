@@ -150,7 +150,7 @@ def vigenere_break(message):
     possible = []
     
     for msg in messages:
-        lengths = range(1, 15)
+        lengths = range(1, 10)
         key_possibilities = []
         for length in lengths:
             msg = msg.replace(" ", "")
