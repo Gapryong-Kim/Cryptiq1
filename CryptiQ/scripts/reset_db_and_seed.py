@@ -10,7 +10,7 @@ DB_PATH = os.path.join(BASE_DIR, "cryptiq.db")
 
 ADMIN_EMAIL = "jimcalstrom@gmail.com"
 ADMIN_USER  = sys.argv[1] if len(sys.argv) > 1 else "Merlin"
-ADMIN_PASS  = sys.argv[2] if len(sys.argv) > 2 else "doebeer8"
+ADMIN_PASS  = sys.argv[2] if len(sys.argv) > 2 else "password"
 
 # --- Remove old DB ---
 if os.path.exists(DB_PATH):

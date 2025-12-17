@@ -237,9 +237,15 @@ def delete_image_file(filename):
 def get_recent_posts(limit=6):
     conn = get_db()
     cur = conn.execute("""
-        SELECT p.id, p.title, p.body, p.created_at, u.username AS author
+        SELECT 
+            p.id, 
+            p.title, 
+            p.body, 
+            p.created_at, 
+            u.username AS author
         FROM posts p
-        JOIN users u ON p.user_id = u.id
+        LEFT JOIN users u ON p.user_id = u.id
+        WHERE (u.banned IS NULL OR u.banned = 0)
         ORDER BY datetime(p.created_at) DESC
         LIMIT ?
     """, (limit,))
@@ -457,16 +463,23 @@ def posts_list():
 
     conn = get_db()
     params = []
-    where_clause = ""
+
+    # Always exclude banned users' posts
+    base_condition = "(users.banned IS NULL OR users.banned = 0)"
 
     if search:
         like = f"%{search}%"
-        where_clause = """
-            WHERE (posts.title LIKE ?
-                   OR posts.body LIKE ?
-                   OR users.username LIKE ?)
+        where_clause = f"""
+            WHERE {base_condition}
+              AND (
+                    posts.title LIKE ?
+                 OR posts.body LIKE ?
+                 OR users.username LIKE ?
+              )
         """
         params.extend([like, like, like])
+    else:
+        where_clause = f"WHERE {base_condition}"
 
     if sort == "new":
         order_clause = """
@@ -509,7 +522,7 @@ def posts_list():
     """, (*params, per_page, offset))
     posts = [dict(r) for r in cur.fetchall()]
 
-    # Count total posts
+    # Count total posts (with same filter)
     cur = conn.execute(f"""
         SELECT COUNT(*) AS total
         FROM posts
@@ -518,9 +531,6 @@ def posts_list():
     """, params)
     total_posts = cur.fetchone()["total"]
 
-    # -----------------------------
-    # ADD THIS BLOCK (persistent upvotes)
-    # -----------------------------
     uid = user["id"] if user else None
 
     for p in posts:
@@ -832,6 +842,7 @@ def comments_list():
         "comments": comments
     })
 
+
 @app.route("/comments/add", methods=["POST"])
 def comments_add():
     user = current_user()
@@ -883,10 +894,16 @@ def comments_add():
     # Create notification for post owner (but not if they commented on their own post)
     if post_owner_id and post_owner_id != user["id"]:
         message = f"{user['username']} replied to your post"
+
+        page = get_post_page(post_id)
+
         cur.execute("""
-            INSERT INTO notifications (user_id, actor_id, post_id, comment_id, message, created_at)
+            INSERT INTO notifications (
+                user_id, actor_id, post_id, comment_id, message, created_at
+            )
             VALUES (?, ?, ?, ?, ?, ?)
         """, (post_owner_id, user["id"], post_id, comment_id, message, now))
+
 
     conn.commit()
     conn.close()
@@ -968,15 +985,26 @@ def notifications_unread():
 
     conn.close()
 
-    notifications = [{
-        "id": r["id"],
-        "post_id": r["post_id"],
-        "comment_id": r["comment_id"],
-        "message": r["message"],
-        "post_title": r["post_title"],
-        "created_at": r["created_at"],
-        "is_read": r["is_read"],
-    } for r in rows]
+    notifications = []
+
+    for r in rows:
+        page = get_post_page(r["post_id"])
+
+        notifications.append({
+            "id": r["id"],
+            "post_id": r["post_id"],
+            "comment_id": r["comment_id"],
+            "message": r["message"],
+            "post_title": r["post_title"],
+            "created_at": r["created_at"],
+            "is_read": r["is_read"],
+            "url": url_for(
+                "posts_list",
+                page=page,
+                _anchor=f"post-{r['post_id']}"
+            )
+        })
+
 
     return jsonify({
         "ok": True,
@@ -1032,12 +1060,17 @@ def api_search_posts():
     conn = get_db()
     cur = conn.execute("""
         SELECT 
-            p.id, p.title, p.body, p.created_at, p.image_filename,
+            p.id, 
+            p.title, 
+            p.body, 
+            p.created_at, 
+            p.image_filename,
             u.username,
-            (u.admin) AS is_admin,
-            (u.banned) AS banned
+            u.is_admin AS is_admin,
+            u.banned AS banned
         FROM posts p
         LEFT JOIN users u ON u.id = p.user_id
+        WHERE (u.banned IS NULL OR u.banned = 0)
         ORDER BY p.created_at DESC
     """)
     rows = cur.fetchall()
@@ -1051,14 +1084,35 @@ def api_search_posts():
             "body": r["body"],
             "username": r["username"] or "[Deleted User]",
             "created_at": r["created_at"],
-            "pinned": False,  # if you want pin support, tell me
+            "pinned": False,  # still unused
             "image_filename": r["image_filename"],
             "is_admin": r["is_admin"],
-            "banned": r["banned"]
+            "banned": r["banned"],
         })
 
     return jsonify({"ok": True, "posts": results})
 
+def get_post_page(post_id, per_page=10,sort='new'):
+    conn = get_db()
+
+    rows = conn.execute("""
+        SELECT posts.id
+        FROM posts
+        LEFT JOIN users ON posts.user_id = users.id
+        WHERE (users.banned IS NULL OR users.banned = 0)
+        ORDER BY posts.pinned DESC,
+                 datetime(posts.created_at) DESC
+    """).fetchall()
+
+    conn.close()
+
+    ids = [r["id"] for r in rows]
+
+    if post_id not in ids:
+        return 1
+
+    index = ids.index(post_id)
+    return (index // per_page) + 1
 
 @app.route("/api/search")
 def api_search():
@@ -1084,6 +1138,7 @@ def api_search():
             users.banned
         FROM posts
         LEFT JOIN users ON users.id = posts.user_id
+        WHERE (users.banned IS NULL OR users.banned = 0)
         ORDER BY posts.pinned DESC, datetime(posts.created_at) DESC
     """)
     rows = cur.fetchall()
@@ -1851,7 +1906,25 @@ def admin_ban_user():
     })
 
 
+@app.route("/admin")
+def admin_dashboard():
+    user = current_user()
 
+    # Only admins can access
+    if not user or not is_admin(user):
+        return redirect(url_for("home"))  # use "home" route
+
+    # Fetch all users from SQLite
+    conn = get_db()
+    cur = conn.execute("""
+        SELECT id, username, email, is_admin, banned, created_at, has_posted
+        FROM users
+        ORDER BY id ASC
+    """)
+    users = [dict(row) for row in cur.fetchall()]
+    conn.close()
+
+    return render_template("admin.html", user=user, users=users)
 
 
 # ------------------- Run -------------------
