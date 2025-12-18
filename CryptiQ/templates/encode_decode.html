@@ -198,11 +198,25 @@
     .breaker-link a:hover { text-decoration: underline; }
 
     @media (max-width: 980px) {
-      .ed-body { grid-template-columns: 1fr; direction: ltr !important; }
+      .ed-body { grid-template-columns: 1fr;  }
       .ed-panel { height: 40vh; }
       .ed-controls { order: -1; }
       main { padding: 60px 10px 20px; }
     }
+    /* ===============================
+   MOBILE MODE SWAP FIX
+=============================== */
+@media (max-width: 980px) {
+  /* Default (Encode mode) */
+  #leftPanel  { order: 2; }  /* Plaintext */
+  .ed-controls { order: 1; }
+  #rightPanel { order: 3; }  /* Ciphertext */
+
+  /* Decode mode — swap panels */
+  .decode-mode #leftPanel  { order: 3; }
+  .decode-mode #rightPanel { order: 2; }
+}
+
   </style>
 </head>
 

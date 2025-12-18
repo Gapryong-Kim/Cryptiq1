@@ -774,3 +774,34 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
   background: color-mix(in srgb, #fff 70%, transparent);
   box-shadow: 0 6px 24px rgba(0,0,0,0.15);
 }
+/* ===============================
+   GLOBAL THEMED SCROLLBAR
+=============================== */
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: color-mix(in oklab, var(--bg) 92%, black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--accent) 35%, #0f0f0f);
+  border-radius: 999px;
+  border: 3px solid var(--bg);
+  transition: background 0.25s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color:
+    color-mix(in oklab, var(--accent) 45%, #0f0f0f)
+    var(--bg);
+}

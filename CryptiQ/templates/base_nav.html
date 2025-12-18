@@ -135,8 +135,10 @@
 
 body { padding-top: 80px; }
 @media (max-width: 900px) {
-  .navbar { height: 60px; }
+  .navbar { height: 60px;
+   }
   body { padding-top: 75px; }
+  
 }
 
 /* Logo */
@@ -463,6 +465,17 @@ body { padding-top: 80px; }
 body.no-nav-padding {
   padding-top: 0 !important;
 }
+/* ===============================
+   MOBILE NAV — OPAQUE SIDEBAR
+=============================== */
+@media (max-width: 900px) {
+  .nav-items {
+    background: var(--panel);       /* solid background */
+    backdrop-filter: none;          /* remove blur noise */
+    -webkit-backdrop-filter: none;
+  }
+}
+
 </style>
 
 <!-- === SCRIPT === -->
