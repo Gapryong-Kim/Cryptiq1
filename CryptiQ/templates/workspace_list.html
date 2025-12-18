@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Cipher Lab — Workspaces</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<style>
+  html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }
+
+  .wl-shell{
+    min-height: calc(100dvh - 80px);
+    display: grid;
+    place-items: start center;
+    padding: 46px 14px 30px;
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .wl-card{
+    width: 100%;
+    max-width: 1100px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--elev-shadow);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .wl-top{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .wl-titlewrap{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .wl-dot{
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-soft);
+    flex: 0 0 auto;
+  }
+
+  .wl-title{
+    margin: 0;
+    color: var(--text);
+    font-weight: 900;
+    letter-spacing: .2px;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wl-sub{
+    color: var(--muted);
+    font-size: .9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wl-actions{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .search{
+    position: relative;
+    width: min(520px, 100%);
+    flex: 1 1 320px;
+  }
+
+  .search input{
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 44px;
+    border-radius: 999px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: 0.98rem;
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+  }
+
+  .search input:focus{
+    outline: none;
+    border-color: var(--accent);
+    background: var(--input-focus);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+
+  .search svg{
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.65;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .btn{
+    padding: 11px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #0f0f0f;
+    font-weight: 900;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, box-shadow .18s ease, transform .06s ease;
+    white-space: nowrap;
+  }
+
+  .btn:hover{
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    box-shadow: 0 10px 22px rgba(0,0,0,.35);
+  }
+
+  .btn:active{ transform: translateY(1px); }
+
+  .btn.secondary{
+    background: transparent;
+    border: 1px solid var(--line-2);
+    color: var(--text);
+    font-weight: 900;
+  }
+
+  .btn.secondary:hover{
+    background: var(--input-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+
+  .wl-body{
+    padding: 16px;
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 980px){
+    .grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px){
+    .wl-shell{ padding: 80px 12px 24px; }
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .ws-card{
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    box-shadow: 0 10px 26px rgba(0,0,0,.18);
+    transition: transform .14s ease, box-shadow .18s ease, border-color .18s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    min-height: 140px;
+  }
+
+  .ws-card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(0,0,0,.26);
+    border-color: rgba(0,255,213,0.22);
+  }
+
+  .ws-head{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .ws-name{
+    font-weight: 900;
+    color: var(--text);
+    font-size: 1.02rem;
+    line-height: 1.2;
+    margin: 0;
+    word-break: break-word;
+  }
+
+  .ws-chip{
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 900;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--muted);
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .ws-snippet{
+    color: var(--muted);
+    font-size: .92rem;
+    line-height: 1.45;
+    margin: 0;
+    word-break: break-word;
+  }
+
+  .ws-meta{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+    color: var(--muted);
+    font-size: .84rem;
+    margin-top: auto;
+  }
+
+  .ws-meta b{ color: var(--text-dim); }
+
+  .empty{
+    padding: 26px 18px;
+    text-align: center;
+    color: var(--muted);
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.02);
+  }
+
+  /* === Info Modal === */
+  .info-modal{
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 7000;
+    padding: 16px;
+  }
+  .info-modal.open{ display: flex; animation: fadeIn .22s ease; }
+
+  @keyframes fadeIn{
+    from{ opacity: 0; }
+    to{ opacity: 1; }
+  }
+
+  .info-box{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    width: min(560px, 92vw);
+    padding: 26px 30px;
+    color: var(--text);
+    box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+    animation: fadeInUp .22s ease;
+    line-height: 1.6;
+    text-align: left;
+    position: relative;
+
+    max-height: 80vh;
+    overflow-y: auto;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  @keyframes fadeInUp{
+    from{ opacity: 0; transform: translateY(10px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  .info-close{
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 22px;
+    cursor: pointer;
+    transition: color 0.25s;
+  }
+  .info-close:hover{ color: var(--accent); }
+
+  .info-box .tip{
+    margin-top: 14px;
+    color: var(--text-dim);
+    font-size: 0.94rem;
+  }
+
+  /* Scrollbar (WebKit) */
+  .info-box::-webkit-scrollbar{ width: 10px; }
+  .info-box::-webkit-scrollbar-track{
+    background: color-mix(in oklab, var(--panel) 90%, black);
+    border-radius: 10px;
+  }
+  .info-box::-webkit-scrollbar-thumb{
+    background: color-mix(in oklab, var(--accent) 30%, #0f0f0f);
+    border-radius: 10px;
+    border: 2px solid var(--panel);
+    transition: background .3s ease;
+  }
+  .info-box::-webkit-scrollbar-thumb:hover{ background: var(--accent); }
+
+  /* Firefox */
+  .info-box{
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--accent) 30%, #0f0f0f)
+                     color-mix(in oklab, var(--panel) 90%, black);
+  }
+
+  /* === Info Button (latest version wins) === */
+  .info-btn{
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 255, 213, 0.08);
+    border: none;
+    color: var(--accent);
+    font-weight: 900;
+    font-size: 16px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    backdrop-filter: blur(6px);
+    transition: all 0.25s ease;
+  }
+
+  .info-btn:hover{
+    background: var(--accent);
+    color: #0f0f0f;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 0 12px var(--accent-soft);
+  }
+
+
+
+  /* === Info modal text styling upgrades (accent-correct) === */
+.info-box h2{
+  color: var(--accent);
+  font-size: 1.35rem;
+  margin: 0 0 10px;
+  font-weight: 950;
+  letter-spacing: 0.2px;
+  text-shadow: 0 0 10px var(--accent-soft);
+}
+
+.info-box ul li strong{
+  color: var(--accent);
+  font-weight: 950;
+}
+
+
+  .info-box ul li{
+    margin-bottom: 10px;
+    color: var(--text-dim);
+  }
+
+  .info-box p{
+    font-size: 0.98rem;
+    margin: 0 0 10px;
+    color: var(--text-dim);
+  }
+
+  .info-box ul{
+    margin: 12px 0 0 18px;
+    padding: 0;
+    list-style-type: disc;
+  }
+  /* === Info modal close button (sleek circular hover) === */
+.info-close{
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+
+  color: var(--muted);
+  font-size: 22px;
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.info-close:hover{
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  color: var(--accent);
+  box-shadow: 0 0 10px var(--accent-soft);
+}
+
+/* keep keyboard accessibility */
+.info-close:focus-visible{
+  outline: none;
+  background: color-mix(in oklab, var(--accent) 25%, transparent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.info-close{
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;          /* IMPORTANT */
+  cursor: pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+  {% include 'base_nav.html' %}
+
+  <!-- Info Modal -->
+  <div class="info-modal" id="info-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="info-title">
+    <div class="info-box" role="document" tabindex="-1">
+      <button class="info-close" id="info-close" title="Close" aria-label="Close">&times;</button>
+
+      <h2 id="info-title">About Workspaces</h2>
+      <p>
+        Workspaces are your private cipher “labs”. Each one holds a cipher text, notes, and any working you do while solving.
+        Use them to keep different puzzles separate and to build a history of your attempts.
+      </p>
+
+      <ul>
+        <li><strong>Create & Organise</strong><br>
+          Make a new workspace for each puzzle. Give it a good title so it’s easy to find later.
+        </li>
+
+        <li><strong>Search</strong><br>
+          Use the search box to filter by workspace title or the first part of your cipher/notes.
+        </li>
+
+        <li><strong>Open & Continue</strong><br>
+          Click a workspace card to jump back in. Your latest edits are saved with the workspace.
+        </li>
+
+        <li><strong>Tips</strong><br>
+          If you’re stuck, add hypotheses to your notes (suspected cipher type, key length, cribs, frequency notes).
+          Your future self will thank you.
+        </li>
+      </ul>
+
+      <p class="tip">🧠 <em>Tip:</em> Keep one workspace as a “scratchpad” for alphabets, frequency tables, and common cribs.</p>
+    </div>
+  </div>
+
+  <main class="wl-shell">
+    <section class="wl-card" aria-label="Workspaces list">
+      <header class="wl-top">
+        <div class="wl-titlewrap">
+          <span class="wl-dot" aria-hidden="true"></span>
+          <div style="min-width:0;">
+            <h1 class="wl-title">Your Workspaces</h1>
+            <div class="wl-sub">Open a workspace to solve, annotate, and run tools.</div>
+          </div>
+        </div>
+
+        <div class="wl-actions">
+          <div class="search">
+            <input id="ws-search" type="text" placeholder="Search workspaces…" autocomplete="off" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+
+          <button class="info-btn" id="info-open" type="button" title="About workspaces" aria-label="About workspaces">i</button>
+          <a style="text-decoration: none;" class="btn" href="{{ url_for('workspace_new') }}">New workspace</a>
+        </div>
+      </header>
+
+      <div class="wl-body">
+        {% if workspaces|length == 0 %}
+          <div class="empty">
+            No workspaces yet — create one to start solving.<br><br>
+            <a class="btn" href="{{ url_for('workspace_new') }}">Create your first workspace</a>
+          </div>
+        {% else %}
+          <div class="grid" id="ws-grid">
+            {% for w in workspaces %}
+              <a
+                class="ws-card"
+                href="{{ url_for('workspace_view', ws_id=w.id) }}"
+                data-title="{{ (w.title or 'Untitled Workspace')|lower }}"
+                data-snippet="{{ ((w.cipher_text or w.notes or '')[:160])|lower }}"
+              >
+                <div class="ws-head">
+                  <h2 class="ws-name">{{ w.title or "Untitled Workspace" }}</h2>
+                  <span class="ws-chip">#{{ w.id }}</span>
+                </div>
+
+                <p class="ws-snippet">
+                  {% set preview = (w.cipher_text or w.notes or "") %}
+                  {{ preview[:180] }}{% if preview|length > 180 %}…{% endif %}
+                </p>
+
+                <div class="ws-meta">
+                  <div><b>Updated:</b> {{ w.updated_at if w.updated_at else "—" }}</div>
+                  <div><b>Created:</b> {{ w.created_at if w.created_at else "—" }}</div>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Simple client-side search filter
+    (function(){
+      const input = document.getElementById("ws-search");
+      const cards = Array.from(document.querySelectorAll(".ws-card"));
+      if (!input || !cards.length) return;
+
+      input.addEventListener("input", () => {
+        const q = (input.value || "").trim().toLowerCase();
+        cards.forEach(c => {
+          const t = c.dataset.title || "";
+          const s = c.dataset.snippet || "";
+          c.style.display = (!q || t.includes(q) || s.includes(q)) ? "" : "none";
+        });
+      });
+    })();
+
+    // Info modal: open/close + ESC + click outside
+    (function(){
+      const modal = document.getElementById("info-modal");
+      const openBtn = document.getElementById("info-open");
+      const closeBtn = document.getElementById("info-close");
+      const box = modal ? modal.querySelector(".info-box") : null;
+
+      if (!modal || !openBtn || !closeBtn || !box) return;
+
+      function openModal(){
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+        box.focus();
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeModal(){
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        openBtn.focus();
+      }
+
+      openBtn.addEventListener("click", openModal);
+      closeBtn.addEventListener("click", closeModal);
+
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
+      });
+    })();
+  </script>
+</body>
+</html>

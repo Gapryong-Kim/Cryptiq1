@@ -51,6 +51,10 @@
     <li><a href="{{ url_for('posts_list') }}">Posts</a></li>
     <li><a href="{{ url_for('weekly_page') }}">Weekly Cipher</a></li>
     <li><a href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
+    {% if user %}
+  <li><a href="{{ url_for('workspace_list') }}">Workspaces</a></li>
+{% endif %}
+
       {% if user and user.is_admin %}
   <li><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
 {% endif %}

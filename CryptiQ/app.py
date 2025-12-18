@@ -1925,7 +1925,320 @@ def admin_dashboard():
     conn.close()
 
     return render_template("admin.html", user=user, users=users)
+# ==============================
+# WORKSPACES — ALL ROUTES (DROP-IN)
+# ==============================
+# Matches your templates:
+# - workspace_list.html uses url_for('workspace_view', ws_id=...)
+# - workspace.html expects "ws" dict and hits /workspaces/<id>/save
+#
+# Requires you already have:
+# - app, get_db(), current_user()
+# - allowed_file(), secure_filename, app.config["UPLOAD_FOLDER"]
+# - from flask import request, jsonify, render_template, redirect, url_for, flash, abort
+# - from datetime import datetime
+# - import os
 
+def init_workspaces():
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Base table (won't overwrite if already exists)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS workspaces (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id INTEGER NOT NULL,
+      title TEXT NOT NULL DEFAULT 'Untitled Workspace',
+      cipher_text TEXT NOT NULL DEFAULT '',
+      notes TEXT NOT NULL DEFAULT '',
+      cipher_image_filename TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(owner_id) REFERENCES users(id)
+    );
+    """)
+
+    # Ensure columns exist even if table was created earlier with fewer cols
+    cur.execute("PRAGMA table_info(workspaces)")
+    cols = {r[1] for r in cur.fetchall()}  # (cid, name, type, ...)
+
+    if "title" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN title TEXT NOT NULL DEFAULT 'Untitled Workspace'")
+    if "cipher_text" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN cipher_text TEXT NOT NULL DEFAULT ''")
+    if "notes" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN notes TEXT NOT NULL DEFAULT ''")
+    if "cipher_image_filename" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN cipher_image_filename TEXT")
+    if "created_at" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    if "updated_at" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP")
+
+    # Helpful index
+    cur.execute("""
+    CREATE INDEX IF NOT EXISTS idx_workspaces_owner_updated
+    ON workspaces(owner_id, datetime(updated_at) DESC);
+    """)
+
+    conn.commit()
+    conn.close()
+
+# Call once on boot (near init_db/migrate_db)
+init_workspaces()
+
+
+# ----------------------
+# Workspaces list
+# GET /workspaces
+# ----------------------
+@app.route("/workspaces", methods=["GET"], endpoint="workspace_list")
+def workspace_list():
+    user = current_user()
+    if not user:
+        flash("Please log in.", "warning")
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT id, title, cipher_text, notes, cipher_image_filename, created_at, updated_at
+        FROM workspaces
+        WHERE owner_id = ?
+        ORDER BY datetime(updated_at) DESC
+    """, (user["id"],)).fetchall()
+    conn.close()
+
+    return render_template(
+        "workspace_list.html",
+        user=user,
+        workspaces=[dict(r) for r in rows]
+    )
+
+
+# ----------------------
+# Create workspace
+# GET shows create form, POST creates + redirects
+# /workspaces/new
+# ----------------------
+@app.route("/workspaces/new", methods=["GET", "POST"], endpoint="workspace_new")
+def workspace_new():
+    user = current_user()
+    if not user:
+        flash("Please log in.", "warning")
+        return redirect(url_for("login"))
+
+    if request.method == "GET":
+        return render_template("workspace_new.html", user=user)
+
+    title = (request.form.get("title") or "Untitled Workspace").strip() or "Untitled Workspace"
+    now = datetime.utcnow().isoformat()
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO workspaces (owner_id, title, cipher_text, notes, created_at, updated_at)
+        VALUES (?, ?, '', '', ?, ?)
+    """, (user["id"], title, now, now))
+    ws_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("workspace_view", ws_id=ws_id))
+
+
+# ----------------------
+# View workspace
+# GET /workspaces/<id>
+# endpoint MUST be workspace_view because your list template calls it
+# ----------------------
+@app.route("/workspaces/<int:ws_id>", methods=["GET"], endpoint="workspace_view")
+def workspace_view(ws_id):
+    user = current_user()
+    if not user:
+        flash("Please log in.", "warning")
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    row = conn.execute("""
+        SELECT *
+        FROM workspaces
+        WHERE id = ? AND owner_id = ?
+        LIMIT 1
+    """, (ws_id, user["id"])).fetchone()
+    conn.close()
+
+    if not row:
+        abort(404)
+
+    return render_template("workspace.html", user=user, ws=dict(row))
+
+
+# ----------------------
+# Save workspace (AJAX)
+# POST /workspaces/<id>/save
+# ----------------------
+@app.route("/workspaces/<int:ws_id>/save", methods=["POST"])
+def workspace_save(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    title = (request.form.get("title") or "").strip() or "Untitled Workspace"
+    notes = request.form.get("notes") or ""
+    cipher_text = request.form.get("cipher_text") or ""
+    now = datetime.utcnow().isoformat()
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE workspaces
+        SET title = ?, notes = ?, cipher_text = ?, updated_at = ?
+        WHERE id = ? AND owner_id = ?
+    """, (title, notes, cipher_text, now, ws_id, user["id"]))
+    conn.commit()
+    changed = cur.rowcount
+    conn.close()
+
+    if not changed:
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    return jsonify({"ok": True, "updated_at": now})
+
+
+# ----------------------
+# Upload/replace cipher image (optional)
+# POST /workspaces/<id>/image
+# ----------------------
+@app.route("/workspaces/<int:ws_id>/image", methods=["POST"])
+def workspace_image_upload(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    img = request.files.get("image")
+    if not img or not img.filename:
+        return jsonify({"ok": False, "error": "no image provided"}), 400
+    if not allowed_file(img.filename):
+        return jsonify({"ok": False, "error": "unsupported file type"}), 400
+
+    conn = get_db()
+    row = conn.execute("""
+        SELECT cipher_image_filename
+        FROM workspaces
+        WHERE id = ? AND owner_id = ?
+        LIMIT 1
+    """, (ws_id, user["id"])).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    old = row["cipher_image_filename"]
+
+    filename = secure_filename(f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{img.filename}")
+    img.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+
+    now = datetime.utcnow().isoformat()
+    conn.execute("""
+        UPDATE workspaces
+        SET cipher_image_filename = ?, updated_at = ?
+        WHERE id = ? AND owner_id = ?
+    """, (filename, now, ws_id, user["id"]))
+    conn.commit()
+    conn.close()
+
+    if old:
+        try:
+            path = os.path.join(app.config["UPLOAD_FOLDER"], old)
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
+
+    return jsonify({"ok": True, "filename": filename, "updated_at": now})
+
+
+# ----------------------
+# Delete cipher image only (optional)
+# POST /workspaces/<id>/image/delete
+# ----------------------
+@app.route("/workspaces/<int:ws_id>/image/delete", methods=["POST"])
+def workspace_image_delete(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+    row = conn.execute("""
+        SELECT cipher_image_filename
+        FROM workspaces
+        WHERE id = ? AND owner_id = ?
+        LIMIT 1
+    """, (ws_id, user["id"])).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    old = row["cipher_image_filename"]
+    now = datetime.utcnow().isoformat()
+
+    conn.execute("""
+        UPDATE workspaces
+        SET cipher_image_filename = NULL, updated_at = ?
+        WHERE id = ? AND owner_id = ?
+    """, (now, ws_id, user["id"]))
+    conn.commit()
+    conn.close()
+
+    if old:
+        try:
+            path = os.path.join(app.config["UPLOAD_FOLDER"], old)
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
+
+    return jsonify({"ok": True, "updated_at": now})
+
+
+# ----------------------
+# Delete workspace (optional)
+# POST /workspaces/<id>/delete
+# ----------------------
+@app.route("/workspaces/<int:ws_id>/delete", methods=["POST"])
+def workspace_delete(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+    row = conn.execute("""
+        SELECT cipher_image_filename
+        FROM workspaces
+        WHERE id = ? AND owner_id = ?
+        LIMIT 1
+    """, (ws_id, user["id"])).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    img = row["cipher_image_filename"]
+
+    conn.execute("DELETE FROM workspaces WHERE id = ? AND owner_id = ?", (ws_id, user["id"]))
+    conn.commit()
+    conn.close()
+
+    if img:
+        try:
+            path = os.path.join(app.config["UPLOAD_FOLDER"], img)
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
+
+    return jsonify({"ok": True})
 
 # ------------------- Run -------------------
 if __name__ == "__main__":
