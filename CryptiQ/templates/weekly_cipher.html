@@ -431,6 +431,15 @@
 body.no-nav-padding {
   padding-top: 0 !important;
 }
+/* Put the admin kebab to the LEFT of the info button */
+.weekly-header { position: relative; } /* already true, but keep it */
+
+.admin-menu{
+  position: absolute;
+  top: 18px;
+  right: 62px;          /* <-- shift left so it doesn't overlap the info button */
+  z-index: 30;
+}
 
   </style>
 </head>

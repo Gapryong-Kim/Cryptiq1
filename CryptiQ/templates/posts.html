@@ -283,6 +283,23 @@
       color: #0f0f0f;
     }
 
+    /* ==========================
+       ✅ Post image (no upscaling)
+    =========================== */
+    .post-image{
+      display: block;
+      height: auto;
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+      object-fit: contain;
+      max-height: 70vh;
+    }
+    .post-image[data-small="1"]{
+      width: auto;      /* don't force full width if it would upscale */
+      max-width: 100%;
+    }
+
     .comments {
       margin-top: 16px;
       background: var(--panel-2);
@@ -963,8 +980,7 @@
       </div>
 
       {% if p.image_filename %}
-      <img src="{{ url_for('uploaded_file', filename=p.image_filename) }}" alt="Post image"
-          style="width:100%;border-radius:10px;margin-top:10px;">
+      <img class="post-image" src="{{ url_for('uploaded_file', filename=p.image_filename) }}" alt="Post image">
       {% endif %}
 
       <div class="post-body">{{ p.body }}</div>
@@ -1072,6 +1088,21 @@
       </div>
     </div>
   </main>
+
+<script>
+/* ============================================================
+   ✅ Mark small images so they don't upscale (blur)
+============================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("img.post-image").forEach(img => {
+    img.addEventListener("load", () => {
+      if (img.naturalWidth && img.clientWidth && img.naturalWidth < img.clientWidth) {
+        img.dataset.small = "1";
+      }
+    }, { once: true });
+  });
+});
+</script>
 
 <script>
 /* ============================================================
@@ -1523,7 +1554,7 @@ function renderPostHTML(p, isAdmin, isLogged) {
     </div>
   </div>
 
-  ${p.image_filename ? `<img src="/uploads/${p.image_filename}" style="width:100%;border-radius:10px;margin-top:10px;">` : ""}
+  ${p.image_filename ? `<img class="post-image" src="/uploads/${p.image_filename}" alt="Post image">` : ""}
 
   <div class="post-body">${escapeHtml(p.body || "")}</div>
 
@@ -1629,6 +1660,15 @@ function renderPostHTML(p, isAdmin, isLogged) {
       // Re-wire collapse & comment counts in the new DOM
       setupPostBodyCollapsing(container);
       loadAllCommentCounts(container);
+
+      // ✅ mark small images in newly rendered DOM too
+      container.querySelectorAll("img.post-image").forEach(img => {
+        img.addEventListener("load", () => {
+          if (img.naturalWidth && img.clientWidth && img.naturalWidth < img.clientWidth) {
+            img.dataset.small = "1";
+          }
+        }, { once: true });
+      });
     } catch (err) {
       console.error("Search error:", err);
     }

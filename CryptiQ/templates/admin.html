@@ -1,232 +1,341 @@
-{% extends "base_nav.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin — The Cipher Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-/* === Admin Page Styles (Self-contained) === */
+  <style>
+    :root{
+      --muted: var(--subtext, #bcbcbc);
+      --line: var(--border, rgba(255,255,255,0.08));
+      --panel-2: var(--panel, #1a1a1a);
+      --radius-lg: 14px;
+      --radius-sm: 10px;
+      --elev-shadow: 0 10px 35px rgba(0,0,0,0.4);
+      --danger: #ff4d4f;
+      --transition: 0.25s ease;
+    }
 
-.admin-wrapper {
-    padding: 140px 20px 40px;
-    max-width: 1100px;
-    margin: auto;
-}
+    /* ===============================
+       Admin Dashboard
+    =============================== */
+    .admin-container {
+      width: 100%;
+      max-width: 1100px;
+      margin: 120px auto 60px;
+      padding: 40px 48px;
+      background: var(--panel);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      box-shadow: var(--elev-shadow);
+    }
 
-.admin-title {
-    font-size: 42px;
-    font-weight: 800;
-    margin-bottom: 15px;
-    color: var(--accent);
-    text-shadow: 0 0 18px var(--accentglow);
-}
+    .admin-title {
+      font-size: 34px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
 
-/* Card container */
-.admin-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 22px;
-    margin-top: 35px;
-}
+    .admin-subtitle {
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
 
-.admin-card {
-    background: var(--panel);
-    border-radius: 16px;
-    padding: 22px;
-    box-shadow: 0 0 15px var(--shadow);
-    transition: 0.25s;
-    border: 1px solid var(--border);
-}
+    /* === Search === */
+    .admin-search {
+      position: relative;
+      width: min(620px, 100%);
+      margin-bottom: 18px;
+    }
 
-.admin-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 0 25px var(--accentglow);
-}
+    .admin-search input {
+      width: 100%;
+      padding: 14px 48px;
+      border-radius: 999px;
+      border: 1px solid var(--input-border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 1rem;
+    }
 
-/* Headings */
-.admin-card h3 {
-    margin-top: 0;
-    color: var(--accent);
-    font-size: 22px;
-    margin-bottom: 8px;
-}
+    .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      opacity: 0.6;
+    }
 
-/* Buttons */
-.admin-btn {
-    margin-top: 8px;
-    display: inline-block;
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: var(--accent);
-    color: black;
-    font-weight: bold;
-    text-decoration: none;
-    box-shadow: 0 0 10px var(--accentglow);
-    cursor: pointer;
-    border: none;
-    font-size: 14px;
-}
+    /* === Table === */
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
 
-.admin-btn:hover {
-    box-shadow: 0 0 16px var(--accentglow);
-}
+    .admin-table th {
+      text-align: left;
+      padding: 14px 12px;
+      color: var(--accent);
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
 
-/* Tables */
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 35px;
-}
+    .admin-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--line);
+    }
 
-.admin-table th {
-    text-align: left;
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-    color: var(--accent);
-}
+    .admin-table tr:hover {
+      background: var(--panel-2);
+    }
 
-.admin-table td {
-    padding: 12px;
-    border-bottom: 1px solid var(--border2);
-}
+    .tag-active { color: var(--accent); font-weight: 700; }
+    .tag-banned { color: var(--danger); font-weight: 700; }
 
-.admin-table tr:hover {
-    background: var(--panel2);
-}
+    .ban-btn {
+      padding: 8px 14px;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: transform .08s ease;
+    }
 
-/* Status tags */
-.tag-active {
-    color: #00ffae;
-    font-weight: bold;
-}
+    .ban-btn.ban { background: var(--danger); color: #0f0f0f; }
+    .ban-btn.unban { background: var(--accent); color: #0f0f0f; }
 
-.tag-banned {
-    color: #ff2e5f;
-    font-weight: bold;
-}
+    .ban-btn:hover { transform: translateY(-1px); }
 
-</style>
+    /* ===============================
+       CONFIRM MODAL
+    =============================== */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+    }
 
-<div class="admin-wrapper">
+    .confirm-overlay.open { display: flex; }
 
-    <h1 class="admin-title">Admin Dashboard</h1>
+    .confirm-box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px 26px;
+      width: min(360px, 90%);
+      box-shadow: 0 10px 40px rgba(0,0,0,.45);
+      animation: pop .18s ease-out;
+      text-align: center;
+    }
 
-    <p style="opacity: 0.85;">Manage everything from posts to users, announcements, ciphers, and more.</p>
+    .confirm-box h3 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+      color: var(--text);
+    }
 
-    <!-- Quick Access Cards -->
-    <div class="admin-grid">
+    .confirm-box p {
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
 
-        <div class="admin-card">
-            <h3>Create New Post</h3>
-            <p>Add a new post to the community feed.</p>
-            <a href="/admin/new-post" class="admin-btn">Open</a>
-        </div>
+    .confirm-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
 
-        <div class="admin-card">
-            <h3>Announcements</h3>
-            <p>Publish site-wide updates for all users.</p>
-            <a href="/admin/announcements" class="admin-btn">Open</a>
-        </div>
+    .confirm-cancel {
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
 
-        <div class="admin-card">
-            <h3>Weekly Cipher</h3>
-            <p>Update the weekly challenge puzzle + leaderboard.</p>
-            <a href="/admin/weekly" class="admin-btn">Open</a>
-        </div>
+    .confirm-confirm {
+      background: var(--danger);
+      color: #0f0f0f;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+    }
 
-        <div class="admin-card">
-            <h3>User Management</h3>
-            <p>Ban users, manage permissions, reset passwords.</p>
-            <a href="/admin/users" class="admin-btn">Open</a>
-        </div>
+    @keyframes pop {
+      from { transform: scale(.88); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
 
+<body>
+{% include 'base_nav.html' %}
+
+<div class="admin-container">
+  <h1 class="admin-title">Admin Dashboard</h1>
+  <p class="admin-subtitle">Manage users and moderation</p>
+
+  <div class="admin-search">
+    <input id="admin-search" placeholder="Search users…" />
+    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+  </div>
+
+  <table class="admin-table" id="user-table">
+    <thead>
+      <tr>
+        <th>Username</th><th>Email</th><th>Joined</th><th>Status</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr data-username="{{ u.username|lower }}" data-email="{{ (u.email or '')|lower }}" id="user-{{ u.username }}">
+        <td><strong>{{ u.username }}</strong></td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.created_at }}</td>
+        <td class="status">
+          {% if u.banned %}
+            <span class="tag-banned">Banned</span>
+          {% else %}
+            <span class="tag-active">Active</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.username == user.username %}
+            <em>You</em>
+          {% elif u.is_admin %}
+            <em>Admin</em>
+          {% else %}
+            {% if u.banned %}
+              <button class="ban-btn unban" data-user="{{ u.username }}" data-banned="1">Unban</button>
+            {% else %}
+              <button class="ban-btn ban" data-user="{{ u.username }}" data-banned="0">Ban</button>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-overlay" class="confirm-overlay">
+  <div class="confirm-box">
+    <h3 id="confirm-title">Confirm</h3>
+    <p id="confirm-text"></p>
+    <div class="confirm-actions">
+      <button class="confirm-cancel">Cancel</button>
+      <button class="confirm-confirm">Confirm</button>
     </div>
-
-    <!-- Users Table -->
-    {% if users %}
-    <h2 style="margin-top: 50px; color: var(--accent);">Users</h2>
-
-    <table class="admin-table">
-        <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Joined</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-
-        {% for u in users %}
-        <tr id="user-{{ u.id }}">
-            <td>{{ u.username }}</td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.created_at }}</td>
-            <td class="status">
-                {% if u.banned %}
-                    <span class="tag-banned">Banned</span>
-                {% else %}
-                    <span class="tag-active">Active</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if u.id != user.id %}
-                <button class="admin-btn" onclick="toggleBan({{ u.id }}, {{ 'true' if u.banned else 'false' }})">
-                    {% if u.banned %}Unban{% else %}Ban{% endif %}
-                </button>
-
-                <button class="admin-btn" onclick="toggleAdmin({{ u.id }}, {{ 'true' if u.is_admin else 'false' }})">
-                    {% if u.is_admin %}Demote{% else %}Promote{% endif %}
-                </button>
-
-                <button class="admin-btn" onclick="deleteUser({{ u.id }})">Delete</button>
-                {% else %}
-                <em>Self</em>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
-
+  </div>
 </div>
 
 <script>
-async function toggleBan(userId, currentlyBanned) {
-    const response = await fetch(`/admin/users/${userId}/ban`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ban: !currentlyBanned})
-    });
-    const data = await response.json();
-    if(data.success){
-        const row = document.getElementById(`user-${userId}`);
-        row.querySelector('.status').innerHTML = data.banned ? '<span class="tag-banned">Banned</span>' : '<span class="tag-active">Active</span>';
-        row.querySelector('button:nth-child(1)').textContent = data.banned ? 'Unban' : 'Ban';
-    }
+/* ===============================
+   SEARCH
+=============================== */
+document.getElementById("admin-search").addEventListener("input", e => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll("#user-table tbody tr").forEach(r => {
+    r.style.display =
+      r.dataset.username.includes(q) || r.dataset.email.includes(q)
+        ? "" : "none";
+  });
+});
+
+/* ===============================
+   CONFIRM MODAL LOGIC
+=============================== */
+const overlay = document.getElementById("confirm-overlay");
+const text = document.getElementById("confirm-text");
+let pendingAction = null;
+
+function openConfirm(msg, action) {
+  text.textContent = msg;
+  pendingAction = action;
+  overlay.classList.add("open");
 }
 
-async function toggleAdmin(userId, currentlyAdmin) {
-    const response = await fetch(`/admin/users/${userId}/admin`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({admin: !currentlyAdmin})
-    });
-    const data = await response.json();
-    if(data.success){
-        const row = document.getElementById(`user-${userId}`);
-        row.querySelector('button:nth-child(2)').textContent = data.is_admin ? 'Demote' : 'Promote';
-    }
+function closeConfirm() {
+  overlay.classList.remove("open");
+  pendingAction = null;
 }
 
-async function deleteUser(userId){
-    if(!confirm('Are you sure you want to delete this user?')) return;
-    const response = await fetch(`/admin/users/${userId}/delete`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'}
-    });
-    const data = await response.json();
-    if(data.success){
-        const row = document.getElementById(`user-${userId}`);
-        row.remove();
-    }
+overlay.addEventListener("click", e => {
+  if (e.target === overlay) closeConfirm();
+});
+
+document.querySelector(".confirm-cancel").onclick = closeConfirm;
+document.querySelector(".confirm-confirm").onclick = () => {
+  if (pendingAction) pendingAction();
+  closeConfirm();
+};
+
+/* ===============================
+   BAN / UNBAN
+=============================== */
+document.addEventListener("click", e => {
+  const btn = e.target.closest(".ban-btn");
+  if (!btn) return;
+
+  const username = btn.dataset.user;
+  const banned = btn.dataset.banned === "1";
+
+  openConfirm(
+    banned ? `Unban ${username}?` : `Ban ${username}?`,
+    () => toggleBan(username, banned)
+  );
+});
+
+async function toggleBan(username, currentlyBanned) {
+  const row = document.getElementById(`user-${username}`);
+  const status = row.querySelector(".status");
+  const btn = row.querySelector(".ban-btn");
+
+  btn.disabled = true;
+  btn.textContent = "Updating…";
+
+  const res = await fetch("/admin/ban_user", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, banned: currentlyBanned ? 0 : 1 })
+  });
+
+  const data = await res.json();
+  if (!data.ok) return alert(data.error || "Failed");
+
+  if (data.banned) {
+    status.innerHTML = `<span class="tag-banned">Banned</span>`;
+    btn.textContent = "Unban";
+    btn.className = "ban-btn unban";
+    btn.dataset.banned = "1";
+  } else {
+    status.innerHTML = `<span class="tag-active">Active</span>`;
+    btn.textContent = "Ban";
+    btn.className = "ban-btn ban";
+    btn.dataset.banned = "0";
+  }
+
+  btn.disabled = false;
 }
 </script>
-
-{% endblock %}
+</body>
+</html>
