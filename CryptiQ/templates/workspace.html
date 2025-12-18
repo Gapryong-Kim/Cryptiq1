@@ -512,9 +512,363 @@
       .doc-text{ min-height: 320px; }
       .cipher-side{ gap: 10px; }
     }
+  /* =============== Mobile improvements (append at end) =============== */
+@media (max-width: 640px){
+
+  /* Full width, no horizontal scroll */
+  .ws-shell{
+    min-height: calc(100dvh - 80px);
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .ws-card{
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Toolbar: stick, wrap nicely, comfy spacing */
+  .ws-topbar{
+    position: sticky;
+    top: 0;
+    padding: 10px 10px;
+    gap: 8px;
+  }
+
+  .ws-titlewrap{
+    width: 100%;
+  }
+
+  .ws-title{
+    font-size: 0.98rem;
+  }
+
+  .ws-sub{
+    display: none; /* keeps toolbar clean on small screens */
+  }
+
+  .ws-tools{
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  /* Bigger tap targets */
+  .tb-btn{
+    padding: 10px 12px;
+    font-size: .88rem;
+  }
+
+  /* Stack layout and reduce padding */
+  .ws-grid{
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .ws-panel{
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  /* Text areas: better height + no awkward resize handles on mobile */
+  .doc-text{
+    min-height: 44vh;
+    resize: none;
+  }
+
+  .cipher-text{
+    min-height: 38vh;
+    resize: none;
+  }
+
+  /* Inputs & selects: full-width and consistent */
+  select,
+  input[type="number"],
+  input[type="text"]{
+    width: 100%;
+  }
+
+  .tool-row{
+    gap: 8px;
+  }
+
+  /* Buttons rows wrap well */
+  .doc-actions,
+  .tool-row{
+    justify-content: flex-start;
+  }
+
+  .run-btn,
+  .mini-btn{
+    width: 100%;
+  }
+
+  /* Right sidebar shouldn't be sticky on mobile */
+  .cipher-side{
+    position: relative;
+    top: 0;
+  }
+}
+
+/* Slightly larger phones / small tablets */
+@media (min-width: 641px) and (max-width: 980px){
+  .ws-grid{
+    grid-template-columns: 1fr;
+  }
+  .cipher-side{
+    position: relative;
+    top: 0;
+  }
+}
+/* =============== Mobile tools bar fix =============== */
+@media (max-width: 640px){
+
+  /* Tool container becomes horizontal scroll */
+  .ws-tools{
+    display: flex;
+    flex-wrap: nowrap;          /* 🔑 no wrapping */
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 6px;
+    scrollbar-width: none;      /* Firefox */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ws-tools::-webkit-scrollbar{
+    display: none;              /* Chrome/Safari */
+  }
+
+  /* Buttons become compact chips */
+  .tb-btn{
+    flex: 0 0 auto;             /* don’t stretch */
+    padding: 9px 14px;
+    font-size: .85rem;
+    white-space: nowrap;
+  }
+
+  /* Active tool stands out more on mobile */
+  .tb-btn.active{
+    box-shadow: 0 0 0 2px var(--accent-soft),
+                0 6px 14px rgba(0,0,0,.35);
+  }
+}
+/* ===== Mobile: scrollable tool chips (fix clipping) ===== */
+@media (max-width: 640px){
+
+  /* The tools area must be allowed to shrink and scroll */
+  .ws-tools{
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;                 /* IMPORTANT: allows overflow container to actually overflow */
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;  /* don't space-between */
+    gap: 8px;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+
+    padding: 6px 2px 10px;
+    margin: 0;
+    scrollbar-width: none;        /* Firefox */
+    touch-action: pan-x;          /* makes horizontal swipe work reliably */
+  }
+
+  .ws-tools::-webkit-scrollbar{ display: none; }
+
+  /* Each chip should not shrink */
+  .ws-tools .tb-btn{
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* Make sure the topbar itself doesn't clip the tools */
+  .ws-topbar{
+    overflow: visible;
+  }
+}
+@media (max-width: 640px){
+  .ws-card,
+  .ws-shell{
+    overflow-x: visible;
+  }
+}
+/* =========================================================
+   MOBILE: tools bar is the ONLY horizontal scroller
+   ========================================================= */
+@media (max-width: 640px){
+
+  /* 1️⃣ Kill horizontal scroll everywhere by default */
+  html, body,
+  .ws-shell,
+  .ws-card,
+  .ws-topbar,
+  .ws-grid,
+  .ws-panel,
+  .doc-wrap,
+  .cipher-side{
+    overflow-x: hidden !important;
+  }
+
+  /* 2️⃣ Tools bar: explicitly allow horizontal scrolling */
+  .ws-tools{
+    width: 100%;
+    min-width: 0;
+
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+
+    overflow-x: auto !important;
+    overflow-y: hidden;
+
+    padding: 6px 4px 10px;
+    margin: 0;
+
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .ws-tools::-webkit-scrollbar{
+    display: none; /* Chrome / Safari */
+  }
+
+  /* 3️⃣ Tool buttons must never shrink */
+  .ws-tools .tb-btn{
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* 4️⃣ Make sure topbar doesn't interfere */
+  .ws-topbar{
+    overflow: hidden;
+  }
+}
+/* =========================================================
+   MOBILE: make the WHOLE topbar row scroll (dot+title+tools)
+   ========================================================= */
+@media (max-width: 640px){
+
+  /* Only the topbar scrolls horizontally */
+  .ws-topbar{
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    scrollbar-width: none;          /* Firefox */
+    padding-bottom: 10px;           /* space so it doesn't feel cramped */
+  }
+  .ws-topbar::-webkit-scrollbar{ display: none; }
+
+  /* Topbar content must stay on one line */
+  .ws-topbar{
+    flex-wrap: nowrap;              /* IMPORTANT */
+    gap: 10px;
+  }
+
+  /* Prevent left title block from shrinking into weirdness */
+  .ws-titlewrap{
+    flex: 0 0 auto;
+    min-width: max-content;
+  }
+
+  /* Tools: no longer a scroller; just a row inside the scroller */
+  .ws-tools{
+    overflow: visible !important;
+    flex-wrap: nowrap;
+    width: auto;
+    min-width: max-content;
+    justify-content: flex-start;
+  }
+
+  .ws-tools .tb-btn{
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+/* =========================================================
+   MOBILE: tighten spacing in topbar (remove big gap)
+   ========================================================= */
+@media (max-width: 640px){
+
+  /* Reduce overall spacing in the row */
+  .ws-topbar{
+    gap: 6px;                 /* was 10–12px */
+  }
+
+  /* Title block should hug its content */
+  .ws-titlewrap{
+    flex: 0 0 auto;
+    min-width: auto;          /* 🔑 remove max-content spacing */
+    gap: 6px;                 /* dot ↔ text closer */
+  }
+
+  .ws-title{
+    font-size: 0.95rem;
+  }
+
+  /* Tools start immediately after title */
+  .ws-tools{
+    margin-left: 4px;         /* tiny separation, not a canyon */
+  }
+}
+
+  /* =========================================================
+   FINAL MOBILE TOPBAR OVERRIDE (wins vs earlier blocks)
+   ========================================================= */
+@media (max-width: 640px){
+
+  /* Make the topbar one scrollable row */
+  .ws-topbar{
+    justify-content: flex-start !important; /* <-- removes the huge gap */
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    scrollbar-width: none;
+    padding-bottom: 10px;
+  }
+  .ws-topbar::-webkit-scrollbar{ display: none; }
+
+  /* STOP the title area from taking the whole row */
+  .ws-titlewrap{
+    width: auto !important;         /* <-- overrides your earlier width:100% */
+    min-width: max-content !important;
+    flex: 0 0 auto !important;
+    gap: 6px !important;
+  }
+
+  /* Tools sit immediately after title, and stay on one line */
+  .ws-tools{
+    width: auto !important;         /* <-- overrides your earlier width:100% */
+    min-width: max-content !important;
+    flex: 0 0 auto !important;
+
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+
+    overflow: visible !important;   /* topbar is the scroller now */
+    margin-left: 4px !important;
+  }
+
+  .ws-tools .tb-btn{
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
   </style>
 </head>
-
 <body>
   {% include 'base_nav.html' %}
 
@@ -535,6 +889,9 @@
           <button class="tb-btn" data-tool="spacer" type="button">Spacer</button>
           <button class="tb-btn" data-tool="remove_spaces" type="button">No spaces</button>
           <button class="tb-btn" data-tool="remove_punctuation" type="button">No punct</button>
+
+          <!-- NEW: Breaker tab -->
+          <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
 
           <button class="tb-btn primary" id="save-btn" type="button">Save</button>
           <div class="ws-status" id="save-status">—</div>
@@ -649,6 +1006,46 @@
                 <div class="result" id="tool-output-remove-punct">Output will appear here.</div>
               </div>
 
+              <!-- NEW: Breaker -->
+              <div class="tool-card" id="tool-breaker">
+                <div class="hint">
+                  Calls <code>/breaker</code>. Optional fixed-map format: <code>AB=TH, CD=ER</code>
+                </div>
+
+                <div class="tool-row" style="align-items:flex-end;">
+                  <div style="display:grid;gap:6px;flex:1;min-width:180px;">
+                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Cipher type</label>
+                    <select id="breaker-type">
+                      <option value="auto">auto</option>
+                      <option value="caesar">caesar</option>
+                      <option value="vigenere" selected>vigenere</option>
+                      <option value="affine">affine</option>
+                      <option value="amsco">amsco</option>
+                      <option value="railfence">railfence</option>
+                      <option value="columnar">columnar</option>
+                      <option value="permutation">permutation</option>
+                      <option value="polybius">polybius</option>
+                      <option value="substitution">substitution</option>
+                      <option value="atbash">atbash</option>
+                      <option value="base64">base64</option>
+                      <option value="hex">hex</option>
+                      <option value="binary">binary</option>
+                      <option value="baconian">baconian</option>
+                    </select>
+                  </div>
+
+                  <button class="run-btn" id="run-breaker" type="button">Run breaker</button>
+                  <button class="run-btn secondary" id="copy-breaker" type="button">Copy output</button>
+                </div>
+
+                <div style="display:grid;gap:6px;margin-top:6px;">
+                  <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Known plaintext / fixed map (optional)</label>
+                  <input id="breaker-known" type="text" placeholder="e.g. AB=TH, CD=ER" />
+                </div>
+
+                <div class="result" id="breaker-output">Run breaker to see output here.</div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -716,6 +1113,17 @@
       return data.text || "";
     }
 
+    async function breakerRunRequest(payload = {}) {
+      const fd = new FormData();
+      fd.append("text", payload.text ?? "");
+      fd.append("cipher_type", (payload.cipher_type ?? "vigenere").toLowerCase());
+      fd.append("known_plaintext", payload.known_plaintext ?? "");
+
+      const res = await fetch("/breaker", { method: "POST", body: fd });
+      const data = await res.json();
+      return data;
+    }
+
     function setStatus(msg) {
       const el = document.getElementById("save-status");
       if (el) el.textContent = msg;
@@ -732,6 +1140,7 @@
       spacer: document.getElementById("tool-spacer"),
       remove_spaces: document.getElementById("tool-remove_spaces"),
       remove_punctuation: document.getElementById("tool-remove_punctuation"),
+      breaker: document.getElementById("tool-breaker"), // NEW
     };
 
     function showTool(name) {
@@ -776,24 +1185,41 @@
     saveBtn?.addEventListener("click", saveWorkspace);
 
     // ===========================
-    // Insert output → doc
+    // Insert output → doc (includes tool name)
     // ===========================
     const insertBtn = document.getElementById("insert-tool-output");
-    const toolOutputMain = document.getElementById("tool-output");
+
+    const TOOL_LABELS = {
+      frequency: "Frequency",
+      substitution: "Substitution",
+      replacer: "Replace",
+      spacer: "Spacer",
+      remove_spaces: "No spaces",
+      remove_punctuation: "No punct",
+      breaker: "Breaker",
+    };
 
     function getActiveToolOutput() {
-      // Return whatever output box is visible
       const active = document.querySelector(".tool-card.active");
-      if (!active) return "";
+      if (!active) return { tool: "Tool", text: "" };
+
+      const id = active.id || "";
+      const toolKey = id.startsWith("tool-") ? id.slice(5) : "tool";
+      const toolLabel = TOOL_LABELS[toolKey] || toolKey;
+
       const out = active.querySelector(".result");
-      return out ? out.textContent : "";
+      return { tool: toolLabel, text: out ? out.textContent : "" };
     }
 
     insertBtn?.addEventListener("click", () => {
-      const text = getActiveToolOutput();
-      if (!text || text.trim() === "Run a tool to see output here.") return;
-      const stamp = new Date().toLocaleString("en-GB", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" }).replace(",", "");
-      notesEl.value += (notesEl.value ? "\n\n" : "") + `--- Tool output (${stamp}) ---\n` + text + "\n";
+      const { tool, text } = getActiveToolOutput();
+      if (!text || text.trim() === "" || text.trim() === "Run a tool to see output here.") return;
+
+      const stamp = new Date().toLocaleString("en-GB", {
+        day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"
+      }).replace(",", "");
+
+      notesEl.value += (notesEl.value ? "\n\n" : "") + `--- ${tool} output (${stamp}) ---\n` + text + "\n";
       notesEl.focus();
     });
 
@@ -869,7 +1295,6 @@
     }
 
     function applySubMapping() {
-      // Take originalCipher and replace any char that matches a mapped ciphertext letter with the plaintext key
       const text = originalCipher || "";
       let out = "";
 
@@ -887,9 +1312,7 @@
       cipherEl.value = out;
     }
 
-    // keep originalCipher updated when user edits cipher box
     cipherEl?.addEventListener("input", () => {
-      // if they type, treat it as the new "base"
       originalCipher = (cipherEl.value || "").toUpperCase();
     });
 
@@ -900,7 +1323,6 @@
     });
 
     document.getElementById("sub-reset")?.addEventListener("click", () => {
-      // restore the pre-mapped cipher text
       cipherEl.value = originalCipher;
       subFreqOut.textContent = "Frequency output will appear here.";
     });
@@ -989,6 +1411,45 @@
     });
 
     // ===========================
+    // Breaker
+    // ===========================
+    const breakerTypeEl = document.getElementById("breaker-type");
+    const breakerKnownEl = document.getElementById("breaker-known");
+    const breakerRunBtn = document.getElementById("run-breaker");
+    const breakerCopyBtn = document.getElementById("copy-breaker");
+    const breakerOutEl = document.getElementById("breaker-output");
+
+    breakerRunBtn?.addEventListener("click", async () => {
+      breakerOutEl.textContent = "Running…";
+      try {
+        const data = await breakerRunRequest({
+          text: cipherEl.value || "",
+          cipher_type: breakerTypeEl?.value || "vigenere",
+          known_plaintext: breakerKnownEl?.value || ""
+        });
+
+        const cipher = data?.cipher ?? "—";
+        const key = (data?.key === null || data?.key === undefined || data?.key === "") ? "—" : String(data.key);
+        const plain = data?.text ?? "";
+
+        breakerOutEl.textContent =
+          `Cipher: ${cipher}\n` +
+          `Key: ${key}\n\n` +
+          `${plain || "(no output)"}`;
+      } catch (e) {
+        breakerOutEl.textContent = "Error running breaker.";
+      }
+    });
+
+    breakerCopyBtn?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText((breakerOutEl.textContent || "").trim());
+        setStatus("Copied");
+        setTimeout(() => setStatus("—"), 900);
+      } catch {}
+    });
+
+    // ===========================
     // Image zoom (if image exists)
     // ===========================
     const img = document.getElementById("cipher-img");
@@ -1024,4 +1485,5 @@
     setStatus("—");
   </script>
 </body>
+
 </html>

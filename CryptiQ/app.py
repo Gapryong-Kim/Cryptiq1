@@ -1943,7 +1943,6 @@ def init_workspaces():
     conn = get_db()
     cur = conn.cursor()
 
-    # Base table (won't overwrite if already exists)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS workspaces (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1952,33 +1951,23 @@ def init_workspaces():
       cipher_text TEXT NOT NULL DEFAULT '',
       notes TEXT NOT NULL DEFAULT '',
       cipher_image_filename TEXT,
+      order_index INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(owner_id) REFERENCES users(id)
     );
     """)
 
-    # Ensure columns exist even if table was created earlier with fewer cols
     cur.execute("PRAGMA table_info(workspaces)")
-    cols = {r[1] for r in cur.fetchall()}  # (cid, name, type, ...)
+    cols = {r[1] for r in cur.fetchall()}
 
-    if "title" not in cols:
-        cur.execute("ALTER TABLE workspaces ADD COLUMN title TEXT NOT NULL DEFAULT 'Untitled Workspace'")
-    if "cipher_text" not in cols:
-        cur.execute("ALTER TABLE workspaces ADD COLUMN cipher_text TEXT NOT NULL DEFAULT ''")
-    if "notes" not in cols:
-        cur.execute("ALTER TABLE workspaces ADD COLUMN notes TEXT NOT NULL DEFAULT ''")
-    if "cipher_image_filename" not in cols:
-        cur.execute("ALTER TABLE workspaces ADD COLUMN cipher_image_filename TEXT")
-    if "created_at" not in cols:
-        cur.execute("ALTER TABLE workspaces ADD COLUMN created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP")
-    if "updated_at" not in cols:
-        cur.execute("ALTER TABLE workspaces ADD COLUMN updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    if "order_index" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN order_index INTEGER NOT NULL DEFAULT 0")
 
-    # Helpful index
+    # helpful index
     cur.execute("""
-    CREATE INDEX IF NOT EXISTS idx_workspaces_owner_updated
-    ON workspaces(owner_id, datetime(updated_at) DESC);
+    CREATE INDEX IF NOT EXISTS idx_workspaces_owner_order
+    ON workspaces(owner_id, order_index);
     """)
 
     conn.commit()
@@ -2004,7 +1993,7 @@ def workspace_list():
         SELECT id, title, cipher_text, notes, cipher_image_filename, created_at, updated_at
         FROM workspaces
         WHERE owner_id = ?
-        ORDER BY datetime(updated_at) DESC
+        ORDER BY order_index ASC, datetime(updated_at) DESC
     """, (user["id"],)).fetchall()
     conn.close()
 
@@ -2239,6 +2228,34 @@ def workspace_delete(ws_id):
             pass
 
     return jsonify({"ok": True})
+
+@app.route("/workspaces/reorder", methods=["POST"])
+def workspace_reorder():
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    order = data.get("order")
+
+    if not isinstance(order, list):
+        return jsonify({"ok": False, "error": "invalid payload"}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    for idx, ws_id in enumerate(order):
+        cur.execute("""
+            UPDATE workspaces
+            SET order_index = ?
+            WHERE id = ? AND owner_id = ?
+        """, (idx, ws_id, user["id"]))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
 
 # ------------------- Run -------------------
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Cipher Lab — Workspaces</title>
+  <title>The Cipher Lab — My Labs</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 <style>
@@ -128,6 +128,10 @@
     cursor: pointer;
     transition: background .15s ease, border-color .15s ease, box-shadow .18s ease, transform .06s ease;
     white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .btn:hover{
@@ -151,9 +155,7 @@
     box-shadow: 0 0 0 2px var(--accent-soft);
   }
 
-  .wl-body{
-    padding: 16px;
-  }
+  .wl-body{ padding: 16px; }
 
   .grid{
     display: grid;
@@ -183,6 +185,7 @@
     text-decoration: none;
     color: inherit;
     min-height: 140px;
+    user-select: none;
   }
 
   .ws-card:hover{
@@ -286,6 +289,7 @@
     max-height: 80vh;
     overflow-y: auto;
     scrollbar-gutter: stable both-edges;
+    outline: none;
   }
 
   @keyframes fadeInUp{
@@ -293,93 +297,19 @@
     to{ opacity: 1; transform: translateY(0); }
   }
 
-  .info-close{
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    font-size: 22px;
-    cursor: pointer;
-    transition: color 0.25s;
-  }
-  .info-close:hover{ color: var(--accent); }
-
-  .info-box .tip{
-    margin-top: 14px;
-    color: var(--text-dim);
-    font-size: 0.94rem;
-  }
-
-  /* Scrollbar (WebKit) */
-  .info-box::-webkit-scrollbar{ width: 10px; }
-  .info-box::-webkit-scrollbar-track{
-    background: color-mix(in oklab, var(--panel) 90%, black);
-    border-radius: 10px;
-  }
-  .info-box::-webkit-scrollbar-thumb{
-    background: color-mix(in oklab, var(--accent) 30%, #0f0f0f);
-    border-radius: 10px;
-    border: 2px solid var(--panel);
-    transition: background .3s ease;
-  }
-  .info-box::-webkit-scrollbar-thumb:hover{ background: var(--accent); }
-
-  /* Firefox */
-  .info-box{
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in oklab, var(--accent) 30%, #0f0f0f)
-                     color-mix(in oklab, var(--panel) 90%, black);
-  }
-
-  /* === Info Button (latest version wins) === */
-  .info-btn{
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(0, 255, 213, 0.08);
-    border: none;
+  .info-box h2{
     color: var(--accent);
-    font-weight: 900;
-    font-size: 16px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    padding: 0;
-
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-    backdrop-filter: blur(6px);
-    transition: all 0.25s ease;
+    font-size: 1.35rem;
+    margin: 0 0 10px;
+    font-weight: 950;
+    letter-spacing: 0.2px;
+    text-shadow: 0 0 10px var(--accent-soft);
   }
 
-  .info-btn:hover{
-    background: var(--accent);
-    color: #0f0f0f;
-    transform: translateY(-1px) scale(1.05);
-    box-shadow: 0 0 12px var(--accent-soft);
+  .info-box ul li strong{
+    color: var(--accent);
+    font-weight: 950;
   }
-
-
-
-  /* === Info modal text styling upgrades (accent-correct) === */
-.info-box h2{
-  color: var(--accent);
-  font-size: 1.35rem;
-  margin: 0 0 10px;
-  font-weight: 950;
-  letter-spacing: 0.2px;
-  text-shadow: 0 0 10px var(--accent-soft);
-}
-
-.info-box ul li strong{
-  color: var(--accent);
-  font-weight: 950;
-}
-
 
   .info-box ul li{
     margin-bottom: 10px;
@@ -397,57 +327,203 @@
     padding: 0;
     list-style-type: disc;
   }
-  /* === Info modal close button (sleek circular hover) === */
-.info-close{
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
 
-  background: transparent;
-  border: none;
-  padding: 0;
+  .info-box .tip{
+    margin-top: 14px;
+    color: var(--text-dim);
+    font-size: 0.94rem;
+  }
 
-  color: var(--muted);
-  font-size: 22px;
-  cursor: pointer;
+  .info-close{
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--muted);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
 
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
-}
+  .info-close:hover{
+    background: color-mix(in oklab, var(--accent) 18%, transparent);
+    color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-soft);
+  }
 
-.info-close:hover{
-  background: color-mix(in oklab, var(--accent) 18%, transparent);
-  color: var(--accent);
-  box-shadow: 0 0 10px var(--accent-soft);
-}
+  .info-close:focus-visible{
+    outline: none;
+    background: color-mix(in oklab, var(--accent) 25%, transparent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
 
-/* keep keyboard accessibility */
-.info-close:focus-visible{
-  outline: none;
-  background: color-mix(in oklab, var(--accent) 25%, transparent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-}
-.info-close{
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
+  /* === Info Button === */
+  .info-btn{
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 255, 213, 0.08);
+    border: none;
+    color: var(--accent);
+    font-weight: 900;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    backdrop-filter: blur(6px);
+    transition: all 0.25s ease;
+  }
 
-  background: transparent;
-  border: none;
-  padding: 0;
+  .info-btn:hover{
+    background: var(--accent);
+    color: #0f0f0f;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 0 12px var(--accent-soft);
+  }
 
-  color: var(--muted);
-  font-size: 22px;
-  line-height: 1;          /* IMPORTANT */
-  cursor: pointer;
-}
+  /* === Delete button (centred) === */
+  .ws-delete{
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: transparent;
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    line-height: 0;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+  }
 
+  .ws-delete svg{
+    display: block;
+    width: 16px;
+    height: 16px;
+    transform: translateY(-1px);
+  }
+
+  .ws-delete:hover{
+    background: rgba(255, 0, 80, 0.12);
+    color: #ff4d6d;
+    box-shadow: 0 0 10px rgba(255, 77, 109, 0.35);
+  }
+
+  /* === Confirm delete modal === */
+  .confirm-modal{
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    z-index: 8000;
+    padding: 16px;
+  }
+  .confirm-modal.open{ display: flex; }
+
+  .confirm-box{
+    width: min(520px, 92vw);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 18px 60px rgba(0,0,0,.55);
+    padding: 18px 18px 16px;
+    color: var(--text);
+    outline: none;
+  }
+
+  .confirm-top{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .confirm-title{
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 950;
+  }
+
+  .confirm-x{
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    line-height: 0;
+    font-size: 22px;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+
+  .confirm-x:hover{
+    background: color-mix(in oklab, var(--accent) 18%, transparent);
+    color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-soft);
+  }
+
+  .confirm-text{
+    margin: 0 0 14px;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  .confirm-actions{
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .confirm-btn{
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-weight: 900;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, box-shadow .18s ease, transform .06s ease;
+  }
+
+  .confirm-btn:active{ transform: translateY(1px); }
+
+  .confirm-btn.secondary:hover{
+    background: var(--input-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+
+  .confirm-btn.danger{
+    border-color: rgba(255, 77, 109, .35);
+    background: rgba(255, 0, 80, 0.10);
+    color: #ff4d6d;
+  }
+
+  .confirm-btn.danger:hover{
+    background: rgba(255, 0, 80, 0.16);
+    box-shadow: 0 0 0 2px rgba(255, 77, 109, 0.18);
+  }
 </style>
 
 </head>
@@ -460,32 +536,20 @@
     <div class="info-box" role="document" tabindex="-1">
       <button class="info-close" id="info-close" title="Close" aria-label="Close">&times;</button>
 
-      <h2 id="info-title">About Workspaces</h2>
+      <h2 id="info-title">About Labs</h2>
       <p>
-        Workspaces are your private cipher “labs”. Each one holds a cipher text, notes, and any working you do while solving.
+        Workspaces are your private cipher “labs”. Each one holds a cipher text, notes, and access to our suite of cipher-solving tools and helpers.
         Use them to keep different puzzles separate and to build a history of your attempts.
       </p>
 
       <ul>
-        <li><strong>Create & Organise</strong><br>
-          Make a new workspace for each puzzle. Give it a good title so it’s easy to find later.
-        </li>
-
-        <li><strong>Search</strong><br>
-          Use the search box to filter by workspace title or the first part of your cipher/notes.
-        </li>
-
-        <li><strong>Open & Continue</strong><br>
-          Click a workspace card to jump back in. Your latest edits are saved with the workspace.
-        </li>
-
-        <li><strong>Tips</strong><br>
-          If you’re stuck, add hypotheses to your notes (suspected cipher type, key length, cribs, frequency notes).
-          Your future self will thank you.
-        </li>
+        <li><strong>Create & Organise</strong><br>Make a new workspace for each puzzle.</li>
+        <li><strong>Search</strong><br>Filter by workspace title or cipher text.</li>
+        <li><strong>Open & Continue</strong><br>Your edits are always saved.</li>
+        <li><strong>Tips</strong><br>Keep hypotheses and cribs in notes.</li>
       </ul>
 
-      <p class="tip">🧠 <em>Tip:</em> Keep one workspace as a “scratchpad” for alphabets, frequency tables, and common cribs.</p>
+      <p class="tip">🧠 <em>Tip:</em> Keep one workspace as a scratchpad.</p>
     </div>
   </div>
 
@@ -495,8 +559,8 @@
         <div class="wl-titlewrap">
           <span class="wl-dot" aria-hidden="true"></span>
           <div style="min-width:0;">
-            <h1 class="wl-title">Your Workspaces</h1>
-            <div class="wl-sub">Open a workspace to solve, annotate, and run tools.</div>
+            <h1 class="wl-title">Your Labs</h1>
+            <div class="wl-sub">Open a workspace to solve and annotate.</div>
           </div>
         </div>
 
@@ -510,15 +574,15 @@
             </svg>
           </div>
 
-          <button class="info-btn" id="info-open" type="button" title="About workspaces" aria-label="About workspaces">i</button>
-          <a style="text-decoration: none;" class="btn" href="{{ url_for('workspace_new') }}">New workspace</a>
+          <button class="info-btn" id="info-open" type="button" aria-label="About workspaces">i</button>
+          <a class="btn" href="{{ url_for('workspace_new') }}">New workspace</a>
         </div>
       </header>
 
       <div class="wl-body">
         {% if workspaces|length == 0 %}
           <div class="empty">
-            No workspaces yet — create one to start solving.<br><br>
+            No workspaces yet.<br><br>
             <a class="btn" href="{{ url_for('workspace_new') }}">Create your first workspace</a>
           </div>
         {% else %}
@@ -526,13 +590,36 @@
             {% for w in workspaces %}
               <a
                 class="ws-card"
+                draggable="true"
+                data-id="{{ w.id }}"
                 href="{{ url_for('workspace_view', ws_id=w.id) }}"
                 data-title="{{ (w.title or 'Untitled Workspace')|lower }}"
                 data-snippet="{{ ((w.cipher_text or w.notes or '')[:160])|lower }}"
               >
                 <div class="ws-head">
                   <h2 class="ws-name">{{ w.title or "Untitled Workspace" }}</h2>
-                  <span class="ws-chip">#{{ w.id }}</span>
+
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <span class="ws-chip">#{{ w.id }}</span>
+
+                    <button
+                      class="ws-delete"
+                      data-id="{{ w.id }}"
+                      type="button"
+                      title="Delete workspace"
+                      aria-label="Delete workspace"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                        <path d="M10 11v6"></path>
+                        <path d="M14 11v6"></path>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 <p class="ws-snippet">
@@ -541,8 +628,8 @@
                 </p>
 
                 <div class="ws-meta">
-                  <div><b>Updated:</b> {{ w.updated_at if w.updated_at else "—" }}</div>
-                  <div><b>Created:</b> {{ w.created_at if w.created_at else "—" }}</div>
+                  <div><b>Updated:</b> {{ w.updated_at or "—" }}</div>
+                  <div><b>Created:</b> {{ w.created_at or "—" }}</div>
                 </div>
               </a>
             {% endfor %}
@@ -552,57 +639,172 @@
     </section>
   </main>
 
+  <!-- Confirm Delete Modal -->
+  <div class="confirm-modal" id="confirm-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="confirm-box" role="document" tabindex="-1">
+      <div class="confirm-top">
+        <h3 id="confirm-title" class="confirm-title">Delete workspace?</h3>
+        <button class="confirm-x" id="confirm-x" type="button" aria-label="Close">×</button>
+      </div>
+
+      <p class="confirm-text">This will permanently delete the workspace. This can’t be undone.</p>
+
+      <div class="confirm-actions">
+        <button class="confirm-btn secondary" id="confirm-cancel" type="button">Cancel</button>
+        <button class="confirm-btn danger" id="confirm-ok" type="button">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Simple client-side search filter
-    (function(){
-      const input = document.getElementById("ws-search");
-      const cards = Array.from(document.querySelectorAll(".ws-card"));
-      if (!input || !cards.length) return;
+  // Search
+  (() => {
+    const input = document.getElementById("ws-search");
+    const cards = [...document.querySelectorAll(".ws-card")];
+    if (!input) return;
 
-      input.addEventListener("input", () => {
-        const q = (input.value || "").trim().toLowerCase();
-        cards.forEach(c => {
-          const t = c.dataset.title || "";
-          const s = c.dataset.snippet || "";
-          c.style.display = (!q || t.includes(q) || s.includes(q)) ? "" : "none";
-        });
+    input.addEventListener("input", () => {
+      const q = input.value.toLowerCase();
+      cards.forEach(c => {
+        c.style.display =
+          !q || c.dataset.title.includes(q) || c.dataset.snippet.includes(q)
+          ? "" : "none";
       });
-    })();
+    });
+  })();
 
-    // Info modal: open/close + ESC + click outside
-    (function(){
-      const modal = document.getElementById("info-modal");
-      const openBtn = document.getElementById("info-open");
-      const closeBtn = document.getElementById("info-close");
-      const box = modal ? modal.querySelector(".info-box") : null;
+  // Drag & drop reorder
+  (() => {
+    const grid = document.getElementById("ws-grid");
+    if (!grid) return;
 
-      if (!modal || !openBtn || !closeBtn || !box) return;
+    let dragged = null;
 
-      function openModal(){
-        modal.classList.add("open");
-        modal.setAttribute("aria-hidden", "false");
-        box.focus();
-        document.body.style.overflow = "hidden";
+    grid.querySelectorAll(".ws-card").forEach(card => {
+      card.addEventListener("dragstart", () => {
+        dragged = card;
+        card.style.opacity = "0.5";
+      });
+
+      card.addEventListener("dragend", () => {
+        dragged = null;
+        card.style.opacity = "";
+      });
+
+      card.addEventListener("dragover", e => e.preventDefault());
+
+      card.addEventListener("drop", e => {
+        e.preventDefault();
+        if (!dragged || dragged === card) return;
+
+        const cards = [...grid.children];
+        const from = cards.indexOf(dragged);
+        const to = cards.indexOf(card);
+
+        grid.insertBefore(dragged, from < to ? card.nextSibling : card);
+        persistOrder();
+      });
+    });
+
+    function persistOrder(){
+      const order = [...grid.children].map(c => c.dataset.id);
+      fetch("/workspaces/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order })
+      });
+    }
+  })();
+
+  // Delete workspace (custom modal confirm)
+  (() => {
+    const modal = document.getElementById("confirm-modal");
+    const box = modal?.querySelector(".confirm-box");
+    const okBtn = document.getElementById("confirm-ok");
+    const cancelBtn = document.getElementById("confirm-cancel");
+    const xBtn = document.getElementById("confirm-x");
+    if (!modal || !box || !okBtn || !cancelBtn || !xBtn) return;
+
+    let pending = { id: null, card: null, opener: null };
+
+    function openConfirm({ id, card, opener }) {
+      pending = { id, card, opener };
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      box.focus();
+    }
+
+    function closeConfirm() {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      pending.opener?.focus?.();
+      pending = { id: null, card: null, opener: null };
+    }
+
+    document.querySelectorAll(".ws-delete").forEach(btn => {
+      btn.addEventListener("click", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const card = btn.closest(".ws-card");
+        openConfirm({ id, card, opener: btn });
+      });
+    });
+
+    okBtn.addEventListener("click", async () => {
+      if (!pending.id) return closeConfirm();
+      okBtn.disabled = true;
+      okBtn.textContent = "Deleting…";
+      try {
+        const res = await fetch(`/workspaces/${pending.id}/delete`, { method: "POST" });
+        if (res.ok) pending.card?.remove();
+      } finally {
+        okBtn.disabled = false;
+        okBtn.textContent = "Delete";
+        closeConfirm();
       }
+    });
 
-      function closeModal(){
-        modal.classList.remove("open");
-        modal.setAttribute("aria-hidden", "true");
-        document.body.style.overflow = "";
-        openBtn.focus();
-      }
+    cancelBtn.addEventListener("click", closeConfirm);
+    xBtn.addEventListener("click", closeConfirm);
 
-      openBtn.addEventListener("click", openModal);
-      closeBtn.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeConfirm(); });
 
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) closeModal();
-      });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("open")) closeConfirm();
+    });
+  })();
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
-      });
-    })();
+  // Info modal
+  (() => {
+    const modal = document.getElementById("info-modal");
+    const open = document.getElementById("info-open");
+    const close = document.getElementById("info-close");
+    const box = modal?.querySelector(".info-box");
+    if (!modal || !open || !close || !box) return;
+
+    open.addEventListener("click", () => {
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      box.focus();
+      document.body.style.overflow = "hidden";
+    });
+
+    close.addEventListener("click", () => {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      open.focus();
+    });
+
+    modal.addEventListener("click", (e) => { if (e.target === modal) close.click(); });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("open")) close.click();
+    });
+  })();
   </script>
 </body>
 </html>
