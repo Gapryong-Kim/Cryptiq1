@@ -11,25 +11,22 @@
 
     /* =============== Shell =============== */
     .ws-shell{
-  min-height: calc(100dvh - 80px);
-  display: grid;
-  grid-template-rows: 1fr;
-  padding: 0;           /* 🔥 removes outer padding */
-  box-sizing: border-box;
-}
-
+      min-height: calc(100dvh - 80px);
+      display: grid;
+      grid-template-rows: 1fr;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     .ws-card{
-  width: 98vw;
-  max-width: none;      /* 🔥 this is the key line */
-  margin: 0;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 0;     /* optional – feels more “app-like” */
-  box-shadow: none;     /* optional – removes card feel */
-}
-
-
+      width: 98vw;
+      max-width: none;
+      margin: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+    }
 
     /* =============== Top Toolbar =============== */
     .ws-topbar{
@@ -98,6 +95,7 @@
       cursor: pointer;
       transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
       letter-spacing: .02em;
+      white-space: nowrap;
     }
 
     .tb-btn:hover{
@@ -136,15 +134,13 @@
 
     /* =============== Main Grid =============== */
     .ws-grid{
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(460px, 600px);
-  gap: 16px;
-  padding: 16px;
-  box-sizing: border-box;
-  align-items: stretch;
-}
-
-
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(460px, 600px);
+      gap: 16px;
+      padding: 16px;
+      box-sizing: border-box;
+      align-items: stretch;
+    }
 
     @media (max-width: 980px){
       .ws-grid{ grid-template-columns: 1fr; }
@@ -263,42 +259,25 @@
     }
 
     .cipher-text{
-  width: 100%;
-  min-height: 420px;   /* 🔥 real working height */
-  box-sizing: border-box;
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 12px;
-  padding: 14px;
-  color: var(--text);
-  font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
-  font-size: 15px;
-  line-height: 1.6;
-  resize: vertical;
-}
-
-
+      width: 100%;
+      min-height: 420px;
+      box-sizing: border-box;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 14px;
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      resize: vertical;
+    }
 
     .cipher-text:focus{
       outline: none;
       border-color: var(--accent);
       background: var(--input-focus);
       box-shadow: 0 0 0 2px var(--accent-soft);
-    }
-
-    .cipher-img-wrap{
-      display: none;
-      gap: 10px;
-    }
-
-    .cipher-img{
-      width: 100%;
-      max-height: 360px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      object-fit: contain;
-      background: rgba(255,255,255,0.02);
-      cursor: zoom-in;
     }
 
     .hint{
@@ -308,13 +287,8 @@
     }
 
     /* =============== Tool Panel (Dock) =============== */
-    .tool-panel{
-      margin-top: 12px;
-    }
-
-    .tool-card{
-      display: none;
-    }
+    .tool-panel{ margin-top: 12px; }
+    .tool-card{ display: none; }
     .tool-card.active{ display: grid; gap: 10px; }
 
     .tool-row{
@@ -504,371 +478,177 @@
       background: rgba(255,255,255,0.02);
     }
 
-    /* Mobile tweaks */
-    @media (max-width: 520px){
-      .ws-shell{ padding: 78px 10px 20px; }
-      .ws-tools{ justify-content: flex-start; }
-      .ws-status{ text-align: left; min-width: 0; }
-      .doc-text{ min-height: 320px; }
-      .cipher-side{ gap: 10px; }
+    /* =========================================================
+       MOBILE TOPBAR OVERRIDE
+       ========================================================= */
+    @media (max-width: 640px){
+      html, body,
+      .ws-shell,
+      .ws-card,
+      .ws-topbar,
+      .ws-grid,
+      .ws-panel,
+      .doc-wrap,
+      .cipher-side{
+        overflow-x: hidden !important;
+      }
+
+      .ws-topbar{
+        justify-content: flex-start !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+        scrollbar-width: none;
+        padding-bottom: 10px;
+      }
+      .ws-topbar::-webkit-scrollbar{ display: none; }
+
+      .ws-titlewrap{
+        width: auto !important;
+        min-width: max-content !important;
+        flex: 0 0 auto !important;
+        gap: 6px !important;
+      }
+
+      .ws-tools{
+        width: auto !important;
+        min-width: max-content !important;
+        flex: 0 0 auto !important;
+
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+
+        overflow: visible !important;
+        margin-left: 4px !important;
+      }
+
+      .ws-tools .tb-btn{
+        flex: 0 0 auto;
+        white-space: nowrap;
+      }
+
+      .doc-actions, .cipher-upload-actions { justify-content: flex-start; }
+      .mini-btn, .img-btn { width: 100%; }
     }
-  /* =============== Mobile improvements (append at end) =============== */
-@media (max-width: 640px){
 
-  /* Full width, no horizontal scroll */
-  .ws-shell{
-    min-height: calc(100dvh - 80px);
-    padding: 0;
-    overflow-x: hidden;
-  }
+    /* =========================================================
+       Upload image buttons + preview (APPEND AT END)
+       ========================================================= */
 
-  .ws-card{
-    width: 100%;
-    max-width: 100%;
-  }
+    /* ===== Cipher image uploader ===== */
+    .cipher-upload{
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+      display: grid;
+      gap: 10px;
+    }
 
-  /* Toolbar: stick, wrap nicely, comfy spacing */
-  .ws-topbar{
-    position: sticky;
-    top: 0;
-    padding: 10px 10px;
-    gap: 8px;
-  }
+    .cipher-upload-row{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
 
-  .ws-titlewrap{
-    width: 100%;
-  }
+    /* ✅ Hidden file input (we trigger it from the Upload button) */
+    #cipher-image-input{
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
-  .ws-title{
-    font-size: 0.98rem;
-  }
+    .cipher-upload-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
 
-  .ws-sub{
-    display: none; /* keeps toolbar clean on small screens */
-  }
+    .img-btn{
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+    }
+    .img-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .img-btn:active{ transform: translateY(1px); }
 
-  .ws-tools{
-    width: 100%;
-    justify-content: flex-start;
-    gap: 8px;
-  }
+    .img-btn.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .img-btn.primary:hover{
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
 
-  /* Bigger tap targets */
-  .tb-btn{
-    padding: 10px 12px;
-    font-size: .88rem;
-  }
+    .img-btn.danger{
+      border-color: rgba(255, 107, 107, 0.35);
+      color: #ff8b8b;
+    }
+    .img-btn.danger:hover{
+      background: rgba(255, 107, 107, 0.12);
+      border-color: #ff7070;
+      box-shadow: 0 0 0 2px rgba(255, 112, 112, 0.18);
+    }
 
-  /* Stack layout and reduce padding */
-  .ws-grid{
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 10px;
-  }
+    .img-btn:disabled{
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
 
-  .ws-panel{
-    padding: 12px;
-    border-radius: 12px;
-  }
+    .cipher-upload-status{
+      color: var(--muted);
+      font-size: .86rem;
+      min-height: 18px;
+    }
 
-  /* Text areas: better height + no awkward resize handles on mobile */
-  .doc-text{
-    min-height: 44vh;
-    resize: none;
-  }
+    /* ===== Preview ===== */
+    .cipher-img-wrap{
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+      gap: 10px;
+    }
 
-  .cipher-text{
-    min-height: 38vh;
-    resize: none;
-  }
-
-  /* Inputs & selects: full-width and consistent */
-  select,
-  input[type="number"],
-  input[type="text"]{
-    width: 100%;
-  }
-
-  .tool-row{
-    gap: 8px;
-  }
-
-  /* Buttons rows wrap well */
-  .doc-actions,
-  .tool-row{
-    justify-content: flex-start;
-  }
-
-  .run-btn,
-  .mini-btn{
-    width: 100%;
-  }
-
-  /* Right sidebar shouldn't be sticky on mobile */
-  .cipher-side{
-    position: relative;
-    top: 0;
-  }
-}
-
-/* Slightly larger phones / small tablets */
-@media (min-width: 641px) and (max-width: 980px){
-  .ws-grid{
-    grid-template-columns: 1fr;
-  }
-  .cipher-side{
-    position: relative;
-    top: 0;
-  }
-}
-/* =============== Mobile tools bar fix =============== */
-@media (max-width: 640px){
-
-  /* Tool container becomes horizontal scroll */
-  .ws-tools{
-    display: flex;
-    flex-wrap: nowrap;          /* 🔑 no wrapping */
-    gap: 8px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 6px;
-    scrollbar-width: none;      /* Firefox */
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .ws-tools::-webkit-scrollbar{
-    display: none;              /* Chrome/Safari */
-  }
-
-  /* Buttons become compact chips */
-  .tb-btn{
-    flex: 0 0 auto;             /* don’t stretch */
-    padding: 9px 14px;
-    font-size: .85rem;
-    white-space: nowrap;
-  }
-
-  /* Active tool stands out more on mobile */
-  .tb-btn.active{
-    box-shadow: 0 0 0 2px var(--accent-soft),
-                0 6px 14px rgba(0,0,0,.35);
-  }
-}
-/* ===== Mobile: scrollable tool chips (fix clipping) ===== */
-@media (max-width: 640px){
-
-  /* The tools area must be allowed to shrink and scroll */
-  .ws-tools{
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;                 /* IMPORTANT: allows overflow container to actually overflow */
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;  /* don't space-between */
-    gap: 8px;
-
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-
-    padding: 6px 2px 10px;
-    margin: 0;
-    scrollbar-width: none;        /* Firefox */
-    touch-action: pan-x;          /* makes horizontal swipe work reliably */
-  }
-
-  .ws-tools::-webkit-scrollbar{ display: none; }
-
-  /* Each chip should not shrink */
-  .ws-tools .tb-btn{
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-
-  /* Make sure the topbar itself doesn't clip the tools */
-  .ws-topbar{
-    overflow: visible;
-  }
-}
-@media (max-width: 640px){
-  .ws-card,
-  .ws-shell{
-    overflow-x: visible;
-  }
-}
-/* =========================================================
-   MOBILE: tools bar is the ONLY horizontal scroller
-   ========================================================= */
-@media (max-width: 640px){
-
-  /* 1️⃣ Kill horizontal scroll everywhere by default */
-  html, body,
-  .ws-shell,
-  .ws-card,
-  .ws-topbar,
-  .ws-grid,
-  .ws-panel,
-  .doc-wrap,
-  .cipher-side{
-    overflow-x: hidden !important;
-  }
-
-  /* 2️⃣ Tools bar: explicitly allow horizontal scrolling */
-  .ws-tools{
-    width: 100%;
-    min-width: 0;
-
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 8px;
-
-    overflow-x: auto !important;
-    overflow-y: hidden;
-
-    padding: 6px 4px 10px;
-    margin: 0;
-
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
-
-    scrollbar-width: none; /* Firefox */
-  }
-
-  .ws-tools::-webkit-scrollbar{
-    display: none; /* Chrome / Safari */
-  }
-
-  /* 3️⃣ Tool buttons must never shrink */
-  .ws-tools .tb-btn{
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-
-  /* 4️⃣ Make sure topbar doesn't interfere */
-  .ws-topbar{
-    overflow: hidden;
-  }
-}
-/* =========================================================
-   MOBILE: make the WHOLE topbar row scroll (dot+title+tools)
-   ========================================================= */
-@media (max-width: 640px){
-
-  /* Only the topbar scrolls horizontally */
-  .ws-topbar{
-    overflow-x: auto !important;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
-    scrollbar-width: none;          /* Firefox */
-    padding-bottom: 10px;           /* space so it doesn't feel cramped */
-  }
-  .ws-topbar::-webkit-scrollbar{ display: none; }
-
-  /* Topbar content must stay on one line */
-  .ws-topbar{
-    flex-wrap: nowrap;              /* IMPORTANT */
-    gap: 10px;
-  }
-
-  /* Prevent left title block from shrinking into weirdness */
-  .ws-titlewrap{
-    flex: 0 0 auto;
-    min-width: max-content;
-  }
-
-  /* Tools: no longer a scroller; just a row inside the scroller */
-  .ws-tools{
-    overflow: visible !important;
-    flex-wrap: nowrap;
-    width: auto;
-    min-width: max-content;
-    justify-content: flex-start;
-  }
-
-  .ws-tools .tb-btn{
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-}
-/* =========================================================
-   MOBILE: tighten spacing in topbar (remove big gap)
-   ========================================================= */
-@media (max-width: 640px){
-
-  /* Reduce overall spacing in the row */
-  .ws-topbar{
-    gap: 6px;                 /* was 10–12px */
-  }
-
-  /* Title block should hug its content */
-  .ws-titlewrap{
-    flex: 0 0 auto;
-    min-width: auto;          /* 🔑 remove max-content spacing */
-    gap: 6px;                 /* dot ↔ text closer */
-  }
-
-  .ws-title{
-    font-size: 0.95rem;
-  }
-
-  /* Tools start immediately after title */
-  .ws-tools{
-    margin-left: 4px;         /* tiny separation, not a canyon */
-  }
-}
-
-  /* =========================================================
-   FINAL MOBILE TOPBAR OVERRIDE (wins vs earlier blocks)
-   ========================================================= */
-@media (max-width: 640px){
-
-  /* Make the topbar one scrollable row */
-  .ws-topbar{
-    justify-content: flex-start !important; /* <-- removes the huge gap */
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
-    scrollbar-width: none;
-    padding-bottom: 10px;
-  }
-  .ws-topbar::-webkit-scrollbar{ display: none; }
-
-  /* STOP the title area from taking the whole row */
-  .ws-titlewrap{
-    width: auto !important;         /* <-- overrides your earlier width:100% */
-    min-width: max-content !important;
-    flex: 0 0 auto !important;
-    gap: 6px !important;
-  }
-
-  /* Tools sit immediately after title, and stay on one line */
-  .ws-tools{
-    width: auto !important;         /* <-- overrides your earlier width:100% */
-    min-width: max-content !important;
-    flex: 0 0 auto !important;
-
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    justify-content: flex-start !important;
-    gap: 8px !important;
-
-    overflow: visible !important;   /* topbar is the scroller now */
-    margin-left: 4px !important;
-  }
-
-  .ws-tools .tb-btn{
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-}
-
+    .cipher-img{
+      width: 100%;
+      max-height: 360px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      object-fit: contain;
+      background: rgba(255,255,255,0.02);
+      cursor: zoom-in;
+    }
   </style>
 </head>
+
 <body>
   {% include 'base_nav.html' %}
 
@@ -889,8 +669,6 @@
           <button class="tb-btn" data-tool="spacer" type="button">Spacer</button>
           <button class="tb-btn" data-tool="remove_spaces" type="button">No spaces</button>
           <button class="tb-btn" data-tool="remove_punctuation" type="button">No punct</button>
-
-          <!-- NEW: Breaker tab -->
           <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
 
           <button class="tb-btn primary" id="save-btn" type="button">Save</button>
@@ -1006,7 +784,7 @@
                 <div class="result" id="tool-output-remove-punct">Output will appear here.</div>
               </div>
 
-              <!-- NEW: Breaker -->
+              <!-- Breaker -->
               <div class="tool-card" id="tool-breaker">
                 <div class="hint">
                   Calls <code>/breaker</code>. Optional fixed-map format: <code>AB=TH, CD=ER</code>
@@ -1055,25 +833,32 @@
           <div class="ws-panel" style="padding:14px;">
             <h3>Cipher View</h3>
 
+            <!-- Hidden file input (triggered by Upload button) -->
+            <input id="cipher-image-input" type="file" accept="image/*" />
+
+            <div class="cipher-upload">
+              <div class="cipher-upload-row">
+                <div class="cipher-upload-actions">
+                  <button class="img-btn primary" id="upload-cipher-image" type="button">Upload image</button>
+                  <button class="img-btn danger" id="delete-cipher-image" type="button">Remove</button>
+                </div>
+              </div>
+              <div class="cipher-upload-status" id="cipher-image-status">—</div>
+            </div>
+
+            <!-- ✅ Preview ON TOP of textarea -->
+            <div class="cipher-img-wrap" id="cipher-image-wrap">
+              <h3 style="margin-bottom:8px;">Cipher Image</h3>
+              <img id="cipher-img" class="cipher-img" src="" alt="Cipher image" />
+              <div class="hint">Tap/click to zoom.</div>
+            </div>
+
             <textarea id="cipher-text" class="cipher-text" placeholder="Paste ciphertext here…">{{ ws.cipher_text or "" }}</textarea>
 
             <div class="hint" style="margin-top:8px;">
               Paste your cipher here. Tools read from this box. Save stores it in the workspace.
             </div>
           </div>
-
-          {% if ws.cipher_image_filename %}
-          <div class="ws-panel cipher-img-wrap" style="display:grid; padding:14px;">
-            <h3 style="margin-bottom:8px;">Cipher Image</h3>
-            <img
-              id="cipher-img"
-              class="cipher-img"
-              src="{{ url_for('uploaded_file', filename=ws.cipher_image_filename) }}"
-              alt="Cipher image"
-            />
-            <div class="hint">Tap/click to zoom.</div>
-          </div>
-          {% endif %}
         </aside>
       </div>
     </section>
@@ -1140,7 +925,7 @@
       spacer: document.getElementById("tool-spacer"),
       remove_spaces: document.getElementById("tool-remove_spaces"),
       remove_punctuation: document.getElementById("tool-remove_punctuation"),
-      breaker: document.getElementById("tool-breaker"), // NEW
+      breaker: document.getElementById("tool-breaker"),
     };
 
     function showTool(name) {
@@ -1450,9 +1235,99 @@
     });
 
     // ===========================
-    // Image zoom (if image exists)
+    // Cipher Image upload/delete (ONE BUTTON FLOW)
+    // - Click "Upload image" -> opens file picker
+    // - After picking a file, it auto-uploads
     // ===========================
+    const imgInput = document.getElementById("cipher-image-input");
+    const imgUploadBtn = document.getElementById("upload-cipher-image");
+    const imgDeleteBtn = document.getElementById("delete-cipher-image");
+    const imgStatus = document.getElementById("cipher-image-status");
+
+    const imgWrap = document.getElementById("cipher-image-wrap");
     const img = document.getElementById("cipher-img");
+
+    function showCipherImage(src) {
+      if (!imgWrap || !img) return;
+      img.src = src;
+      imgWrap.style.display = "grid";
+    }
+
+    function hideCipherImage() {
+      if (!imgWrap || !img) return;
+      img.src = "";
+      imgWrap.style.display = "none";
+    }
+
+    async function uploadSelectedImage() {
+      const file = imgInput?.files?.[0];
+      if (!file) return;
+
+      if (imgStatus) imgStatus.textContent = "Uploading…";
+      if (imgUploadBtn) imgUploadBtn.disabled = true;
+
+      try {
+        const fd = new FormData();
+        fd.append("image", file);
+
+        const res = await fetch(`/workspaces/{{ ws.id }}/image`, { method: "POST", body: fd });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "upload failed");
+
+        // assumes your image-serving route is /uploads/<filename>
+        const url = `/uploads/${encodeURIComponent(data.filename)}?v=${Date.now()}`;
+        showCipherImage(url);
+
+        const updatedEl = document.getElementById("updated-at");
+        if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
+
+        if (imgStatus) imgStatus.textContent = "Uploaded ✓";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
+      } catch {
+        if (imgStatus) imgStatus.textContent = "Upload failed";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
+      } finally {
+        if (imgUploadBtn) imgUploadBtn.disabled = false;
+        // reset input so selecting the same file again triggers change
+        if (imgInput) imgInput.value = "";
+      }
+    }
+
+    // One-button UX:
+    // 1) click upload -> open picker
+    // 2) on file chosen -> upload
+    imgUploadBtn?.addEventListener("click", () => imgInput?.click());
+    imgInput?.addEventListener("change", uploadSelectedImage);
+
+    imgDeleteBtn?.addEventListener("click", async () => {
+      if (imgStatus) imgStatus.textContent = "Removing…";
+
+      try {
+        const res = await fetch(`/workspaces/{{ ws.id }}/image/delete`, { method: "POST" });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "delete failed");
+
+        hideCipherImage();
+
+        const updatedEl = document.getElementById("updated-at");
+        if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
+
+        if (imgStatus) imgStatus.textContent = "Removed ✓";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
+      } catch {
+        if (imgStatus) imgStatus.textContent = "Remove failed";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
+      }
+    });
+
+    // If workspace already has an image, show it on load
+    {% if ws.cipher_image_filename %}
+      showCipherImage("{{ url_for('uploaded_file', filename=ws.cipher_image_filename) }}");
+    {% endif %}
+
+    // ===========================
+    // Image zoom (preview)
+    // ===========================
     const modal = document.getElementById("img-modal");
     const modalImg = document.getElementById("img-modal-img");
     const closeBtn = document.getElementById("img-close");
@@ -1485,5 +1360,4 @@
     setStatus("—");
   </script>
 </body>
-
 </html>

@@ -2093,6 +2093,9 @@ def workspace_save(ws_id):
 
     return jsonify({"ok": True, "updated_at": now})
 
+import logging
+logging.getLogger("werkzeug").setLevel(logging.INFO)
+logging.getLogger("werkzeug").disabled = False
 
 # ----------------------
 # Upload/replace cipher image (optional)
@@ -2125,6 +2128,8 @@ def workspace_image_upload(ws_id):
     old = row["cipher_image_filename"]
 
     filename = secure_filename(f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{img.filename}")
+    print("UPLOAD_FOLDER =", app.config["UPLOAD_FOLDER"])
+
     img.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
     now = datetime.utcnow().isoformat()

@@ -284,22 +284,27 @@
     }
 
     /* ==========================
-       ✅ Post image (no upscaling)
+       Post image wrap (cover crop)
     =========================== */
-    .post-image{
-      display: block;
-      height: auto;
-      max-width: 100%;
+    .post-image-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
       border-radius: 10px;
+      background: var(--panel-2);
       margin-top: 10px;
-      object-fit: contain;
-      max-height: 70vh;
-    }
-    .post-image[data-small="1"]{
-      width: auto;      /* don't force full width if it would upscale */
-      max-width: 100%;
     }
 
+    .post-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 0;
+      max-height: none;
+    }
+
+    /* Comments */
     .comments {
       margin-top: 16px;
       background: var(--panel-2);
@@ -334,7 +339,6 @@
       padding: 0;
     }
 
-    /* === Twitter-style comment layout === */
     .comment {
       display: flex;
       align-items: flex-start;
@@ -466,10 +470,13 @@
       font-weight: 600;
       transition: background .15s, color .15s;
       font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
     }
 
     .comments-toggle:hover { background: var(--accent); color: #0f0f0f; }
 
+    /* Pagination */
     .pagination {
       display: flex;
       justify-content: center;
@@ -493,6 +500,7 @@
 
     .pagination span { color: var(--text-dim); }
 
+    /* FAB */
     .fab {
       position: fixed;
       bottom: 30px;
@@ -524,9 +532,7 @@
       .pagination { flex-wrap: wrap; gap: 8px; }
       .page-btn { padding: 8px 12px; font-size: 0.9rem; }
 
-      .comment {
-        padding: 8px 10px;
-      }
+      .comment { padding: 8px 10px; }
     }
 
     /* === Search Bar (Google-style) === */
@@ -548,9 +554,7 @@
       transition: box-shadow .2s, border-color .2s, background .2s;
     }
 
-    .posts-search input::placeholder {
-      color: var(--muted);
-    }
+    .posts-search input::placeholder { color: var(--muted); }
 
     .posts-search input:focus {
       outline: none;
@@ -569,7 +573,6 @@
       color: var(--muted);
     }
 
-    /* Suggestions dropdown (not wired yet, but styled) */
     .search-suggestions {
       position: absolute;
       top: 48px;
@@ -594,13 +597,9 @@
       transition: background .15s;
     }
 
-    .suggestion-item:last-child {
-      border-bottom: none;
-    }
+    .suggestion-item:last-child { border-bottom: none; }
 
-    .suggestion-item:hover {
-      background: var(--input-hover);
-    }
+    .suggestion-item:hover { background: var(--input-hover); }
 
     .suggestion-title {
       font-weight: 700;
@@ -613,30 +612,19 @@
       color: var(--muted);
     }
 
-    /* Glow highlight when navigated from a notification */
+    /* Glow highlight */
     @keyframes postGlow {
-      0% {
-        box-shadow: 0 0 0 rgba(0,255,213,0);
-        border-color: var(--accent);
-      }
-      50% {
-        box-shadow: 0 0 20px rgba(0,255,213,0.55);
-        border-color: var(--accent);
-      }
-      100% {
-        box-shadow: 0 0 0 rgba(0,255,213,0);
-        border-color: var(--line);
-      }
+      0% { box-shadow: 0 0 0 rgba(0,255,213,0); border-color: var(--accent); }
+      50% { box-shadow: 0 0 20px rgba(0,255,213,0.55); border-color: var(--accent); }
+      100% { box-shadow: 0 0 0 rgba(0,255,213,0); border-color: var(--line); }
     }
-
-    .post-glow {
-      animation: postGlow 1.1s ease-out;
-    }
+    .post-glow { animation: postGlow 1.1s ease-out; }
 
     /* =============================
-       HEART SYSTEM STYLES
-       Single SVG with CSS animation
+       HEART / UPVOTE
     ============================== */
+    .heart-anchor { display: block; }
+
     .heart-row {
       display: flex;
       align-items: center;
@@ -647,6 +635,7 @@
       position: absolute;
       bottom: 12px;
       right: 16px;
+      z-index: 5;
     }
 
     .heart-box {
@@ -682,9 +671,7 @@
       transform-origin: center;
     }
 
-    .heart-btn:hover .heart-icon {
-      stroke: var(--accent);
-    }
+    .heart-btn:hover .heart-icon { stroke: var(--accent); }
 
     .heart-btn.active-heart .heart-icon {
       fill: var(--accent-strong);
@@ -698,13 +685,8 @@
       100% { transform: scale(1.0); }
     }
 
-    .heart-pop .heart-icon {
-      animation: heartPop 0.26s ease-out;
-    }
-
-    .heart-unpop .heart-icon {
-      animation: heartPop 0.20s ease-out reverse;
-    }
+    .heart-pop .heart-icon { animation: heartPop 0.26s ease-out; }
+    .heart-unpop .heart-icon { animation: heartPop 0.20s ease-out reverse; }
 
     .heart-count {
       min-width: 16px;
@@ -712,7 +694,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Small pulse halo on like */
     .heart-pulse-ring {
       position: absolute;
       inset: -2px;
@@ -734,8 +715,20 @@
       }
     }
 
-    .heart-box.pulse .heart-pulse-ring {
-      animation: pulseRing 0.42s ease-out;
+    .heart-box.pulse .heart-pulse-ring { animation: pulseRing 0.42s ease-out; }
+
+    /* ✅ When comments are open: move heart next to toggle (inline) */
+    .post-card.comments-open .heart-row {
+      position: static;
+      bottom: auto;
+      right: auto;
+      margin-top: 0;
+    }
+
+    .post-card.comments-open .comments-toggle + .heart-row{
+      display: inline-flex;
+      margin-left: 10px;
+      vertical-align: middle;
     }
 
     /* ============================================================
@@ -753,9 +746,7 @@
       animation: fadeIn .15s ease-out;
     }
 
-    .delete-popup-overlay.open {
-      display: flex;
-    }
+    .delete-popup-overlay.open { display: flex; }
 
     .delete-popup-box {
       background: var(--panel);
@@ -800,18 +791,14 @@
       color: var(--text);
     }
 
-    #delete-popup-cancel:hover {
-      background: var(--input-hover);
-    }
+    #delete-popup-cancel:hover { background: var(--input-hover); }
 
     #delete-popup-confirm {
       background: #ff6b6b;
       color: #0f0f0f;
     }
 
-    #delete-popup-confirm:hover {
-      background: #ff7f7f;
-    }
+    #delete-popup-confirm:hover { background: #ff7f7f; }
 
     @keyframes popIn {
       from { transform: scale(.87); opacity: 0; }
@@ -823,63 +810,7 @@
       to   { opacity: 1; }
     }
 
-    /* === Upvote Arrow (clean, bright accent fill) === */
-    .upvote-svg {
-      width: 22px;
-      height: 22px;
-      display: block;
-    }
-
-    .upvote-path {
-      fill: transparent;
-      stroke: var(--accent);              /* bright teal outline */
-      stroke-width: 2.4;
-      stroke-linejoin: round;
-      stroke-linecap: round;
-      opacity: 0.55;                      /* subtle outline */
-      transition:
-        fill .22s ease,
-        stroke .22s ease,
-        opacity .22s ease,
-        transform .18s ease,
-        filter .18s ease;
-    }
-
-    /* Hover preview: brighter outline */
-    .heart-btn:hover .upvote-path {
-      opacity: 0.85;
-    }
-
-    /* Liked state — fully filled with your accent */
-    .heart-btn.active-heart .upvote-path {
-      fill: var(--accent);
-      stroke: var(--accent);
-      opacity: 1;
-      transform: scale(1.16);
-    }
-
-    /* Optional glow (looks clean on dark theme) */
-    .heart-btn.active-heart .upvote-svg {
-      filter: drop-shadow(0 0 4px rgba(0,255,213,0.55));
-    }
-    .post-titles {
-      padding-bottom: 2vh;
-    }
-  .post-image-wrap {
-  width: 100%;
-  aspect-ratio: 16 / 9;      /* pick 4/5, 1/1, or 3/4 if you prefer */
-  overflow: hidden;
-  border-radius: 10px;
-  background: var(--panel-2);
-}
-
-.post-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;         /* ← key change */
-  display: block;
-}
-
+    .post-titles { padding-bottom: 2vh; }
   </style>
 </head>
 
@@ -891,25 +822,15 @@
       <h2 class="post-titles">Community Posts</h2>
 
       <div class="posts-search">
-        <input
-          type="text"
-          id="post-search-input"
-          placeholder="Search posts..."
-          autocomplete="off"
-        >
-
-        <!-- Clean SVG magnifying glass icon -->
+        <input type="text" id="post-search-input" placeholder="Search posts..." autocomplete="off">
         <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-
-        <!-- Suggestions (dropdown - optional) -->
         <div class="search-suggestions" id="search-suggestions"></div>
       </div>
 
-      <!-- No results message -->
       <div id="no-results" style="
         display:none;
         text-align:center;
@@ -920,20 +841,10 @@
         No results found.
       </div>
 
-      <!-- SORT PILLS (New / Top / Hot) -->
       <div class="posts-sort">
-        <a href="{{ url_for('posts_list', sort='new') }}"
-           class="sort-pill {% if sort == 'new' %}active{% endif %}">
-          New
-        </a>
-        <a href="{{ url_for('posts_list', sort='top') }}"
-           class="sort-pill {% if sort == 'top' %}active{% endif %}">
-          Top
-        </a>
-        <a href="{{ url_for('posts_list', sort='hot') }}"
-           class="sort-pill {% if sort == 'hot' %}active{% endif %}">
-          Hot
-        </a>
+        <a href="{{ url_for('posts_list', sort='new') }}" class="sort-pill {% if sort == 'new' %}active{% endif %}">New</a>
+        <a href="{{ url_for('posts_list', sort='top') }}" class="sort-pill {% if sort == 'top' %}active{% endif %}">Top</a>
+        <a href="{{ url_for('posts_list', sort='hot') }}" class="sort-pill {% if sort == 'hot' %}active{% endif %}">Hot</a>
       </div>
 
       <p>Share your ciphers, solver tips, and cryptic insights with others.</p>
@@ -953,25 +864,23 @@
           <div class="post-title">{{ p.title }}</div>
           <div class="post-author">
             by {{ p.username or '[Deleted User]' }}
-            {% if p.is_admin %}
-              <span class="admin-badge">Admin</span>
-            {% endif %}
-            {% if p.banned %}
-              <span class="banned-badge">BANNED</span>
-            {% endif %}
+            {% if p.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+            {% if p.banned %}<span class="banned-badge">BANNED</span>{% endif %}
           </div>
         </div>
+
         <div class="post-right">
           <div class="post-meta">
             {% if p.pinned %}
               <span class="pinned-badge" title="Pinned post">
                 <img src="{{ url_for('static', filename='assets/pin.svg') }}" alt="Pinned"
-                    style="width:14px;height:14px;vertical-align:-2px;filter:invert(63%) sepia(95%) saturate(500%) hue-rotate(125deg) brightness(102%) contrast(101%);">
+                  style="width:14px;height:14px;vertical-align:-2px;filter:invert(63%) sepia(95%) saturate(500%) hue-rotate(125deg) brightness(102%) contrast(101%);">
                 Pinned
               </span>
             {% endif %}
             <span>{{ p.created_at[:19].replace('T',' ') }}</span>
           </div>
+
           {% if user and (user.id == p.owner_id or user_is_admin) %}
           <div class="post-menu">
             <button class="kebab-btn" title="Options">⋯</button>
@@ -995,15 +904,15 @@
       </div>
 
       {% if p.image_filename %}
-<div class="post-image-wrap">
-  <img class="post-image"
-       src="{{ url_for('uploaded_file', filename=p.image_filename) }}"
-       alt="Post image">
-</div>
-{% endif %}
-
+      <div class="post-image-wrap">
+        <img class="post-image" src="{{ url_for('uploaded_file', filename=p.image_filename) }}" alt="Post image">
+      </div>
+      {% endif %}
 
       <div class="post-body">{{ p.body }}</div>
+
+      <!-- anchor so we can snap the upvote back to bottom-right -->
+      <div class="heart-anchor"></div>
 
       <!-- Hearts row -->
       <div class="heart-row">
@@ -1013,7 +922,6 @@
                   type="button"
                   aria-label="Heart this post"
                   aria-pressed="{% if p.viewer_hearted %}true{% else %}false{% endif %}">
-            <!-- Single SVG -->
             <svg class="heart-icon" viewBox="0 0 24 24">
               <path d="M12 4 L18 12 H14 V20 H10 V12 H6 Z"/>
             </svg>
@@ -1039,9 +947,8 @@
         {% else %}
         <div class="comment-add" style="justify-content:center;">
           <em style="color:var(--muted);">
-            <a href="{{ url_for('login') }}" style="color:var(--accent); text-decoration:none; font-weight:600;">
-              Log in
-            </a> to comment
+            <a href="{{ url_for('login') }}" style="color:var(--accent); text-decoration:none; font-weight:600;">Log in</a>
+            to comment
           </em>
         </div>
         {% endif %}
@@ -1068,9 +975,7 @@
       <span>＋</span>
     </a>
 
-    <!-- ===========================
-         Delete Confirmation Popup
-    =========================== -->
+    <!-- Delete Confirmation Popup -->
     <div id="delete-popup" class="delete-popup-overlay">
       <div class="delete-popup-box">
         <h3>Confirm Delete</h3>
@@ -1083,14 +988,11 @@
       </div>
     </div>
 
-    <!-- ===========================
-         Login Required Popup
-    =========================== -->
+    <!-- Login Required Popup -->
     <div id="login-popup" class="delete-popup-overlay">
       <div class="delete-popup-box">
         <h3>Login Required</h3>
         <p>
-          
           <a href="{{ url_for('login') }}" style="color:var(--accent);font-weight:700;">Log in</a>
           to upvote posts.
         </p>
@@ -1108,21 +1010,6 @@
       </div>
     </div>
   </main>
-
-<script>
-/* ============================================================
-   ✅ Mark small images so they don't upscale (blur)
-============================================================ */
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("img.post-image").forEach(img => {
-    img.addEventListener("load", () => {
-      if (img.naturalWidth && img.clientWidth && img.naturalWidth < img.clientWidth) {
-        img.dataset.small = "1";
-      }
-    }, { once: true });
-  });
-});
-</script>
 
 <script>
 /* ============================================================
@@ -1149,11 +1036,7 @@ function setupPostBodyCollapsing(root = document) {
     }
   });
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  setupPostBodyCollapsing();
-});
-
+document.addEventListener("DOMContentLoaded", () => setupPostBodyCollapsing());
 
 /* ============================================================
    Kebab Menu Toggle (delegated)
@@ -1171,7 +1054,6 @@ document.addEventListener("click", e => {
     all.forEach(m => m.classList.remove("open"));
   }
 });
-
 
 /* ============================================================
    COMMENT UTIL FUNCTIONS
@@ -1214,10 +1096,8 @@ function renderComment(c) {
       <div class="comment-body">${escapeHtml(c.body)}</div>
     </div>
   `;
-
   return li;
 }
-
 
 /* ============================================================
    LOAD COMMENTS
@@ -1243,9 +1123,9 @@ async function loadComments(postId) {
   }
 }
 
-
 /* ============================================================
-   COMMENTS (toggle, post, delete)
+   COMMENTS (toggle, post)
+   ✅ (delete is handled ONLY by popup handler at bottom)
 ============================================================ */
 document.addEventListener("click", async e => {
   /* Toggle */
@@ -1257,13 +1137,27 @@ document.addEventListener("click", async e => {
     const num = document.getElementById(`comments-num-${id}`).textContent;
     const open = toggle.dataset.state === "open";
 
+    // move upvote next to toggle when open
+    const heartRow = card.querySelector(".heart-row");
+    const anchor = card.querySelector(".heart-anchor");
+
     if (open) {
       toggle.dataset.state = "closed";
       box.classList.remove("open");
+      card.classList.remove("comments-open");
+
+      // snap back near anchor (absolute bottom-right again)
+      if (anchor && heartRow) anchor.insertAdjacentElement("afterend", heartRow);
+
       toggle.innerHTML = `Show comments (<span id="comments-num-${id}">${num}</span>)`;
     } else {
       toggle.dataset.state = "open";
       box.classList.add("open");
+      card.classList.add("comments-open");
+
+      // move heart beside toggle
+      if (heartRow) toggle.insertAdjacentElement("afterend", heartRow);
+
       toggle.innerHTML = `Hide comments (<span id="comments-num-${id}">${num}</span>)`;
       await loadComments(id);
     }
@@ -1301,23 +1195,10 @@ document.addEventListener("click", async e => {
     postBtn.textContent = old;
   }
 
-  /* Delete comment */
+  /* Delete comment: do nothing here (popup handler handles it) */
   const delBtn = e.target.closest(".comment-delete");
-  if (delBtn) {
-    const id = delBtn.dataset.id;
-    const el = delBtn.closest(".comment");
-    delBtn.disabled = true;
-
-    try {
-      const res = await fetch(`/comments/${id}/delete`, { method: "POST" });
-      const data = await res.json();
-      if (data.ok) el.remove();
-    } finally {
-      delBtn.disabled = false;
-    }
-  }
+  if (delBtn) return;
 });
-
 
 /* ============================================================
    Ban / Unban + Pin / Unpin
@@ -1344,7 +1225,6 @@ document.addEventListener("click", async e => {
   }
 });
 
-
 /* ============================================================
    Glow on hash navigation
 ============================================================ */
@@ -1359,7 +1239,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
-
 
 /* ============================================================
    Load Comment Counts
@@ -1383,9 +1262,7 @@ async function loadAllCommentCounts(root = document) {
     } catch {}
   }
 }
-
 document.addEventListener("DOMContentLoaded", () => loadAllCommentCounts());
-
 
 /* ============================================================
    HEART SYSTEM — Animated CSS Single-SVG
@@ -1395,7 +1272,6 @@ document.addEventListener("click", async e => {
   const btn = e.target.closest(".heart-btn");
   if (!btn) return;
 
-  // If not logged in, show login popup instead of sending vote
   if (!{{ 'true' if user else 'false' }}) {
     const lp = document.getElementById("login-popup");
     if (lp) lp.classList.add("open");
@@ -1415,14 +1291,12 @@ document.addEventListener("click", async e => {
     const data = await res.json();
     if (!data.ok) return;
 
-    // update count
     const countEl = document.getElementById(`heart-count-${postId}`);
     if (countEl) countEl.textContent = data.hearts;
 
-    // clear animations
     btn.classList.remove("heart-pop", "heart-unpop");
     box.classList.remove("pulse");
-    void btn.offsetWidth; // force reflow
+    void btn.offsetWidth;
 
     if (data.hearted) {
       btn.classList.add("active-heart", "heart-pop");
@@ -1433,12 +1307,10 @@ document.addEventListener("click", async e => {
       btn.classList.add("heart-unpop");
       btn.setAttribute("aria-pressed", "false");
     }
-
   } catch (err) {
     console.error("Heart error:", err);
   }
 });
-
 
 /* ============================================================
    Levenshtein
@@ -1465,7 +1337,6 @@ function levenshtein(a, b) {
   return dp[lb][la];
 }
 
-
 /* ============================================================
    SCORING MODEL — TITLE STRONG, NO PIN BIAS
 ============================================================ */
@@ -1479,14 +1350,11 @@ function scoredPost(p, rawQuery) {
 
   let score = 0;
 
-  // Exact match dominates everything
   if (title === q) return 10_000_000;
 
-  // Title starts-with or contains
   if (title.startsWith(q)) score += 5_000_000;
   if (title.includes(q))   score += 3_000_000;
 
-  // Levenshtein on full title
   const dt = levenshtein(title, q);
   if (dt === 1) score += 1_000_000;
   if (dt === 2) score += 500_000;
@@ -1523,10 +1391,9 @@ function scoredPost(p, rawQuery) {
   return score;
 }
 
-
 /* ============================================================
    RENDER POST (for search results)
-   NOTE: This mirrors the server HTML as close as possible.
+   NOTE: mirrors server HTML + includes heart-anchor
 ============================================================ */
 function renderPostHTML(p, isAdmin, isLogged) {
   const created = (p.created_at || "").replace("T", " ").slice(0,19);
@@ -1560,7 +1427,6 @@ function renderPostHTML(p, isAdmin, isLogged) {
                    <button class="toggle-pin" data-id="${p.id}" data-state="${p.pinned ? "1" : "0"}">${p.pinned ? "Unpin" : "Pin"}</button>
                    <button class="ban-user" data-username="${escapeHtml(p.username || "")}" data-banned="${p.banned ? "1" : "0"}">${p.banned ? "Unban user" : "Ban user"}</button>
                  ` : ""}
-
                  ${p.can_edit ? `<a href="/posts/${p.id}/edit">Edit</a>` : ""}
                  ${p.can_delete ? `
                    <form method="post" action="/posts/${p.id}/delete">
@@ -1574,9 +1440,11 @@ function renderPostHTML(p, isAdmin, isLogged) {
     </div>
   </div>
 
-  ${p.image_filename ? `<img class="post-image" src="/uploads/${p.image_filename}" alt="Post image">` : ""}
+  ${p.image_filename ? `<div class="post-image-wrap"><img class="post-image" src="/uploads/${p.image_filename}" alt="Post image"></div>` : ""}
 
   <div class="post-body">${escapeHtml(p.body || "")}</div>
+
+  <div class="heart-anchor"></div>
 
   <div class="heart-row">
     <div class="heart-box" data-post-id="${p.id}">
@@ -1618,11 +1486,8 @@ function renderPostHTML(p, isAdmin, isLogged) {
 </article>`;
 }
 
-
 /* ============================================================
    GLOBAL SEARCH (Option B)
-   - Always searches ALL posts via /api/search
-   - Overrides sort mode visually but pills stay rendered
 ============================================================ */
 (function () {
   const input = document.getElementById("post-search-input");
@@ -1637,13 +1502,11 @@ function renderPostHTML(p, isAdmin, isLogged) {
     const q = raw.trim().toLowerCase();
 
     if (!q) {
-      // Reset to whatever server sort is (new/top/hot)
       window.location.href = window.location.pathname + window.location.search;
       return;
     }
 
     try {
-      // Grab all posts, independent of current sort
       const res = await fetch("/api/search");
       const data = await res.json();
 
@@ -1652,14 +1515,10 @@ function renderPostHTML(p, isAdmin, isLogged) {
       const posts = data.posts || [];
 
       const ranked = posts
-        .map(p => ({
-          post: p,
-          score: scoredPost(p, raw)
-        }))
+        .map(p => ({ post: p, score: scoredPost(p, raw) }))
         .filter(r => r.score > 0)
-        .sort((a, b) => b.score - a.score); // strict best→worst
+        .sort((a, b) => b.score - a.score);
 
-      // Remove all server-rendered posts & pagination
       container.querySelectorAll(".post-card").forEach(e => e.remove());
       container.querySelectorAll(".pagination").forEach(e => e.remove());
 
@@ -1671,24 +1530,11 @@ function renderPostHTML(p, isAdmin, isLogged) {
       noRes.style.display = "none";
 
       ranked.forEach(r => {
-        container.insertAdjacentHTML(
-          "beforeend",
-          renderPostHTML(r.post, isAdmin, isLogged)
-        );
+        container.insertAdjacentHTML("beforeend", renderPostHTML(r.post, isAdmin, isLogged));
       });
 
-      // Re-wire collapse & comment counts in the new DOM
       setupPostBodyCollapsing(container);
       loadAllCommentCounts(container);
-
-      // ✅ mark small images in newly rendered DOM too
-      container.querySelectorAll("img.post-image").forEach(img => {
-        img.addEventListener("load", () => {
-          if (img.naturalWidth && img.clientWidth && img.naturalWidth < img.clientWidth) {
-            img.dataset.small = "1";
-          }
-        }, { once: true });
-      });
     } catch (err) {
       console.error("Search error:", err);
     }
@@ -1708,7 +1554,6 @@ function renderPostHTML(p, isAdmin, isLogged) {
   });
 })();
 
-
 /* ============================================================
    DELETE POPUP HANDLER
 ============================================================ */
@@ -1719,14 +1564,12 @@ const btnConfirm = document.getElementById("delete-popup-confirm");
 
 let pendingDeleteAction = null;
 
-// Open popup
 function openDeletePopup(message, onConfirm) {
   popupText.textContent = message;
   pendingDeleteAction = onConfirm;
   popup.classList.add("open");
 }
 
-// Close popup
 function closeDeletePopup() {
   popup.classList.remove("open");
   pendingDeleteAction = null;
@@ -1742,7 +1585,6 @@ btnConfirm.addEventListener("click", () => {
   closeDeletePopup();
 });
 
-
 /* ============================================================
    LOGIN POPUP HANDLER
 ============================================================ */
@@ -1750,32 +1592,26 @@ const loginPopup = document.getElementById("login-popup");
 const loginClose = document.getElementById("login-popup-close");
 
 if (loginPopup && loginClose) {
-  loginClose.addEventListener("click", () => {
-    loginPopup.classList.remove("open");
-  });
-
+  loginClose.addEventListener("click", () => loginPopup.classList.remove("open"));
   loginPopup.addEventListener("click", e => {
-    if (e.target === loginPopup) {
-      loginPopup.classList.remove("open");
-    }
+    if (e.target === loginPopup) loginPopup.classList.remove("open");
   });
 }
 
-
 /* ============================================================
    HOOK INTO ALL DELETE BUTTONS (POSTS + COMMENTS)
+   ✅ Comment delete only happens after confirm now
 ============================================================ */
 document.addEventListener("click", e => {
   const delForm = e.target.closest("form[action*='delete']");
   const delCommentBtn = e.target.closest(".comment-delete");
 
-  // POST DELETE
   if (delForm && delForm.tagName === "FORM") {
     e.preventDefault();
     openDeletePopup("Delete this post?", () => delForm.submit());
+    return;
   }
 
-  // COMMENT DELETE (popup override)
   if (delCommentBtn) {
     e.preventDefault();
     const commentId = delCommentBtn.dataset.id;
@@ -1788,6 +1624,5 @@ document.addEventListener("click", e => {
   }
 });
 </script>
-
 </body>
 </html>
