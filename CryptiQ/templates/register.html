@@ -265,6 +265,8 @@
           <label class="form-label" for="email">Email</label>
           <input class="auth-input" id="email" type="email" name="email" required placeholder="you@example.com"
                  value="{{ request.form.get('email','') }}">
+          <div id="email-error" class="mismatch">Please enter a valid email (must include “@”).</div>
+
 
           <label class="form-label" for="username">Username</label>
           <input class="auth-input" id="username" type="text" name="username" required
@@ -294,41 +296,69 @@
     </div>
   </main>
 
-  <script>
-    // Show/Hide toggles
-    function wireToggle(btnId, inputId) {
-      const btn = document.getElementById(btnId);
-      const input = document.getElementById(inputId);
-      if (!btn || !input) return;
-      btn.addEventListener('click', () => {
-        const show = input.type === 'password';
-        input.type = show ? 'text' : 'password';
-        btn.textContent = show ? 'Hide' : 'Show';
-      });
-    }
-    wireToggle('toggle-pass-1', 'password');
-    wireToggle('toggle-pass-2', 'confirm');
-
-    // Inline password match warning
-    const form = document.getElementById('register-form');
-    const pwd = document.getElementById('password');
-    const cfm = document.getElementById('confirm');
-    const msg = document.getElementById('mismatch');
-
-    function checkMatch() {
-      const noMatch = pwd.value && cfm.value && pwd.value !== cfm.value;
-      msg.classList.toggle('show', noMatch);
-      return !noMatch;
-    }
-    pwd.addEventListener('input', checkMatch);
-    cfm.addEventListener('input', checkMatch);
-
-    form.addEventListener('submit', (e) => {
-      if (!checkMatch()) {
-        e.preventDefault();
-        cfm.focus();
-      }
+<script>
+  // Show/Hide toggles
+  function wireToggle(btnId, inputId) {
+    const btn = document.getElementById(btnId);
+    const input = document.getElementById(inputId);
+    if (!btn || !input) return;
+    btn.addEventListener('click', () => {
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Hide' : 'Show';
     });
-  </script>
+  }
+  wireToggle('toggle-pass-1', 'password');
+  wireToggle('toggle-pass-2', 'confirm');
+
+  // Elements
+  const form = document.getElementById('register-form');
+  const email = document.getElementById('email');
+  const emailErr = document.getElementById('email-error');
+
+  const pwd = document.getElementById('password');
+  const cfm = document.getElementById('confirm');
+  const pwdMsg = document.getElementById('mismatch');
+
+  // Email validation: must include "@"
+  function checkEmail() {
+    const v = (email.value || '').trim();
+
+    // allow empty during typing; submit handler will catch required anyway
+    const bad = v.length > 0 && !v.includes('@');
+
+    if (emailErr) emailErr.classList.toggle('show', bad);
+    return !bad;
+  }
+
+  email.addEventListener('input', checkEmail);
+  email.addEventListener('blur', checkEmail);
+
+  // Inline password match warning
+  function checkMatch() {
+    const noMatch = pwd.value && cfm.value && pwd.value !== cfm.value;
+    pwdMsg.classList.toggle('show', noMatch);
+    return !noMatch;
+  }
+  pwd.addEventListener('input', checkMatch);
+  cfm.addEventListener('input', checkMatch);
+
+  form.addEventListener('submit', (e) => {
+    const okEmail = checkEmail();
+    const okPwd = checkMatch();
+
+    if (!okEmail) {
+      e.preventDefault();
+      email.focus();
+      return;
+    }
+    if (!okPwd) {
+      e.preventDefault();
+      cfm.focus();
+      return;
+    }
+  });
+</script>
+
 </body>
 </html>
