@@ -44,6 +44,9 @@ from cipher_tools.breakers import (
 from cipher_tools.auto_break import auto_break  #  new auto detector
 from cipher_tools.random_tools import nospace
 from cipher_tools.random_tools import remove_punc
+# from cipher_tools.playfair import make_score_fn, playfair_break
+
+# PLAYFAIR_SCORE_FN, PLAYFAIR_USING_FILE = make_score_fn("english_tetragrams.txt")
 
 
 
@@ -349,6 +352,16 @@ def breaker():
                 key, plaintext = binary_break(text)
             elif cipher_type == "baconian":
                 key, plaintext = baconian_break(text)
+            elif cipher_type == "playfair":
+                # Choose budget based on how long you’ll allow per request
+                # "fast" ~ quickest, "normal" balanced, "hard" stronger
+                key_square, plaintext = playfair_break(
+                    text,
+                    score_fn=PLAYFAIR_SCORE_FN,
+                    time_budget="fast",
+                    seed=42
+                )
+                key = key_square  # return the 25-letter square as the "key"
 
             # ======================
             # AUTO-DETECT
@@ -2261,6 +2274,22 @@ def workspace_reorder():
 
     return jsonify({"ok": True})
 
+@app.route("/prefs/labs-info-seen", methods=["POST"])
+def prefs_labs_info_seen():
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+    conn.execute("""
+        UPDATE users
+        SET labs_info_seen = 1
+        WHERE id = ?
+    """, (user["id"],))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
 
 # ------------------- Run -------------------
 if __name__ == "__main__":

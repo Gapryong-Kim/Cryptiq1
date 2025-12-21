@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Cipher Lab — New Workspace</title>
+  <title>The Cipher Lab — New Lab</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     .page-wrap{ min-height: calc(100dvh - 80px); padding: 18px 14px 22px; }
@@ -78,7 +78,7 @@
   <main class="page-wrap">
     <section class="card" aria-label="Create workspace">
       <div class="top">
-        <h1 class="title">Create Workspace</h1>
+        <h1 class="title">Create Lab</h1>
         <a class="btn" href="{{ url_for('workspace_list') }}">Back</a>
       </div>
 
@@ -87,7 +87,7 @@
           <label for="title">Workspace title</label>
           <input id="title" name="title" type="text" placeholder="e.g. Zodiac #340 notes" maxlength="120" />
           <div class="hint">
-            You can change this later inside the workspace. If left blank, we’ll use “Untitled Workspace”.
+            You can change this later inside the workspace. If left blank, we’ll use “Untitled Lab”.
           </div>
         </div>
 
