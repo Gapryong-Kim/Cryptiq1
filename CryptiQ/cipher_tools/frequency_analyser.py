@@ -13,7 +13,7 @@ normal_distribution = {
 
 def analyse(message):
     # --- Clean and prep ---
-    message = ''.join(ch for ch in message.lower() if ch.isalpha())
+    message = ''.join(ch for ch in message if ch.isalpha())
     n = len(message)
     if n == 0:
         return [], [], [], "No alphabetic content"

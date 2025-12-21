@@ -538,10 +538,9 @@
     }
 
     /* =========================================================
-       Upload image buttons + preview (APPEND AT END)
+       Upload image buttons + preview
        ========================================================= */
 
-    /* ===== Cipher image uploader ===== */
     .cipher-upload{
       margin-top: 12px;
       padding-top: 12px;
@@ -557,7 +556,6 @@
       align-items: center;
     }
 
-    /* ✅ Hidden file input (we trigger it from the Upload button) */
     #cipher-image-input{
       position: absolute;
       width: 1px;
@@ -628,7 +626,6 @@
       min-height: 18px;
     }
 
-    /* ===== Preview ===== */
     .cipher-img-wrap{
       display: none;
       margin-top: 12px;
@@ -646,6 +643,323 @@
       background: rgba(255,255,255,0.02);
       cursor: zoom-in;
     }
+
+    /* ===========================
+       Split-scroll layout
+       =========================== */
+    @media (min-width: 981px){
+      .ws-shell{
+        height: calc(100dvh - 80px);
+        overflow: hidden;
+      }
+
+      .ws-grid{
+        height: calc(100dvh - 80px - 58px);
+        overflow: hidden;
+      }
+
+      .ws-grid > .ws-panel{
+        height: 100%;
+        overflow-y: auto;
+        scrollbar-gutter: stable both-edges;
+      }
+
+      .cipher-side{
+        position: relative;
+        top: auto;
+        height: 100%;
+        overflow-y: auto;
+        scrollbar-gutter: stable both-edges;
+      }
+
+      .cipher-side .ws-panel{
+        height: auto;
+      }
+    }
+
+    @media (max-width: 980px){
+      .ws-shell{ height: auto; overflow: visible; }
+      .ws-grid{ height: auto; overflow: visible; }
+      .ws-grid > .ws-panel{ height: auto; overflow: visible; }
+      .cipher-side{ height: auto; overflow: visible; }
+    }
+
+    /* =========================================================
+       Image tabs + kebab menu
+       ========================================================= */
+    .cipher-tabs{
+      display: none;
+      margin-top: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .cipher-tabs.show{ display: flex; }
+
+    .cipher-tab-wrap{
+      position: relative;
+      display: inline-flex;
+    }
+
+    .cipher-tab{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      max-width: 100%;
+    }
+    .cipher-tab:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .cipher-tab.active{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+
+    .cipher-tab-label{
+      display: inline-block;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cipher-tab-more{
+  background: none;
+  border: none;
+  padding: 0 4px;
+  margin-left: 2px;
+  color: inherit;
+  font-weight: 900;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .6;
+}
+
+.cipher-tab-more:hover{
+  opacity: 1;
+}
+
+
+    .cipher-menu{
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 170px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.45);
+      padding: 6px;
+      display: none;
+      z-index: 2000;
+    }
+    .cipher-menu.open{ display: grid; gap: 4px; }
+
+    .cipher-menu-item{
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+
+      padding: 10px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+    }
+    .cipher-menu-item:hover{
+      background: var(--input-hover);
+      border-color: var(--line-2);
+    }
+    .cipher-menu-item.danger{
+      color: #ff8b8b;
+    }
+    .cipher-menu-item.danger:hover{
+      background: rgba(255, 107, 107, 0.12);
+      border-color: rgba(255, 107, 107, 0.35);
+    }
+
+    .cipher-tab-input{
+      width: 190px;
+      max-width: 62vw;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .cipher-tab-input:focus{
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    /* ===== Confirm modal ===== */
+.cmodal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 7000;
+}
+.cmodal.open{ display: flex; }
+
+.cmodal-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+}
+
+.cmodal-box{
+  position: relative;
+  width: min(520px, 92vw);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  animation: cmodalPop .12s ease-out;
+}
+@keyframes cmodalPop{
+  from { transform: translateY(6px) scale(.98); opacity: .6; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.cmodal-top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 4px 0;
+}
+
+.cmodal-title{
+  color: var(--text);
+  font-weight: 900;
+  font-size: .98rem;
+}
+
+.cmodal-x{
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--text);
+  font-weight: 900;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.cmodal-x:hover{
+  background: var(--input-hover);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.cmodal-body{
+  color: var(--muted);
+  line-height: 1.45;
+  padding: 0 4px;
+}
+
+.cmodal-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 6px 4px 2px;
+  flex-wrap: wrap;
+}
+
+.cmodal-btn{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+}
+.cmodal-btn:hover{
+  background: var(--input-hover);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.cmodal-btn.ghost{
+  opacity: .95;
+}
+
+.cmodal-btn.danger{
+  border-color: rgba(255, 107, 107, 0.35);
+  color: #ff8b8b;
+}
+.cmodal-btn.danger:hover{
+  background: rgba(255, 107, 107, 0.12);
+  border-color: #ff7070;
+  box-shadow: 0 0 0 2px rgba(255, 112, 112, 0.18);
+}
+/* let menus overflow the wrapped rows */
+.cipher-tabs{
+  overflow: visible;
+}
+
+/* each tab needs a positioning context for its menu */
+.cipher-tab-wrap{
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+}
+
+/* when a menu is open, raise that tab above the other wrapped tabs */
+.cipher-tab-wrap.open{
+  z-index: 50;
+}
+
+/* make sure the dropdown can sit above other rows */
+.cipher-menu{
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 2000;
+}
+
+  /* floating menu (portal) */
+.cipher-float-menu{
+  position: fixed;
+  min-width: 170px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  padding: 6px;
+  display: none;
+  z-index: 99999;
+}
+
+.cipher-float-menu.open{ display: grid; gap: 4px; }
+
   </style>
 </head>
 
@@ -658,7 +972,7 @@
       <header class="ws-topbar">
         <div class="ws-titlewrap">
           <span class="ws-dot" aria-hidden="true"></span>
-          <h1 class="ws-title">Workspace</h1>
+          <h1 class="ws-title">My Cipher Lab</h1>
           <span class="ws-sub" id="ws-id">#{{ ws.id }}</span>
         </div>
 
@@ -690,7 +1004,7 @@
               </div>
             </div>
 
-            <input id="ws-title-input" class="doc-title" placeholder="Workspace title"
+            <input id="ws-title-input" class="doc-title" placeholder="Lab title"
                    value="{{ ws.title or 'Untitled Workspace' }}"/>
 
             <textarea id="ws-notes" class="doc-text" placeholder="Write notes, partial plaintext, hypotheses…">{{ ws.notes or "" }}</textarea>
@@ -833,7 +1147,6 @@
           <div class="ws-panel" style="padding:14px;">
             <h3>Cipher View</h3>
 
-            <!-- Hidden file input (triggered by Upload button) -->
             <input id="cipher-image-input" type="file" accept="image/*" />
 
             <div class="cipher-upload">
@@ -844,9 +1157,13 @@
                 </div>
               </div>
               <div class="cipher-upload-status" id="cipher-image-status">—</div>
+
+              <div class="cipher-tabs" id="cipher-tabs" aria-label="Cipher image tabs"></div>
+              <div class="hint" id="cipher-tabs-hint" style="display:none;margin-top:-2px;">
+                Tip: double-click a tab to rename it.
+              </div>
             </div>
 
-            <!-- ✅ Preview ON TOP of textarea -->
             <div class="cipher-img-wrap" id="cipher-image-wrap">
               <h3 style="margin-bottom:8px;">Cipher Image</h3>
               <img id="cipher-img" class="cipher-img" src="" alt="Cipher image" />
@@ -874,490 +1191,869 @@
       <img id="img-modal-img" class="img-modal-img" alt="Cipher image zoomed" />
     </div>
   </div>
+  <!-- Confirm Delete Modal -->
+<div id="confirm-modal" class="cmodal" aria-hidden="true">
+  <div class="cmodal-backdrop" data-close="1"></div>
 
-  <script>
-    // ===========================
-    // Helpers
-    // ===========================
-    function escapeHtml(str) {
-      return (str || "").replace(/[&<>"']/g, s =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s])
-      );
-    }
+  <div class="cmodal-box" role="dialog" aria-modal="true" aria-label="Confirm delete">
+    <div class="cmodal-top">
+      <div class="cmodal-title" id="cmodal-title">Delete image?</div>
+      <button class="cmodal-x" id="cmodal-x" type="button" aria-label="Close">✕</button>
+    </div>
 
-    async function toolsRun(tool_type, payload = {}) {
-      const formData = new FormData();
-      formData.append("tool_type", tool_type);
-      formData.append("text", payload.text ?? "");
-      if (payload.block_length != null) formData.append("block_length", String(payload.block_length));
-      if (payload.to_replace != null) formData.append("to_replace", payload.to_replace);
-      if (payload.replacement != null) formData.append("replacement", payload.replacement);
+    <div class="cmodal-body" id="cmodal-body">
+      Are you sure you want to delete this image?
+    </div>
 
-      const res = await fetch("/tools/run", { method: "POST", body: formData });
-      const data = await res.json();
-      return data.text || "";
-    }
+    <div class="cmodal-actions">
+      <button class="cmodal-btn ghost" id="cmodal-cancel" type="button">Cancel</button>
+      <button class="cmodal-btn danger" id="cmodal-confirm" type="button">Delete</button>
+    </div>
+  </div>
+</div>
+<script>
+  // ===========================
+  // Helpers
+  // ===========================
+  function escapeHtml(str) {
+    return (str || "").replace(/[&<>"']/g, s =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s])
+    );
+  }
 
-    async function breakerRunRequest(payload = {}) {
+  async function toolsRun(tool_type, payload = {}) {
+    const formData = new FormData();
+    formData.append("tool_type", tool_type);
+    formData.append("text", payload.text ?? "");
+    if (payload.block_length != null) formData.append("block_length", String(payload.block_length));
+    if (payload.to_replace != null) formData.append("to_replace", payload.to_replace);
+    if (payload.replacement != null) formData.append("replacement", payload.replacement);
+
+    const res = await fetch("/tools/run", { method: "POST", body: formData });
+    const data = await res.json();
+    return data.text || "";
+  }
+
+  async function breakerRunRequest(payload = {}) {
+    const fd = new FormData();
+    fd.append("text", payload.text ?? "");
+    fd.append("cipher_type", (payload.cipher_type ?? "vigenere").toLowerCase());
+    fd.append("known_plaintext", payload.known_plaintext ?? "");
+
+    const res = await fetch("/breaker", { method: "POST", body: fd });
+    const data = await res.json();
+    return data;
+  }
+
+  function setStatus(msg) {
+    const el = document.getElementById("save-status");
+    if (el) el.textContent = msg;
+  }
+
+  // ===== Custom confirm modal (NO window.confirm) =====
+  function confirmDeleteModal({ title = "Delete image?", message = "Are you sure?" } = {}) {
+    const modal = document.getElementById("confirm-modal");
+    const titleEl = document.getElementById("cmodal-title");
+    const bodyEl = document.getElementById("cmodal-body");
+    const btnCancel = document.getElementById("cmodal-cancel");
+    const btnConfirm = document.getElementById("cmodal-confirm");
+    const btnX = document.getElementById("cmodal-x");
+
+    if (!modal || !btnCancel || !btnConfirm) return Promise.resolve(false);
+
+    titleEl.textContent = title;
+    bodyEl.textContent = message;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+
+    // focus confirm for quick Enter
+    setTimeout(() => btnConfirm.focus(), 0);
+
+    return new Promise((resolve) => {
+      const cleanup = (result) => {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+
+        btnCancel.removeEventListener("click", onCancel);
+        btnConfirm.removeEventListener("click", onConfirm);
+        btnX?.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKey);
+
+        resolve(result);
+      };
+
+      const onCancel = () => cleanup(false);
+      const onConfirm = () => cleanup(true);
+
+      const onBackdrop = (e) => {
+        const closeEl = e.target?.closest?.("[data-close='1']");
+        if (closeEl) cleanup(false);
+      };
+
+      const onKey = (e) => {
+        if (e.key === "Escape") cleanup(false);
+        if (e.key === "Enter") cleanup(true);
+      };
+
+      btnCancel.addEventListener("click", onCancel);
+      btnConfirm.addEventListener("click", onConfirm);
+      btnX?.addEventListener("click", onCancel);
+      modal.addEventListener("click", onBackdrop);
+      document.addEventListener("keydown", onKey);
+    });
+  }
+
+  // ===========================
+  // Toolbar switching
+  // ===========================
+  const toolButtons = Array.from(document.querySelectorAll(".tb-btn[data-tool]"));
+  const toolCards = {
+    frequency: document.getElementById("tool-frequency"),
+    substitution: document.getElementById("tool-substitution"),
+    replacer: document.getElementById("tool-replacer"),
+    spacer: document.getElementById("tool-spacer"),
+    remove_spaces: document.getElementById("tool-remove_spaces"),
+    remove_punctuation: document.getElementById("tool-remove_punctuation"),
+    breaker: document.getElementById("tool-breaker"),
+  };
+
+  function showTool(name) {
+    toolButtons.forEach(b => b.classList.toggle("active", b.dataset.tool === name));
+    Object.entries(toolCards).forEach(([k, el]) => {
+      if (!el) return;
+      el.classList.toggle("active", k === name);
+    });
+  }
+
+  toolButtons.forEach(btn => {
+    btn.addEventListener("click", () => showTool(btn.dataset.tool));
+  });
+
+  // ===========================
+  // Save
+  // ===========================
+  const saveBtn = document.getElementById("save-btn");
+  const notesEl = document.getElementById("ws-notes");
+  const titleEl = document.getElementById("ws-title-input");
+  const cipherEl = document.getElementById("cipher-text");
+
+  async function saveWorkspace() {
+    setStatus("Saving…");
+    try {
       const fd = new FormData();
-      fd.append("text", payload.text ?? "");
-      fd.append("cipher_type", (payload.cipher_type ?? "vigenere").toLowerCase());
-      fd.append("known_plaintext", payload.known_plaintext ?? "");
+      fd.append("title", titleEl.value || "");
+      fd.append("notes", notesEl.value || "");
+      fd.append("cipher_text", cipherEl.value || "");
 
-      const res = await fetch("/breaker", { method: "POST", body: fd });
+      const res = await fetch(`/workspaces/{{ ws.id }}/save`, { method: "POST", body: fd });
       const data = await res.json();
-      return data;
+      if (!data.ok) throw new Error("save failed");
+      setStatus("Saved ✓");
+      setTimeout(() => setStatus("—"), 1400);
+    } catch {
+      setStatus("Save failed");
+      setTimeout(() => setStatus("—"), 1600);
     }
+  }
 
-    function setStatus(msg) {
-      const el = document.getElementById("save-status");
-      if (el) el.textContent = msg;
+  saveBtn?.addEventListener("click", saveWorkspace);
+
+  // ===========================
+  // Insert output → doc
+  // ===========================
+  const insertBtn = document.getElementById("insert-tool-output");
+
+  const TOOL_LABELS = {
+    frequency: "Frequency",
+    substitution: "Substitution",
+    replacer: "Replace",
+    spacer: "Spacer",
+    remove_spaces: "No spaces",
+    remove_punctuation: "No punct",
+    breaker: "Breaker",
+  };
+
+  function getActiveToolOutput() {
+    const active = document.querySelector(".tool-card.active");
+    if (!active) return { tool: "Tool", text: "" };
+
+    const id = active.id || "";
+    const toolKey = id.startsWith("tool-") ? id.slice(5) : "tool";
+    const toolLabel = TOOL_LABELS[toolKey] || toolKey;
+
+    const out = active.querySelector(".result");
+    return { tool: toolLabel, text: out ? out.textContent : "" };
+  }
+
+  insertBtn?.addEventListener("click", () => {
+    const { tool, text } = getActiveToolOutput();
+    if (!text || text.trim() === "" || text.trim() === "Run a tool to see output here.") return;
+
+    const stamp = new Date().toLocaleString("en-GB", {
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+    }).replace(",", "");
+
+    notesEl.value += (notesEl.value ? "\n\n" : "") + `--- ${tool} output (${stamp}) ---\n` + text + "\n";
+    notesEl.focus();
+  });
+
+  document.getElementById("copy-doc")?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(notesEl.value || "");
+      setStatus("Copied");
+      setTimeout(() => setStatus("—"), 900);
+    } catch {}
+  });
+
+  // ===========================
+  // Frequency
+  // ===========================
+  const freqBtn = document.getElementById("run-frequency");
+  const copyToolBtn = document.getElementById("copy-tool");
+  const outMain = document.getElementById("tool-output");
+
+  freqBtn?.addEventListener("click", async () => {
+    outMain.textContent = "Running…";
+    try {
+      const text = cipherEl.value || "";
+      const out = await toolsRun("frequency", { text });
+      outMain.textContent = out || "(no output)";
+    } catch {
+      outMain.textContent = "Error running frequency.";
     }
+  });
 
-    // ===========================
-    // Toolbar switching
-    // ===========================
-    const toolButtons = Array.from(document.querySelectorAll(".tb-btn[data-tool]"));
-    const toolCards = {
-      frequency: document.getElementById("tool-frequency"),
-      substitution: document.getElementById("tool-substitution"),
-      replacer: document.getElementById("tool-replacer"),
-      spacer: document.getElementById("tool-spacer"),
-      remove_spaces: document.getElementById("tool-remove_spaces"),
-      remove_punctuation: document.getElementById("tool-remove_punctuation"),
-      breaker: document.getElementById("tool-breaker"),
-    };
+  copyToolBtn?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText((outMain.textContent || "").trim());
+      setStatus("Copied");
+      setTimeout(() => setStatus("—"), 900);
+    } catch {}
+  });
 
-    function showTool(name) {
-      toolButtons.forEach(b => b.classList.toggle("active", b.dataset.tool === name));
-      Object.entries(toolCards).forEach(([k, el]) => {
-        if (!el) return;
-        el.classList.toggle("active", k === name);
+  // ===========================
+  // Substitution (client-side mapping MVP)
+  // ===========================
+  const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
+  const subGrid = document.getElementById("sub-grid");
+  const subFreqBtn = document.getElementById("sub-frequency");
+  const subFreqOut = document.getElementById("sub-freq-output");
+
+  const mapping = {};
+  let originalCipher = (cipherEl.value || "").toUpperCase();
+
+  function renderSubGrid() {
+    if (!subGrid) return;
+    subGrid.innerHTML = "";
+    alphabet.forEach(plain => {
+      mapping[plain] = mapping[plain] || "";
+      const box = document.createElement("div");
+      box.className = "sub-box";
+      box.innerHTML = `
+        <div class="sub-top">${plain}</div>
+        <div class="sub-arrow">↓</div>
+        <input class="sub-input" maxlength="1" data-plain="${plain}" placeholder="…" value="${escapeHtml(mapping[plain] || "")}">
+      `;
+      subGrid.appendChild(box);
+    });
+
+    subGrid.querySelectorAll(".sub-input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const plain = inp.dataset.plain;
+        const c = (inp.value || "").toUpperCase().replace(/[^A-Z]/g, "");
+        inp.value = c;
+        mapping[plain] = c;
+        applySubMapping();
       });
-    }
-
-    toolButtons.forEach(btn => {
-      btn.addEventListener("click", () => showTool(btn.dataset.tool));
     });
+  }
 
-    // ===========================
-    // Save
-    // ===========================
-    const saveBtn = document.getElementById("save-btn");
-    const notesEl = document.getElementById("ws-notes");
-    const titleEl = document.getElementById("ws-title-input");
-    const cipherEl = document.getElementById("cipher-text");
+  function applySubMapping() {
+    const text = originalCipher || "";
+    let out = "";
 
-    async function saveWorkspace() {
-      setStatus("Saving…");
-      try {
-        const fd = new FormData();
-        fd.append("title", titleEl.value || "");
-        fd.append("notes", notesEl.value || "");
-        fd.append("cipher_text", cipherEl.value || "");
-
-        const res = await fetch(`/workspaces/{{ ws.id }}/save`, { method: "POST", body: fd });
-        const data = await res.json();
-        if (!data.ok) throw new Error("save failed");
-        setStatus("Saved ✓");
-        setTimeout(() => setStatus("—"), 1400);
-      } catch {
-        setStatus("Save failed");
-        setTimeout(() => setStatus("—"), 1600);
-      }
-    }
-
-    saveBtn?.addEventListener("click", saveWorkspace);
-
-    // ===========================
-    // Insert output → doc (includes tool name)
-    // ===========================
-    const insertBtn = document.getElementById("insert-tool-output");
-
-    const TOOL_LABELS = {
-      frequency: "Frequency",
-      substitution: "Substitution",
-      replacer: "Replace",
-      spacer: "Spacer",
-      remove_spaces: "No spaces",
-      remove_punctuation: "No punct",
-      breaker: "Breaker",
-    };
-
-    function getActiveToolOutput() {
-      const active = document.querySelector(".tool-card.active");
-      if (!active) return { tool: "Tool", text: "" };
-
-      const id = active.id || "";
-      const toolKey = id.startsWith("tool-") ? id.slice(5) : "tool";
-      const toolLabel = TOOL_LABELS[toolKey] || toolKey;
-
-      const out = active.querySelector(".result");
-      return { tool: toolLabel, text: out ? out.textContent : "" };
-    }
-
-    insertBtn?.addEventListener("click", () => {
-      const { tool, text } = getActiveToolOutput();
-      if (!text || text.trim() === "" || text.trim() === "Run a tool to see output here.") return;
-
-      const stamp = new Date().toLocaleString("en-GB", {
-        day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"
-      }).replace(",", "");
-
-      notesEl.value += (notesEl.value ? "\n\n" : "") + `--- ${tool} output (${stamp}) ---\n` + text + "\n";
-      notesEl.focus();
-    });
-
-    document.getElementById("copy-doc")?.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(notesEl.value || "");
-        setStatus("Copied");
-        setTimeout(() => setStatus("—"), 900);
-      } catch {}
-    });
-
-    // ===========================
-    // Frequency
-    // ===========================
-    const freqBtn = document.getElementById("run-frequency");
-    const copyToolBtn = document.getElementById("copy-tool");
-    const outMain = document.getElementById("tool-output");
-
-    freqBtn?.addEventListener("click", async () => {
-      outMain.textContent = "Running…";
-      try {
-        const text = cipherEl.value || "";
-        const out = await toolsRun("frequency", { text });
-        outMain.textContent = out || "(no output)";
-      } catch {
-        outMain.textContent = "Error running frequency.";
-      }
-    });
-
-    copyToolBtn?.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText((outMain.textContent || "").trim());
-        setStatus("Copied");
-        setTimeout(() => setStatus("—"), 900);
-      } catch {}
-    });
-
-    // ===========================
-    // Substitution (client-side mapping MVP)
-    // ===========================
-    const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
-    const subGrid = document.getElementById("sub-grid");
-    const subFreqBtn = document.getElementById("sub-frequency");
-    const subFreqOut = document.getElementById("sub-freq-output");
-
-    const mapping = {}; // plain -> cipher uppercase
-    let originalCipher = (cipherEl.value || "").toUpperCase();
-
-    function renderSubGrid() {
-      if (!subGrid) return;
-      subGrid.innerHTML = "";
-      alphabet.forEach(plain => {
-        mapping[plain] = mapping[plain] || "";
-        const box = document.createElement("div");
-        box.className = "sub-box";
-        box.innerHTML = `
-          <div class="sub-top">${plain}</div>
-          <div class="sub-arrow">↓</div>
-          <input class="sub-input" maxlength="1" data-plain="${plain}" placeholder="…" value="${escapeHtml(mapping[plain] || "")}">
-        `;
-        subGrid.appendChild(box);
-      });
-
-      subGrid.querySelectorAll(".sub-input").forEach(inp => {
-        inp.addEventListener("input", () => {
-          const plain = inp.dataset.plain;
-          const c = (inp.value || "").toUpperCase().replace(/[^A-Z]/g, "");
-          inp.value = c;
-          mapping[plain] = c;
-          applySubMapping();
-        });
-      });
-    }
-
-    function applySubMapping() {
-      const text = originalCipher || "";
-      let out = "";
-
-      for (const ch of text) {
-        let replaced = false;
-        for (const [plain, cipher] of Object.entries(mapping)) {
-          if (cipher && ch === cipher) {
-            out += plain;
-            replaced = true;
-            break;
-          }
+    for (const ch of text) {
+      let replaced = false;
+      for (const [plain, cipher] of Object.entries(mapping)) {
+        if (cipher && ch === cipher) {
+          out += plain;
+          replaced = true;
+          break;
         }
-        if (!replaced) out += ch;
       }
-      cipherEl.value = out;
+      if (!replaced) out += ch;
     }
+    cipherEl.value = out;
+  }
 
-    cipherEl?.addEventListener("input", () => {
-      originalCipher = (cipherEl.value || "").toUpperCase();
-    });
+  cipherEl?.addEventListener("input", () => {
+    originalCipher = (cipherEl.value || "").toUpperCase();
+  });
 
-    document.getElementById("sub-clear")?.addEventListener("click", () => {
-      Object.keys(mapping).forEach(k => mapping[k] = "");
-      renderSubGrid();
-      applySubMapping();
-    });
-
-    document.getElementById("sub-reset")?.addEventListener("click", () => {
-      cipherEl.value = originalCipher;
-      subFreqOut.textContent = "Frequency output will appear here.";
-    });
-
-    subFreqBtn?.addEventListener("click", async () => {
-      subFreqOut.textContent = "Running…";
-      try {
-        const out = await toolsRun("frequency", { text: originalCipher });
-        subFreqOut.textContent = out || "(no output)";
-      } catch {
-        subFreqOut.textContent = "Error running frequency.";
-      }
-    });
-
+  document.getElementById("sub-clear")?.addEventListener("click", () => {
+    Object.keys(mapping).forEach(k => mapping[k] = "");
     renderSubGrid();
+    applySubMapping();
+  });
 
-    // ===========================
-    // Text Replacer
-    // ===========================
-    const repFind = document.getElementById("rep-find");
-    const repWith = document.getElementById("rep-with");
-    const repRun = document.getElementById("run-replace");
-    const repOut = document.getElementById("tool-output-replace");
+  document.getElementById("sub-reset")?.addEventListener("click", () => {
+    cipherEl.value = originalCipher;
+    subFreqOut.textContent = "Frequency output will appear here.";
+  });
 
-    repRun?.addEventListener("click", async () => {
-      repOut.textContent = "Running…";
-      try {
-        const out = await toolsRun("text_replacer", {
-          text: cipherEl.value || "",
-          to_replace: repFind.value || "",
-          replacement: repWith.value || ""
-        });
-        repOut.textContent = out || "(no output)";
-      } catch {
-        repOut.textContent = "Error running replacer.";
-      }
-    });
-
-    // ===========================
-    // Spacer
-    // ===========================
-    const spacerRun = document.getElementById("run-spacer");
-    const spacerLen = document.getElementById("spacer-len");
-    const spacerOut = document.getElementById("tool-output-spacer");
-
-    spacerRun?.addEventListener("click", async () => {
-      spacerOut.textContent = "Running…";
-      try {
-        const out = await toolsRun("text_spacer", {
-          text: cipherEl.value || "",
-          block_length: Number(spacerLen.value || 5)
-        });
-        spacerOut.textContent = out || "(no output)";
-      } catch {
-        spacerOut.textContent = "Error running spacer.";
-      }
-    });
-
-    // ===========================
-    // Remove spaces / punctuation
-    // ===========================
-    const rsBtn = document.getElementById("run-remove-spaces");
-    const rsOut = document.getElementById("tool-output-remove-spaces");
-
-    rsBtn?.addEventListener("click", async () => {
-      rsOut.textContent = "Running…";
-      try {
-        const out = await toolsRun("remove_spaces", { text: cipherEl.value || "" });
-        rsOut.textContent = out || "(no output)";
-      } catch {
-        rsOut.textContent = "Error running remove spaces.";
-      }
-    });
-
-    const rpBtn = document.getElementById("run-remove-punct");
-    const rpOut = document.getElementById("tool-output-remove-punct");
-
-    rpBtn?.addEventListener("click", async () => {
-      rpOut.textContent = "Running…";
-      try {
-        const out = await toolsRun("remove_punctuation", { text: cipherEl.value || "" });
-        rpOut.textContent = out || "(no output)";
-      } catch {
-        rpOut.textContent = "Error running remove punctuation.";
-      }
-    });
-
-    // ===========================
-    // Breaker
-    // ===========================
-    const breakerTypeEl = document.getElementById("breaker-type");
-    const breakerKnownEl = document.getElementById("breaker-known");
-    const breakerRunBtn = document.getElementById("run-breaker");
-    const breakerCopyBtn = document.getElementById("copy-breaker");
-    const breakerOutEl = document.getElementById("breaker-output");
-
-    breakerRunBtn?.addEventListener("click", async () => {
-      breakerOutEl.textContent = "Running…";
-      try {
-        const data = await breakerRunRequest({
-          text: cipherEl.value || "",
-          cipher_type: breakerTypeEl?.value || "vigenere",
-          known_plaintext: breakerKnownEl?.value || ""
-        });
-
-        const cipher = data?.cipher ?? "—";
-        const key = (data?.key === null || data?.key === undefined || data?.key === "") ? "—" : String(data.key);
-        const plain = data?.text ?? "";
-
-        breakerOutEl.textContent =
-          `Cipher: ${cipher}\n` +
-          `Key: ${key}\n\n` +
-          `${plain || "(no output)"}`;
-      } catch (e) {
-        breakerOutEl.textContent = "Error running breaker.";
-      }
-    });
-
-    breakerCopyBtn?.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText((breakerOutEl.textContent || "").trim());
-        setStatus("Copied");
-        setTimeout(() => setStatus("—"), 900);
-      } catch {}
-    });
-
-    // ===========================
-    // Cipher Image upload/delete (ONE BUTTON FLOW)
-    // - Click "Upload image" -> opens file picker
-    // - After picking a file, it auto-uploads
-    // ===========================
-    const imgInput = document.getElementById("cipher-image-input");
-    const imgUploadBtn = document.getElementById("upload-cipher-image");
-    const imgDeleteBtn = document.getElementById("delete-cipher-image");
-    const imgStatus = document.getElementById("cipher-image-status");
-
-    const imgWrap = document.getElementById("cipher-image-wrap");
-    const img = document.getElementById("cipher-img");
-
-    function showCipherImage(src) {
-      if (!imgWrap || !img) return;
-      img.src = src;
-      imgWrap.style.display = "grid";
+  subFreqBtn?.addEventListener("click", async () => {
+    subFreqOut.textContent = "Running…";
+    try {
+      const out = await toolsRun("frequency", { text: originalCipher });
+      subFreqOut.textContent = out || "(no output)";
+    } catch {
+      subFreqOut.textContent = "Error running frequency.";
     }
+  });
 
-    function hideCipherImage() {
-      if (!imgWrap || !img) return;
-      img.src = "";
-      imgWrap.style.display = "none";
+  renderSubGrid();
+
+  // ===========================
+  // Text Replacer
+  // ===========================
+  const repFind = document.getElementById("rep-find");
+  const repWith = document.getElementById("rep-with");
+  const repRun = document.getElementById("run-replace");
+  const repOut = document.getElementById("tool-output-replace");
+
+  repRun?.addEventListener("click", async () => {
+    repOut.textContent = "Running…";
+    try {
+      const out = await toolsRun("text_replacer", {
+        text: cipherEl.value || "",
+        to_replace: repFind.value || "",
+        replacement: repWith.value || ""
+      });
+      repOut.textContent = out || "(no output)";
+    } catch {
+      repOut.textContent = "Error running replacer.";
     }
+  });
 
-    async function uploadSelectedImage() {
-      const file = imgInput?.files?.[0];
-      if (!file) return;
+  // ===========================
+  // Spacer
+  // ===========================
+  const spacerRun = document.getElementById("run-spacer");
+  const spacerLen = document.getElementById("spacer-len");
+  const spacerOut = document.getElementById("tool-output-spacer");
 
-      if (imgStatus) imgStatus.textContent = "Uploading…";
-      if (imgUploadBtn) imgUploadBtn.disabled = true;
+  spacerRun?.addEventListener("click", async () => {
+    spacerOut.textContent = "Running…";
+    try {
+      const out = await toolsRun("text_spacer", {
+        text: cipherEl.value || "",
+        block_length: Number(spacerLen.value || 5)
+      });
+      spacerOut.textContent = out || "(no output)";
+    } catch {
+      spacerOut.textContent = "Error running spacer.";
+    }
+  });
 
-      try {
-        const fd = new FormData();
-        fd.append("image", file);
+  // ===========================
+  // Remove spaces / punctuation
+  // ===========================
+  const rsBtn = document.getElementById("run-remove-spaces");
+  const rsOut = document.getElementById("tool-output-remove-spaces");
 
-        const res = await fetch(`/workspaces/{{ ws.id }}/image`, { method: "POST", body: fd });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || "upload failed");
+  rsBtn?.addEventListener("click", async () => {
+    rsOut.textContent = "Running…";
+    try {
+      const out = await toolsRun("remove_spaces", { text: cipherEl.value || "" });
+      rsOut.textContent = out || "(no output)";
+    } catch {
+      rsOut.textContent = "Error running remove spaces.";
+    }
+  });
 
-        // assumes your image-serving route is /uploads/<filename>
-        const url = `/uploads/${encodeURIComponent(data.filename)}?v=${Date.now()}`;
-        showCipherImage(url);
+  const rpBtn = document.getElementById("run-remove-punct");
+  const rpOut = document.getElementById("tool-output-remove-punct");
 
-        const updatedEl = document.getElementById("updated-at");
-        if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
+  rpBtn?.addEventListener("click", async () => {
+    rpOut.textContent = "Running…";
+    try {
+      const out = await toolsRun("remove_punctuation", { text: cipherEl.value || "" });
+      rpOut.textContent = out || "(no output)";
+    } catch {
+      rpOut.textContent = "Error running remove punctuation.";
+    }
+  });
 
-        if (imgStatus) imgStatus.textContent = "Uploaded ✓";
-        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
-      } catch {
-        if (imgStatus) imgStatus.textContent = "Upload failed";
-        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
-      } finally {
-        if (imgUploadBtn) imgUploadBtn.disabled = false;
-        // reset input so selecting the same file again triggers change
-        if (imgInput) imgInput.value = "";
+  // ===========================
+  // Breaker
+  // ===========================
+  const breakerTypeEl = document.getElementById("breaker-type");
+  const breakerKnownEl = document.getElementById("breaker-known");
+  const breakerRunBtn = document.getElementById("run-breaker");
+  const breakerCopyBtn = document.getElementById("copy-breaker");
+  const breakerOutEl = document.getElementById("breaker-output");
+
+  breakerRunBtn?.addEventListener("click", async () => {
+    breakerOutEl.textContent = "Running…";
+    try {
+      const data = await breakerRunRequest({
+        text: cipherEl.value || "",
+        cipher_type: breakerTypeEl?.value || "vigenere",
+        known_plaintext: breakerKnownEl?.value || ""
+      });
+
+      const cipher = data?.cipher ?? "—";
+      const key = (data?.key === null || data?.key === undefined || data?.key === "") ? "—" : String(data.key);
+      const plain = data?.text ?? "";
+
+      breakerOutEl.textContent =
+        `Cipher: ${cipher}\n` +
+        `Key: ${key}\n\n` +
+        `${plain || "(no output)"}`;
+    } catch {
+      breakerOutEl.textContent = "Error running breaker.";
+    }
+  });
+
+  breakerCopyBtn?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText((breakerOutEl.textContent || "").trim());
+      setStatus("Copied");
+      setTimeout(() => setStatus("—"), 900);
+    } catch {}
+  });
+
+  // ============================================================
+  // Cipher Image tabs + upload/delete + rename + kebab menu (PORTAL)
+  // ============================================================
+  const imgInput = document.getElementById("cipher-image-input");
+  const imgUploadBtn = document.getElementById("upload-cipher-image");
+  const imgDeleteBtn = document.getElementById("delete-cipher-image");
+  const imgStatus = document.getElementById("cipher-image-status");
+
+  const tabsEl = document.getElementById("cipher-tabs");
+  const tabsHint = document.getElementById("cipher-tabs-hint");
+
+  const imgWrap = document.getElementById("cipher-image-wrap");
+  const img = document.getElementById("cipher-img");
+
+  let images = [];       // [{id, filename, label, url}]
+  let activeImageId = null;
+
+  // ===== Floating menu portal (escapes overflow clipping) =====
+  let floatMenuEl = null;
+  let floatMenuForId = null;
+
+  function ensureFloatMenu() {
+    if (floatMenuEl) return floatMenuEl;
+
+    floatMenuEl = document.createElement("div");
+    floatMenuEl.className = "cipher-float-menu";
+    floatMenuEl.innerHTML = `
+      <button class="cipher-menu-item" type="button" data-action="rename">
+        Rename <span style="opacity:.7;">↵</span>
+      </button>
+      <button class="cipher-menu-item danger" type="button" data-action="delete">
+        Delete <span style="opacity:.7;">⌫</span>
+      </button>
+    `;
+
+    floatMenuEl.addEventListener("click", async (e) => {
+      const item = e.target?.closest?.(".cipher-menu-item");
+      if (!item) return;
+
+      const im = images.find(x => x.id === floatMenuForId);
+      if (!im) return closeFloatMenu();
+
+      const action = item.dataset.action;
+
+      if (action === "rename") {
+        closeFloatMenu();
+        startRenameTab(im.id);
+        return;
       }
+
+      if (action === "delete") {
+        closeFloatMenu();
+        const ok = await confirmDeleteModal({
+          title: "Delete image?",
+          message: `Delete "${(im.label || "Image").trim()}"? This can’t be undone.`
+        });
+        if (!ok) return;
+
+        await deleteImageById(im.id);
+      }
+    });
+
+    document.body.appendChild(floatMenuEl);
+    return floatMenuEl;
+  }
+
+  function closeFloatMenu() {
+    if (!floatMenuEl) return;
+    floatMenuEl.classList.remove("open");
+    floatMenuEl.style.left = "-9999px";
+    floatMenuEl.style.top = "-9999px";
+    floatMenuForId = null;
+  }
+
+  function openFloatMenuFor(imageId, anchorEl) {
+    const menu = ensureFloatMenu();
+    floatMenuForId = imageId;
+
+    // show to measure
+    menu.classList.add("open");
+    menu.style.left = "0px";
+    menu.style.top = "0px";
+
+    const r = anchorEl.getBoundingClientRect();
+    const mr = menu.getBoundingClientRect();
+
+    // place below-right, clamp to viewport
+    const pad = 10;
+    let left = r.right - mr.width;
+    let top = r.bottom + 8;
+
+    if (left < pad) left = pad;
+    if (left + mr.width > window.innerWidth - pad) left = window.innerWidth - mr.width - pad;
+
+    // flip up if needed
+    if (top + mr.height > window.innerHeight - pad) {
+      top = r.top - mr.height - 8;
     }
+    if (top < pad) top = pad;
 
-    // One-button UX:
-    // 1) click upload -> open picker
-    // 2) on file chosen -> upload
-    imgUploadBtn?.addEventListener("click", () => imgInput?.click());
-    imgInput?.addEventListener("change", uploadSelectedImage);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+  }
 
-    imgDeleteBtn?.addEventListener("click", async () => {
-      if (imgStatus) imgStatus.textContent = "Removing…";
+  function showCipherImage(src) {
+    if (!imgWrap || !img) return;
+    img.src = src;
+    imgWrap.style.display = "grid";
+  }
 
-      try {
-        const res = await fetch(`/workspaces/{{ ws.id }}/image/delete`, { method: "POST" });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || "delete failed");
+  function hideCipherImage() {
+    if (!imgWrap || !img) return;
+    img.src = "";
+    imgWrap.style.display = "none";
+  }
 
+  function setActiveImage(id) {
+    activeImageId = id;
+    const active = images.find(x => x.id === id);
+    if (active && active.url) {
+      showCipherImage(active.url + (active.url.includes("?") ? "&" : "?") + "v=" + Date.now());
+    } else {
+      hideCipherImage();
+    }
+    renderTabs();
+  }
+
+  async function deleteImageById(imageId) {
+    if (!imageId) return;
+
+    if (imgStatus) imgStatus.textContent = "Removing…";
+
+    try {
+      const res = await fetch(`/workspaces/{{ ws.id }}/image/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_id: imageId })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "delete failed");
+
+      images = images.filter(x => x.id !== imageId);
+
+      const updatedEl = document.getElementById("updated-at");
+      if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
+
+      if (images.length === 0) {
+        activeImageId = null;
         hideCipherImage();
-
-        const updatedEl = document.getElementById("updated-at");
-        if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
-
-        if (imgStatus) imgStatus.textContent = "Removed ✓";
-        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
-      } catch {
-        if (imgStatus) imgStatus.textContent = "Remove failed";
-        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
+        closeFloatMenu();
+        renderTabs();
+      } else {
+        closeFloatMenu();
+        const next = images[0].id;
+        setActiveImage(next);
       }
-    });
 
-    // If workspace already has an image, show it on load
-    {% if ws.cipher_image_filename %}
-      showCipherImage("{{ url_for('uploaded_file', filename=ws.cipher_image_filename) }}");
-    {% endif %}
-
-    // ===========================
-    // Image zoom (preview)
-    // ===========================
-    const modal = document.getElementById("img-modal");
-    const modalImg = document.getElementById("img-modal-img");
-    const closeBtn = document.getElementById("img-close");
-
-    function openImgModal(src) {
-      if (!modal || !modalImg) return;
-      modalImg.src = src;
-      modal.classList.add("open");
-      modal.setAttribute("aria-hidden", "false");
+      if (imgStatus) imgStatus.textContent = "Removed ✓";
+      setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
+    } catch {
+      if (imgStatus) imgStatus.textContent = "Remove failed";
+      setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
     }
-    function closeImgModal() {
-      if (!modal) return;
-      modal.classList.remove("open");
-      modal.setAttribute("aria-hidden", "true");
+  }
+
+  function renderTabs() {
+    if (!tabsEl) return;
+
+    if (!images || images.length === 0) {
+      tabsEl.classList.remove("show");
+      if (tabsHint) tabsHint.style.display = "none";
+      closeFloatMenu();
+      return;
     }
 
-    img?.addEventListener("click", () => openImgModal(img.src));
-    closeBtn?.addEventListener("click", closeImgModal);
-    modal?.addEventListener("click", (e) => {
-      if (e.target === modal) closeImgModal();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeImgModal();
-    });
+    tabsEl.classList.add("show");
+    if (tabsHint) tabsHint.style.display = "block";
 
-    // ===========================
-    // Default tool state
-    // ===========================
-    showTool("frequency");
-    setStatus("—");
-  </script>
+    tabsEl.innerHTML = "";
+
+    images.forEach((im) => {
+      const wrap = document.createElement("div");
+      wrap.className = "cipher-tab-wrap";
+      wrap.dataset.imageId = String(im.id);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cipher-tab" + (im.id === activeImageId ? " active" : "");
+      btn.dataset.imageId = String(im.id);
+
+      btn.innerHTML = `
+        <span class="cipher-tab-label" title="${escapeHtml(im.label || "")}">
+          ${escapeHtml(im.label || "")}
+        </span>
+        <button class="cipher-tab-more" type="button" aria-label="Tab options" title="Options">⋮</button>
+      `;
+
+      // clicking tab (not kebab) switches image
+      btn.addEventListener("click", (e) => {
+        const isMore = e.target?.closest?.(".cipher-tab-more");
+        if (isMore) return;
+        closeFloatMenu();
+        setActiveImage(im.id);
+      });
+
+      // kebab opens FLOAT menu (escapes wrap + overflow)
+      const more = btn.querySelector(".cipher-tab-more");
+      more?.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // toggle behavior
+        if (floatMenuForId === im.id && floatMenuEl?.classList.contains("open")) {
+          closeFloatMenu();
+          return;
+        }
+        openFloatMenuFor(im.id, more);
+      });
+
+      // double click rename
+      btn.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        closeFloatMenu();
+        startRenameTab(im.id);
+      });
+
+      wrap.appendChild(btn);
+      tabsEl.appendChild(wrap);
+    });
+  }
+
+  function startRenameTab(imageId) {
+    const im = images.find(x => x.id === imageId);
+    if (!im || !tabsEl) return;
+
+    // find wrapper
+    const wrap = Array.from(tabsEl.querySelectorAll(".cipher-tab-wrap"))
+      .find(w => Number(w.dataset.imageId) === imageId);
+    if (!wrap) return;
+
+    closeFloatMenu();
+
+    const oldLabel = (im.label || "").trim() || "Image";
+
+    // keep wrap element, just replace its contents
+    wrap.innerHTML = `
+      <input class="cipher-tab-input" value="${escapeHtml(oldLabel)}" />
+    `;
+
+    const input = wrap.querySelector(".cipher-tab-input");
+    input?.focus();
+    input?.select();
+
+    const cancel = () => { renderTabs(); };
+
+    const commit = async () => {
+      const newLabel = (input?.value || "").trim();
+      const finalLabel = newLabel || oldLabel;
+
+      // optimistic update
+      im.label = finalLabel;
+      renderTabs();
+
+      try {
+        const res = await fetch(`/workspaces/{{ ws.id }}/image/rename`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_id: imageId, label: finalLabel })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "rename failed");
+      } catch {
+        // revert if server fails
+        im.label = oldLabel;
+        renderTabs();
+        if (imgStatus) {
+          imgStatus.textContent = "Rename failed";
+          setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1400);
+        }
+      }
+    };
+
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") commit();
+      if (e.key === "Escape") cancel();
+    });
+    input?.addEventListener("blur", commit);
+  }
+
+  async function loadImages() {
+    try {
+      const res = await fetch(`/workspaces/{{ ws.id }}/images`);
+      const data = await res.json();
+      if (!data.ok) throw new Error("failed");
+
+      images = Array.isArray(data.images) ? data.images : [];
+
+      if (images.length === 0) {
+        activeImageId = null;
+        hideCipherImage();
+        closeFloatMenu();
+        renderTabs();
+        return;
+      }
+
+      if (!activeImageId || !images.some(x => x.id === activeImageId)) {
+        activeImageId = images[0].id;
+      }
+
+      renderTabs();
+      setActiveImage(activeImageId);
+    } catch {
+      images = [];
+      renderTabs();
+    }
+  }
+
+  async function uploadSelectedImage() {
+    const file = imgInput?.files?.[0];
+    if (!file) return;
+
+    if (imgStatus) imgStatus.textContent = "Uploading…";
+    if (imgUploadBtn) imgUploadBtn.disabled = true;
+
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+
+      const res = await fetch(`/workspaces/{{ ws.id }}/image`, { method: "POST", body: fd });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "upload failed");
+
+      const newImg = data.image;
+      if (newImg && newImg.id) {
+        images.push(newImg);
+        closeFloatMenu();
+        setActiveImage(newImg.id);
+      } else {
+        await loadImages();
+      }
+
+      const updatedEl = document.getElementById("updated-at");
+      if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
+
+      if (imgStatus) imgStatus.textContent = "Uploaded ✓";
+      setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
+    } catch {
+      if (imgStatus) imgStatus.textContent = "Upload failed";
+      setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
+    } finally {
+      if (imgUploadBtn) imgUploadBtn.disabled = false;
+      if (imgInput) imgInput.value = "";
+    }
+  }
+
+  imgUploadBtn?.addEventListener("click", () => imgInput?.click());
+  imgInput?.addEventListener("change", uploadSelectedImage);
+
+  // existing "Remove" button still deletes ACTIVE image
+  imgDeleteBtn?.addEventListener("click", async () => {
+    if (!activeImageId) {
+      if (imgStatus) imgStatus.textContent = "No image selected";
+      setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
+      return;
+    }
+
+    const active = images.find(x => x.id === activeImageId);
+    const ok = await confirmDeleteModal({
+      title: "Delete selected image?",
+      message: `Delete "${((active?.label) || "Image").trim()}"? This can’t be undone.`
+    });
+    if (!ok) return;
+
+    await deleteImageById(activeImageId);
+  });
+
+  // close float menu on outside click / escape / scroll / resize
+  document.addEventListener("click", (e) => {
+    const inMenu = e.target?.closest?.(".cipher-float-menu");
+    const onKebab = e.target?.closest?.(".cipher-tab-more");
+    if (!inMenu && !onKebab) closeFloatMenu();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeFloatMenu();
+  });
+
+  // capture scroll from any scrollable parent
+  document.addEventListener("scroll", () => closeFloatMenu(), true);
+  window.addEventListener("resize", () => closeFloatMenu());
+
+  // Load images on start
+  loadImages();
+
+  // ===========================
+  // Image zoom (preview)
+  // ===========================
+  const modal = document.getElementById("img-modal");
+  const modalImg = document.getElementById("img-modal-img");
+  const closeBtn = document.getElementById("img-close");
+
+  function openImgModal(src) {
+    if (!modal || !modalImg) return;
+    modalImg.src = src;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+  }
+  function closeImgModal() {
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  img?.addEventListener("click", () => openImgModal(img.src));
+  closeBtn?.addEventListener("click", closeImgModal);
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) closeImgModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeImgModal();
+  });
+
+  // ===========================
+  // Default tool state
+  // ===========================
+  showTool("frequency");
+  setStatus("—");
+</script>
+
+
 </body>
 </html>

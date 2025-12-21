@@ -71,7 +71,7 @@ def migrate_weekly_tables():
 
 def get_current_season():
     """Returns the current season number, starting at 1 from November 2025."""
-    start = datetime(2025, 11, 1)  # site launch / first season start
+    start = datetime(2025, 11, 12)  # site launch / first season start
     now = datetime.utcnow()
     months_since = (now.year - start.year) * 12 + (now.month - start.month)
     season = (months_since // 2) + 1  # one season = 2 months
@@ -198,13 +198,18 @@ def current_user():
     if "user_id" in session:
         conn = get_db()
         cur = conn.execute(
-            "SELECT id, username, email, is_admin, banned FROM users WHERE id = ?",
+            """
+            SELECT id, username, email, is_admin, banned, labs_info_seen
+            FROM users
+            WHERE id = ?
+            """,
             (session["user_id"],)
         )
         row = cur.fetchone()
         conn.close()
         return dict(row) if row else None
     return None
+
 
 
 def is_admin(user):
@@ -2032,7 +2037,7 @@ def workspace_new():
     if request.method == "GET":
         return render_template("workspace_new.html", user=user)
 
-    title = (request.form.get("title") or "Untitled Workspace").strip() or "Untitled Workspace"
+    title = (request.form.get("title") or "Untitled Lab").strip() or "Untitled Lab"
     now = datetime.utcnow().isoformat()
 
     conn = get_db()
@@ -2074,7 +2079,6 @@ def workspace_view(ws_id):
 
     return render_template("workspace.html", user=user, ws=dict(row))
 
-
 # ----------------------
 # Save workspace (AJAX)
 # POST /workspaces/<id>/save
@@ -2106,13 +2110,63 @@ def workspace_save(ws_id):
 
     return jsonify({"ok": True, "updated_at": now})
 
+
 import logging
 logging.getLogger("werkzeug").setLevel(logging.INFO)
 logging.getLogger("werkzeug").disabled = False
 
+
+# ============================================================
+# NEW: Workspace Images helpers + routes (for tabs / multi-image)
+# ============================================================
+
+def _workspace_owned(conn, ws_id, owner_id):
+    row = conn.execute(
+        "SELECT id FROM workspaces WHERE id=? AND owner_id=? LIMIT 1",
+        (ws_id, owner_id)
+    ).fetchone()
+    return bool(row)
+
+
 # ----------------------
-# Upload/replace cipher image (optional)
+# NEW: List images for workspace (tabs)
+# GET /workspaces/<id>/images
+# ----------------------
+@app.route("/workspaces/<int:ws_id>/images", methods=["GET"])
+def workspace_images_list(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+    if not _workspace_owned(conn, ws_id, user["id"]):
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    rows = conn.execute("""
+        SELECT id, filename, label, sort_index, created_at
+        FROM workspace_images
+        WHERE workspace_id=?
+        ORDER BY sort_index ASC, id ASC
+    """, (ws_id,)).fetchall()
+    conn.close()
+
+    images = []
+    for r in rows:
+        images.append({
+            "id": r["id"],
+            "filename": r["filename"],
+            "label": r["label"],
+            "url": url_for("uploaded_file", filename=r["filename"]),
+        })
+
+    return jsonify({"ok": True, "images": images})
+
+
+# ----------------------
+# REPLACED: Upload cipher image (MULTI)
 # POST /workspaces/<id>/image
+# - Always creates a NEW image row (new tab)
 # ----------------------
 @app.route("/workspaces/<int:ws_id>/image", methods=["POST"])
 def workspace_image_upload(ws_id):
@@ -2127,47 +2181,56 @@ def workspace_image_upload(ws_id):
         return jsonify({"ok": False, "error": "unsupported file type"}), 400
 
     conn = get_db()
-    row = conn.execute("""
-        SELECT cipher_image_filename
-        FROM workspaces
-        WHERE id = ? AND owner_id = ?
-        LIMIT 1
-    """, (ws_id, user["id"])).fetchone()
-
-    if not row:
+    if not _workspace_owned(conn, ws_id, user["id"]):
         conn.close()
         return jsonify({"ok": False, "error": "not found"}), 404
 
-    old = row["cipher_image_filename"]
+    # next sort index
+    row = conn.execute("""
+        SELECT COALESCE(MAX(sort_index), -1) AS mx
+        FROM workspace_images
+        WHERE workspace_id=?
+    """, (ws_id,)).fetchone()
+    next_index = int(row["mx"] if row and row["mx"] is not None else -1) + 1
+    label = f"Image {next_index + 1}"
 
     filename = secure_filename(f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{img.filename}")
-    print("UPLOAD_FOLDER =", app.config["UPLOAD_FOLDER"])
-
     img.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
     now = datetime.utcnow().isoformat()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO workspace_images (workspace_id, filename, label, sort_index)
+        VALUES (?, ?, ?, ?)
+    """, (ws_id, filename, label, next_index))
+    new_id = cur.lastrowid
+
     conn.execute("""
         UPDATE workspaces
-        SET cipher_image_filename = ?, updated_at = ?
-        WHERE id = ? AND owner_id = ?
-    """, (filename, now, ws_id, user["id"]))
+        SET updated_at=?
+        WHERE id=? AND owner_id=?
+    """, (now, ws_id, user["id"]))
+
     conn.commit()
     conn.close()
 
-    if old:
-        try:
-            path = os.path.join(app.config["UPLOAD_FOLDER"], old)
-            if os.path.exists(path):
-                os.remove(path)
-        except Exception:
-            pass
-
-    return jsonify({"ok": True, "filename": filename, "updated_at": now})
+    return jsonify({
+        "ok": True,
+        "image": {
+            "id": new_id,
+            "filename": filename,
+            "label": label,
+            "url": url_for("uploaded_file", filename=filename)
+        },
+        "updated_at": now
+    })
 
 
 # ----------------------
-# Delete cipher image only (optional)
+# REPLACED: Delete cipher image (MULTI)
 # POST /workspaces/<id>/image/delete
+# Body JSON: { "image_id": 123 }
 # ----------------------
 @app.route("/workspaces/<int:ws_id>/image/delete", methods=["POST"])
 def workspace_image_delete(ws_id):
@@ -2175,42 +2238,55 @@ def workspace_image_delete(ws_id):
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
 
-    conn = get_db()
-    row = conn.execute("""
-        SELECT cipher_image_filename
-        FROM workspaces
-        WHERE id = ? AND owner_id = ?
-        LIMIT 1
-    """, (ws_id, user["id"])).fetchone()
+    data = request.get_json(silent=True) or {}
+    image_id = data.get("image_id")
+    try:
+        image_id = int(image_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "image_id required"}), 400
 
-    if not row:
+    conn = get_db()
+    if not _workspace_owned(conn, ws_id, user["id"]):
         conn.close()
         return jsonify({"ok": False, "error": "not found"}), 404
 
-    old = row["cipher_image_filename"]
+    row = conn.execute("""
+        SELECT id, filename
+        FROM workspace_images
+        WHERE id=? AND workspace_id=?
+        LIMIT 1
+    """, (image_id, ws_id)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "error": "image not found"}), 404
+
+    filename = row["filename"]
     now = datetime.utcnow().isoformat()
 
+    conn.execute("DELETE FROM workspace_images WHERE id=? AND workspace_id=?", (image_id, ws_id))
     conn.execute("""
         UPDATE workspaces
-        SET cipher_image_filename = NULL, updated_at = ?
-        WHERE id = ? AND owner_id = ?
+        SET updated_at=?
+        WHERE id=? AND owner_id=?
     """, (now, ws_id, user["id"]))
+
     conn.commit()
     conn.close()
 
-    if old:
-        try:
-            path = os.path.join(app.config["UPLOAD_FOLDER"], old)
-            if os.path.exists(path):
-                os.remove(path)
-        except Exception:
-            pass
+    # delete the file on disk
+    try:
+        path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception:
+        pass
 
     return jsonify({"ok": True, "updated_at": now})
 
 
 # ----------------------
-# Delete workspace (optional)
+# REPLACED: Delete workspace (UPDATED: deletes all images too)
 # POST /workspaces/<id>/delete
 # ----------------------
 @app.route("/workspaces/<int:ws_id>/delete", methods=["POST"])
@@ -2220,26 +2296,23 @@ def workspace_delete(ws_id):
         return jsonify({"ok": False, "error": "login required"}), 401
 
     conn = get_db()
-    row = conn.execute("""
-        SELECT cipher_image_filename
-        FROM workspaces
-        WHERE id = ? AND owner_id = ?
-        LIMIT 1
-    """, (ws_id, user["id"])).fetchone()
-
-    if not row:
+    if not _workspace_owned(conn, ws_id, user["id"]):
         conn.close()
         return jsonify({"ok": False, "error": "not found"}), 404
 
-    img = row["cipher_image_filename"]
+    imgs = conn.execute("""
+        SELECT filename FROM workspace_images WHERE workspace_id=?
+    """, (ws_id,)).fetchall()
+    filenames = [r["filename"] for r in imgs]
 
-    conn.execute("DELETE FROM workspaces WHERE id = ? AND owner_id = ?", (ws_id, user["id"]))
+    conn.execute("DELETE FROM workspace_images WHERE workspace_id=?", (ws_id,))
+    conn.execute("DELETE FROM workspaces WHERE id=? AND owner_id=?", (ws_id, user["id"]))
     conn.commit()
     conn.close()
 
-    if img:
+    for fn in filenames:
         try:
-            path = os.path.join(app.config["UPLOAD_FOLDER"], img)
+            path = os.path.join(app.config["UPLOAD_FOLDER"], fn)
             if os.path.exists(path):
                 os.remove(path)
         except Exception:
@@ -2247,6 +2320,11 @@ def workspace_delete(ws_id):
 
     return jsonify({"ok": True})
 
+
+# ----------------------
+# Leave as-is: reorder
+# POST /workspaces/reorder
+# ----------------------
 @app.route("/workspaces/reorder", methods=["POST"])
 def workspace_reorder():
     user = current_user()
@@ -2274,6 +2352,11 @@ def workspace_reorder():
 
     return jsonify({"ok": True})
 
+
+# ----------------------
+# Leave as-is: prefs
+# POST /prefs/labs-info-seen
+# ----------------------
 @app.route("/prefs/labs-info-seen", methods=["POST"])
 def prefs_labs_info_seen():
     user = current_user()
@@ -2290,6 +2373,72 @@ def prefs_labs_info_seen():
     conn.close()
 
     return jsonify({"ok": True})
+
+
+@app.route("/workspaces/<int:ws_id>/image/rename", methods=["POST"])
+def workspace_image_rename(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    image_id = data.get("image_id")
+    label = (data.get("label") or "").strip()
+
+    try:
+        image_id = int(image_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "image_id required"}), 400
+
+    if not label:
+        return jsonify({"ok": False, "error": "label required"}), 400
+
+    # optional: prevent stupid long names
+    if len(label) > 60:
+        label = label[:60].strip()
+
+    conn = get_db()
+
+    # verify workspace belongs to user
+    ws = conn.execute(
+        "SELECT id FROM workspaces WHERE id=? AND owner_id=? LIMIT 1",
+        (ws_id, user["id"])
+    ).fetchone()
+    if not ws:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    # verify image belongs to workspace
+    row = conn.execute("""
+        SELECT id
+        FROM workspace_images
+        WHERE id=? AND workspace_id=?
+        LIMIT 1
+    """, (image_id, ws_id)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "error": "image not found"}), 404
+
+    now = datetime.utcnow().isoformat()
+
+    conn.execute("""
+        UPDATE workspace_images
+        SET label=?
+        WHERE id=? AND workspace_id=?
+    """, (label, image_id, ws_id))
+
+    conn.execute("""
+        UPDATE workspaces
+        SET updated_at=?
+        WHERE id=? AND owner_id=?
+    """, (now, ws_id, user["id"]))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "label": label, "updated_at": now})
+
+
 
 # ------------------- Run -------------------
 if __name__ == "__main__":

@@ -600,19 +600,19 @@
             class="info-btn {% if user and not user['labs_info_seen'] %}pulse{% endif %}"
             id="info-open"
             type="button"
-            aria-label="About workspaces"
+            aria-label="About Labs"
             data-seen="{{ 1 if (user and user['labs_info_seen']) else 0 }}"
           >i</button>
 
-          <a class="btn" href="{{ url_for('workspace_new') }}">New workspace</a>
+          <a class="btn" href="{{ url_for('workspace_new') }}">New Lab</a>
         </div>
       </header>
 
       <div class="wl-body">
         {% if workspaces|length == 0 %}
           <div class="empty">
-            No workspaces yet.<br><br>
-            <a class="btn" href="{{ url_for('workspace_new') }}">Create your first workspace</a>
+            No Lab yet.<br><br>
+            <a class="btn" href="{{ url_for('workspace_new') }}">Create your first Lab</a>
           </div>
         {% else %}
           <div class="grid" id="ws-grid">
