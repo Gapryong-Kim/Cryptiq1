@@ -39,6 +39,7 @@
       padding: 18px 22px;
       border-bottom: 1px solid var(--line);
       background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+      flex-wrap: wrap;
     }
 
     .cb-dot {
@@ -53,6 +54,52 @@
       color: var(--text);
       font-weight: 700;
       letter-spacing: .2px;
+    }
+
+    /* ===== Labs integration header actions ===== */
+    .cb-header-actions{
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .lab-btn{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+      font-size: .9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lab-btn:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .lab-btn:active{ transform: translateY(1px); }
+    .lab-btn.primary{
+      background: var(--accent, #00ffd5);
+      border-color: var(--accent, #00ffd5);
+      color: #0f0f0f;
+    }
+    .lab-btn.primary:hover{
+      background: var(--accent-strong, #00e6c0);
+      border-color: var(--accent-strong, #00e6c0);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .lab-btn:disabled{
+      opacity: .55;
+      cursor: not-allowed;
+      box-shadow: none !important;
     }
 
     .tools-grid {
@@ -215,6 +262,113 @@
       .btn { width: 100%; }
       .btn.copy-btn { width: 100%; text-align: center; }
     }
+
+    /* ===============================
+       Labs Modal
+       =============================== */
+    .lmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8000;
+    }
+    .lmodal.open{ display: flex; }
+
+    .lmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .lmodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel, #1d1d1d);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      animation: lmodalPop .12s ease-out;
+    }
+    @keyframes lmodalPop{
+      from { transform: translateY(6px) scale(.98); opacity: .6; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .lmodal-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 4px 0;
+    }
+    .lmodal-title{
+      color: var(--text, #f0f0f0);
+      font-weight: 900;
+      font-size: .98rem;
+    }
+    .lmodal-x{
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 900;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .lmodal-x:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .lmodal-body{
+      color: var(--muted, #a0a0a0);
+      line-height: 1.45;
+      padding: 0 4px;
+      display: grid;
+      gap: 10px;
+    }
+    .lmodal-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 6px 4px 2px;
+      flex-wrap: wrap;
+    }
+    .lmodal-row{
+      display: grid;
+      gap: 6px;
+    }
+    .lmodal-help{
+      font-size: .86rem;
+      color: var(--muted, #a0a0a0);
+    }
+    .lmodal-note{
+      font-size: .82rem;
+      color: var(--muted, #a0a0a0);
+      opacity: .9;
+    }
+    .ltextarea{
+      min-height: 140px;
+      border-radius: 10px;
+      border: 1px solid var(--input-border,#343434);
+      background: var(--input-bg,#0e0e0e);
+      color: var(--text,#f0f0f0);
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      resize: vertical;
+      outline: none;
+    }
+    .ltextarea:focus{
+      border-color: var(--accent, #00ffd5);
+      background: var(--input-focus, #161616);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
   </style>
 </head>
 
@@ -226,6 +380,16 @@
       <header class="cb-header">
         <span class="cb-dot"></span>
         <h1 class="cb-title">Cipher Tools</h1>
+
+        <div class="cb-header-actions">
+          {% if user %}
+            <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
+            <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+          {% else %}
+            <a class="lab-btn primary" id="save-to-lab-loggedout" href="{{ url_for('login') }}?next={{ request.path }}">Login to save</a>
+            <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+          {% endif %}
+        </div>
       </header>
 
       <div class="tools-grid">
@@ -240,7 +404,6 @@
             <option value="text_replacer">Text Replacer</option>
             <option value="remove_spaces">Space Remover</option>
             <option value="remove_punctuation">Punctuation Remover</option>
-
           </select>
         </div>
 
@@ -249,11 +412,58 @@
     </section>
   </main>
 
+  <!-- ===== Labs Modal ===== -->
+  <div id="labs-modal" class="lmodal" aria-hidden="true">
+    <div class="lmodal-backdrop" data-close="1"></div>
+
+    <div class="lmodal-box" role="dialog" aria-modal="true" aria-label="Save to Lab">
+      <div class="lmodal-top">
+        <div class="lmodal-title">Save to Lab</div>
+        <button class="lmodal-x" id="labs-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="lmodal-body">
+        <div class="lmodal-help">
+          Creates a new Lab (workspace) and saves the current tool output + notes into it.
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-title">Lab title</label>
+          <input id="labs-title" type="text" placeholder="e.g. Tools — Frequency Analyzer" />
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-notes">Notes</label>
+          <textarea id="labs-notes" class="ltextarea" placeholder="Add your notes (optional)"></textarea>
+          <div class="lmodal-note">
+            We’ll include: selected tool, input, and the latest output.
+          </div>
+        </div>
+      </div>
+
+      <div class="lmodal-actions">
+        <button class="lab-btn" id="labs-cancel" type="button">Cancel</button>
+        <button class="lab-btn primary" id="labs-confirm" type="button">Create Lab</button>
+      </div>
+    </div>
+  </div>
+
   <script>
   (function () {
     const toolSelect = document.getElementById("tool-select");
     const toolContainer = document.getElementById("tool-container");
     const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+
+    // ===== Labs integration =====
+    const saveToLabBtn = document.getElementById("save-to-lab");
+    const labsModal = document.getElementById("labs-modal");
+    const labsX = document.getElementById("labs-x");
+    const labsCancel = document.getElementById("labs-cancel");
+    const labsConfirm = document.getElementById("labs-confirm");
+    const labsTitle = document.getElementById("labs-title");
+    const labsNotes = document.getElementById("labs-notes");
+
+    const DRAFT_KEY = "tcl_tools_draft_v1";
 
     const toolExplanations = {
       frequency: "Counts how often each letter appears. Great first step for substitution-style ciphers.",
@@ -264,10 +474,57 @@
       text_replacer: "Replaces every occurrence of one substring with another. Case-sensitive.",
       remove_spaces: "Removes all spaces",
       remove_punctuation: "Removes all punctuation"
-
     };
 
     const showCard = () => { toolContainer.style.display = 'flex'; toolContainer.style.flexDirection = 'column'; };
+
+    function safeGetVal(id) {
+      const el = document.getElementById(id);
+      return el ? (el.value ?? "") : "";
+    }
+    function safeGetText(id) {
+      const el = document.getElementById(id);
+      return el ? (el.innerText ?? "") : "";
+    }
+
+    function buildDraft() {
+      return {
+        ts: Date.now(),
+        tool: toolSelect.value,
+        // common ids (present depending on tool)
+        tool_text: safeGetVal("tool-text"),
+        tool_result: safeGetText("tool-result"),
+        block_length: safeGetVal("block-length"),
+
+        // substitution ids
+        sub_ciphertext: safeGetVal("ciphertext"),
+        sub_output: safeGetText("frequency-output"),
+        sub_mapping: Array.from(document.querySelectorAll(".sub-input")).map(inp => ({
+          plain: inp.dataset.plain,
+          v: inp.value || ""
+        })),
+
+        // replacer ids
+        rep_text: safeGetVal("replace-text"),
+        rep_find: safeGetVal("replace-find"),
+        rep_with: safeGetVal("replace-with"),
+        rep_result: safeGetText("replace-result")
+      };
+    }
+
+    function saveDraft() {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(buildDraft())); } catch {}
+    }
+    function loadDraft() {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch { return null; }
+    }
+    function clearDraft() {
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    }
 
     function addCopyButton(targetId) {
       const btn = document.createElement("button");
@@ -336,6 +593,7 @@
             const cipher = (input.value || "").toUpperCase();
             mapping[plain] = cipher;
             updateTextarea();
+            saveDraft();
           });
           box.append(top, arrow, input);
           substitutionRow.appendChild(box);
@@ -345,6 +603,8 @@
         textarea.addEventListener("input", async () => {
           originalText = textarea.value.toUpperCase();
           updateTextarea();
+          saveDraft();
+
           if (originalText.trim()) {
             try {
               const formData = new FormData();
@@ -353,8 +613,15 @@
               const res = await fetch("/tools/run", { method: "POST", body: formData });
               const data = await res.json();
               freqOutput.innerText = data.text || "";
-            } catch { freqOutput.innerText = "Error fetching frequency analysis."; }
-          } else freqOutput.innerText = "";
+              saveDraft();
+            } catch {
+              freqOutput.innerText = "Error fetching frequency analysis.";
+              saveDraft();
+            }
+          } else {
+            freqOutput.innerText = "";
+            saveDraft();
+          }
         });
 
         function updateTextarea() {
@@ -373,10 +640,12 @@
           substitutionRow.querySelectorAll(".sub-input").forEach(inp => inp.value = "");
           Object.keys(mapping).forEach(k => mapping[k] = "");
           updateTextarea();
+          saveDraft();
         };
         document.getElementById("reset-text").onclick = () => {
           textarea.value = originalText;
           freqOutput.innerText = "";
+          saveDraft();
         };
       }
 
@@ -391,18 +660,25 @@
           <label class="cipher-label">Replace With</label>
           <input type="text" id="replace-with" placeholder="Replacement text">
           <div style="display:flex;gap:10px;margin-top:10px;">
-            <button id="replace-run" class="btn">Run</button>
-            <button id="replace-clear" class="btn secondary">Clear</button>
+            <button id="replace-run" class="btn" type="button">Run</button>
+            <button id="replace-clear" class="btn secondary" type="button">Clear</button>
           </div>
           <div id="replace-result" class="result-box"></div>
         `;
         const copyBtn = addCopyButton("replace-result");
         toolContainer.appendChild(copyBtn);
 
+        const repText = document.getElementById("replace-text");
+        const repFind = document.getElementById("replace-find");
+        const repWith = document.getElementById("replace-with");
+        const repRes  = document.getElementById("replace-result");
+
+        [repText, repFind, repWith].forEach(el => el.addEventListener("input", saveDraft, { passive: true }));
+
         document.getElementById("replace-run").onclick = async () => {
-          const text = document.getElementById("replace-text").value;
-          const find = document.getElementById("replace-find").value;
-          const replacement = document.getElementById("replace-with").value;
+          const text = repText.value;
+          const find = repFind.value;
+          const replacement = repWith.value;
           const formData = new FormData();
           formData.append("text", text);
           formData.append("tool_type", "text_replacer");
@@ -410,11 +686,13 @@
           formData.append("replacement", replacement);
           const res = await fetch("/tools/run", { method: "POST", body: formData });
           const data = await res.json();
-          document.getElementById("replace-result").innerText = data.text || "";
+          repRes.innerText = data.text || "";
+          saveDraft();
         };
         document.getElementById("replace-clear").onclick = () => {
           ["replace-text","replace-find","replace-with"].forEach(id => document.getElementById(id).value = "");
-          document.getElementById("replace-result").innerText = "";
+          repRes.innerText = "";
+          saveDraft();
         };
       }
 
@@ -435,37 +713,222 @@
           <textarea id="tool-text" placeholder="Paste or type your text…" style="min-height:160px;"></textarea>
           ${extra}
           <div style="display:flex;gap:10px;margin-top:10px;">
-            <button id="tools-run" class="btn">Run</button>
-            <button id="tools-clear" class="btn secondary">Clear</button>
+            <button id="tools-run" class="btn" type="button">Run</button>
+            <button id="tools-clear" class="btn secondary" type="button">Clear</button>
           </div>
           <div id="tool-result" class="result-box"></div>
         `;
         const copyBtn = addCopyButton("tool-result");
         toolContainer.appendChild(copyBtn);
 
+        const tText = document.getElementById("tool-text");
+        const tRes  = document.getElementById("tool-result");
+        const bLen  = document.getElementById("block-length");
+
+        tText.addEventListener("input", saveDraft, { passive: true });
+        bLen?.addEventListener("input", saveDraft, { passive: true });
+
         document.getElementById("tools-run").onclick = async () => {
-          const text = document.getElementById("tool-text").value;
+          const text = tText.value;
           const formData = new FormData();
           formData.append("text", text);
           formData.append("tool_type", selected);
-          const blockEl = document.getElementById("block-length");
-          if (blockEl) formData.append("block_length", blockEl.value);
+          if (bLen) formData.append("block_length", bLen.value);
           const res = await fetch("/tools/run", { method: "POST", body: formData });
           const data = await res.json();
-          document.getElementById("tool-result").innerText = data.text || "";
+          tRes.innerText = data.text || "";
+          saveDraft();
         };
         document.getElementById("tools-clear").onclick = () => {
-          document.getElementById("tool-text").value = "";
-          document.getElementById("tool-result").innerText = "";
+          tText.value = "";
+          tRes.innerText = "";
+          saveDraft();
         };
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => renderTool(toolSelect.value));
-    toolSelect.addEventListener("change", () => renderTool(toolSelect.value));
+    function applyDraft(d) {
+      if (!d) return;
+
+      const tool = d.tool || "frequency";
+      toolSelect.value = tool;
+      renderTool(tool);
+
+      // wait a tick because renderTool builds DOM
+      setTimeout(() => {
+        if (tool === "text_replacer") {
+          const a = document.getElementById("replace-text"); if (a) a.value = d.rep_text || "";
+          const b = document.getElementById("replace-find"); if (b) b.value = d.rep_find || "";
+          const c = document.getElementById("replace-with"); if (c) c.value = d.rep_with || "";
+          const r = document.getElementById("replace-result"); if (r) r.innerText = d.rep_result || "";
+        } else if (tool === "substitution") {
+          const t = document.getElementById("ciphertext"); if (t) t.value = d.sub_ciphertext || "";
+          const out = document.getElementById("frequency-output"); if (out) out.innerText = d.sub_output || "";
+
+          const mapArr = Array.isArray(d.sub_mapping) ? d.sub_mapping : [];
+          const byPlain = {};
+          mapArr.forEach(x => { if (x && x.plain) byPlain[x.plain] = x.v || ""; });
+          document.querySelectorAll(".sub-input").forEach(inp => {
+            const p = inp.dataset.plain;
+            if (p in byPlain) inp.value = byPlain[p];
+          });
+        } else {
+          const t = document.getElementById("tool-text"); if (t) t.value = d.tool_text || "";
+          const r = document.getElementById("tool-result"); if (r) r.innerText = d.tool_result || "";
+          const b = document.getElementById("block-length"); if (b && d.block_length) b.value = d.block_length;
+        }
+      }, 0);
+    }
+
+    // ===== Labs modal =====
+    function openLabsModal() {
+      if (!labsModal) return;
+      labsModal.classList.add("open");
+      labsModal.setAttribute("aria-hidden", "false");
+
+      const tool = toolSelect.value;
+      const niceTool = (toolSelect.options[toolSelect.selectedIndex]?.textContent || tool).trim();
+
+      const inputText =
+        safeGetVal("tool-text") ||
+        safeGetVal("ciphertext") ||
+        safeGetVal("replace-text") ||
+        "";
+
+      const outputText =
+        safeGetText("tool-result") ||
+        safeGetText("frequency-output") ||
+        safeGetText("replace-result") ||
+        "";
+
+      const maybeBlock = safeGetVal("block-length");
+
+      labsTitle.value = `Tools — ${niceTool}`;
+
+      labsNotes.value =
+`[Tools]
+Tool: ${tool}
+
+${maybeBlock ? `Block length: ${maybeBlock}\n` : ""}Input:
+${inputText || "(empty)"}
+
+Output:
+${outputText || "(empty)"}
+`;
+
+      setTimeout(() => labsTitle.focus(), 0);
+    }
+
+    function closeLabsModal() {
+      if (!labsModal) return;
+      labsModal.classList.remove("open");
+      labsModal.setAttribute("aria-hidden", "true");
+    }
+
+    labsX?.addEventListener("click", closeLabsModal);
+    labsCancel?.addEventListener("click", closeLabsModal);
+    labsModal?.addEventListener("click", (e) => {
+      const closeEl = e.target?.closest?.("[data-close='1']");
+      if (closeEl) closeLabsModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && labsModal?.classList.contains("open")) closeLabsModal();
+    });
+
+    saveToLabBtn?.addEventListener("click", () => {
+      saveDraft();
+      openLabsModal();
+    });
+
+    async function createWorkspacePOST(title) {
+      const fd = new FormData();
+      fd.append("title", title || "Untitled Lab");
+
+      const res = await fetch(`{{ url_for('workspace_new') }}`, {
+        method: "POST",
+        body: fd,
+        redirect: "follow"
+      });
+
+      if (res.url && res.url.includes("/login")) {
+        saveDraft();
+        window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
+        return null;
+      }
+
+      const finalUrl = res.url || "";
+      const m = finalUrl.match(/\/workspaces\/(\d+)(?:\/)?$/);
+      if (!m) return null;
+      return Number(m[1]);
+    }
+
+    async function saveWorkspace(wsId, payload) {
+      const fd = new FormData();
+      fd.append("title", payload.title || "Untitled Lab");
+      fd.append("notes", payload.notes || "");
+      fd.append("cipher_text", payload.cipher_text || "");
+
+      const res = await fetch(`/workspaces/${wsId}/save`, { method: "POST", body: fd });
+
+      if (res.status === 401) {
+        saveDraft();
+        window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
+        return false;
+      }
+
+      const data = await res.json().catch(() => null);
+      return !!(data && data.ok);
+    }
+
+    labsConfirm?.addEventListener("click", async () => {
+      const title = (labsTitle.value || "").trim() || "Untitled Lab";
+
+      // Store "output" in cipher_text; store full details in notes.
+      const outputText =
+        safeGetText("tool-result") ||
+        safeGetText("frequency-output") ||
+        safeGetText("replace-result") ||
+        "";
+
+      const notes = (labsNotes.value || "").trim();
+
+      labsConfirm.disabled = true;
+      const oldText = labsConfirm.textContent;
+      labsConfirm.textContent = "Creating…";
+
+      try {
+        const wsId = await createWorkspacePOST(title);
+        if (!wsId) throw new Error("create failed");
+
+        labsConfirm.textContent = "Saving…";
+        const ok = await saveWorkspace(wsId, { title, notes, cipher_text: outputText });
+        if (!ok) throw new Error("save failed");
+
+        clearDraft();
+        window.location.href = `/workspaces/${wsId}`;
+      } catch (e) {
+        labsConfirm.disabled = false;
+        labsConfirm.textContent = oldText;
+        alert("Could not create lab. Are you logged in?");
+      }
+    });
+
+    // ===== tool switching + draft hooks =====
+    toolSelect.addEventListener("change", () => {
+      renderTool(toolSelect.value);
+      saveDraft();
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // restore if coming back from login
+      const d = loadDraft();
+      if (d) applyDraft(d);
+      else renderTool(toolSelect.value);
+    });
+
   })();
 
-  // Fun samples
+  // Fun samples (only fill empty ones)
   const funSamples = [
     "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
     "This sentence knows it’s about to be encrypted and is very nervous.",
@@ -488,6 +951,7 @@
     "The key was under the doormat the whole time."
   ];
 
+  // IMPORTANT: toolContainer is created dynamically, so this just seeds any initial textareas
   document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("textarea").forEach(area => {
       if (!area.value.trim()) area.value = funSamples[Math.floor(Math.random()*funSamples.length)];

@@ -18,7 +18,7 @@
 
     main {
       min-height: calc(100dvh - 1dvh);
-      display: flex;    
+      display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
@@ -33,6 +33,7 @@
       max-width: 1500px;
       padding-bottom: 12px;
       border-bottom: 1px solid var(--line, #2a2a2a);
+      flex-wrap: wrap;
     }
 
     .ed-dot {
@@ -45,6 +46,52 @@
       font-size: 1.2rem;
       font-weight: 700;
       margin: 0;
+    }
+
+    /* ===== Labs integration header actions ===== */
+    .ed-header-actions{
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .lab-btn{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+      font-size: .9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lab-btn:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .lab-btn:active{ transform: translateY(1px); }
+    .lab-btn.primary{
+      background: var(--accent, #00ffd5);
+      border-color: var(--accent, #00ffd5);
+      color: #0f0f0f;
+    }
+    .lab-btn.primary:hover{
+      background: var(--accent-strong, #00e6c0);
+      border-color: var(--accent-strong, #00e6c0);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .lab-btn:disabled{
+      opacity: .55;
+      cursor: not-allowed;
+      box-shadow: none !important;
     }
 
     .ed-body {
@@ -82,6 +129,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
     }
 
     textarea {
@@ -145,6 +193,7 @@
       color: var(--text, #f0f0f0);
       padding: 10px 12px;
       font-size: 15px;
+      box-sizing: border-box;
     }
 
     .shift-display {
@@ -182,6 +231,62 @@
       background: var(--input-focus, #161616);
     }
 
+    /* ===== Vigenere custom input ===== */
+    .vigenere-row{
+      display: none;
+      gap: 6px;
+    }
+    .vigenere-row.show{ display: grid; }
+    .vigenere-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 700;
+      font-size: .88rem;
+    }
+    .vigenere-help{
+      margin-top: 2px;
+      color: var(--muted, #a0a0a0);
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
+    /* ===== Affine custom inputs ===== */
+    .affine-row{
+      display: none;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .affine-row.show{ display: grid; }
+    .affine-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 700;
+      font-size: .88rem;
+    }
+
+    /* ===== Rail Fence custom inputs ===== */
+    .rail-row{
+      display: none;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .rail-row.show{ display: grid; }
+    .rail-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 700;
+      font-size: .88rem;
+    }
+    .rail-help{
+      margin-top: 2px;
+      color: var(--muted, #a0a0a0);
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
     .breaker-link {
       text-align: center;
       margin-top: 12px;
@@ -194,29 +299,133 @@
       text-decoration: none;
       font-weight: 600;
     }
-
     .breaker-link a:hover { text-decoration: underline; }
 
     @media (max-width: 980px) {
-      .ed-body { grid-template-columns: 1fr;  }
+      .ed-body { grid-template-columns: 1fr; }
       .ed-panel { height: 40vh; }
       .ed-controls { order: -1; }
       main { padding: 60px 10px 20px; }
     }
+
     /* ===============================
-   MOBILE MODE SWAP FIX
-=============================== */
-@media (max-width: 980px) {
-  /* Default (Encode mode) */
-  #leftPanel  { order: 2; }  /* Plaintext */
-  .ed-controls { order: 1; }
-  #rightPanel { order: 3; }  /* Ciphertext */
+       MOBILE MODE SWAP FIX
+       =============================== */
+    @media (max-width: 980px) {
+      #leftPanel  { order: 2; }
+      .ed-controls { order: 1; }
+      #rightPanel { order: 3; }
 
-  /* Decode mode — swap panels */
-  .decode-mode #leftPanel  { order: 3; }
-  .decode-mode #rightPanel { order: 2; }
-}
+      .decode-mode #leftPanel  { order: 3; }
+      .decode-mode #rightPanel { order: 2; }
+    }
 
+    /* ===============================
+       Labs Modal
+       =============================== */
+    .lmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8000;
+    }
+    .lmodal.open{ display: flex; }
+
+    .lmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .lmodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel, #1d1d1d);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      animation: lmodalPop .12s ease-out;
+    }
+    @keyframes lmodalPop{
+      from { transform: translateY(6px) scale(.98); opacity: .6; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .lmodal-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 4px 0;
+    }
+    .lmodal-title{
+      color: var(--text, #f0f0f0);
+      font-weight: 900;
+      font-size: .98rem;
+    }
+    .lmodal-x{
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 900;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .lmodal-x:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .lmodal-body{
+      color: var(--muted, #a0a0a0);
+      line-height: 1.45;
+      padding: 0 4px;
+      display: grid;
+      gap: 10px;
+    }
+    .lmodal-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 6px 4px 2px;
+      flex-wrap: wrap;
+    }
+    .lmodal-row{
+      display: grid;
+      gap: 6px;
+    }
+    .lmodal-help{
+      font-size: .86rem;
+      color: var(--muted, #a0a0a0);
+    }
+    .lmodal-note{
+      font-size: .82rem;
+      color: var(--muted, #a0a0a0);
+      opacity: .9;
+    }
+    .ltextarea{
+      min-height: 140px;
+      border-radius: 10px;
+      border: 1px solid var(--input-border,#343434);
+      background: var(--input-bg,#0e0e0e);
+      color: var(--text,#f0f0f0);
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      resize: vertical;
+      outline: none;
+    }
+    .ltextarea:focus{
+      border-color: var(--accent, #00ffd5);
+      background: var(--input-focus, #161616);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
   </style>
 </head>
 
@@ -226,6 +435,16 @@
     <div class="ed-header">
       <span class="ed-dot"></span>
       <h1 class="ed-title">Encoder / Decoder</h1>
+
+      <div class="ed-header-actions">
+        {% if user %}
+          <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
+          <a class="lab-btn" id="open-labs" href="{{ url_for('workspace_list') }}">My Labs</a>
+        {% else %}
+          <a class="lab-btn primary" id="save-to-lab-loggedout" href="{{ url_for('login') }}?next={{ request.path }}">Login to save</a>
+          <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+        {% endif %}
+      </div>
     </div>
 
     <div id="bodyWrap" class="ed-body">
@@ -236,8 +455,8 @@
 
       <div class="ed-controls">
         <div class="mode-toggle">
-          <button id="encodeMode" class="mode-btn active">Encode</button>
-          <button id="decodeMode" class="mode-btn">Decode</button>
+          <button id="encodeMode" class="mode-btn active" type="button">Encode</button>
+          <button id="decodeMode" class="mode-btn" type="button">Decode</button>
         </div>
 
         <div>
@@ -259,9 +478,46 @@
           </select>
         </div>
 
+        <!-- Default key input -->
         <div id="key-group">
           <label for="cipher-key">Key</label>
           <input id="cipher-key" type="text" value="7" placeholder="Enter key" />
+        </div>
+
+        <!-- Vigenere custom key input -->
+        <div class="vigenere-row" id="vigenere-row">
+          <div>
+            <label for="vigenere-key">Vigenère keyword</label>
+            <input id="vigenere-key" type="text" value="LEMON" placeholder="e.g. LEMON" autocomplete="off" />
+            <div class="vigenere-help">Letters only.</div>
+          </div>
+        </div>
+
+        <!-- Affine custom key inputs -->
+        <div class="affine-row" id="affine-row">
+          <div>
+            <label for="affine-a">Affine a</label>
+            <input id="affine-a" type="number" value="5" min="0" step="1" placeholder="e.g. 5" />
+          </div>
+          <div>
+            <label for="affine-b">Affine b</label>
+            <input id="affine-b" type="number" value="8" min="0" step="1" placeholder="e.g. 8" />
+          </div>
+        </div>
+
+        <!-- Rail Fence custom inputs (rails + offset) -->
+        <div class="rail-row" id="rail-row">
+          <div>
+            <label for="rail-rails">Rails</label>
+            <input id="rail-rails" type="number" value="3" min="2" step="1" placeholder="e.g. 3" />
+          </div>
+          <div>
+            <label for="rail-offset">Offset</label>
+            <input id="rail-offset" type="number" value="0" min="0" step="1" placeholder="e.g. 0" />
+          </div>
+          <div class="rail-help" style="grid-column:1 / -1;">
+            Offset shifts the starting zig-zag position before placing the first character.
+          </div>
         </div>
 
         <div id="polybius-grid-wrapper" style="display:none;">
@@ -283,6 +539,42 @@
     </p>
   </main>
 
+  <!-- ===== Labs Modal ===== -->
+  <div id="labs-modal" class="lmodal" aria-hidden="true">
+    <div class="lmodal-backdrop" data-close="1"></div>
+
+    <div class="lmodal-box" role="dialog" aria-modal="true" aria-label="Save to Lab">
+      <div class="lmodal-top">
+        <div class="lmodal-title">Save to Lab</div>
+        <button class="lmodal-x" id="labs-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="lmodal-body">
+        <div class="lmodal-help">
+          Creates a new Lab (workspace) and saves your current cipher output + notes into it.
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-title">Lab title</label>
+          <input id="labs-title" type="text" placeholder="e.g. Encoder/Decoder — Caesar (shift 7)" />
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-notes">Notes</label>
+          <textarea id="labs-notes" class="ltextarea" placeholder="Add your notes (optional)"></textarea>
+          <div class="lmodal-note">
+            We’ll also include: mode, cipher, key, and the generated output.
+          </div>
+        </div>
+      </div>
+
+      <div class="lmodal-actions">
+        <button class="lab-btn" id="labs-cancel" type="button">Cancel</button>
+        <button class="lab-btn primary" id="labs-confirm" type="button">Create Lab</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const leftBox = document.getElementById("leftBox");
     const rightBox = document.getElementById("rightBox");
@@ -295,6 +587,20 @@
     const keyGroup = document.getElementById("key-group");
     const polybiusGridWrapper = document.getElementById("polybius-grid-wrapper");
     const polybiusGrid = document.getElementById("polybius-grid");
+
+    // vigenere
+    const vigenereRow = document.getElementById("vigenere-row");
+    const vigenereKey = document.getElementById("vigenere-key");
+
+    // affine
+    const affineRow = document.getElementById("affine-row");
+    const affineA = document.getElementById("affine-a");
+    const affineB = document.getElementById("affine-b");
+
+    // railfence
+    const railRow = document.getElementById("rail-row");
+    const railRails = document.getElementById("rail-rails");
+    const railOffset = document.getElementById("rail-offset");
 
     let debounce;
 
@@ -325,22 +631,89 @@
       leftBox.value = result;
     }
 
+    function sanitizeLettersOnly(s) {
+      return String(s || "").replace(/[^a-zA-Z]/g, "");
+    }
+
     function getCurrentKey() {
-      if (cipherSelect.value === "polybius") {
+      const cipher = cipherSelect.value;
+
+      // vigenere uses its own field (letters only)
+      if (cipher === "vigenere") {
+        return sanitizeLettersOnly(vigenereKey?.value || "").trim();
+      }
+
+      // railfence uses "rails,offset"
+      if (cipher === "railfence") {
+        const r = String(railRails?.value ?? "3").trim() || "3";
+        const off = String(railOffset?.value ?? "0").trim() || "0";
+        return `${r},${off}`;
+      }
+
+      // affine uses "a,b"
+      if (cipher === "affine") {
+        const a = String(affineA?.value ?? "").trim();
+        const b = String(affineB?.value ?? "").trim();
+        return `${a},${b}`;
+      }
+
+      if (cipher === "polybius") {
         return Array.from(polybiusGrid.querySelectorAll("input"))
           .map(i => i.value.trim().toUpperCase() || "?")
           .join("");
       }
+
       return cipherKey.value;
     }
 
-    leftBox.addEventListener("input", () => schedule(encodeLeftToRight));
-    rightBox.addEventListener("input", () => schedule(decodeRightToLeft));
+    leftBox.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+    }));
+
+    rightBox.addEventListener("input", () => schedule(() => {
+      if (decodeBtn.classList.contains("active")) decodeRightToLeft();
+    }));
+
     cipherSelect.addEventListener("change", () => {
       updateKeyInput();
-      schedule(encodeLeftToRight);
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
     });
-    cipherKey.addEventListener("input", () => schedule(encodeLeftToRight));
+
+    cipherKey.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+
+    vigenereKey?.addEventListener("input", () => {
+      // live sanitize while typing
+      const clean = sanitizeLettersOnly(vigenereKey.value);
+      if (vigenereKey.value !== clean) vigenereKey.value = clean;
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    });
+
+    railRails?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+    railOffset?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+
+    affineA?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+    affineB?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
 
     function setMode(newMode) {
       const isDecode = newMode === "decode";
@@ -349,38 +722,68 @@
       bodyWrap.classList.toggle("decode-mode", isDecode);
       if (isDecode) rightBox.focus();
       else leftBox.focus();
+
+      schedule(() => {
+        if (isDecode) decodeRightToLeft();
+        else encodeLeftToRight();
+      });
     }
 
     encodeBtn.onclick = () => setMode("encode");
     decodeBtn.onclick = () => setMode("decode");
 
     function generatePolybiusGrid() {
-  polybiusGrid.innerHTML = "";
-  const letters = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
-
-  for (let i = 0; i < 25; i++) {
-    const cell = document.createElement("input");
-    cell.maxLength = 1;
-    cell.value = letters[i];
-    cell.addEventListener("input", () => {
-      // when a user edits the grid, re-encode/decode immediately
-      schedule(() => {
-        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
-        else decodeRightToLeft();
-      });
-    });
-    polybiusGrid.appendChild(cell);
-  }
-}
-
+      polybiusGrid.innerHTML = "";
+      const letters = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement("input");
+        cell.maxLength = 1;
+        cell.value = letters[i];
+        cell.addEventListener("input", () => {
+          schedule(() => {
+            if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+            else decodeRightToLeft();
+          });
+        });
+        polybiusGrid.appendChild(cell);
+      }
+    }
 
     function updateKeyInput() {
       const cipher = cipherSelect.value;
-      polybiusGridWrapper.style.display = cipher === "polybius" ? "block" : "none";
-      keyGroup.style.display = cipher === "polybius" ? "none" : "block";
 
-      if (cipher === "polybius") generatePolybiusGrid();
-      if (["base64", "hex", "binary", "atbash", "baconian"].includes(cipher)) keyGroup.style.display = "none";
+      // defaults
+      polybiusGridWrapper.style.display = "none";
+      keyGroup.style.display = "block";
+      affineRow?.classList.remove("show");
+      vigenereRow?.classList.remove("show");
+      railRow?.classList.remove("show");
+
+      if (cipher === "polybius") {
+        polybiusGridWrapper.style.display = "block";
+        keyGroup.style.display = "none";
+        generatePolybiusGrid();
+      }
+
+      if (cipher === "affine") {
+        affineRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (cipher === "vigenere") {
+        vigenereRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (cipher === "railfence") {
+        railRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (["base64", "hex", "binary", "atbash", "baconian"].includes(cipher)) {
+        keyGroup.style.display = "none";
+      }
+
       if (cipher === "caesar") {
         cipherKey.type = "number";
         cipherKey.placeholder = "Enter shift";
@@ -403,7 +806,7 @@
     cipherKey.addEventListener("input", updateShiftPreview);
     cipherSelect.addEventListener("change", updateShiftPreview);
 
-    // 🧩 Playful random demo text (expanded pool)
+    // 🧩 Playful random demo text
     const funSamples = [
       "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
       "This sentence knows it’s about to be encrypted and is very nervous.",
@@ -425,12 +828,246 @@
       "I asked for a decryption key and got a therapy session instead.",
       "The key was under the doormat the whole time."
     ];
-    leftBox.value = funSamples[Math.floor(Math.random() * funSamples.length)];
 
-    window.addEventListener("DOMContentLoaded", () => {
+    // ===========================
+    // Labs integration + login return + restore content
+    // ===========================
+    const labsModal = document.getElementById("labs-modal");
+    const labsX = document.getElementById("labs-x");
+    const labsCancel = document.getElementById("labs-cancel");
+    const labsConfirm = document.getElementById("labs-confirm");
+    const labsTitle = document.getElementById("labs-title");
+    const labsNotes = document.getElementById("labs-notes");
+    const saveToLabBtn = document.getElementById("save-to-lab");
+
+    const DRAFT_KEY = "tcl_ed_draft_v1";
+
+    function buildDraft() {
+      return {
+        ts: Date.now(),
+        mode: encodeBtn.classList.contains("active") ? "encode" : "decode",
+        cipher: cipherSelect.value,
+        key: cipherKey.value,
+        vigenere_key: vigenereKey?.value ?? "",
+        affine_a: affineA?.value ?? "",
+        affine_b: affineB?.value ?? "",
+        rail_rails: railRails?.value ?? "3",
+        rail_offset: railOffset?.value ?? "0",
+        left: leftBox.value || "",
+        right: rightBox.value || ""
+      };
+    }
+
+    function saveDraft() {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(buildDraft())); } catch {}
+    }
+
+    function loadDraft() {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch { return null; }
+    }
+
+    function clearDraft() {
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    }
+
+    function applyDraft(d) {
+      if (!d) return;
+
+      // cipher first (so key UI shows correct fields)
+      cipherSelect.value = d.cipher || "caesar";
       updateKeyInput();
       updateShiftPreview();
-      schedule(encodeLeftToRight);
+
+      // mode
+      setMode(d.mode === "decode" ? "decode" : "encode");
+
+      // keys
+      cipherKey.value = d.key ?? "";
+      if (vigenereKey) vigenereKey.value = d.vigenere_key ?? vigenereKey.value;
+      if (affineA) affineA.value = d.affine_a ?? affineA.value;
+      if (affineB) affineB.value = d.affine_b ?? affineB.value;
+      if (railRails) railRails.value = d.rail_rails ?? railRails.value;
+      if (railOffset) railOffset.value = d.rail_offset ?? railOffset.value;
+
+      // text
+      leftBox.value = d.left ?? "";
+      rightBox.value = d.right ?? "";
+
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    }
+
+    function openLabsModal() {
+      if (!labsModal) return;
+      labsModal.classList.add("open");
+      labsModal.setAttribute("aria-hidden", "false");
+
+      const mode = encodeBtn.classList.contains("active") ? "Encode" : "Decode";
+      const cipher = cipherSelect.value;
+      const key = getCurrentKey();
+      const niceCipher = cipher.charAt(0).toUpperCase() + cipher.slice(1);
+
+      let keySnippet = "";
+      if (cipher === "polybius") keySnippet = "custom square";
+      else if (cipher === "affine") keySnippet = `a=${affineA?.value ?? "?"}, b=${affineB?.value ?? "?"}`;
+      else if (cipher === "vigenere") keySnippet = `keyword ${key || "—"}`;
+      else if (cipher === "railfence") keySnippet = `rails=${railRails?.value ?? "3"}, off=${railOffset?.value ?? "0"}`;
+      else if (key) keySnippet = `key ${key}`;
+
+      labsTitle.value = `Encoder/Decoder — ${niceCipher} (${mode}${keySnippet ? `, ${keySnippet}` : ""})`;
+
+      const input = encodeBtn.classList.contains("active") ? (leftBox.value || "(empty)") : (rightBox.value || "(empty)");
+      const output = encodeBtn.classList.contains("active") ? (rightBox.value || "(empty)") : (leftBox.value || "(empty)");
+
+      const keyLine =
+        cipher === "polybius" ? "(custom polybius square)" :
+        cipher === "affine" ? `a=${affineA?.value ?? "?"}, b=${affineB?.value ?? "Important"}` :
+        cipher === "vigenere" ? (key || "—") :
+        cipher === "railfence" ? `rails=${railRails?.value ?? "3"}, offset=${railOffset?.value ?? "0"}` :
+        (key || "—");
+
+      labsNotes.value =
+`[Encoder/Decoder]
+Mode: ${mode}
+Cipher: ${cipher}
+Key: ${keyLine}
+
+Input:
+${input}
+
+Output:
+${output}
+`;
+
+      setTimeout(() => labsTitle.focus(), 0);
+    }
+
+    function closeLabsModal() {
+      if (!labsModal) return;
+      labsModal.classList.remove("open");
+      labsModal.setAttribute("aria-hidden", "true");
+    }
+
+    labsX?.addEventListener("click", closeLabsModal);
+    labsCancel?.addEventListener("click", closeLabsModal);
+    labsModal?.addEventListener("click", (e) => {
+      const closeEl = e.target?.closest?.("[data-close='1']");
+      if (closeEl) closeLabsModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && labsModal?.classList.contains("open")) closeLabsModal();
+    });
+
+    // keep a live draft while typing (so login round-trip restores)
+    ["input","change"].forEach(evt => {
+      leftBox.addEventListener(evt, saveDraft, { passive: true });
+      rightBox.addEventListener(evt, saveDraft, { passive: true });
+      cipherSelect.addEventListener(evt, saveDraft, { passive: true });
+      cipherKey.addEventListener(evt, saveDraft, { passive: true });
+      vigenereKey?.addEventListener(evt, saveDraft, { passive: true });
+      affineA?.addEventListener(evt, saveDraft, { passive: true });
+      affineB?.addEventListener(evt, saveDraft, { passive: true });
+      railRails?.addEventListener(evt, saveDraft, { passive: true });
+      railOffset?.addEventListener(evt, saveDraft, { passive: true });
+    });
+
+    saveToLabBtn?.addEventListener("click", () => {
+      saveDraft();
+      openLabsModal();
+    });
+
+    async function createWorkspacePOST(title) {
+      const fd = new FormData();
+      fd.append("title", title || "Untitled Lab");
+
+      const res = await fetch(`{{ url_for('workspace_new') }}`, {
+        method: "POST",
+        body: fd,
+        redirect: "follow"
+      });
+
+      if (res.url && res.url.includes("/login")) {
+        saveDraft();
+        window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
+        return null;
+      }
+
+      const finalUrl = res.url || "";
+      const m = finalUrl.match(/\/workspaces\/(\d+)(?:\/)?$/);
+      if (!m) return null;
+
+      return Number(m[1]);
+    }
+
+    async function saveWorkspace(wsId, payload) {
+      const fd = new FormData();
+      fd.append("title", payload.title || "Untitled Lab");
+      fd.append("notes", payload.notes || "");
+      fd.append("cipher_text", payload.cipher_text || "");
+
+      const res = await fetch(`/workspaces/${wsId}/save`, { method: "POST", body: fd });
+
+      if (res.status === 401) {
+        saveDraft();
+        window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
+        return false;
+      }
+
+      const data = await res.json().catch(() => null);
+      return !!(data && data.ok);
+    }
+
+    labsConfirm?.addEventListener("click", async () => {
+      const title = (labsTitle.value || "").trim() || "Untitled Lab";
+
+      const cipher_text = rightBox.value || "";
+      const notes = (labsNotes.value || "").trim();
+
+      labsConfirm.disabled = true;
+      const oldText = labsConfirm.textContent;
+      labsConfirm.textContent = "Creating…";
+
+      try {
+        const wsId = await createWorkspacePOST(title);
+        if (!wsId) throw new Error("create failed");
+
+        labsConfirm.textContent = "Saving…";
+        const ok = await saveWorkspace(wsId, { title, notes, cipher_text });
+        if (!ok) throw new Error("save failed");
+
+        clearDraft();
+        window.location.href = `/workspaces/${wsId}`;
+      } catch (e) {
+        labsConfirm.disabled = false;
+        labsConfirm.textContent = oldText;
+        alert("Could not create lab. Are you logged in?");
+      }
+    });
+
+    // ===========================
+    // Boot
+    // ===========================
+    window.addEventListener("DOMContentLoaded", () => {
+      const d = loadDraft();
+      if (d && (d.left || d.right || d.cipher)) {
+        applyDraft(d);
+      } else {
+        leftBox.value = funSamples[Math.floor(Math.random() * funSamples.length)];
+      }
+
+      updateKeyInput();
+      updateShiftPreview();
+
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
     });
   </script>
 </body>

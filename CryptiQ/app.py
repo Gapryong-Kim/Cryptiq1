@@ -69,13 +69,16 @@ def migrate_weekly_tables():
 
 
 
+from datetime import datetime, timezone
+
 def get_current_season():
-    """Returns the current season number, starting at 1 from November 2025."""
-    start = datetime(2025, 11, 12)  # site launch / first season start
-    now = datetime.utcnow()
+    """Season 1 starts 2025-12-01 00:00 UTC. Each season is 2 calendar months."""
+    start = datetime(2025, 12, 1, tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+
     months_since = (now.year - start.year) * 12 + (now.month - start.month)
-    season = (months_since // 2) + 1  # one season = 2 months
-    return max(1, season)
+    return max(1, (months_since // 2) + 1)
+
 
 
 
@@ -1240,8 +1243,30 @@ def comments_count():
 
     return jsonify({"ok": True, "count": row["c"] if row else 0})
 
+from urllib.parse import urlparse, urljoin
+from flask import request, redirect, url_for, flash, render_template, session
+
+def is_safe_url(target: str) -> bool:
+    """
+    Only allow redirects to same-host relative URLs.
+    Prevents open redirect attacks.
+    """
+    if not target:
+        return False
+
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+
+    return (
+        test_url.scheme in ("http", "https") and
+        ref_url.netloc == test_url.netloc
+    )
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # capture next from querystring or form
+    next_url = (request.args.get("next") or request.form.get("next") or "").strip()
+
     if request.method == "POST":
         identifier = (request.form.get("username") or "").strip()
         password = request.form.get("password", "")
@@ -1259,17 +1284,24 @@ def login():
 
         if not user:
             flash("No account found with that username or email.", "error")
-            return redirect(url_for("login"))
+            # keep next on redirect back to login
+            return redirect(url_for("login", next=next_url) if next_url else url_for("login"))
 
         if not check_password_hash(user["password_hash"], password):
             flash("Incorrect password.", "error")
-            return redirect(url_for("login"))
+            return redirect(url_for("login", next=next_url) if next_url else url_for("login"))
 
         session["user_id"] = user["id"]
         flash(f"Welcome back, {user['username']}!", "success")
+
+        # redirect back to where they came from (if safe)
+        if next_url and is_safe_url(next_url):
+            return redirect(next_url)
+
         return redirect(url_for("posts_list"))
 
-    return render_template("login.html", user=current_user())
+    # GET: render login with next preserved so the form can POST it back
+    return render_template("login.html", user=current_user(), next=next_url)
 
 # ------------------- Forgot/Reset Password -------------------
 @app.route("/forgot-password", methods=["GET", "POST"])
@@ -1704,10 +1736,14 @@ def admin_weekly():
 from flask import render_template, session
 from datetime import datetime
 
+
 def get_current_season():
-    """Each season lasts 2 months, starting January."""
-    now = datetime.utcnow()
-    return ((now.month - 1) // 2) + 1 + (6 * (now.year - 2025))
+    """Season 1 starts 2025-12-01 00:00 UTC. Each season is 2 calendar months."""
+    start = datetime(2025, 12, 1, tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+
+    months_since = (now.year - start.year) * 12 + (now.month - start.month)
+    return max(1, (months_since // 2) + 1)
 
 @app.route("/leaderboard")
 def leaderboard():
@@ -2442,6 +2478,50 @@ def workspace_image_rename(ws_id):
 
     return jsonify({"ok": True, "label": label, "updated_at": now})
 
+@app.route("/weekly/open_lab", methods=["POST"])
+def weekly_open_lab():
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    wc = get_current_weekly()
+    if not wc:
+        return jsonify({"ok": False, "error": "weekly cipher not found"}), 404
+
+    # Build a clean title + notes for the lab
+    title = f"Weekly Cipher — Week #{wc['week_number']}"
+    posted = (wc.get("posted_at") or "")[:19].replace("T", " ")
+
+    notes = (
+        f"[Weekly Cipher]\n"
+        f"Week: {wc.get('week_number')}\n"
+        f"Title: {wc.get('title')}\n"
+        f"Posted: {posted}\n"
+        f"Season: {get_current_season()}\n"
+        f"\n"
+        f"Description:\n{(wc.get('description') or '—')}\n"
+        f"\n"
+        f"Hint:\n{(wc.get('hint') or '—')}\n"
+    )
+
+    cipher_text = wc.get("ciphertext") or ""
+
+    now = datetime.utcnow().isoformat()
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Create workspace
+    cur.execute("""
+        INSERT INTO workspaces (owner_id, title, cipher_text, notes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (user["id"], title, cipher_text, notes, now, now))
+
+    ws_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "ws_id": ws_id})
 
 
 # ------------------- Run -------------------

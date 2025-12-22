@@ -33,6 +33,7 @@
       padding: 18px 20px;
       border-bottom: 1px solid var(--line);
       background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+      flex-wrap: wrap;
     }
 
     .cb-dot {
@@ -47,6 +48,52 @@
       letter-spacing: .2px;
       color: var(--text);
       font-weight: 700;
+    }
+
+    /* ===== Labs integration header actions ===== */
+    .cb-header-actions{
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .lab-btn{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+      font-size: .9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lab-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .lab-btn:active{ transform: translateY(1px); }
+    .lab-btn.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .lab-btn.primary:hover{
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .lab-btn:disabled{
+      opacity: .55;
+      cursor: not-allowed;
+      box-shadow: none !important;
     }
 
     .cb-grid {
@@ -138,7 +185,7 @@
       padding: 12px 14px;
       resize: vertical;
       line-height: 1.5;
-      font-family: ''Fira Code','JetBrains Mono','Courier New',monospace';
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
       font-size: 15px;
       scrollbar-gutter: stable both-edges;
     }
@@ -214,12 +261,119 @@
     @media (max-width: 480px) {
       .cb-shell { padding: 80px 12px 32px; }
     }
-    .cb-textarea::placeholder {
-  color: var(--muted);
-  opacity: 0.6;
-  font-style: italic;
-}
 
+    .cb-textarea::placeholder {
+      color: var(--muted);
+      opacity: 0.6;
+      font-style: italic;
+    }
+
+    /* ===============================
+       Labs Modal
+       =============================== */
+    .lmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9000;
+    }
+    .lmodal.open{ display: flex; }
+
+    .lmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .lmodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      animation: lmodalPop .12s ease-out;
+    }
+    @keyframes lmodalPop{
+      from { transform: translateY(6px) scale(.98); opacity: .6; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .lmodal-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 4px 0;
+    }
+    .lmodal-title{
+      color: var(--text);
+      font-weight: 900;
+      font-size: .98rem;
+    }
+    .lmodal-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .lmodal-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .lmodal-body{
+      color: var(--muted);
+      line-height: 1.45;
+      padding: 0 4px;
+      display: grid;
+      gap: 10px;
+    }
+    .lmodal-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 6px 4px 2px;
+      flex-wrap: wrap;
+    }
+    .lmodal-row{
+      display: grid;
+      gap: 6px;
+    }
+    .lmodal-help{
+      font-size: .86rem;
+      color: var(--muted);
+    }
+    .lmodal-note{
+      font-size: .82rem;
+      color: var(--muted);
+      opacity: .9;
+    }
+    .ltextarea{
+      min-height: 140px;
+      border-radius: 10px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      resize: vertical;
+      outline: none;
+    }
+    .ltextarea:focus{
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
   </style>
 </head>
 
@@ -231,10 +385,22 @@
       <header class="cb-header">
         <span class="cb-dot" aria-hidden="true"></span>
         <h1 class="cb-title">Cipher Breaker</h1>
+
+        <div class="cb-header-actions">
+          {% if user %}
+            <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
+            <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+          {% else %}
+            <!-- IMPORTANT: use full_path so you come back to THIS page -->
+            <a class="lab-btn primary" id="login-to-save"
+               href="{{ url_for('login') }}?next={{ request.full_path }}">Login to save</a>
+            <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+          {% endif %}
+        </div>
       </header>
 
       <div class="cb-grid">
-        
+
         <!-- LEFT: Input -->
         <div class="cb-panel input-panel">
           <h3>Input</h3>
@@ -250,7 +416,6 @@
                 <option value="railfence">Railfence</option>
                 <option value="columnar">Columnar Transposition</option>
                 <option value="permutation">Permutation</option>
-                <option value="playfair">Playfair</option>
                 <option value="substitution">Basic Substitution</option>
                 <option value="polybius">Polybius Square</option>
                 <option value="atbash">Atbash</option>
@@ -262,39 +427,36 @@
             </div>
 
             <div class="cb-row" style="gap: 4px; margin-bottom: 0;">
-  <label for="ciphertext" class="cb-label">Ciphertext</label>
-  <textarea id="ciphertext" name="text" class="cb-textarea"></textarea>
-  <p class="cb-help">Tip: longer samples produce better results for classical ciphers.</p>
-</div>
+              <label for="ciphertext" class="cb-label">Ciphertext</label>
+              <textarea id="ciphertext" name="text" class="cb-textarea"></textarea>
+              <p class="cb-help">Tip: longer samples produce better results for classical ciphers.</p>
+            </div>
 
-
-<div style="
-  margin: 0px 0 16px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px dashed var(--line);
-  background: var(--panel-2);
-  text-align: center;
-  font-size: .92rem;
-  color: var(--muted);
-">
-  Not sure what cipher you're dealing with?
-  <a href="{{ url_for('tools') }}" 
-     style="color: var(--accent); font-weight: 600; text-decoration: none;">
-     Try our Frequency Analyzer
-  </a>
-  to get an idea.
-</div>
-
+            <div style="
+              margin: 0px 0 16px;
+              padding: 12px 14px;
+              border-radius: 10px;
+              border: 1px dashed var(--line);
+              background: var(--panel-2);
+              text-align: center;
+              font-size: .92rem;
+              color: var(--muted);
+            ">
+              Not sure what cipher you're dealing with?
+              <a href="{{ url_for('tools') }}"
+                 style="color: var(--accent); font-weight: 600; text-decoration: none;">
+                 Try our Frequency Analyzer
+              </a>
+              to get an idea.
+            </div>
 
             <div class="cb-actions">
               <button type="submit" id="break-btn" class="btn">Break Cipher</button>
               <button type="button" id="clear-btn" class="btn secondary">Clear</button>
               <div id="loading" class="cb-loading" aria-live="polite">
-  <span class="spinner" aria-hidden="true"></span>
-  <span>Initializing analysis…</span>
-</div>
- 
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Initializing analysis…</span>
+              </div>
             </div>
 
             <div id="error-banner" class="cb-error" aria-live="polite">Something went wrong. Please try again.</div>
@@ -314,6 +476,42 @@
     </section>
   </main>
 
+  <!-- ===== Labs Modal ===== -->
+  <div id="labs-modal" class="lmodal" aria-hidden="true">
+    <div class="lmodal-backdrop" data-close="1"></div>
+
+    <div class="lmodal-box" role="dialog" aria-modal="true" aria-label="Save to Lab">
+      <div class="lmodal-top">
+        <div class="lmodal-title">Save to Lab</div>
+        <button class="lmodal-x" id="labs-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="lmodal-body">
+        <div class="lmodal-help">
+          Creates a new Lab and saves your ciphertext + breaker output into it.
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-title">Lab title</label>
+          <input id="labs-title" type="text" placeholder="e.g. Breaker — Caesar / Auto Detect" />
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-notes">Notes</label>
+          <textarea id="labs-notes" class="ltextarea" placeholder="Add your notes (optional)"></textarea>
+          <div class="lmodal-note">
+            We’ll include: selected cipher, key (if any), and plaintext result.
+          </div>
+        </div>
+      </div>
+
+      <div class="lmodal-actions">
+        <button class="lab-btn" id="labs-cancel" type="button">Cancel</button>
+        <button class="lab-btn primary" id="labs-confirm" type="button">Create Lab</button>
+      </div>
+    </div>
+  </div>
+
 <script>
   const form = document.getElementById("breaker-form");
   const breakBtn = document.getElementById("break-btn");
@@ -324,8 +522,90 @@
   const copyBtn = document.getElementById("copy-btn");
   const errorBanner = document.getElementById("error-banner");
   const textarea = document.getElementById("ciphertext");
+  const cipherTypeSelect = document.getElementById("cipher_type");
 
+  // ===========================
+  // Return-after-login state persistence
+  // ===========================
+  const STATE_KEY = "tcl_breaker_state:" + window.location.pathname;
+
+  function stashBreakerState(extra = {}) {
+    try {
+      const keyVisible = (resultKey && resultKey.style.display !== "none");
+      const state = {
+        ts: Date.now(),
+        cipher_type: cipherTypeSelect?.value || "auto",
+        ciphertext: textarea?.value || "",
+        result_text: resultText?.textContent || "",
+        result_key_text: keyVisible ? (resultKey?.textContent || "") : "",
+        result_key_visible: !!keyVisible,
+        // also stash labs modal draft if open / user typed
+        labs_title: (document.getElementById("labs-title")?.value || ""),
+        labs_notes: (document.getElementById("labs-notes")?.value || ""),
+        ...extra
+      };
+      sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
+    } catch {}
+  }
+
+  function restoreBreakerStateIfAny() {
+    try {
+      const raw = sessionStorage.getItem(STATE_KEY);
+      if (!raw) return false;
+
+      const state = JSON.parse(raw);
+      if (!state || typeof state !== "object") return false;
+
+      if (cipherTypeSelect && state.cipher_type) cipherTypeSelect.value = state.cipher_type;
+      if (textarea && typeof state.ciphertext === "string") textarea.value = state.ciphertext;
+
+      if (resultText && typeof state.result_text === "string") {
+        resultText.textContent = state.result_text;
+      }
+
+      if (resultKey) {
+        const show = !!state.result_key_visible && !!state.result_key_text;
+        resultKey.style.display = show ? "block" : "none";
+        resultKey.textContent = show ? state.result_key_text : "";
+      }
+
+      if (copyBtn) copyBtn.style.display = (resultText?.textContent || "").trim() ? "inline-flex" : "none";
+
+      // restore labs draft (nice if they were mid-save)
+      const lt = document.getElementById("labs-title");
+      const ln = document.getElementById("labs-notes");
+      if (lt && typeof state.labs_title === "string" && state.labs_title) lt.value = state.labs_title;
+      if (ln && typeof state.labs_notes === "string" && state.labs_notes) ln.value = state.labs_notes;
+
+      // keep state for a bit (don’t instantly delete; user might login/logout again)
+      // but if you prefer, you can clear it here:
+      // sessionStorage.removeItem(STATE_KEY);
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function redirectToLoginPreservingState() {
+    stashBreakerState();
+    window.location.href = `{{ url_for('login') }}?next={{ request.full_path }}`;
+  }
+
+  // If logged-out header button exists, intercept click to stash state first
+  const loginToSave = document.getElementById("login-to-save");
+  loginToSave?.addEventListener("click", (e) => {
+    stashBreakerState();
+    // allow normal navigation to the link
+  });
+
+  // Also keep state updated while typing / switching cipher / results appear
+  textarea?.addEventListener("input", () => stashBreakerState(), { passive: true });
+  cipherTypeSelect?.addEventListener("change", () => stashBreakerState(), { passive: true });
+
+  // ===========================
   // Fun placeholder samples
+  // ===========================
   const funSamples = [
     "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
     "This sentence knows it’s about to be encrypted and is very nervous.",
@@ -336,7 +616,6 @@
     "Trust no one. Except maybe the hash function."
   ];
 
-  // Placeholder logic
   const randomPlaceholder = funSamples[Math.floor(Math.random() * funSamples.length)];
   textarea.placeholder = randomPlaceholder;
   textarea.addEventListener("focus", () => textarea.placeholder = "");
@@ -377,7 +656,7 @@
     loadingInterval = setInterval(() => {
       msgIndex = (msgIndex + 1) % loadingMessages.length;
       msgEl.textContent = loadingMessages[msgIndex];
-    }, 6000); // every 6 seconds
+    }, 6000);
   }
 
   function stopLoadingCycle() {
@@ -399,6 +678,7 @@
     copyBtn.style.display = "none";
     clearError();
     textarea.focus();
+    stashBreakerState();
   });
 
   form.addEventListener("submit", async (e) => {
@@ -426,6 +706,8 @@
       }
       copyBtn.style.display = data.text ? "inline-flex" : "none";
       if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
+
+      stashBreakerState(); // keep outputs across login bounce too
     } catch (err) {
       showError("Unable to reach the server. Please try again.");
     } finally {
@@ -441,6 +723,157 @@
     } catch {
       copyBtn.textContent = "Failed to copy";
       setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
+    }
+  });
+
+  // ===========================
+  // Labs integration (create workspace via POST /workspaces/new, then save)
+  // + login bounce preserves state
+  // ===========================
+  const labsModal = document.getElementById("labs-modal");
+  const labsX = document.getElementById("labs-x");
+  const labsCancel = document.getElementById("labs-cancel");
+  const labsConfirm = document.getElementById("labs-confirm");
+  const labsTitle = document.getElementById("labs-title");
+  const labsNotes = document.getElementById("labs-notes");
+  const saveToLabBtn = document.getElementById("save-to-lab");
+
+  function openLabsModal() {
+    if (!labsModal) return;
+    labsModal.classList.add("open");
+    labsModal.setAttribute("aria-hidden", "false");
+
+    const cipherType = (cipherTypeSelect?.value || "auto");
+    const nice = cipherType.charAt(0).toUpperCase() + cipherType.slice(1);
+    if (!labsTitle.value.trim()) labsTitle.value = `Breaker — ${nice}`;
+
+    const keyLine = (resultKey && resultKey.style.display !== "none" && resultKey.textContent)
+      ? resultKey.textContent.replace(/^Key:\s*/i, "").trim()
+      : "";
+
+    if (!labsNotes.value.trim()) {
+      labsNotes.value =
+`[Cipher Breaker]
+Cipher type: ${cipherType}
+
+Ciphertext:
+${textarea.value.trim() || "(empty)"}
+
+Key:
+${keyLine || "—"}
+
+Plaintext:
+${(resultText.textContent || "").trim() || "(empty)"}
+`;
+    }
+
+    stashBreakerState({ labs_title: labsTitle.value || "", labs_notes: labsNotes.value || "" });
+    setTimeout(() => labsTitle.focus(), 0);
+  }
+
+  function closeLabsModal() {
+    if (!labsModal) return;
+    labsModal.classList.remove("open");
+    labsModal.setAttribute("aria-hidden", "true");
+    stashBreakerState({ labs_title: labsTitle.value || "", labs_notes: labsNotes.value || "" });
+  }
+
+  labsX?.addEventListener("click", closeLabsModal);
+  labsCancel?.addEventListener("click", closeLabsModal);
+  labsModal?.addEventListener("click", (e) => {
+    const closeEl = e.target?.closest?.("[data-close='1']");
+    if (closeEl) closeLabsModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && labsModal?.classList.contains("open")) closeLabsModal();
+  });
+
+  labsTitle?.addEventListener("input", () => stashBreakerState({ labs_title: labsTitle.value || "" }), { passive: true });
+  labsNotes?.addEventListener("input", () => stashBreakerState({ labs_notes: labsNotes.value || "" }), { passive: true });
+
+  saveToLabBtn?.addEventListener("click", openLabsModal);
+
+  async function createWorkspacePOST(title) {
+    const fd = new FormData();
+    fd.append("title", title || "Untitled Lab");
+
+    const res = await fetch(`{{ url_for('workspace_new') }}`, {
+      method: "POST",
+      body: fd,
+      redirect: "follow"
+    });
+
+    // If it bounced to login, preserve state and redirect properly
+    if (res.url && res.url.includes("/login")) {
+      redirectToLoginPreservingState();
+      return null;
+    }
+
+    const finalUrl = res.url || "";
+    const m = finalUrl.match(/\/workspaces\/(\d+)(?:\/)?$/);
+    if (!m) return null;
+    return Number(m[1]);
+  }
+
+  async function saveWorkspace(wsId, payload) {
+    const fd = new FormData();
+    fd.append("title", payload.title || "Untitled Lab");
+    fd.append("notes", payload.notes || "");
+    fd.append("cipher_text", payload.cipher_text || "");
+
+    const res = await fetch(`/workspaces/${wsId}/save`, {
+      method: "POST",
+      body: fd
+    });
+
+    if (res.status === 401) {
+      redirectToLoginPreservingState();
+      return false;
+    }
+
+    const data = await res.json().catch(() => null);
+    return !!(data && data.ok);
+  }
+
+  labsConfirm?.addEventListener("click", async () => {
+    const title = (labsTitle.value || "").trim() || "Untitled Lab";
+    const cipher_text = (textarea.value || "").trim();
+    const notes = (labsNotes.value || "").trim();
+
+    stashBreakerState({ labs_title: title, labs_notes: notes });
+
+    labsConfirm.disabled = true;
+    const oldText = labsConfirm.textContent;
+    labsConfirm.textContent = "Creating…";
+
+    try {
+      const wsId = await createWorkspacePOST(title);
+      if (!wsId) throw new Error("create failed");
+
+      labsConfirm.textContent = "Saving…";
+      const ok = await saveWorkspace(wsId, { title, notes, cipher_text });
+      if (!ok) throw new Error("save failed");
+
+      // If you want: clear state after successful save
+      try { sessionStorage.removeItem(STATE_KEY); } catch {}
+
+      window.location.href = `/workspaces/${wsId}`;
+    } catch (e) {
+      labsConfirm.disabled = false;
+      labsConfirm.textContent = oldText;
+      alert("Could not create lab. Are you logged in?");
+    }
+  });
+
+  // ===========================
+  // Restore state when returning from login
+  // ===========================
+  window.addEventListener("DOMContentLoaded", () => {
+    const restored = restoreBreakerStateIfAny();
+
+    // If nothing restored and box empty, keep your existing playful demo behavior
+    if (!restored && !(textarea.value || "").trim()) {
+      textarea.value = funSamples[Math.floor(Math.random() * funSamples.length)];
     }
   });
 </script>

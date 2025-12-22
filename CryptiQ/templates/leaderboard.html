@@ -199,6 +199,10 @@
         font-size: 0.8rem;
       }
     }
+  .no-submissions-link {
+    color: var(--accent);
+    text-decoration: none;
+  }
   </style>
 </head>
 
@@ -222,7 +226,7 @@
       </div>
 
       {% if all_time|length == 0 %}
-        <p class="no-submissions">No submissions yet — be the first to claim the top spot!</p>
+        <p class="no-submissions">No submissions yet — be the first to claim the top spot in our <a class="no-submissions-link" href="{{ url_for('weekly_page') }}">Weekly Cipher!</a>!</p>
       {% else %}
       <table>
         <thead><tr><th>Rank</th><th>Username</th><th>Weeks Played</th><th>Total Score</th></tr></thead>
@@ -250,7 +254,8 @@
       </div>
 
       {% if seasonal|length == 0 %}
-        <p class="no-submissions">No submissions yet this season — start cracking!</p>
+        <p class="no-submissions">No submissions yet this season — start cracking the <a class="no-submissions-link" href="{{ url_for('weekly_page') }}">Weekly Cipher </a>now!
+!</p>
       {% else %}
       <table>
         <thead><tr><th>Rank</th><th>Username</th><th>Weeks Played</th><th>Total Score</th></tr></thead>
@@ -278,7 +283,7 @@
       </div>
 
       {% if weekly|length == 0 %}
-        <p class="no-submissions">No submissions yet this week — be the first to solve!</p>
+        <p class="no-submissions">No submissions yet this week — be the first to solve the <a class="no-submissions-link" href="{{ url_for('weekly_page') }}">Weekly Cipher</a>!</p>
       {% else %}
       <table>
         <thead><tr><th>Rank</th><th>Username</th><th>Fastest Time (s)</th><th>Score</th></tr></thead>
