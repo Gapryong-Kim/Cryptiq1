@@ -546,6 +546,10 @@
     background: rgba(255, 0, 80, 0.16);
     box-shadow: 0 0 0 2px rgba(255, 77, 109, 0.18);
   }
+  .personal {
+    color: var(--accent);
+    text-decoration: none;
+  }
 </style>
 
 </head>
@@ -596,73 +600,88 @@
             </svg>
           </div>
 
+          <!-- Info button: pulses only if logged in AND not seen -->
           <button
-            class="info-btn {% if user and not user['labs_info_seen'] %}pulse{% endif %}"
+            class="info-btn {% if user and (not user.get('labs_info_seen')) %}pulse{% endif %}"
             id="info-open"
             type="button"
             aria-label="About Labs"
-            data-seen="{{ 1 if (user and user['labs_info_seen']) else 0 }}"
+            data-user="{{ 1 if user else 0 }}"
+            data-seen="{{ 1 if (user and user.get('labs_info_seen')) else 0 }}"
           >i</button>
 
-          <a class="btn" href="{{ url_for('workspace_new') }}">New Lab</a>
+          <!-- New Lab: if logged out, send to login (with next redirect) -->
+          {% if user %}
+            <a class="btn" href="{{ url_for('workspace_new') }}">New Lab</a>
+          {% else %}
+            <a class="btn" href="{{ url_for('login', next=request.path) }}">Log in to create a Lab</a>
+          {% endif %}
         </div>
       </header>
 
       <div class="wl-body">
-        {% if workspaces|length == 0 %}
+        {% if not user %}
           <div class="empty">
-            No Lab yet.<br><br>
-            <a class="btn" href="{{ url_for('workspace_new') }}">Create your first Lab</a>
+            <b>Labs are private.</b><br><br>
+            Click the <b>i</b> button above to learn what Labs are.<br>
+             <a  class= 'personal' href="{{ url_for('login', next=request.path) }}">Log in </a> to create and manage your Labs.<br><br>
           </div>
         {% else %}
-          <div class="grid" id="ws-grid">
-            {% for w in workspaces %}
-              <a
-                class="ws-card"
-                draggable="true"
-                data-id="{{ w.id }}"
-                href="{{ url_for('workspace_view', ws_id=w.id) }}"
-                data-title="{{ (w.title or 'Untitled Workspace')|lower }}"
-                data-snippet="{{ ((w.cipher_text or w.notes or '')[:160])|lower }}"
-              >
-                <div class="ws-head">
-                  <h2 class="ws-name">{{ w.title or "Untitled Workspace" }}</h2>
+          {% if workspaces|length == 0 %}
+            <div class="empty">
+              No Lab yet.<br><br>
+              <a class="btn" href="{{ url_for('workspace_new') }}">Create your first Lab</a>
+            </div>
+          {% else %}
+            <div class="grid" id="ws-grid">
+              {% for w in workspaces %}
+                <a
+                  class="ws-card"
+                  draggable="true"
+                  data-id="{{ w.id }}"
+                  href="{{ url_for('workspace_view', ws_id=w.id) }}"
+                  data-title="{{ (w.title or 'Untitled Workspace')|lower }}"
+                  data-snippet="{{ ((w.cipher_text or w.notes or '')[:160])|lower }}"
+                >
+                  <div class="ws-head">
+                    <h2 class="ws-name">{{ w.title or "Untitled Workspace" }}</h2>
 
-                  <div style="display:flex;gap:8px;align-items:center;">
-                    <span class="ws-chip">#{{ w.id }}</span>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                      <span class="ws-chip">#{{ w.id }}</span>
 
-                    <button
-                      class="ws-delete"
-                      data-id="{{ w.id }}"
-                      type="button"
-                      title="Delete workspace"
-                      aria-label="Delete workspace"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                        <path d="M10 11v6"></path>
-                        <path d="M14 11v6"></path>
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                      </svg>
-                    </button>
+                      <button
+                        class="ws-delete"
+                        data-id="{{ w.id }}"
+                        type="button"
+                        title="Delete workspace"
+                        aria-label="Delete workspace"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                          <path d="M10 11v6"></path>
+                          <path d="M14 11v6"></path>
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <p class="ws-snippet">
-                  {% set preview = (w.cipher_text or w.notes or "") %}
-                  {{ preview[:180] }}{% if preview|length > 180 %}…{% endif %}
-                </p>
+                  <p class="ws-snippet">
+                    {% set preview = (w.cipher_text or w.notes or "") %}
+                    {{ preview[:180] }}{% if preview|length > 180 %}…{% endif %}
+                  </p>
 
-                <div class="ws-meta">
-                  <div><b>Updated:</b> {{ w.updated_at or "—" }}</div>
-                  <div><b>Created:</b> {{ w.created_at or "—" }}</div>
-                </div>
-              </a>
-            {% endfor %}
-          </div>
+                  <div class="ws-meta">
+                    <div><b>Updated:</b> {{ w.updated_at or "—" }}</div>
+                    <div><b>Created:</b> {{ w.created_at or "—" }}</div>
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+          {% endif %}
         {% endif %}
       </div>
     </section>
@@ -686,11 +705,11 @@
   </div>
 
   <script>
-  // Search
+  // Search (only meaningful when logged in + cards exist)
   (() => {
     const input = document.getElementById("ws-search");
     const cards = [...document.querySelectorAll(".ws-card")];
-    if (!input) return;
+    if (!input || cards.length === 0) return;
 
     input.addEventListener("input", () => {
       const q = input.value.toLowerCase();
@@ -702,7 +721,7 @@
     });
   })();
 
-  // Drag & drop reorder
+  // Drag & drop reorder (only when grid exists)
   (() => {
     const grid = document.getElementById("ws-grid");
     if (!grid) return;
@@ -745,14 +764,15 @@
     }
   })();
 
-  // Delete workspace (custom modal confirm)
+  // Delete workspace (custom modal confirm) — only if delete buttons exist
   (() => {
     const modal = document.getElementById("confirm-modal");
     const box = modal?.querySelector(".confirm-box");
     const okBtn = document.getElementById("confirm-ok");
     const cancelBtn = document.getElementById("confirm-cancel");
     const xBtn = document.getElementById("confirm-x");
-    if (!modal || !box || !okBtn || !cancelBtn || !xBtn) return;
+    const deleteBtns = document.querySelectorAll(".ws-delete");
+    if (!modal || !box || !okBtn || !cancelBtn || !xBtn || deleteBtns.length === 0) return;
 
     let pending = { id: null, card: null, opener: null };
 
@@ -772,7 +792,7 @@
       pending = { id: null, card: null, opener: null };
     }
 
-    document.querySelectorAll(".ws-delete").forEach(btn => {
+    deleteBtns.forEach(btn => {
       btn.addEventListener("click", e => {
         e.preventDefault();
         e.stopPropagation();
@@ -806,7 +826,7 @@
     });
   })();
 
-  // Info modal (+ mark as seen once)
+  // Info modal (+ mark as seen once ONLY if logged in)
   (() => {
     const modal = document.getElementById("info-modal");
     const open = document.getElementById("info-open");
@@ -815,6 +835,9 @@
     if (!modal || !open || !close || !box) return;
 
     async function markInfoSeenOnce(){
+      // logged out? don't persist "seen"
+      if (open.dataset.user !== "1") return;
+
       if (open.dataset.seen === "1") return;
 
       // stop pulsing immediately
@@ -854,4 +877,5 @@
   })();
   </script>
 </body>
+
 </html>

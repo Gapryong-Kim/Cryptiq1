@@ -2002,25 +2002,29 @@ init_workspaces()
 @app.route("/workspaces", methods=["GET"], endpoint="workspace_list")
 def workspace_list():
     user = current_user()
-    if not user:
+    '''if not user:
         flash("Please log in.", "warning")
-        return redirect(url_for("login"))
+        return redirect(url_for("login"))'''
+    if user:
+        conn = get_db()
+        rows = conn.execute("""
+            SELECT id, title, cipher_text, notes, cipher_image_filename, created_at, updated_at
+            FROM workspaces
+            WHERE owner_id = ?
+            ORDER BY order_index ASC, datetime(updated_at) DESC
+        """, (user["id"],)).fetchall()
+        conn.close()
 
-    conn = get_db()
-    rows = conn.execute("""
-        SELECT id, title, cipher_text, notes, cipher_image_filename, created_at, updated_at
-        FROM workspaces
-        WHERE owner_id = ?
-        ORDER BY order_index ASC, datetime(updated_at) DESC
-    """, (user["id"],)).fetchall()
-    conn.close()
-
-    return render_template(
-        "workspace_list.html",
-        user=user,
-        workspaces=[dict(r) for r in rows]
-    )
-
+        return render_template(
+            "workspace_list.html",
+            user=user,
+            workspaces=[dict(r) for r in rows]
+        )
+    else:
+        return render_template(
+            "workspace_list.html",
+            user=user,
+        )
 
 # ----------------------
 # Create workspace
