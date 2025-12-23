@@ -315,7 +315,11 @@
       <tbody>
         {% for u in users %}
         <tr data-username="{{ u.username|lower }}" data-email="{{ (u.email or '')|lower }}" id="user-{{ u.username }}">
-          <td><strong>{{ u.username }}</strong></td>
+          <td><strong>{{ u.username }}</strong> {% if u.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+            {% if u.is_pro %}
+  <span class="pro-badge">PRO</span>
+{% endif %}</td>
+          
           <td>{{ u.email }}</td>
           <td>{{ u.created_at }}</td>
           <td class="status">

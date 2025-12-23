@@ -137,15 +137,7 @@
       gap: 6px;
     }
 
-    .admin-badge {
-      background: var(--accent);
-      color: #0f0f0f;
-      font-size: 0.75rem;
-      padding: 2px 6px;
-      border-radius: 6px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
+    
 
     .banned-badge {
       background: #ff6b6b;
@@ -865,6 +857,9 @@
           <div class="post-author">
             by {{ p.username or '[Deleted User]' }}
             {% if p.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+            {% if user.is_pro %}
+  <span class="pro-badge">PRO</span>
+{% endif %}
             {% if p.banned %}<span class="banned-badge">BANNED</span>{% endif %}
           </div>
         </div>

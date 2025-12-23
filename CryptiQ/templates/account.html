@@ -381,6 +381,9 @@
   animation: shimmer 3s infinite ease-in-out;
 }
 
+  #logout-btn {
+    text-decoration: none;
+  }
   </style>
 </head>
 
@@ -396,7 +399,10 @@
       <div class="account-hero">
         <div class="avatar">{{ user_info['username'][0].upper() }}</div>
         <div class="hero-info">
-          <h2>{{ user_info['username'] }}</h2>
+          <h2>{{ user_info['username'] }} {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+            {% if user.is_pro %}
+  <span class="pro-badge">PRO</span>
+{% endif %}</h2>
           <p>Email: {{ user_info['email'] }}</p>
           <p>Member since: {{ user_info['created_at'][:10] }}</p>
         </div>

@@ -574,6 +574,40 @@
       </div>
     </div>
   </div>
+  <!-- ===== Labs Pro Limit Modal (nice) ===== -->
+<div id="pro-modal" class="promodal" aria-hidden="true">
+  <div class="promodal-backdrop" data-close="1"></div>
+
+  <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Upgrade required">
+    <div class="promodal-top">
+      <div class="promodal-title" id="pro-title">Free plan limit reached</div>
+
+      <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="promodal-body">
+      <div class="promodal-msg" id="pro-body">
+        You’ve hit the free limit. Upgrade to Labs Pro to keep going.
+      </div>
+
+      <ul class="promodal-list">
+        <li><span class="tick">✓</span> Unlimited Labs</li>
+        <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+        <li><span class="tick">✓</span> Pro badge across the site</li>
+      </ul>
+
+      <div class="promodal-note" id="pro-note">
+        Your draft is saved — you won’t lose your text.
+      </div>
+    </div>
+
+    <div class="promodal-actions">
+      <button class="promodal-btn ghost" id="pro-cancel" type="button">Not now</button>
+      <a class="promodal-btn primary" id="pro-cta" href="{{ url_for('labs_pro_page') }}">Upgrade to Pro</a>
+    </div>
+  </div>
+</div>
+
 
   <script>
     const leftBox = document.getElementById("leftBox");
@@ -977,12 +1011,19 @@ ${output}
       railOffset?.addEventListener(evt, saveDraft, { passive: true });
     });
 
-    saveToLabBtn?.addEventListener("click", () => {
+        saveToLabBtn?.addEventListener("click", async () => {
       saveDraft();
+      const gate = await canCreateLabGate();
+      if (!gate.ok) return;
       openLabsModal();
     });
 
-    async function createWorkspacePOST(title) {
+
+        async function createWorkspacePOST(title) {
+      // ✅ Gate first: if free limit hit, open popup (no flash redirect)
+      const gate = await canCreateLabGate();
+      if (!gate.ok) return null;
+
       const fd = new FormData();
       fd.append("title", title || "Untitled Lab");
 
@@ -992,6 +1033,7 @@ ${output}
         redirect: "follow"
       });
 
+      // if server still sends to login, keep draft and go login
       if (res.url && res.url.includes("/login")) {
         saveDraft();
         window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
@@ -1069,6 +1111,75 @@ ${output}
         else decodeRightToLeft();
       });
     });
+      // ===========================
+    // Labs Pro popup (free limit)
+    // ===========================
+    const proModal = document.getElementById("pro-modal");
+    const proX = document.getElementById("pro-x");
+    const proCancel = document.getElementById("pro-cancel");
+    const proTitle = document.getElementById("pro-title");
+    const proBody = document.getElementById("pro-body");
+    const proCta = document.getElementById("pro-cta");
+
+    function openProModal({ title, message, upgrade_url } = {}) {
+      saveDraft(); // important: keep their work safe
+
+      if (!proModal) return;
+      if (proTitle) proTitle.textContent = title || "Free plan limit reached";
+      if (proBody) proBody.textContent = message || "Upgrade to Labs Pro for unlimited labs.";
+      if (proCta && upgrade_url) proCta.href = upgrade_url;
+
+      proModal.classList.add("open");
+      proModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setTimeout(() => proCta?.focus?.(), 0);
+    }
+
+    function closeProModal() {
+      if (!proModal) return;
+      proModal.classList.remove("open");
+      proModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    proX?.addEventListener("click", closeProModal);
+    proCancel?.addEventListener("click", closeProModal);
+    proModal?.addEventListener("click", (e) => {
+      const closeEl = e.target?.closest?.("[data-close='1']");
+      if (closeEl) closeProModal();
+    });
+    async function canCreateLabGate() {
+      // If you added my /workspaces/can-create route, this will work.
+      // If not, it fails open (lets it try creating).
+      try {
+        const res = await fetch("/workspaces/can-create", {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.status === 401 && data.redirect) {
+          window.location.href = data.redirect;
+          return { ok: false, redirected: true };
+        }
+
+        if (!res.ok || !data.ok) {
+          openProModal({
+            title: "Free plan limit reached",
+            message: data.error || "Upgrade to Labs Pro for unlimited labs.",
+            upgrade_url: data.upgrade_url || "{{ url_for('labs_pro_page') }}"
+          });
+          return { ok: false, blocked: true };
+        }
+
+        return { ok: true };
+      } catch {
+        return { ok: true }; // fail open if endpoint missing
+      }
+    }
+
+  
   </script>
 </body>
 </html>

@@ -237,7 +237,19 @@
             {% if current_user and row['username'] == current_user %}user-highlight{% endif %}
           ">
             <td data-label="Rank">#{{ loop.index }}</td>
-            <td data-label="Username">{{ row['username'] }}</td>
+            <td data-label="Username">{{ row['username'] }}  
+  {% if row['is_admin'] %}
+    <span class="admin-badge">ADMIN</span>
+  {% endif %}
+  {% if row['is_pro'] %}
+    <span class="pro-badge">PRO</span>
+  {% endif %}</td>
+            
+            
+            
+            
+            
+            
             <td data-label="Weeks Played">{{ row['weeks_played'] }}</td>
             <td data-label="Total Score">{{ row['total_score'] }}</td>
           </tr>
@@ -266,7 +278,13 @@
             {% if current_user and row['username'] == current_user %}user-highlight{% endif %}
           ">
             <td data-label="Rank">#{{ loop.index }}</td>
-            <td data-label="Username">{{ row['username'] }}</td>
+            <td data-label="Username">{{ row['username'] }}  {% if row['is_admin'] %}
+    <span class="admin-badge">ADMIN</span>
+  {% endif %}
+  {% if row['is_pro'] %}
+    <span class="pro-badge">PRO</span>
+  {% endif %}</td>
+            
             <td data-label="Weeks Played">{{ row['weeks_played'] }}</td>
             <td data-label="Total Score">{{ row['total_score'] }}</td>
           </tr>
@@ -294,7 +312,12 @@
             {% if current_user and row['username'] == current_user %}user-highlight{% endif %}
           ">
             <td data-label="Rank">#{{ loop.index }}</td>
-            <td data-label="Username">{{ row['username'] }}</td>
+            <td data-label="Username">{{ row['username'] }}  {% if row['is_admin'] %}
+    <span class="admin-badge">ADMIN</span>
+  {% endif %}
+  {% if row['is_pro'] %}
+    <span class="pro-badge">PRO</span>
+  {% endif %}</td>
             <td data-label="Fastest Time (s)">{{ row['best_time'] or "—" }}</td>
             <td data-label="Score">{{ row['score'] }}</td>
           </tr>

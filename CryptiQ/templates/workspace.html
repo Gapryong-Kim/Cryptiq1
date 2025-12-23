@@ -703,7 +703,6 @@
       overflow: visible;
       z-index: 1;
     }
-    .cipher-tab-wrap.open{ z-index: 50; }
 
     .cipher-tab{
       display: inline-flex;
@@ -752,13 +751,6 @@
       opacity: .6;
     }
     .cipher-tab-more:hover{ opacity: 1; }
-
-    .cipher-menu{
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
-      z-index: 2000;
-    }
 
     .cipher-menu-item{
       width: 100%;
@@ -961,6 +953,332 @@
     .autosave-pill.saving .spinner{ display: inline-block; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =========================================================
+       Labs Pro upsell modal
+       ========================================================= */
+    .promodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8000;
+    }
+    .promodal.open{ display: flex; }
+
+    .promodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.68);
+      backdrop-filter: blur(7px);
+    }
+
+    .promodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 22px 70px rgba(0,0,0,.6);
+      overflow: hidden;
+      animation: cmodalPop .12s ease-out;
+    }
+
+    .promodal-hero{
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(70% 60% at 15% 20%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+        radial-gradient(55% 50% at 85% 10%, rgba(0,255,213,.10) 0%, rgba(0,255,213,0) 55%);
+    }
+
+    .promodal-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .promodal-title{
+      font-weight: 1000;
+      color: var(--text);
+      font-size: 1.05rem;
+      letter-spacing: .1px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pro-chip{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #0f0f0f;
+      font-weight: 1000;
+      font-size: .78rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pro-chip::after{
+      content:"";
+      position:absolute;
+      inset:-40% -70%;
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.28) 45%, transparent 70%);
+      transform: translateX(-80%);
+      animation: proShine 2.6s ease-in-out infinite;
+    }
+    @keyframes proShine{
+      0%{ transform: translateX(-80%); }
+      55%{ transform: translateX(80%); }
+      100%{ transform: translateX(80%); }
+    }
+
+    .promodal-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .promodal-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .promodal-body{
+      padding: 14px 16px 10px;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+
+    .promodal-list{
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+    .promodal-list li{
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .promodal-list .tick{
+      color: var(--accent);
+      font-weight: 1000;
+    }
+
+    .promodal-actions{
+      padding: 12px 16px 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .promodal-btn{
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 1000;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .promodal-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .promodal-btn.primary{
+      background: var(--accent);
+      color: #0f0f0f;
+      border-color: var(--accent);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 0 3px var(--accent-soft);
+    }
+    .promodal-btn.primary:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+
+    /* =========================================================
+       HISTORY MODAL (Labs Pro)
+       ========================================================= */
+    .hmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8500;
+    }
+    .hmodal.open{ display: flex; }
+
+    .hmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .hmodal-box{
+      position: relative;
+      width: min(760px, 94vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      overflow: hidden;
+      animation: cmodalPop .12s ease-out;
+    }
+
+    .hmodal-top{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .hmodal-title{
+      font-weight: 1000;
+      color: var(--text);
+      font-size: 1rem;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .hmodal-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .hmodal-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .hmodal-body{
+      padding: 12px 14px 10px;
+      color: var(--muted);
+      display: grid;
+      gap: 10px;
+    }
+
+    .hlist{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+      max-height: min(60vh, 520px);
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .hitem{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      padding: 10px 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .hrow{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+
+    .hwhen{
+      color: var(--text);
+      font-weight: 900;
+      font-size: .92rem;
+    }
+    .hmeta{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .82rem;
+    }
+
+    .hactions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .hbtn{
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .hbtn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .hbtn.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .hbtn.primary:hover{
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+      transform: translateY(-1px);
+    }
+
+    .hstatus{
+      font-size: .86rem;
+      color: var(--muted);
+      min-height: 18px;
+    }
+    /* ===== Confirm modal ===== */
+.cmodal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000; /* was 7000 — must be > .hmodal (8500) */
+}
+
   </style>
 </head>
 
@@ -985,6 +1303,11 @@
           <button class="tb-btn" data-tool="remove_spaces" type="button">No spaces</button>
           <button class="tb-btn" data-tool="remove_punctuation" type="button">No punct</button>
           <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
+
+          <!-- ===== PRO FEATURES ===== -->
+          <button class="tb-btn" id="ws-export-pdf" type="button" title="Export this lab as a PDF">Export PDF</button>
+          <button class="tb-btn" id="ws-clone" type="button" title="Clone this lab">Clone</button>
+          <button class="tb-btn" id="ws-history" type="button" title="View lab history snapshots">History</button>
 
           <div class="ws-status" id="save-status">—</div>
         </div>
@@ -1219,6 +1542,61 @@
     </div>
   </div>
 
+  <!-- Labs Pro Modal -->
+  <div id="pro-modal" class="promodal" aria-hidden="true">
+    <div class="promodal-backdrop" data-pro-close="1"></div>
+
+    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Labs Pro required">
+      <div class="promodal-hero">
+        <div class="promodal-top">
+          <div class="promodal-title">
+            <span class="pro-chip">PRO</span>
+            <span id="pro-title">Labs Pro required</span>
+          </div>
+          <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <div class="promodal-body">
+        <div id="pro-body">
+          You’ve hit the free limit. Upgrade to Labs Pro to keep going.
+        </div>
+
+        <ul class="promodal-list">
+          <li><span class="tick">✓</span> Export lab as PDF</li>
+          <li><span class="tick">✓</span> Clone any lab instantly</li>
+          <li><span class="tick">✓</span> Lab history (snapshots)</li>
+          <li><span class="tick">✓</span> Unlimited Labs</li>
+          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+          <li><span class="tick">✓</span> Pro badge across the site</li>
+        </ul>
+      </div>
+
+      <div class="promodal-actions">
+        <button class="promodal-btn" id="pro-cancel" type="button">Not now</button>
+        <a class="promodal-btn primary" id="pro-go" href="/labs-pro">View Labs Pro</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal (Pro) -->
+  <div id="history-modal" class="hmodal" aria-hidden="true">
+    <div class="hmodal-backdrop" data-hclose="1"></div>
+    <div class="hmodal-box" role="dialog" aria-modal="true" aria-label="Lab history">
+      <div class="hmodal-top">
+        <div class="hmodal-title">
+          <span class="pro-chip" style="box-shadow:none;">PRO</span>
+          Lab history
+        </div>
+        <button class="hmodal-x" id="history-x" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="hmodal-body">
+        <div class="hstatus" id="history-status">—</div>
+        <ul class="hlist" id="history-list"></ul>
+      </div>
+    </div>
+  </div>
+
   <script>
   // ===========================
   // Helpers
@@ -1257,7 +1635,6 @@
     const el = document.getElementById("save-status");
     if (el) el.textContent = msg;
 
-    // autosave UI pill
     const pill = document.getElementById("autosave-pill");
     const text = document.getElementById("autosave-text");
     if (!pill || !text) return;
@@ -1269,19 +1646,16 @@
       text.textContent = "Saving…";
       return;
     }
-
     if (m.includes("saved")) {
       pill.classList.remove("saving");
       text.textContent = "Saved";
       return;
     }
-
     if (m.includes("failed")) {
       pill.classList.remove("saving");
       text.textContent = "Save failed";
       return;
     }
-
     if (m.includes("unsaved")) {
       pill.classList.remove("saving");
       text.textContent = "Unsaved changes";
@@ -1293,57 +1667,150 @@
   }
 
   // ===== Custom confirm modal (NO window.confirm) =====
-  function confirmDeleteModal({ title = "Delete image?", message = "Are you sure?" } = {}) {
-    const modal = document.getElementById("confirm-modal");
-    const titleEl = document.getElementById("cmodal-title");
-    const bodyEl = document.getElementById("cmodal-body");
-    const btnCancel = document.getElementById("cmodal-cancel");
-    const btnConfirm = document.getElementById("cmodal-confirm");
-    const btnX = document.getElementById("cmodal-x");
 
-    if (!modal || !btnCancel || !btnConfirm) return Promise.resolve(false);
+function confirmDeleteModal({
+  title = "Confirm",
+  message = "Are you sure?",
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  danger = false
+} = {}) {
+  const modal = document.getElementById("confirm-modal");
+  const titleEl = document.getElementById("cmodal-title");
+  const bodyEl = document.getElementById("cmodal-body");
+  const btnCancel = document.getElementById("cmodal-cancel");
+  const btnConfirm = document.getElementById("cmodal-confirm");
+  const btnX = document.getElementById("cmodal-x");
+
+  if (!modal || !btnCancel || !btnConfirm) return Promise.resolve(false);
+
+  titleEl.textContent = title;
+  bodyEl.textContent = message;
+
+  btnCancel.textContent = cancelText;
+  btnConfirm.textContent = confirmText;
+
+  // toggle danger styling
+  btnConfirm.classList.toggle("danger", !!danger);
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  setTimeout(() => btnConfirm.focus(), 0);
+
+  return new Promise((resolve) => {
+    const cleanup = (result) => {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+
+      btnCancel.removeEventListener("click", onCancel);
+      btnConfirm.removeEventListener("click", onConfirm);
+      btnX?.removeEventListener("click", onCancel);
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+
+      resolve(result);
+    };
+
+    const onCancel = () => cleanup(false);
+    const onConfirm = () => cleanup(true);
+
+    const onBackdrop = (e) => {
+      const closeEl = e.target?.closest?.("[data-close='1']");
+      if (closeEl) cleanup(false);
+    };
+
+    const onKey = (e) => {
+      if (e.key === "Escape") cleanup(false);
+      if (e.key === "Enter") cleanup(true);
+    };
+
+    btnCancel.addEventListener("click", onCancel);
+    btnConfirm.addEventListener("click", onConfirm);
+    btnX?.addEventListener("click", onCancel);
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKey);
+  });
+}
+
+
+  // ===== Labs Pro modal =====
+  function openProModal({
+    title = "Labs Pro required",
+    body = "This feature is available on Labs Pro.",
+    href = "/labs-pro",
+    cta = "View Labs Pro"
+  } = {}) {
+    const modal = document.getElementById("pro-modal");
+    const titleEl = document.getElementById("pro-title");
+    const bodyEl = document.getElementById("pro-body");
+    const btnX = document.getElementById("pro-x");
+    const btnCancel = document.getElementById("pro-cancel");
+    const btnGo = document.getElementById("pro-go");
+
+    if (!modal || !titleEl || !bodyEl || !btnCancel || !btnGo) return;
 
     titleEl.textContent = title;
-    bodyEl.textContent = message;
+    bodyEl.textContent = body;
+    btnGo.textContent = cta;
+    btnGo.href = href;
 
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
 
-    setTimeout(() => btnConfirm.focus(), 0);
+    const close = () => {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      btnCancel.removeEventListener("click", onClose);
+      btnX?.removeEventListener("click", onClose);
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+    };
 
-    return new Promise((resolve) => {
-      const cleanup = (result) => {
-        modal.classList.remove("open");
-        modal.setAttribute("aria-hidden", "true");
+    const onClose = () => close();
+    const onBackdrop = (e) => {
+      const closeEl = e.target?.closest?.("[data-pro-close='1']");
+      if (closeEl) close();
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
 
-        btnCancel.removeEventListener("click", onCancel);
-        btnConfirm.removeEventListener("click", onConfirm);
-        btnX?.removeEventListener("click", onCancel);
-        modal.removeEventListener("click", onBackdrop);
-        document.removeEventListener("keydown", onKey);
+    btnCancel.addEventListener("click", onClose);
+    btnX?.addEventListener("click", onClose);
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKey);
+  }
 
-        resolve(result);
-      };
+  async function maybeHandleProGate(res, data, context = "action") {
+    const status = res?.status;
 
-      const onCancel = () => cleanup(false);
-      const onConfirm = () => cleanup(true);
+    if (status === 402 || status === 403) {
+      openProModal({
+        title: "Labs Pro required",
+        body: context === "history"
+          ? "Lab history is a Labs Pro feature. Upgrade to browse snapshots and restore older versions."
+          : context === "clone"
+            ? "Cloning a lab is a Labs Pro feature."
+            : context === "export"
+              ? "Exporting a lab as PDF is a Labs Pro feature."
+              : "This is a Labs Pro feature.",
+        href: "/labs-pro",
+        cta: "Upgrade to Pro"
+      });
+      return true;
+    }
 
-      const onBackdrop = (e) => {
-        const closeEl = e.target?.closest?.("[data-close='1']");
-        if (closeEl) cleanup(false);
-      };
-
-      const onKey = (e) => {
-        if (e.key === "Escape") cleanup(false);
-        if (e.key === "Enter") cleanup(true);
-      };
-
-      btnCancel.addEventListener("click", onCancel);
-      btnConfirm.addEventListener("click", onConfirm);
-      btnX?.addEventListener("click", onCancel);
-      modal.addEventListener("click", onBackdrop);
-      document.addEventListener("keydown", onKey);
-    });
+    const err = (data?.error || "").toLowerCase();
+    if (err.includes("pro") || err.includes("limit") || err.includes("upgrade")) {
+      openProModal({
+        title: "Labs Pro required",
+        body: data?.error || "This is a Labs Pro feature.",
+        href: "/labs-pro",
+        cta: "View Labs Pro"
+      });
+      return true;
+    }
+    return false;
   }
 
   // ===========================
@@ -1375,13 +1842,12 @@
   // ===========================
   // Save + Autosave
   // ===========================
-  const saveBtn = document.getElementById("save-btn");
   const notesEl = document.getElementById("ws-notes");
   const titleEl = document.getElementById("ws-title-input");
   const cipherEl = document.getElementById("cipher-text");
 
-  const AUTOSAVE_DELAY_MS = 900;     // save after typing stops
-  const FORCE_SAVE_MAX_MS = 9000;    // guarantee save during long typing
+  const AUTOSAVE_DELAY_MS = 900;
+  const FORCE_SAVE_MAX_MS = 9000;
 
   let dirty = false;
   let saving = false;
@@ -1390,7 +1856,6 @@
   let lastSavedPayload = null;
   let saveQueued = false;
 
-  // prevents autosave from firing when substitution programmatically rewrites cipher text
   let internalCipherUpdate = false;
 
   function currentPayload() {
@@ -1422,17 +1887,10 @@
   }
 
   async function triggerAutosave(reason = "auto") {
-    if (saving) {
-      saveQueued = true;
-      return;
-    }
+    if (saving) { saveQueued = true; return; }
 
     const payload = currentPayload();
-
-    if (!dirty || payloadEquals(payload, lastSavedPayload)) {
-      dirty = false;
-      return;
-    }
+    if (!dirty || payloadEquals(payload, lastSavedPayload)) { dirty = false; return; }
 
     await saveWorkspace(payload, reason);
 
@@ -1480,11 +1938,6 @@
       saving = false;
     }
   }
-
-  saveBtn?.addEventListener("click", () => {
-    dirty = true;
-    triggerAutosave("manual-click");
-  });
 
   lastSavedPayload = currentPayload();
 
@@ -1803,7 +2256,7 @@
   const imgWrap = document.getElementById("cipher-image-wrap");
   const img = document.getElementById("cipher-img");
 
-  let images = [];       // [{id, filename, label, url}]
+  let images = [];
   let activeImageId = null;
 
   let floatMenuEl = null;
@@ -2106,8 +2559,14 @@
       fd.append("image", file);
 
       const res = await fetch(`/workspaces/{{ ws.id }}/image`, { method: "POST", body: fd });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "upload failed");
+      const data = await res.json().catch(() => ({}));
+
+      if (await maybeHandleProGate(res, data, "tabs")) {
+        if (imgStatus) imgStatus.textContent = "—";
+        return;
+      }
+
+      if (!res.ok || !data.ok) throw new Error(data.error || "upload failed");
 
       const newImg = data.image;
       if (newImg && newImg.id) {
@@ -2193,6 +2652,220 @@
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeImgModal();
+  });
+
+  // ===========================
+  // PRO FEATURES: Export PDF / Clone / History
+  // ===========================
+  const exportBtn = document.getElementById("ws-export-pdf");
+  const cloneBtn  = document.getElementById("ws-clone");
+  const histBtn   = document.getElementById("ws-history");
+
+async function workspaceCanCreateCheck() {
+  // Expected JSON: { ok:true, can_create:true } or { ok:false, can_create:false, error:"..." }
+  try {
+    const res = await fetch(`/workspaces/can-create`, { method: "GET" });
+
+    // if not logged in, treat as can't create (or redirect if you prefer)
+    if (res.status === 401) {
+      return { ok: false, can_create: false, error: "login required" };
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, can_create: false, error: data.error || "not allowed" };
+
+    if (typeof data.can_create === "boolean") return data;
+
+    // fallback if server returned {ok:true} only
+    return { ok: true, can_create: true };
+  } catch {
+    // if network weird, fallback to "try anyway"
+    return { ok: true, can_create: true };
+  }
+}
+
+  exportBtn?.addEventListener("click", async () => {
+    // We do a HEAD-ish preflight by fetching JSON first if blocked,
+    // but easiest: just hit endpoint and if 403 show modal.
+    try {
+      exportBtn.disabled = true;
+      setStatus("Preparing PDF…");
+
+      const res = await fetch(`/workspaces/{{ ws.id }}/export.pdf`, { method: "GET" });
+
+      // If server returns JSON 403 instead of PDF
+      if (res.status === 403 || res.status === 402) {
+        let data = {};
+        try { data = await res.json(); } catch {}
+        await maybeHandleProGate(res, data, "export");
+        return;
+      }
+
+      if (!res.ok) throw new Error("export failed");
+
+      // It's a PDF blob: force download
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cipherlab_lab_{{ ws.id }}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      setStatus("Downloaded ✓");
+      setTimeout(() => setStatus("—"), 1200);
+    } catch {
+      setStatus("Export failed");
+      setTimeout(() => setStatus("—"), 1200);
+    } finally {
+      exportBtn.disabled = false;
+    }
+  });
+
+  cloneBtn?.addEventListener("click", async () => {
+    // hard stop if user can't create (your requirement)
+    const can = await workspaceCanCreateCheck();
+    if (can && can.can_create === false) {
+      openProModal({
+        title: "Can’t create more labs",
+        body: can.error || "You’ve hit your plan limit. Upgrade to Labs Pro for unlimited labs + cloning.",
+        href: "/labs-pro",
+        cta: "Upgrade to Pro"
+      });
+      return;
+    }
+
+    const ok = await confirmDeleteModal({
+      title: "Clone this lab?",
+      message: "This creates a new lab with the same notes + ciphertext (and images)."
+    });
+    if (!ok) return;
+
+    try {
+      cloneBtn.disabled = true;
+      setStatus("Cloning…");
+
+      const res = await fetch(`/workspaces/{{ ws.id }}/clone`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+
+      if (await maybeHandleProGate(res, data, "clone")) return;
+      if (!res.ok || !data.ok || !data.ws_id) throw new Error(data.error || "clone failed");
+
+      window.location.href = `/workspaces/${data.ws_id}`;
+    } catch {
+      setStatus("Clone failed");
+      setTimeout(() => setStatus("—"), 1200);
+    } finally {
+      cloneBtn.disabled = false;
+    }
+  });
+
+  // ===== History modal =====
+  const hModal = document.getElementById("history-modal");
+  const hX = document.getElementById("history-x");
+  const hList = document.getElementById("history-list");
+  const hStatus = document.getElementById("history-status");
+
+  function openHistoryModal() {
+    if (!hModal) return;
+    hModal.classList.add("open");
+    hModal.setAttribute("aria-hidden","false");
+  }
+  function closeHistoryModal() {
+    if (!hModal) return;
+    hModal.classList.remove("open");
+    hModal.setAttribute("aria-hidden","true");
+  }
+
+  hX?.addEventListener("click", closeHistoryModal);
+  hModal?.addEventListener("click", (e) => {
+    const closeEl = e.target?.closest?.("[data-hclose='1']");
+    if (closeEl) closeHistoryModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && hModal?.classList.contains("open")) closeHistoryModal();
+  });
+
+  function fmtWhen(s) {
+    const t = (s || "").replace("T"," ").slice(0,19);
+    return t || "—";
+  }
+
+  async function loadHistory() {
+    if (!hList || !hStatus) return;
+
+    hStatus.textContent = "Loading…";
+    hList.innerHTML = "";
+
+    try {
+      const res = await fetch(`/workspaces/{{ ws.id }}/history`);
+      const data = await res.json().catch(() => ({}));
+
+      if (await maybeHandleProGate(res, data, "history")) {
+        closeHistoryModal();
+        return;
+      }
+
+      if (!res.ok || !data.ok) throw new Error(data.error || "history failed");
+
+      const items = Array.isArray(data.history) ? data.history : [];
+      if (items.length === 0) {
+        hStatus.textContent = "No snapshots yet. (Pro snapshots are created when you save.)";
+        return;
+      }
+
+      hStatus.textContent = `Showing ${items.length} snapshots`;
+      items.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+      for (const it of items) {
+        const li = document.createElement("li");
+        li.className = "hitem";
+        li.innerHTML = `
+          <div class="hrow">
+            <div class="hwhen">${escapeHtml(fmtWhen(it.created_at))}</div>
+            <div class="hmeta">${escapeHtml((it.reason || "save").toUpperCase())}${it.title ? " • " + escapeHtml(it.title) : ""}</div>
+          </div>
+          <div class="hactions">
+            <button class="hbtn" data-action="restore" data-id="${it.id}">Restore</button>
+          </div>
+        `;
+
+        li.querySelector("[data-action='restore']")?.addEventListener("click", async () => {
+          const ok = await confirmDeleteModal({
+            title: "Restore this snapshot?",
+            message: "This will overwrite your current title/notes/ciphertext. (A restore snapshot will also be saved.)"
+          });
+          if (!ok) return;
+
+          try {
+            hStatus.textContent = "Restoring…";
+            const rres = await fetch(`/workspaces/{{ ws.id }}/history/${it.id}/restore`, { method: "POST" });
+            const rdata = await rres.json().catch(() => ({}));
+
+            if (await maybeHandleProGate(rres, rdata, "history")) return;
+            if (!rres.ok || !rdata.ok) throw new Error(rdata.error || "restore failed");
+
+            // Reload page so everything matches the restored state (including autosave baseline)
+            window.location.reload();
+          } catch {
+            hStatus.textContent = "Restore failed";
+            setTimeout(() => (hStatus.textContent = "—"), 1200);
+          }
+        });
+
+        hList.appendChild(li);
+      }
+    } catch {
+      hStatus.textContent = "Couldn’t load history.";
+    }
+  }
+
+  histBtn?.addEventListener("click", async () => {
+    openHistoryModal();
+    await loadHistory();
   });
 
   // ===========================

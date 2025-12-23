@@ -546,9 +546,186 @@
     background: rgba(255, 0, 80, 0.16);
     box-shadow: 0 0 0 2px rgba(255, 77, 109, 0.18);
   }
+
   .personal {
     color: var(--accent);
     text-decoration: none;
+  }
+
+  /* =========================================================
+     Labs Pro upsell modal (same treatment)
+     ========================================================= */
+  .promodal{
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9000;
+    padding: 16px;
+  }
+  .promodal.open{ display: flex; }
+
+  .promodal-backdrop{
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.68);
+    backdrop-filter: blur(7px);
+  }
+
+  .promodal-box{
+    position: relative;
+    width: min(560px, 92vw);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 22px 70px rgba(0,0,0,.6);
+    overflow: hidden;
+    animation: fadeInUp .18s ease;
+  }
+
+  .promodal-hero{
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(70% 60% at 15% 20%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+      radial-gradient(55% 50% at 85% 10%, rgba(0,255,213,.10) 0%, rgba(0,255,213,0) 55%);
+  }
+
+  .promodal-top{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .promodal-title{
+    font-weight: 1000;
+    color: var(--text);
+    font-size: 1.05rem;
+    letter-spacing: .1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .pro-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #0f0f0f;
+    font-weight: 1000;
+    font-size: .78rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    position: relative;
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+
+  .pro-chip::after{
+    content:"";
+    position:absolute;
+    inset:-40% -70%;
+    background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.28) 45%, transparent 70%);
+    transform: translateX(-80%);
+    animation: proShine 2.6s ease-in-out infinite;
+  }
+  @keyframes proShine{
+    0%{ transform: translateX(-80%); }
+    55%{ transform: translateX(80%); }
+    100%{ transform: translateX(80%); }
+  }
+
+  .promodal-x{
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-weight: 900;
+    border-radius: 12px;
+    padding: 8px 10px;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .promodal-x:hover{
+    background: var(--input-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+
+  .promodal-body{
+    padding: 14px 16px 10px;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  .promodal-list{
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+  }
+  .promodal-list li{
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.03);
+    color: var(--muted);
+    font-weight: 800;
+  }
+  .promodal-list .tick{
+    color: var(--accent);
+    font-weight: 1000;
+  }
+
+  .promodal-actions{
+    padding: 12px 16px 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .promodal-btn{
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-weight: 1000;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .promodal-btn:hover{
+    background: var(--input-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+
+  .promodal-btn.primary{
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 0 3px var(--accent-soft);
+  }
+  .promodal-btn.primary:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+
+  @media (prefers-reduced-motion: reduce){
+    .pro-chip::after{ animation: none; }
   }
 </style>
 
@@ -612,7 +789,7 @@
 
           <!-- New Lab: if logged out, send to login (with next redirect) -->
           {% if user %}
-            <a class="btn" href="{{ url_for('workspace_new') }}">New Lab</a>
+            <a class="btn" href="{{ url_for('workspace_new') }}" id="new-lab-btn">New Lab</a>
           {% else %}
             <a class="btn" href="{{ url_for('login', next=request.path) }}">Log in to create a Lab</a>
           {% endif %}
@@ -624,13 +801,13 @@
           <div class="empty">
             <b>Labs are private.</b><br><br>
             Click the <b>i</b> button above to learn what Labs are.<br>
-             <a  class= 'personal' href="{{ url_for('login', next=request.path) }}">Log in </a> to create and manage your Labs.<br><br>
+             <a class="personal" href="{{ url_for('login', next=request.path) }}">Log in</a> to create and manage your Labs.<br><br>
           </div>
         {% else %}
           {% if workspaces|length == 0 %}
             <div class="empty">
               No Lab yet.<br><br>
-              <a class="btn" href="{{ url_for('workspace_new') }}">Create your first Lab</a>
+              <a class="btn" href="{{ url_for('workspace_new') }}" id="create-first-lab">Create your first Lab</a>
             </div>
           {% else %}
             <div class="grid" id="ws-grid">
@@ -704,7 +881,157 @@
     </div>
   </div>
 
+  <!-- Labs Pro Modal (same treatment) -->
+  <div id="pro-modal" class="promodal" aria-hidden="true">
+    <div class="promodal-backdrop" data-pro-close="1"></div>
+
+    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Labs Pro required">
+      <div class="promodal-hero">
+        <div class="promodal-top">
+          <div class="promodal-title">
+            <span class="pro-chip">PRO</span>
+            <span id="pro-title">Labs Pro required</span>
+          </div>
+          <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <div class="promodal-body">
+        <div id="pro-body">
+          You’ve hit the free limit. Upgrade to Labs Pro to keep going.
+        </div>
+
+        <ul class="promodal-list">
+          <li><span class="tick">✓</span> Unlimited Labs</li>
+          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+          <li><span class="tick">✓</span> Pro badge across the site</li>
+        </ul>
+      </div>
+
+      <div class="promodal-actions">
+        <button class="promodal-btn" id="pro-cancel" type="button">Not now</button>
+        <a class="promodal-btn primary" id="pro-go" href="/labs-pro">View Labs Pro</a>
+      </div>
+    </div>
+  </div>
+
   <script>
+  // ===== Labs Pro modal helpers (same behavior) =====
+  function openProModal({
+    title = "Labs Pro required",
+    body = "You’ve hit the free limit. Upgrade to Labs Pro to keep going.",
+    href = "/labs-pro",
+    cta = "View Labs Pro"
+  } = {}) {
+    const modal = document.getElementById("pro-modal");
+    const titleEl = document.getElementById("pro-title");
+    const bodyEl = document.getElementById("pro-body");
+    const btnX = document.getElementById("pro-x");
+    const btnCancel = document.getElementById("pro-cancel");
+    const btnGo = document.getElementById("pro-go");
+
+    if (!modal || !titleEl || !bodyEl || !btnCancel || !btnGo) return;
+
+    titleEl.textContent = title;
+    bodyEl.textContent = body;
+    btnGo.textContent = cta;
+    btnGo.href = href;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+
+    const close = () => {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      btnCancel.removeEventListener("click", onClose);
+      btnX?.removeEventListener("click", onClose);
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+    };
+
+    const onClose = () => close();
+    const onBackdrop = (e) => {
+      const closeEl = e.target?.closest?.("[data-pro-close='1']");
+      if (closeEl) close();
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
+
+    btnCancel.addEventListener("click", onClose);
+    btnX?.addEventListener("click", onClose);
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKey);
+  }
+
+  async function maybeHandleProGate(res, data, context = "action") {
+    const status = res?.status;
+
+    if (status === 402 || status === 403) {
+      openProModal({
+        title: "Labs Pro required",
+        body: context === "create"
+          ? "You’ve hit the free Lab limit. Upgrade to create unlimited Labs."
+          : "You’ve hit a free limit. Upgrade to Labs Pro to keep going.",
+        href: "/labs-pro",
+        cta: "Upgrade to Pro"
+      });
+      return true;
+    }
+
+    const err = (data?.error || "").toLowerCase();
+    if (err.includes("pro") || err.includes("limit") || err.includes("upgrade")) {
+      openProModal({
+        title: "Labs Pro required",
+        body: data?.error || "You’ve hit a free limit. Upgrade to Labs Pro to keep going.",
+        href: "/labs-pro",
+        cta: "View Labs Pro"
+      });
+      return true;
+    }
+
+    return false;
+  }
+
+  // Intercept "New Lab" + "Create your first Lab" to show Pro modal on gate
+  (() => {
+    const btns = [
+      document.getElementById("new-lab-btn"),
+      document.getElementById("create-first-lab")
+    ].filter(Boolean);
+
+    if (btns.length === 0) return;
+
+    btns.forEach(a => {
+      a.addEventListener("click", async (e) => {
+        // If it isn't an <a> or has no href, do nothing
+        const href = a.getAttribute("href");
+        if (!href) return;
+
+        e.preventDefault();
+
+        try {
+          // Ask server if creation is allowed (you implement this endpoint OR reuse your create route)
+          // Recommended: return {ok:true, redirect:"/workspaces/new"} or {ok:false, error:"..."} with 402/403 for Pro gating.
+          const res = await fetch("/workspaces/can-create", { method: "GET" });
+          const data = await res.json().catch(() => ({}));
+
+          if (await maybeHandleProGate(res, data, "create")) return;
+
+          if (data.ok && data.redirect) {
+            window.location.href = data.redirect;
+            return;
+          }
+
+          // fallback: just go to the normal new page
+          window.location.href = href;
+        } catch {
+          window.location.href = href;
+        }
+      });
+    });
+  })();
+
   // Search (only meaningful when logged in + cards exist)
   (() => {
     const input = document.getElementById("ws-search");
@@ -754,13 +1081,19 @@
       });
     });
 
-    function persistOrder(){
+    async function persistOrder(){
       const order = [...grid.children].map(c => c.dataset.id);
-      fetch("/workspaces/reorder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order })
-      });
+
+      try{
+        const res = await fetch("/workspaces/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (await maybeHandleProGate(res, data, "reorder")) return;
+      }catch(_e){}
     }
   })();
 
@@ -808,6 +1141,10 @@
       okBtn.textContent = "Deleting…";
       try {
         const res = await fetch(`/workspaces/${pending.id}/delete`, { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+
+        if (await maybeHandleProGate(res, data, "delete")) return;
+
         if (res.ok) pending.card?.remove();
       } finally {
         okBtn.disabled = false;
@@ -877,5 +1214,4 @@
   })();
   </script>
 </body>
-
 </html>

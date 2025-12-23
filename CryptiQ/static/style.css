@@ -805,3 +805,251 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
     color-mix(in oklab, var(--accent) 45%, #0f0f0f)
     var(--bg);
 }
+.admin-badge {
+      background: var(--accent);
+      color: #0f0f0f;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+.admin-badge {
+      background: var(--accent);
+      color: #0f0f0f;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+.pro-badge {
+  background: linear-gradient(
+    135deg,
+    #ffd36a,
+    #ffb703
+  );
+  color: #0f0f0f;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 800;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 1px rgba(255,183,3,0.4);
+}
+.pro-badge{
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;           /* keeps the shine contained */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Shine sweep */
+.pro-badge::after{
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0) 40%,
+    rgba(255,255,255,0.65) 50%,
+    rgba(255,255,255,0) 60%
+  );
+  transform: translateX(-120%) rotate(8deg);
+  animation: proShine 2.8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Keep text above shine */
+.pro-badge > *{
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes proShine{
+  0%   { transform: translateX(-140%) rotate(8deg); opacity: 0; }
+  10%  { opacity: 1; }
+  45%  { transform: translateX(140%) rotate(8deg); opacity: 1; }
+  46%  { opacity: 0; }
+  100% { transform: translateX(140%) rotate(8deg); opacity: 0; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .pro-badge::after{ animation: none; display: none; }
+}
+/* ===============================
+   Nice Pro Modal
+   =============================== */
+.promodal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  padding: 16px;
+}
+.promodal.open{ display: flex; }
+
+.promodal-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.68);
+  backdrop-filter: blur(7px);
+}
+
+.promodal-box{
+  position: relative;
+  width: min(560px, 92vw);
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--panel, #1d1d1d) 92%, #000);
+  border: 1px solid color-mix(in oklab, var(--line, #2a2a2a) 65%, transparent);
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.62),
+    0 0 0 1px rgba(255,255,255,.03) inset;
+  overflow: hidden;
+  transform: translateY(6px) scale(.99);
+  opacity: .98;
+  animation: proPop .14s ease-out forwards;
+}
+
+@keyframes proPop{
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.promodal-top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid color-mix(in oklab, var(--line, #2a2a2a) 60%, transparent);
+  background:
+    radial-gradient(80% 120% at 15% 10%, rgba(0,255,213,.10) 0%, transparent 55%),
+    linear-gradient(0deg, rgba(0,0,0,0.06), transparent);
+}
+
+.promodal-title{
+  font-weight: 950;
+  font-size: 1.02rem;
+  letter-spacing: .2px;
+  color: var(--text, #f0f0f0);
+}
+
+.promodal-x{
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--line-2, #343434);
+  background: rgba(255,255,255,0.02);
+  color: var(--text, #f0f0f0);
+  font-weight: 900;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+}
+.promodal-x:hover{
+  background: var(--input-hover, rgba(255,255,255,0.06));
+  border-color: var(--accent, #00ffd5);
+  box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+}
+.promodal-x:active{ transform: translateY(1px); }
+
+.promodal-body{
+  padding: 14px 14px 6px;
+  display: grid;
+  gap: 12px;
+}
+
+.promodal-msg{
+  color: var(--text-dim, #cfcfcf);
+  font-size: .98rem;
+  line-height: 1.5;
+}
+
+.promodal-list{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.promodal-list li{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text, #f0f0f0);
+  font-weight: 800;
+}
+
+.tick{
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,255,213,.14);
+  border: 1px solid rgba(0,255,213,.22);
+  color: var(--accent, #00ffd5);
+  font-weight: 950;
+  flex: 0 0 auto;
+}
+
+.promodal-note{
+  color: var(--muted, #a0a0a0);
+  font-size: .86rem;
+  line-height: 1.35;
+  padding-top: 4px;
+}
+
+.promodal-actions{
+  padding: 12px 14px 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-top: 1px solid color-mix(in oklab, var(--line, #2a2a2a) 60%, transparent);
+  background: rgba(0,0,0,0.06);
+}
+
+.promodal-btn{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line-2, #343434);
+  background: transparent;
+  color: var(--text, #f0f0f0);
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+  white-space: nowrap;
+}
+.promodal-btn:hover{
+  background: var(--input-hover, rgba(255,255,255,0.06));
+  border-color: var(--accent, #00ffd5);
+  box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+}
+.promodal-btn:active{ transform: translateY(1px); }
+
+.promodal-btn.primary{
+  background: var(--accent, #00ffd5);
+  border-color: var(--accent, #00ffd5);
+  color: #0f0f0f;
+}
+.promodal-btn.primary:hover{
+  background: var(--accent-strong, #00e6c0);
+  border-color: var(--accent-strong, #00e6c0);
+  box-shadow: 0 10px 22px rgba(0,0,0,.35);
+}

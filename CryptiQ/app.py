@@ -48,7 +48,8 @@ from cipher_tools.random_tools import remove_punc
 
 # PLAYFAIR_SCORE_FN, PLAYFAIR_USING_FILE = make_score_fn("english_tetragrams.txt")
 
-
+FREE_MAX_LABS = 3          # free users can have up to 3 labs
+FREE_MAX_TABS = 5 
 
 
 def migrate_weekly_tables():
@@ -202,7 +203,7 @@ def current_user():
         conn = get_db()
         cur = conn.execute(
             """
-            SELECT id, username, email, is_admin, banned, labs_info_seen
+            SELECT id, username, email, is_admin, banned, labs_info_seen,is_pro
             FROM users
             WHERE id = ?
             """,
@@ -219,6 +220,14 @@ def is_admin(user):
     if not user:
         return False
     return (user.get("is_admin") == 1) or (user.get("email", "").lower() == ADMIN_EMAIL.lower())
+
+
+def is_pro(user):
+    if not user:
+        return False
+    return user.get("is_pro") == 1
+
+
 
 def fetch_post(post_id):
     conn = get_db()
@@ -572,7 +581,6 @@ def posts_list():
     conn.close()
 
     total_pages = max((total_posts + per_page - 1) // per_page, 1)
-
     return render_template(
         "posts.html",
         posts=posts,
@@ -580,6 +588,7 @@ def posts_list():
         user_is_admin=is_admin(user),
         page=page,
         total_pages=total_pages,
+        user_is_pro=is_pro(user),
         sort=sort,
         search=search,
     )
@@ -1747,53 +1756,71 @@ def get_current_season():
 
 @app.route("/leaderboard")
 def leaderboard():
-    user = current_user()  # ✅ Properly fetch logged-in user for navbar
+    user = current_user()
     username = user["username"] if user else None
+    current_season = get_current_season()
 
     conn = get_db()
 
     # === 1️⃣ All-Time Leaderboard ===
     all_time = conn.execute("""
-        SELECT username,
-               SUM(score) AS total_score,
-               COUNT(DISTINCT cipher_week) AS weeks_played
-        FROM cipher_submissions
-        GROUP BY username
+        SELECT
+            cs.username,
+            SUM(cs.score) AS total_score,
+            COUNT(DISTINCT cs.cipher_week) AS weeks_played,
+            COALESCE(MAX(u.is_pro), 0)  AS is_pro,
+            COALESCE(MAX(u.is_admin), 0) AS is_admin
+        FROM cipher_submissions cs
+        LEFT JOIN users u
+          ON LOWER(u.username) = LOWER(cs.username)
+        WHERE cs.username IS NOT NULL
+        GROUP BY cs.username
         ORDER BY total_score DESC
         LIMIT 50
     """).fetchall()
 
     # === 2️⃣ Current Season Leaderboard ===
-    current_season = get_current_season()
     seasonal = conn.execute("""
-        SELECT username,
-               SUM(score) AS total_score,
-               COUNT(DISTINCT cipher_week) AS weeks_played
-        FROM cipher_submissions
-        WHERE season=?
-        GROUP BY username
+        SELECT
+            cs.username,
+            SUM(cs.score) AS total_score,
+            COUNT(DISTINCT cs.cipher_week) AS weeks_played,
+            COALESCE(MAX(u.is_pro), 0)  AS is_pro,
+            COALESCE(MAX(u.is_admin), 0) AS is_admin
+        FROM cipher_submissions cs
+        LEFT JOIN users u
+          ON LOWER(u.username) = LOWER(cs.username)
+        WHERE cs.username IS NOT NULL
+          AND cs.season = ?
+        GROUP BY cs.username
         ORDER BY total_score DESC
         LIMIT 50
     """, (current_season,)).fetchall()
 
     # === 3️⃣ Weekly Fastest Solvers ===
     weekly = conn.execute("""
-        SELECT username,
-               MIN(solve_time_seconds) AS best_time,
-               MAX(score) AS score
-        FROM cipher_submissions
-        WHERE DATE(created_at) >= DATE('now', '-7 days')
-        GROUP BY username
+        SELECT
+            cs.username,
+            MIN(cs.solve_time_seconds) AS best_time,
+            MAX(cs.score) AS score,
+            COALESCE(MAX(u.is_pro), 0)  AS is_pro,
+            COALESCE(MAX(u.is_admin), 0) AS is_admin
+        FROM cipher_submissions cs
+        LEFT JOIN users u
+          ON LOWER(u.username) = LOWER(cs.username)
+        WHERE cs.username IS NOT NULL
+          AND DATE(cs.created_at) >= DATE('now', '-7 days')
+          AND cs.solve_time_seconds IS NOT NULL
+        GROUP BY cs.username
         ORDER BY best_time ASC
         LIMIT 50
     """).fetchall()
 
     conn.close()
 
-    # === Render the leaderboard page ===
     return render_template(
         "leaderboard.html",
-        user=user,  # ✅ for base_nav.html
+        user=user,
         all_time=all_time,
         seasonal=seasonal,
         weekly=weekly,
@@ -1971,7 +1998,7 @@ def admin_dashboard():
     # Fetch all users from SQLite
     conn = get_db()
     cur = conn.execute("""
-        SELECT id, username, email, is_admin, banned, created_at, has_posted
+        SELECT id, username, email, is_admin, banned, created_at, has_posted, is_pro
         FROM users
         ORDER BY id ASC
     """)
@@ -1992,6 +2019,36 @@ def admin_dashboard():
 # - from flask import request, jsonify, render_template, redirect, url_for, flash, abort
 # - from datetime import datetime
 # - import os
+
+
+from io import BytesIO
+from flask import send_file
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+
+def _history_add_snapshot(conn, ws_row, reason="save", max_keep=200):
+    """
+    ws_row is a row/dict containing id, owner_id, title, notes, cipher_text.
+    Keeps at most max_keep snapshots per workspace (delete oldest beyond limit).
+    """
+    conn.execute("""
+        INSERT INTO workspace_history (workspace_id, owner_id, title, notes, cipher_text, reason)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (ws_row["id"], ws_row["owner_id"], ws_row.get("title") or "", ws_row.get("notes") or "", ws_row.get("cipher_text") or "", reason))
+
+    # prune old snapshots
+    conn.execute("""
+        DELETE FROM workspace_history
+        WHERE id IN (
+          SELECT id FROM workspace_history
+          WHERE workspace_id=?
+          ORDER BY datetime(created_at) DESC
+          LIMIT -1 OFFSET ?
+        )
+    """, (ws_row["id"], max_keep))
+
+
 
 def init_workspaces():
     conn = get_db()
@@ -2060,6 +2117,7 @@ def workspace_list():
         return render_template(
             "workspace_list.html",
             user=user,
+            viewer_is_pro=is_pro(user)
         )
 
 # ----------------------
@@ -2077,10 +2135,19 @@ def workspace_new():
     if request.method == "GET":
         return render_template("workspace_new.html", user=user)
 
+    # ✅ Enforce free limit
+    conn = get_db()
+    cur = conn.execute("SELECT COUNT(*) AS c FROM workspaces WHERE owner_id=?", (user["id"],))
+    lab_count = cur.fetchone()["c"] or 0
+
+    if (not is_pro(user)) and lab_count >= FREE_MAX_LABS:
+        conn.close()
+        flash(f"Free plan limit: {FREE_MAX_LABS} Labs. Upgrade to Labs Pro for unlimited labs.", "warning")
+        return redirect(url_for("workspace_list"))
+
     title = (request.form.get("title") or "Untitled Lab").strip() or "Untitled Lab"
     now = datetime.utcnow().isoformat()
 
-    conn = get_db()
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO workspaces (owner_id, title, cipher_text, notes, created_at, updated_at)
@@ -2136,13 +2203,32 @@ def workspace_save(ws_id):
 
     conn = get_db()
     cur = conn.cursor()
+
     cur.execute("""
         UPDATE workspaces
         SET title = ?, notes = ?, cipher_text = ?, updated_at = ?
         WHERE id = ? AND owner_id = ?
     """, (title, notes, cipher_text, now, ws_id, user["id"]))
-    conn.commit()
+
     changed = cur.rowcount
+
+    # ✅ Pro feature: add snapshot to history
+    try:
+        if changed and is_pro(user):
+            ws_row = conn.execute("""
+                SELECT id, owner_id, title, notes, cipher_text
+                FROM workspaces
+                WHERE id=? AND owner_id=?
+                LIMIT 1
+            """, (ws_id, user["id"])).fetchone()
+
+            if ws_row:
+                _history_add_snapshot(conn, dict(ws_row), reason="save")
+    except Exception as e:
+        # optional: log it so you can see failures
+        app.logger.exception("history snapshot failed: %s", e)
+
+    conn.commit()
     conn.close()
 
     if not changed:
@@ -2225,6 +2311,17 @@ def workspace_image_upload(ws_id):
         conn.close()
         return jsonify({"ok": False, "error": "not found"}), 404
 
+    # ✅ Count existing tabs/images for this lab
+    cur = conn.execute("SELECT COUNT(*) AS c FROM workspace_images WHERE workspace_id=?", (ws_id,))
+    tab_count = cur.fetchone()["c"] or 0
+
+    if (not is_pro(user)) and tab_count >= FREE_MAX_TABS:
+        conn.close()
+        return jsonify({
+            "ok": False,
+            "error": f"Free plan limit: {FREE_MAX_TABS} tabs per Lab. Upgrade to Labs Pro for unlimited tabs."
+        }), 403
+
     # next sort index
     row = conn.execute("""
         SELECT COALESCE(MAX(sort_index), -1) AS mx
@@ -2265,7 +2362,6 @@ def workspace_image_upload(ws_id):
         },
         "updated_at": now
     })
-
 
 # ----------------------
 # REPLACED: Delete cipher image (MULTI)
@@ -2488,7 +2584,18 @@ def weekly_open_lab():
     if not wc:
         return jsonify({"ok": False, "error": "weekly cipher not found"}), 404
 
-    # Build a clean title + notes for the lab
+    conn = get_db()
+
+    # ✅ Enforce free limit
+    cur = conn.execute("SELECT COUNT(*) AS c FROM workspaces WHERE owner_id=?", (user["id"],))
+    lab_count = cur.fetchone()["c"] or 0
+    if (not is_pro(user)) and lab_count >= FREE_MAX_LABS:
+        conn.close()
+        return jsonify({
+            "ok": False,
+            "error": f"Free plan limit: {FREE_MAX_LABS} Labs. Upgrade to Labs Pro for unlimited labs."
+        }), 403
+
     title = f"Weekly Cipher — Week #{wc['week_number']}"
     posted = (wc.get("posted_at") or "")[:19].replace("T", " ")
 
@@ -2505,13 +2612,9 @@ def weekly_open_lab():
     )
 
     cipher_text = wc.get("ciphertext") or ""
-
     now = datetime.utcnow().isoformat()
 
-    conn = get_db()
     cur = conn.cursor()
-
-    # Create workspace
     cur.execute("""
         INSERT INTO workspaces (owner_id, title, cipher_text, notes, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -2524,6 +2627,410 @@ def weekly_open_lab():
     return jsonify({"ok": True, "ws_id": ws_id})
 
 
+@app.route("/labs-pro")
+def labs_pro_page():
+    user = current_user()
+    viewer_is_pro = is_pro(user) if user else False
+    return render_template("labs_pro.html", user=user, viewer_is_pro=viewer_is_pro)
+
+
+
+
+@app.route("/workspaces/can-create", methods=["GET"])
+def workspace_can_create():
+    user = current_user()
+    if not user:
+        return jsonify({
+            "ok": False,
+            "can_create": False,
+            "error": "login required",
+            "redirect": url_for("login", next=url_for("workspace_list"))
+        }), 401
+
+    conn = get_db()
+
+    # ✅ refresh user so is_pro() has the right fields
+    fresh = conn.execute("SELECT * FROM users WHERE id=? LIMIT 1", (user["id"],)).fetchone()
+    if not fresh:
+        conn.close()
+        return jsonify({"ok": False, "can_create": False, "error": "login required"}), 401
+    fresh = dict(fresh)
+
+    lab_count = conn.execute(
+        "SELECT COUNT(*) AS c FROM workspaces WHERE owner_id=?",
+        (user["id"],)
+    ).fetchone()["c"] or 0
+
+    conn.close()
+
+    if (not is_pro(fresh)) and lab_count >= FREE_MAX_LABS:
+        return jsonify({
+            "ok": False,
+            "can_create": False,
+            "error": f"Free plan limit: {FREE_MAX_LABS} Labs. Upgrade to Labs Pro for unlimited labs.",
+            "upgrade_url": url_for("labs_pro_page")
+        }), 402
+
+    return jsonify({
+        "ok": True,
+        "can_create": True
+    })
+
+
+
+
+
+@app.route("/workspaces/<int:ws_id>/history", methods=["GET"])
+def workspace_history_list(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    if not is_pro(user):
+        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
+
+    conn = get_db()
+    ws = conn.execute("SELECT id FROM workspaces WHERE id=? AND owner_id=? LIMIT 1", (ws_id, user["id"])).fetchone()
+    if not ws:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    rows = conn.execute("""
+        SELECT id, created_at, reason, title
+        FROM workspace_history
+        WHERE workspace_id=? AND owner_id=?
+        ORDER BY datetime(created_at) DESC
+        LIMIT 80
+    """, (ws_id, user["id"])).fetchall()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "history": [dict(r) for r in rows]
+    })
+
+@app.route("/workspaces/<int:ws_id>/history/<int:h_id>/restore", methods=["POST"])
+def workspace_history_restore(ws_id, h_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    if not is_pro(user):
+        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
+
+    conn = get_db()
+    ws = conn.execute("SELECT * FROM workspaces WHERE id=? AND owner_id=? LIMIT 1", (ws_id, user["id"])).fetchone()
+    if not ws:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    snap = conn.execute("""
+        SELECT title, notes, cipher_text
+        FROM workspace_history
+        WHERE id=? AND workspace_id=? AND owner_id=?
+        LIMIT 1
+    """, (h_id, ws_id, user["id"])).fetchone()
+
+    if not snap:
+        conn.close()
+        return jsonify({"ok": False, "error": "snapshot not found"}), 404
+
+    now = datetime.utcnow().isoformat()
+
+    conn.execute("""
+        UPDATE workspaces
+        SET title=?, notes=?, cipher_text=?, updated_at=?
+        WHERE id=? AND owner_id=?
+    """, (snap["title"], snap["notes"], snap["cipher_text"], now, ws_id, user["id"]))
+
+    # also record a snapshot of the restore action (so you can undo restores)
+    try:
+        _history_add_snapshot(conn, {
+            "id": ws_id,
+            "owner_id": user["id"],
+            "title": snap["title"],
+            "notes": snap["notes"],
+            "cipher_text": snap["cipher_text"],
+        }, reason="restore")
+    except Exception:
+        pass
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "updated_at": now})
+@app.route("/workspaces/<int:ws_id>/clone", methods=["POST"])
+def workspace_clone(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    if not is_pro(user):
+        print('UNSAFE')
+        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
+
+    conn = get_db()
+
+    src = conn.execute("""
+        SELECT id, owner_id, title, notes, cipher_text
+        FROM workspaces
+        WHERE id=? AND owner_id=?
+        LIMIT 1
+    """, (ws_id, user["id"])).fetchone()
+
+    if not src:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    now = datetime.utcnow().isoformat()
+    new_title = (src["title"] or "Untitled Lab").strip()
+    new_title = f"{new_title} (Copy)"
+
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO workspaces (owner_id, title, cipher_text, notes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (user["id"], new_title, src["cipher_text"] or "", src["notes"] or "", now, now))
+    new_id = cur.lastrowid
+
+    # clone images rows if your table exists
+    try:
+        rows = conn.execute("""
+            SELECT filename, label, sort_index
+            FROM workspace_images
+            WHERE workspace_id=?
+            ORDER BY sort_index ASC, id ASC
+        """, (ws_id,)).fetchall()
+
+        for r in rows:
+            conn.execute("""
+                INSERT INTO workspace_images (workspace_id, filename, label, sort_index)
+                VALUES (?, ?, ?, ?)
+            """, (new_id, r["filename"], r["label"], r["sort_index"]))
+    except Exception:
+        pass
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "ws_id": new_id})
+
+
+from io import BytesIO
+import os
+from datetime import datetime
+
+from flask import send_file, abort, redirect, url_for, jsonify
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, HRFlowable, Image as RLImage, PageBreak
+)
+from reportlab.pdfbase.pdfmetrics import stringWidth
+
+@app.route("/workspaces/<int:ws_id>/export.pdf", methods=["GET"])
+def workspace_export_pdf(ws_id):
+    user = current_user()
+    if not user:
+        return redirect(url_for("login", next=url_for("workspace_view", ws_id=ws_id)))
+
+    if not is_pro(user):
+        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
+
+    conn = get_db()
+    ws = conn.execute("""
+        SELECT id, owner_id, title, notes, cipher_text, updated_at
+        FROM workspaces
+        WHERE id=? AND owner_id=?
+        LIMIT 1
+    """, (ws_id, user["id"])).fetchone()
+    if not ws:
+        conn.close()
+        abort(404)
+
+    img_rows = conn.execute("""
+        SELECT id, filename, label, sort_index, created_at
+        FROM workspace_images
+        WHERE workspace_id=?
+        ORDER BY sort_index ASC, id ASC
+    """, (ws_id,)).fetchall()
+
+    ws = dict(ws)
+    images = [dict(r) for r in img_rows]
+    conn.close()
+
+    # --------------------
+    # Build PDF with Platypus
+    # --------------------
+    buf = BytesIO()
+
+    # slightly wider content, looks more modern
+    left = right = 0.75 * inch
+    top = 0.75 * inch
+    bottom = 0.75 * inch
+
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=letter,
+        leftMargin=left, rightMargin=right,
+        topMargin=top, bottomMargin=bottom,
+        title=f"Cipher Lab #{ws_id}",
+        author="The Cipher Lab"
+    )
+
+    styles = getSampleStyleSheet()
+
+    # Custom styles (clean + compact)
+    H1 = ParagraphStyle(
+        "H1", parent=styles["Title"],
+        fontName="Helvetica-Bold", fontSize=18, leading=22,
+        spaceAfter=6
+    )
+    META = ParagraphStyle(
+        "META", parent=styles["Normal"],
+        fontName="Helvetica", fontSize=9.5, leading=12,
+        textColor=colors.HexColor("#555555"),
+        spaceAfter=10
+    )
+    H2 = ParagraphStyle(
+        "H2", parent=styles["Heading2"],
+        fontName="Helvetica-Bold", fontSize=12.5, leading=16,
+        textColor=colors.HexColor("#111111"),
+        spaceBefore=8, spaceAfter=6
+    )
+    BODY = ParagraphStyle(
+        "BODY", parent=styles["Normal"],
+        fontName="Helvetica", fontSize=10.5, leading=14,
+        textColor=colors.HexColor("#111111")
+    )
+    CODE = ParagraphStyle(
+        "CODE", parent=styles["Normal"],
+        fontName="Courier", fontSize=9.5, leading=12,
+        textColor=colors.HexColor("#111111"),
+        backColor=colors.HexColor("#F5F5F5"),
+        borderPadding=8,
+        spaceBefore=2, spaceAfter=2
+    )
+    CAPTION = ParagraphStyle(
+        "CAPTION", parent=styles["Normal"],
+        fontName="Helvetica", fontSize=9.5, leading=12,
+        textColor=colors.HexColor("#555555"),
+        spaceBefore=6, spaceAfter=12
+    )
+
+    def esc(s: str) -> str:
+        # Paragraph expects HTML-ish text; escape basic stuff.
+        return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    def nice_time(s):
+        # best-effort formatting for your stored iso string
+        if not s:
+            return "—"
+        return s.replace("T", " ")[:19]
+
+    title = (ws.get("title") or "Untitled Lab").strip() or "Untitled Lab"
+    updated = nice_time(ws.get("updated_at"))
+
+    story = []
+
+    # Header
+    story.append(Paragraph(esc(title), H1))
+    story.append(Paragraph(f"<b>Lab #{ws_id}</b> &nbsp;&nbsp;•&nbsp;&nbsp; Updated: {esc(updated)}", META))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#DDDDDD"), spaceBefore=6, spaceAfter=10))
+
+    # Notes
+    story.append(Paragraph("Notes / Plaintext", H2))
+    notes = (ws.get("notes") or "").strip()
+    if notes:
+        # Use BODY with line breaks preserved
+        story.append(Paragraph(esc(notes).replace("\n", "<br/>"), BODY))
+    else:
+        story.append(Paragraph("<i>No notes.</i>", META))
+
+    story.append(Spacer(1, 10))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#EEEEEE"), spaceBefore=2, spaceAfter=10))
+
+    # Ciphertext
+    story.append(Paragraph("Ciphertext", H2))
+    ctext = (ws.get("cipher_text") or "").strip()
+    if ctext:
+        # Make ciphertext look like a code block
+        story.append(Paragraph(esc(ctext).replace("\n", "<br/>"), CODE))
+    else:
+        story.append(Paragraph("<i>No ciphertext.</i>", META))
+
+    # Images
+    if images:
+        story.append(Spacer(1, 8))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#EEEEEE"), spaceBefore=2, spaceAfter=10))
+        story.append(Paragraph("Cipher Images", H2))
+
+        # available drawing area
+        max_w = doc.width
+        max_h = 6.4 * inch  # nice big preview, not too huge
+
+        for idx, im in enumerate(images, start=1):
+            label = (im.get("label") or f"Image {idx}").strip() or f"Image {idx}"
+            filename = (im.get("filename") or "").strip()
+            path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+            if not filename or not os.path.exists(path):
+                story.append(Paragraph(f"{idx}. {esc(label)}", BODY))
+                story.append(Paragraph("(missing image file)", META))
+                story.append(Spacer(1, 8))
+                continue
+
+            # Put each image on its own “block” with caption.
+            # If you prefer each image on its own PAGE, uncomment the PageBreak below.
+            # story.append(PageBreak())
+
+            story.append(Paragraph(f"{idx}. {esc(label)}", BODY))
+            story.append(Spacer(1, 6))
+
+            img_flow = RLImage(path)
+            # Preserve aspect ratio by constraining to box
+            iw, ih = img_flow.imageWidth, img_flow.imageHeight
+            scale = min(max_w / float(iw), max_h / float(ih), 1.0)
+            img_flow.drawWidth = iw * scale
+            img_flow.drawHeight = ih * scale
+            img_flow.hAlign = "CENTER"
+            story.append(img_flow)
+
+            story.append(Paragraph(esc(filename), CAPTION))
+
+    # Footer with page numbers
+    def draw_footer(canv, doc_):
+        canv.saveState()
+        canv.setFont("Helvetica", 9)
+        canv.setFillColor(colors.HexColor("#777777"))
+
+        page = canv.getPageNumber()
+        footer_left = f"The Cipher Lab • Lab #{ws_id}"
+        footer_right = f"Page {page}"
+
+        y = 0.55 * inch
+        canv.drawString(doc_.leftMargin, y, footer_left)
+
+        w = stringWidth(footer_right, "Helvetica", 9)
+        canv.drawString(doc_.pagesize[0] - doc_.rightMargin - w, y, footer_right)
+
+        canv.restoreState()
+
+    doc.build(story, onFirstPage=draw_footer, onLaterPages=draw_footer)
+
+    buf.seek(0)
+    filename = f"cipherlab_lab_{ws_id}.pdf"
+    return send_file(buf, mimetype="application/pdf", as_attachment=True, download_name=filename)
+
+
+
+
+
+
+
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)
+ 

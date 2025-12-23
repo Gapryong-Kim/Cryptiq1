@@ -374,6 +374,150 @@
       background: var(--input-focus);
       box-shadow: 0 0 0 2px var(--accent-soft);
     }
+
+    /* ===============================
+       Pro Modal (nice one)
+       =============================== */
+    .promodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9500;
+      padding: 16px;
+    }
+    .promodal.open{ display:flex; animation: proFade .18s ease; }
+    @keyframes proFade{ from{opacity:0} to{opacity:1} }
+
+    .promodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.66);
+      backdrop-filter: blur(6px);
+    }
+
+    .promodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      overflow: hidden;
+      animation: proPop .14s ease-out;
+      outline: none;
+    }
+    @keyframes proPop{
+      from{ transform: translateY(10px) scale(.98); opacity:.7; }
+      to{ transform: translateY(0) scale(1); opacity:1; }
+    }
+
+    .promodal-top{
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    }
+    .promodal-titlewrap{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .promodal-dot{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-soft);
+      flex: 0 0 auto;
+    }
+    .promodal-title{
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .promodal-x{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      cursor: pointer;
+      display:grid;
+      place-items:center;
+      transition: background .15s ease, border-color .15s ease, box-shadow .18s ease, transform .06s ease;
+    }
+    .promodal-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .promodal-x:active{ transform: translateY(1px); }
+
+    .promodal-body{
+      padding: 16px;
+      color: var(--text-dim);
+      line-height: 1.55;
+      display: grid;
+      gap: 12px;
+    }
+
+    .promodal-list{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+    .promodal-list li{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-weight: 800;
+    }
+    .tick{
+      width: 22px; height: 22px;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      background: rgba(0,255,213,0.10);
+      border: 1px solid rgba(0,255,213,0.22);
+      color: var(--accent);
+      flex: 0 0 auto;
+      box-shadow: 0 0 10px var(--accent-soft);
+      font-weight: 950;
+    }
+
+    .promodal-actions{
+      padding: 14px 16px 16px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04), transparent);
+    }
+
+    .pro-note{
+      font-size: .88rem;
+      color: var(--muted);
+      margin: 0;
+    }
   </style>
 </head>
 
@@ -391,7 +535,6 @@
             <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
             <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
           {% else %}
-            <!-- IMPORTANT: use full_path so you come back to THIS page -->
             <a class="lab-btn primary" id="login-to-save"
                href="{{ url_for('login') }}?next={{ request.full_path }}">Login to save</a>
             <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
@@ -512,6 +655,40 @@
     </div>
   </div>
 
+  <!-- ===== Pro Modal (limit reached) ===== -->
+  <div id="pro-modal" class="promodal" aria-hidden="true">
+    <div class="promodal-backdrop" data-pro-close="1"></div>
+
+    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Upgrade to Labs Pro" tabindex="-1">
+      <div class="promodal-top">
+        <div class="promodal-titlewrap">
+          <span class="promodal-dot" aria-hidden="true"></span>
+          <h3 class="promodal-title" id="pro-title">Labs Pro</h3>
+        </div>
+        <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="promodal-body">
+        <div id="pro-body">
+          You’ve hit the free limit. Upgrade to Labs Pro to keep going.
+        </div>
+
+        <ul class="promodal-list">
+          <li><span class="tick">✓</span> Unlimited Labs</li>
+          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+          <li><span class="tick">✓</span> Pro badge across the site</li>
+        </ul>
+
+        <p class="pro-note" id="pro-note" style="display:none;"></p>
+      </div>
+
+      <div class="promodal-actions">
+        <a class="lab-btn" id="pro-not-now" href="#" role="button">Not now</a>
+        <a class="lab-btn primary" id="pro-upgrade" href="{{ url_for('labs_pro_page') }}">Upgrade</a>
+      </div>
+    </div>
+  </div>
+
 <script>
   const form = document.getElementById("breaker-form");
   const breakBtn = document.getElementById("break-btn");
@@ -523,6 +700,56 @@
   const errorBanner = document.getElementById("error-banner");
   const textarea = document.getElementById("ciphertext");
   const cipherTypeSelect = document.getElementById("cipher_type");
+
+  // ===========================
+  // Pro modal helpers
+  // ===========================
+  const proModal = document.getElementById("pro-modal");
+  const proBox = proModal?.querySelector(".promodal-box");
+  const proX = document.getElementById("pro-x");
+  const proNotNow = document.getElementById("pro-not-now");
+  const proUpgrade = document.getElementById("pro-upgrade");
+  const proTitle = document.getElementById("pro-title");
+  const proBody = document.getElementById("pro-body");
+  const proNote = document.getElementById("pro-note");
+  let proOpener = null;
+
+  function openProModal({ title, message, upgrade_url, note } = {}) {
+    if (!proModal) return;
+    proOpener = document.activeElement;
+
+    if (proTitle) proTitle.textContent = title || "Labs Pro";
+    if (proBody) proBody.textContent = message || "You’ve hit the free limit. Upgrade to Labs Pro to keep going.";
+    if (proUpgrade && upgrade_url) proUpgrade.href = upgrade_url;
+
+    if (proNote) {
+      if (note) { proNote.style.display = "block"; proNote.textContent = note; }
+      else { proNote.style.display = "none"; proNote.textContent = ""; }
+    }
+
+    proModal.classList.add("open");
+    proModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => proBox?.focus?.(), 0);
+  }
+
+  function closeProModal() {
+    if (!proModal) return;
+    proModal.classList.remove("open");
+    proModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    proOpener?.focus?.();
+    proOpener = null;
+  }
+
+  proX?.addEventListener("click", closeProModal);
+  proNotNow?.addEventListener("click", (e) => { e.preventDefault(); closeProModal(); });
+  proModal?.addEventListener("click", (e) => {
+    if (e.target?.closest?.("[data-pro-close='1']")) closeProModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && proModal?.classList.contains("open")) closeProModal();
+  });
 
   // ===========================
   // Return-after-login state persistence
@@ -539,7 +766,6 @@
         result_text: resultText?.textContent || "",
         result_key_text: keyVisible ? (resultKey?.textContent || "") : "",
         result_key_visible: !!keyVisible,
-        // also stash labs modal draft if open / user typed
         labs_title: (document.getElementById("labs-title")?.value || ""),
         labs_notes: (document.getElementById("labs-notes")?.value || ""),
         ...extra
@@ -571,15 +797,10 @@
 
       if (copyBtn) copyBtn.style.display = (resultText?.textContent || "").trim() ? "inline-flex" : "none";
 
-      // restore labs draft (nice if they were mid-save)
       const lt = document.getElementById("labs-title");
       const ln = document.getElementById("labs-notes");
       if (lt && typeof state.labs_title === "string" && state.labs_title) lt.value = state.labs_title;
       if (ln && typeof state.labs_notes === "string" && state.labs_notes) ln.value = state.labs_notes;
-
-      // keep state for a bit (don’t instantly delete; user might login/logout again)
-      // but if you prefer, you can clear it here:
-      // sessionStorage.removeItem(STATE_KEY);
 
       return true;
     } catch {
@@ -592,14 +813,9 @@
     window.location.href = `{{ url_for('login') }}?next={{ request.full_path }}`;
   }
 
-  // If logged-out header button exists, intercept click to stash state first
   const loginToSave = document.getElementById("login-to-save");
-  loginToSave?.addEventListener("click", (e) => {
-    stashBreakerState();
-    // allow normal navigation to the link
-  });
+  loginToSave?.addEventListener("click", () => stashBreakerState());
 
-  // Also keep state updated while typing / switching cipher / results appear
   textarea?.addEventListener("input", () => stashBreakerState(), { passive: true });
   cipherTypeSelect?.addEventListener("change", () => stashBreakerState(), { passive: true });
 
@@ -727,8 +943,11 @@
   });
 
   // ===========================
-  // Labs integration (create workspace via POST /workspaces/new, then save)
-  // + login bounce preserves state
+  // Labs integration
+  // HARD STOP if capped:
+  // - gate before opening labs modal
+  // - gate before creating
+  // - also handle 403 from create/save
   // ===========================
   const labsModal = document.getElementById("labs-modal");
   const labsX = document.getElementById("labs-x");
@@ -737,6 +956,43 @@
   const labsTitle = document.getElementById("labs-title");
   const labsNotes = document.getElementById("labs-notes");
   const saveToLabBtn = document.getElementById("save-to-lab");
+
+  async function gateCanCreateOrShowPro({ note } = {}) {
+    try {
+      const gateRes = await fetch(`{{ url_for('workspace_can_create') }}`, {
+        method: "GET",
+        headers: { "Accept": "application/json" }
+      });
+
+      if (gateRes.status === 401) {
+        redirectToLoginPreservingState();
+        return false;
+      }
+
+      const gate = await gateRes.json().catch(() => null);
+
+      // support typical shapes:
+      // { ok: true } OR { can_create: true }
+      // { ok: false, error: "...", upgrade_url: "/labs-pro" } OR { can_create: false, reason: "..." }
+      const canCreate = (gate?.can_create ?? gate?.canCreate ?? gate?.ok);
+
+      if (canCreate === false) {
+        openProModal({
+          title: "Free plan limit reached",
+          message: gate?.reason || gate?.error || "You’ve hit the free limit. Upgrade to Labs Pro to keep going.",
+          upgrade_url: gate?.upgrade_url || gate?.upgradeUrl || `{{ url_for('labs_pro_page') }}`,
+          note: note || "Your draft is saved — you won’t lose your text."
+        });
+        return false;
+      }
+
+      // if the route returns something unexpected, assume allowed (fail-open)
+      return true;
+    } catch {
+      // fail-open if gate is temporarily unreachable
+      return true;
+    }
+  }
 
   function openLabsModal() {
     if (!labsModal) return;
@@ -791,7 +1047,13 @@ ${(resultText.textContent || "").trim() || "(empty)"}
   labsTitle?.addEventListener("input", () => stashBreakerState({ labs_title: labsTitle.value || "" }), { passive: true });
   labsNotes?.addEventListener("input", () => stashBreakerState({ labs_notes: labsNotes.value || "" }), { passive: true });
 
-  saveToLabBtn?.addEventListener("click", openLabsModal);
+  // Gate BEFORE opening the labs modal
+  saveToLabBtn?.addEventListener("click", async () => {
+    stashBreakerState();
+    const ok = await gateCanCreateOrShowPro();
+    if (!ok) return; // 🚫 HARD STOP
+    openLabsModal();
+  });
 
   async function createWorkspacePOST(title) {
     const fd = new FormData();
@@ -803,16 +1065,21 @@ ${(resultText.textContent || "").trim() || "(empty)"}
       redirect: "follow"
     });
 
-    // If it bounced to login, preserve state and redirect properly
+    // login bounce
     if (res.url && res.url.includes("/login")) {
       redirectToLoginPreservingState();
-      return null;
+      return { ok:false, code:401 };
+    }
+
+    // if backend returns a hard 403 (limit), show pro
+    if (res.status === 403) {
+      return { ok:false, code:403 };
     }
 
     const finalUrl = res.url || "";
     const m = finalUrl.match(/\/workspaces\/(\d+)(?:\/)?$/);
-    if (!m) return null;
-    return Number(m[1]);
+    if (!m) return { ok:false, code:500 };
+    return { ok:true, wsId: Number(m[1]) };
   }
 
   async function saveWorkspace(wsId, payload) {
@@ -828,14 +1095,21 @@ ${(resultText.textContent || "").trim() || "(empty)"}
 
     if (res.status === 401) {
       redirectToLoginPreservingState();
-      return false;
+      return { ok:false, code:401 };
+    }
+    if (res.status === 403) {
+      return { ok:false, code:403 };
     }
 
     const data = await res.json().catch(() => null);
-    return !!(data && data.ok);
+    return { ok: !!(data && data.ok), code: (data && data.ok) ? 200 : 500 };
   }
 
   labsConfirm?.addEventListener("click", async () => {
+    // Gate BEFORE creating (second lock)
+    const allowed = await gateCanCreateOrShowPro();
+    if (!allowed) return; // 🚫 HARD STOP
+
     const title = (labsTitle.value || "").trim() || "Untitled Lab";
     const cipher_text = (textarea.value || "").trim();
     const notes = (labsNotes.value || "").trim();
@@ -847,21 +1121,51 @@ ${(resultText.textContent || "").trim() || "(empty)"}
     labsConfirm.textContent = "Creating…";
 
     try {
-      const wsId = await createWorkspacePOST(title);
-      if (!wsId) throw new Error("create failed");
+      const created = await createWorkspacePOST(title);
+
+      if (!created.ok) {
+        if (created.code === 403) {
+          closeLabsModal();
+          openProModal({
+            title: "Free plan limit reached",
+            message: "You’ve hit the free limit. Upgrade to Labs Pro to keep going.",
+            upgrade_url: `{{ url_for('labs_pro_page') }}`,
+            note: "Your draft is saved — you won’t lose your text."
+          });
+          return;
+        }
+        throw new Error("create failed");
+      }
 
       labsConfirm.textContent = "Saving…";
-      const ok = await saveWorkspace(wsId, { title, notes, cipher_text });
-      if (!ok) throw new Error("save failed");
+      const saved = await saveWorkspace(created.wsId, { title, notes, cipher_text });
 
-      // If you want: clear state after successful save
+      if (!saved.ok) {
+        if (saved.code === 403) {
+          closeLabsModal();
+          openProModal({
+            title: "Free plan limit reached",
+            message: "You’ve hit the free limit. Upgrade to Labs Pro to keep going.",
+            upgrade_url: `{{ url_for('labs_pro_page') }}`,
+            note: "Your draft is saved — you won’t lose your text."
+          });
+          return;
+        }
+        throw new Error("save failed");
+      }
+
       try { sessionStorage.removeItem(STATE_KEY); } catch {}
-
-      window.location.href = `/workspaces/${wsId}`;
+      window.location.href = `/workspaces/${created.wsId}`;
     } catch (e) {
       labsConfirm.disabled = false;
       labsConfirm.textContent = oldText;
       alert("Could not create lab. Are you logged in?");
+    } finally {
+      if (!labsConfirm.disabled) {
+        // nothing
+      } else {
+        // if we didn't early-return above, keep disabled until navigation happens
+      }
     }
   });
 
@@ -871,7 +1175,6 @@ ${(resultText.textContent || "").trim() || "(empty)"}
   window.addEventListener("DOMContentLoaded", () => {
     const restored = restoreBreakerStateIfAny();
 
-    // If nothing restored and box empty, keep your existing playful demo behavior
     if (!restored && !(textarea.value || "").trim()) {
       textarea.value = funSamples[Math.floor(Math.random() * funSamples.length)];
     }

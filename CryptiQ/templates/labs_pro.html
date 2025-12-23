@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Labs Pro — The Cipher Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    body{
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter','Segoe UI',Tahoma,sans-serif;
+      margin:0;
+    }
+
+    .pro-wrap{
+      width: min(1050px, 94%);
+      margin: 110px auto 90px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px 26px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background:
+        radial-gradient(70% 60% at 15% 20%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+        radial-gradient(55% 50% at 85% 10%, rgba(0,255,213,.10) 0%, rgba(0,255,213,0) 55%),
+        radial-gradient(40% 40% at 70% 85%, rgba(0,255,213,.08) 0%, rgba(0,255,213,0) 55%);
+      pointer-events:none;
+      filter: blur(0px);
+      opacity: 1;
+    }
+
+    .hero-inner{
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: .02em;
+      margin-bottom: 10px;
+    }
+
+    .pro-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-weight: 900;
+      font-size: .78rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: #0f0f0f;
+      background: var(--accent);
+      border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .title{
+      margin: 0;
+      font-size: clamp(1.8rem, 4.8vw, 2.6rem);
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+
+    .sub{
+      margin-top: 10px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      font-size: 1.02rem;
+      max-width: 62ch;
+    }
+
+    .status{
+      margin-top: 14px;
+      display: inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: color-mix(in oklab, var(--panel) 85%, black);
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #999;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+    }
+    .dot.pro{ background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .dot.free{ background: #7b7b7b; }
+
+    .cta-card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px 18px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .price{
+      display:flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 6px 0 2px;
+    }
+
+    .price .amount{
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--text);
+      letter-spacing: -0.03em;
+    }
+    .price .per{
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .fine{
+      color: var(--text-dim);
+      font-size: .92rem;
+      line-height: 1.45;
+      margin-top: 8px;
+    }
+
+    .btn-row{
+      margin-top: 14px;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn{
+      width: 100%;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      display:inline-flex;
+      justify-content:center;
+      align-items:center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease, background .12s ease;
+      user-select:none;
+    }
+
+    .btn.primary{
+      background: var(--accent);
+      color: #0f0f0f;
+      border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+      box-shadow: 0 0 0 3px var(--accent-soft), 0 12px 28px rgba(0,0,0,0.35);
+    }
+    .btn.primary:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+
+    .btn.ghost{
+      background: transparent;
+      color: var(--text);
+    }
+    .btn.ghost:hover{
+      background: rgba(255,255,255,0.05);
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .btn[aria-disabled="true"]{
+      opacity: .65;
+      pointer-events: none;
+      box-shadow: none;
+    }
+
+    /* ===== Features grid (now 6 items) ===== */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px 18px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+    }
+
+    .card h3{
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+    .card p{
+      margin: 0;
+      color: var(--text-dim);
+      line-height: 1.55;
+      font-size: .96rem;
+    }
+
+    .feat{
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+    }
+
+    .feat .icon{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display:grid;
+      place-items:center;
+      background: rgba(0,255,213,0.10);
+      border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
+      color: var(--accent);
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .section-title{
+      margin: 14px 0 6px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--accent);
+    }
+
+    .faq{
+      display:grid;
+      gap: 10px;
+    }
+    details{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    summary{
+      cursor:pointer;
+      font-weight: 900;
+      color: var(--text);
+    }
+    details p{
+      margin: 10px 0 0;
+      color: var(--text-dim);
+      line-height: 1.55;
+      font-size: .96rem;
+    }
+
+    @media (max-width: 900px){
+      .hero-inner{ grid-template-columns: 1fr; }
+      .grid{ grid-template-columns: 1fr; }
+      .pro-wrap{ margin: 95px auto 70px; }
+    }
+  </style>
+</head>
+
+<body>
+  {% include 'base_nav.html' %}
+
+  <main class="pro-wrap">
+
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <div class="kicker">
+            <span class="pro-pill">Labs Pro</span>
+            <span>Unlimited labs + tabs. Support the project.</span>
+          </div>
+
+          <h1 class="title">Go unlimited. Work like a real cryptanalyst.</h1>
+          <p class="sub">
+            Labs Pro unlocks unlimited Labs, unlimited image tabs, and premium Lab features like PDF export,
+            cloning, and history snapshots. You also get a shiny Pro badge next to your name across posts,
+            comments, and leaderboards. (More perks coming.)
+          </p>
+
+          <div class="status">
+            {% if user %}
+              {% if viewer_is_pro %}
+                <span class="dot pro"></span> You’re currently on <strong>Labs Pro</strong>.
+              {% else %}
+                <span class="dot free"></span> You’re currently on <strong>Free</strong>.
+              {% endif %}
+            {% else %}
+              <span class="dot free"></span> You’re browsing as a guest. Log in to upgrade.
+            {% endif %}
+          </div>
+        </div>
+
+        <aside class="cta-card">
+          <div style="font-weight:900;color:var(--text);">Labs Pro</div>
+
+          <div class="price">
+            <div class="amount">£5</div>
+            <div class="per">/ month</div>
+          </div>
+
+          <div class="fine">
+            Cancel anytime. This is a placeholder price — we’ll wire Stripe later.
+          </div>
+
+          <div class="btn-row">
+            {% if not user %}
+              <a class="btn primary" href="{{ url_for('login') }}?next={{ request.path }}">Log in to upgrade</a>
+            {% elif viewer_is_pro %}
+              <a class="btn primary" href="{{ url_for('workspace_list') }}">Open your Labs</a>
+              <a class="btn ghost" aria-disabled="true">Manage billing (soon)</a>
+            {% else %}
+              <!-- Later you'll point this to Stripe checkout -->
+              <a class="btn primary" href="{{ url_for('workspace_list') }}">Upgrade (coming soon)</a>
+              <a class="btn ghost" href="{{ url_for('workspace_list') }}">Try Labs</a>
+            {% endif %}
+          </div>
+
+          <div class="fine" style="margin-top:12px;">
+            Want yearly? Student? Team? We can add tiers once Pro is live.
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===== FEATURES (updated) ===== -->
+    <div class="grid">
+      <section class="card feat">
+        <div class="icon">∞</div>
+        <div>
+          <h3>Unlimited Labs</h3>
+          <p>Create as many labs as you want. Keep separate workspaces for each cipher, puzzle, or idea.</p>
+        </div>
+      </section>
+
+      <section class="card feat">
+        <div class="icon">🗂️</div>
+        <div>
+          <h3>Unlimited Tabs</h3>
+          <p>Add unlimited image tabs inside a lab—screenshots, scans, notes, anything. No more juggling.</p>
+        </div>
+      </section>
+
+      <section class="card feat">
+        <div class="icon">📄</div>
+        <div>
+          <h3>Export as PDF</h3>
+          <p>One click export of your lab (notes + ciphertext + images) so you can share, print, or archive.</p>
+        </div>
+      </section>
+
+      <section class="card feat">
+        <div class="icon">⎘</div>
+        <div>
+          <h3>Clone Labs</h3>
+          <p>Duplicate any lab instantly (including images) to branch ideas without losing your original work.</p>
+        </div>
+      </section>
+
+      <section class="card feat">
+        <div class="icon">⏱</div>
+        <div>
+          <h3>Lab History</h3>
+          <p>Snapshots on save, plus restore. Fearless experimentation: roll back when you take a wrong turn.</p>
+        </div>
+      </section>
+
+      <section class="card feat">
+        <div class="icon">✨</div>
+        <div>
+          <h3>Pro Badge</h3>
+          <p>Your name gets a Pro badge across the site (posts, comments, leaderboards). Supporter flex.</p>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="section-title">What’s coming next</div>
+      <p style="margin:0;color:var(--text-dim);line-height:1.6;">
+        After Pro is wired: better lab organization, templates, pinned tools, share links, team labs,
+        and more solver utilities. Pro members help fund faster improvements.
+      </p>
+    </section>
+
+    <section class="faq">
+      <div class="section-title">FAQ</div>
+
+      <details>
+        <summary>Does Pro affect Weekly Cipher scoring or leaderboards?</summary>
+        <p>No. Pro is about Labs capacity + quality-of-life lab features and a badge. Weekly Cipher scoring stays fair.</p>
+      </details>
+
+      <details>
+        <summary>What exactly is included in “Lab History”?</summary>
+        <p>Labs Pro adds snapshot history entries (created on save) and a restore button to revert your lab back to an earlier snapshot.</p>
+      </details>
+
+      <details>
+        <summary>What’s included in the PDF export?</summary>
+        <p>Your lab title, notes/plaintext, ciphertext, and any uploaded images (shown inside the export).</p>
+      </details>
+
+      <details>
+        <summary>Can I cancel anytime?</summary>
+        <p>Yes. Once payments are wired, you’ll be able to cancel from billing at any time.</p>
+      </details>
+
+      <details>
+        <summary>Will there be a yearly plan?</summary>
+        <p>Probably. Once monthly is stable, yearly pricing is easy to add.</p>
+      </details>
+
+      <details>
+        <summary>What if I hit the free limit?</summary>
+        <p>We’ll show a clean popup that explains the limit and links here to upgrade.</p>
+      </details>
+    </section>
+
+  </main>
+</body>
+</html>
