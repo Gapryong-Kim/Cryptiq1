@@ -13,7 +13,7 @@ def current_user():
     if "user_id" in session:
         conn = get_db()
         cur = conn.execute("""
-            SELECT id, username, email, is_admin, banned, labs_info_seen, is_pro, stripe_customer_id
+            SELECT id, username, email, is_admin, banned, labs_info_seen, is_pro, stripe_customer_id,pro_current_period_end,pro_cancel_at_period_end
             FROM users
             WHERE id=?
         """, (session["user_id"],))
