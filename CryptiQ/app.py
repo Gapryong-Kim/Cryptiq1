@@ -257,35 +257,21 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-
-
 def is_admin(user):
     if not user:
         return False
     return (user.get("is_admin") == 1) or (user.get("email", "").lower() == ADMIN_EMAIL.lower())
 
 
-from datetime import datetime, timezone
-
 def is_pro(user):
     if not user:
         return False
 
-    # If you also store a boolean flag, you can keep it, but the end-date is the source of truth.
-    end = user.get("pro_current_period_end")
-    if not end:
-        return False
-
     try:
-        # Accept either "2025-12-24T19:00:00Z" or "2025-12-24T19:00:00"
-        s = end.replace("Z", "+00:00") if isinstance(end, str) else str(end)
-        dt = datetime.fromisoformat(s)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt > datetime.now(timezone.utc)
+        # works for sqlite3.Row and dict
+        return bool(user["is_pro"])
     except Exception:
         return False
-
 
 
 def fetch_post(post_id):
@@ -2676,34 +2662,27 @@ def weekly_open_lab():
     conn.close()
 
     return jsonify({"ok": True, "ws_id": ws_id})
-
-
 @app.route("/labs-pro")
 def labs_pro_page():
     user = current_user()
-    viewer_is_pro = is_pro(user) if user else False
-
-    pro_end = None
-    cancel_at_period_end = False
+    viewer_is_pro = False
 
     if user:
-        # Refresh from DB so it’s accurate
         conn = get_db()
-        fresh = conn.execute("SELECT * FROM users WHERE id=? LIMIT 1", (user["id"],)).fetchone()
+        user = conn.execute(
+            "SELECT * FROM users WHERE id=? LIMIT 1",
+            (user["id"],)
+        ).fetchone()
         conn.close()
-        if fresh:
-            fresh = dict(fresh)
-            viewer_is_pro = is_pro(fresh)
-            pro_end = fresh.get("pro_current_period_end")
-            cancel_at_period_end = bool(fresh.get("pro_cancel_at_period_end") or 0)
+
+        viewer_is_pro = is_pro(user)
 
     return render_template(
         "labs_pro.html",
         user=user,
-        viewer_is_pro=viewer_is_pro,
-        pro_end=pro_end,
-        cancel_at_period_end=cancel_at_period_end
+        viewer_is_pro=viewer_is_pro
     )
+
 
 import secrets
 
