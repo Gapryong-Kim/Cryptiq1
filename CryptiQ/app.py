@@ -102,7 +102,7 @@ app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USERNAME"] = "thecipherlab@gmail.com"   # your sender email
-app.config["MAIL_PASSWORD"] = "xryonkhnboapnuwt"         # 16-char App Password
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = ("The Cipher Lab Support", "thecipherlab@gmail.com")
 
 mail = Mail(app)
@@ -1365,77 +1365,108 @@ def login():
     return render_template("login.html", user=current_user(), next=next_url)
 
 # ------------------- Forgot/Reset Password -------------------
+
+import threading
+import socket
+import smtplib
+import logging
+# Make SMTP fail fast instead of hanging forever
+app.config["MAIL_TIMEOUT"] = int(os.environ.get("MAIL_TIMEOUT", "10"))
+
+def _send_mail_async(app, msg):
+    """Send email off-thread so web requests don't block (prevents Gunicorn timeouts)."""
+    with app.app_context():
+        try:
+            mail.send(msg)
+        except (socket.timeout, smtplib.SMTPException, OSError) as e:
+            app.logger.warning(f"[MAIL] Send failed: {e}")
+
+def send_mail_nonblocking(msg):
+    t = threading.Thread(target=_send_mail_async, args=(app, msg), daemon=True)
+    t.start()
+
+
+
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         email = (request.form.get("email") or "").strip().lower()
-        if not email:
-            flash("Please enter your email address.", "warning")
-            return render_template("forgot_password.html", user=current_user())
 
         conn = get_db()
         cur = conn.execute("SELECT id, email FROM users WHERE lower(email)=?", (email,))
         user = cur.fetchone()
         conn.close()
 
-        if not user:
-            flash("No account found with that email.", "error")
-            return render_template("forgot_password.html", user=current_user())
+        # Always show generic response (prevents account enumeration)
+        flash("If an account with that email exists, a reset link has been sent.", "info")
 
-        # Generate token (valid 1 hour)
-        token = serializer.dumps(email, salt="password-reset")
-        reset_link = url_for("reset_password", token=token, _external=True)
+        if user:
+            token = serializer.dumps(email, salt="password-reset")
+            reset_url = url_for("reset_password", token=token, _external=True)
 
-        # --- Send Email ---
-        msg = Message(
-            subject="Password Reset — The Cipher Lab",
-            recipients=[email],
-            html=f"""
-            <h2 style="color:#00ffd5;font-weight:700;">Password Reset Requested</h2>
-            <p>Hello,</p>
-            <p>We received a request to reset your password for your Cipher Lab account.</p>
-            <p>Click the link below to reset it:</p>
-            <p><a href="{reset_link}" style="color:#00ffd5;">Reset your password</a></p>
-            <p>This link will expire in 1 hour.</p>
-            <br><p style="color:#888;">– The Cipher Lab Team</p>
-            """
-        )
-        try:
-            mail.send(msg)
-            flash("✅ Password reset email sent! Check your inbox for instructions.", "success")
-        except Exception as e:
-            flash("⚠️ Error sending email. Please try again later.", "error")
-            print("MAIL ERROR:", e)
+            msg = Message(
+                subject="CryptiQ — Password Reset",
+                recipients=[email],
+                body=f"Reset your password using this link (valid for 1 hour):\n\n{reset_url}\n"
+            )
 
-        # Re-render same page with message
-        return render_template("forgot_password.html", user=current_user())
+            # IMPORTANT: non-blocking send (prevents Gunicorn worker timeout)
+            send_mail_nonblocking(msg)
+
+        # Redirect after POST (avoids resubmits)
+        return redirect(url_for("forgot_password"))
 
     return render_template("forgot_password.html", user=current_user())
 
+from werkzeug.security import generate_password_hash
+
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
+    # 1) Validate token -> email
     try:
         email = serializer.loads(token, salt="password-reset", max_age=3600)
+        email = (email or "").strip().lower()
+        if not email:
+            raise ValueError("empty email")
     except Exception:
-        flash("Invalid or expired reset link.", "error")
+        flash("Invalid or expired reset link. Please request a new one.", "error")
+        return redirect(url_for("forgot_password"))
+
+    # 2) Confirm user exists (prevents updating nothing silently)
+    conn = get_db()
+    user = conn.execute("SELECT id, email FROM users WHERE lower(email)=?", (email,)).fetchone()
+    if not user:
+        conn.close()
+        flash("That reset link is no longer valid. Please request a new one.", "error")
         return redirect(url_for("forgot_password"))
 
     if request.method == "POST":
-        new_pass = request.form.get("password", "")
-        confirm = request.form.get("confirm", "")
+        new_pass = (request.form.get("password") or "").strip()
+        confirm = (request.form.get("confirm") or "").strip()
+
+        if len(new_pass) < 8:
+            conn.close()
+            flash("Password must be at least 8 characters.", "error")
+            return redirect(url_for("reset_password", token=token))
+
         if new_pass != confirm:
+            conn.close()
             flash("Passwords do not match.", "error")
             return redirect(url_for("reset_password", token=token))
 
         hashed = generate_password_hash(new_pass)
-        conn = get_db()
-        conn.execute("UPDATE users SET password_hash=? WHERE lower(email)=?", (hashed, email))
+
+        conn.execute(
+            "UPDATE users SET password_hash=? WHERE id=?",
+            (hashed, user["id"])
+        )
         conn.commit()
         conn.close()
 
         flash("🎉 Your password has been reset successfully! You can now log in.", "success")
         return redirect(url_for("login"))
 
+    conn.close()
     return render_template("reset_password.html", email=email)
 
 @app.route("/logout")

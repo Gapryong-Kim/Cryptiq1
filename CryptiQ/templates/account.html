@@ -45,11 +45,11 @@
       border-radius: var(--radius);
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
       backdrop-filter: blur(6px);
-      padding: clamp(28px, 4vw, 36px);
+      padding: clamp(26px, 3.6vw, 34px);
       width: min(950px, 95vw);
       display: flex;
       flex-direction: column;
-      gap: 28px;
+      gap: 22px;
       z-index: 1;
     }
 
@@ -58,7 +58,14 @@
       color: var(--accent);
       font-size: clamp(1.6rem, 2.4vw, 2rem);
       font-weight: 800;
-      margin: 0 0 20px;
+      margin: 0 0 6px;
+    }
+
+    .account-subtitle{
+      text-align:center;
+      color: var(--muted);
+      margin: 0 0 10px;
+      font-size: .96rem;
     }
 
     /* ===== Hero Section ===== */
@@ -66,28 +73,39 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 24px;
+      gap: 18px;
       flex-wrap: wrap;
+      padding: 14px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     }
 
     .avatar {
-      width: 150px;
-      height: 150px;
+      width: 110px;
+      height: 110px;
       border-radius: 90%;
       background: var(--accent);
       color: #0f0f0f;
       display: grid;
       place-items: center;
-      font-weight: 800;
+      font-weight: 900;
       font-size: 2rem;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+      flex: 0 0 auto;
+    }
+
+    .hero-info {
+      min-width: min(420px, 92vw);
+      text-align: center;
     }
 
     .hero-info h2 {
       margin: 0 0 6px;
       color: var(--accent);
-      font-size: 1.4rem;
-      font-weight: 800;
+      font-size: 1.35rem;
+      font-weight: 900;
       text-align: center;
     }
 
@@ -108,38 +126,87 @@
 
     .account-links a {
       padding: 8px 14px;
-      border-radius: 10px;
+      border-radius: 999px;
       border: 1px solid var(--line);
       text-decoration: none;
       color: var(--text);
-      font-weight: 600;
-      transition: background .18s ease, color .18s ease, border-color .18s ease;
+      font-weight: 650;
+      transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+      background: rgba(255,255,255,0.02);
     }
 
     .account-links a:hover {
       background: var(--accent);
       color: #0f0f0f;
       border-color: var(--accent);
+      transform: translateY(-1px);
     }
 
     /* ===== Sections ===== */
     .section {
       border-top: 1px solid var(--line);
-      padding-top: 20px;
+      padding-top: 18px;
     }
 
     .section h3 {
       color: var(--accent);
-      margin: 0 0 8px;
-      font-size: 1.15rem;
-      font-weight: 700;
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+      font-weight: 850;
+      text-align: left;
+      letter-spacing: .2px;
     }
 
     .section p {
       color: var(--subtext);
       margin: 0;
       font-size: .95rem;
+      line-height: 1.5;
     }
+
+    /* ===== Clean “settings row” card ===== */
+    .setting-card{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .setting-left{
+      display:flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .setting-title{
+      font-weight: 850;
+      color: var(--text);
+      font-size: .98rem;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .setting-title .dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(0,255,213,0.12);
+      flex: 0 0 auto;
+    }
+    .setting-desc{
+      color: var(--muted);
+      font-size: .93rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .setting-desc b{ color: var(--text); font-weight: 750; }
 
     /* ===== Leaderboard Mini ===== */
     .lb-stats {
@@ -162,26 +229,15 @@
 
     .lb-label { color: var(--subtext); font-size: .9rem; }
     .lb-value {
-      font-weight: 800;
+      font-weight: 900;
       font-size: 1.25rem;
       margin-top: 6px;
     }
 
-    /* === Podium Glow === */
-    .lb-value.rank-1 {
-      color: #ffd700;
-      text-shadow: 0 0 10px rgba(255,215,0,0.35);
-    }
-    .lb-value.rank-2 {
-      color: #c0c0c0;
-      text-shadow: 0 0 10px rgba(192,192,192,0.3);
-    }
-    .lb-value.rank-3 {
-      color: #c08a4c;
-      text-shadow: 0 0 10px rgba(192,138,76,0.3);
-    }
+    .lb-value.rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.35); }
+    .lb-value.rank-2 { color: #c0c0c0; text-shadow: 0 0 10px rgba(192,192,192,0.3); }
+    .lb-value.rank-3 { color: #c08a4c; text-shadow: 0 0 10px rgba(192,138,76,0.3); }
 
-    /* Shimmer for top 3 */
     .lb-item.rank-1::after,
     .lb-item.rank-2::after,
     .lb-item.rank-3::after {
@@ -208,15 +264,13 @@
     }
 
     /* ===== Posts ===== */
-    
     .post-grid {
       display: grid;
-      gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      margin-top: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 18px;
+      margin-top: 12px;
     }
 
-    /* Clickable post cards */
     a.post-link {
       text-decoration: none;
       color: inherit;
@@ -231,7 +285,7 @@
 
     .post {
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 14px;
       background: rgba(255,255,255,0.02);
       display: flex;
@@ -239,21 +293,13 @@
       gap: 8px;
       height: 100%;
       transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: normal;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.16);
     }
-    .post {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-}
-.post-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-  gap: 18px;
-  margin-top: 10px;
-}
 
-
-    .post h4 { margin: 0; color: var(--accent); font-size: 1rem; }
+    .post h4 { margin: 0; color: var(--accent); font-size: 1rem; font-weight: 850; }
     .post p { margin: 0; color: var(--text); line-height: 1.5; }
     .post .meta { color: var(--subtext); font-size: .9rem; }
 
@@ -262,12 +308,15 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-weight: 700;
+      padding: 11px 16px;
+      border-radius: 12px;
+      font-weight: 850;
       border: 1px solid transparent;
       cursor: pointer;
       transition: all .18s ease;
+      text-decoration: none;
+      white-space: nowrap;
+      user-select: none;
     }
 
     .btn-accent {
@@ -294,12 +343,23 @@
       transform: translateY(-1px);
     }
 
+    .btn-ghost{
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      border-color: var(--line);
+    }
+    .btn-ghost:hover{
+      border-color: color-mix(in oklab, var(--accent) 60%, var(--line));
+      box-shadow: 0 0 0 3px rgba(0,255,213,0.08);
+      transform: translateY(-1px);
+    }
+
     .bottom-actions {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      margin-top: 20px;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
     }
 
     /* ===== Modals ===== */
@@ -312,6 +372,7 @@
       background: rgba(0,0,0,0.6);
       backdrop-filter: blur(4px);
       z-index: 200;
+      padding: 16px;
     }
 
     .confirm-modal.open { display: flex; animation: fadeIn .25s ease; }
@@ -320,15 +381,16 @@
       background: color-mix(in oklab, var(--panel) 88%, transparent);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      max-width: 420px;
-      padding: 26px;
+      max-width: 440px;
+      width: min(440px, 92vw);
+      padding: 22px;
       text-align: center;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
 
-    .confirm-box h2 { color: var(--accent); margin: 0 0 8px; font-weight: 800; }
-    .confirm-box p { color: var(--text); margin-bottom: 20px; line-height: 1.5; }
-    .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+    .confirm-box h2 { color: var(--accent); margin: 0 0 8px; font-weight: 900; }
+    .confirm-box p { color: var(--text); margin-bottom: 16px; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
     @keyframes fadeIn {
       from {opacity: 0; transform: translateY(6px);}
@@ -337,53 +399,11 @@
 
     @media (max-width: 700px) {
       .account-card { width: 94vw; padding: 22px 18px; }
-      .hero-info h2, .account-title { font-size: 1.4rem; text-align: center; }
       .account-hero { flex-direction: column; }
+      .hero-info { min-width: 0; }
+      .setting-card{ grid-template-columns: 1fr; }
+      .confirm-actions .btn{ width: 100%; }
     }
-    /* === FIX — Restore Podium Shimmer / Glow Priority === */
-
-.lb-item {
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-.lb-value.rank-1 {
-  color: #ffd700 !important;
-  text-shadow: 0 0 10px rgba(255,215,0,0.35) !important;
-}
-
-.lb-value.rank-2 {
-  color: #c0c0c0 !important;
-  text-shadow: 0 0 10px rgba(192,192,192,0.3) !important;
-}
-
-.lb-value.rank-3 {
-  color: #c08a4c !important;
-  text-shadow: 0 0 10px rgba(192,138,76,0.3) !important;
-}
-
-.lb-item.rank-1::after,
-.lb-item.rank-2::after,
-.lb-item.rank-3::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 80%;
-  height: 100%;
-  background: linear-gradient(
-    120deg,
-    transparent 0%,
-    rgba(255,255,255,0.25) 50%,
-    transparent 100%
-  );
-  transform: skewX(-25deg);
-  animation: shimmer 3s infinite ease-in-out;
-}
-
-  #logout-btn {
-    text-decoration: none;
-  }
   </style>
 </head>
 
@@ -395,14 +415,16 @@
 
     <div class="account-card">
       <h1 class="account-title">Account Overview</h1>
+      <p class="account-subtitle">Manage your profile, security, and posts.</p>
 
       <div class="account-hero">
         <div class="avatar">{{ user_info['username'][0].upper() }}</div>
         <div class="hero-info">
-          <h2>{{ user_info['username'] }} {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
-            {% if user.is_pro %}
-  <span class="pro-badge">PRO</span>
-{% endif %}</h2>
+          <h2>
+            {{ user_info['username'] }}
+            {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+            {% if user.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
+          </h2>
           <p>Email: {{ user_info['email'] }}</p>
           <p>Member since: {{ user_info['created_at'][:10] }}</p>
         </div>
@@ -410,6 +432,7 @@
 
       <div class="account-links">
         <a href="#profile">Profile</a>
+        <a href="#security">Security</a>
         <a href="#leaderboard">Leaderboard</a>
         <a href="#posts">My Posts</a>
       </div>
@@ -418,6 +441,31 @@
       <div id="profile" class="section">
         <h3>Profile</h3>
         <p>Your profile summary appears above. More options coming soon.</p>
+      </div>
+
+      <!-- ===== Security (clean) ===== -->
+      <div id="security" class="section">
+        <h3>Security</h3>
+
+        <div class="setting-card">
+          <div class="setting-left">
+            <div class="setting-title">
+              <span class="dot"></span>
+              Password reset
+            </div>
+            <div class="setting-desc">
+              Send a reset link to <b>{{ user_info['email'] }}</b>. The link expires after 1 hour.
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <button class="btn btn-accent" id="pw-reset-btn" type="button">Send reset link</button>
+            <a class="btn btn-ghost" href="{{ url_for('forgot_password') }}">Open reset page</a>
+          </div>
+        </div>
+
+        <p style="margin-top:10px; color:var(--muted); font-size:.93rem;">
+          Tip: if you don’t see it within a minute, check spam/junk.
+        </p>
       </div>
 
       <!-- ===== Leaderboard ===== -->
@@ -449,7 +497,7 @@
         {% if posts %}
         <div class="post-grid">
           {% for post in posts %}
-<a href="{{ url_for('posts_list') }}#post-{{ post['id'] }}" class="post-link">
+          <a href="{{ url_for('posts_list') }}#post-{{ post['id'] }}" class="post-link">
             <article class="post">
               <h4>{{ post['title'] }}</h4>
               <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
@@ -465,7 +513,7 @@
 
       <!-- ===== Bottom Actions ===== -->
       <div class="bottom-actions">
-        <a href="#" class="btn btn-accent" id="logout-btn">Logout</a>
+        <a href="#" class="btn btn-ghost" id="logout-btn">Logout</a>
         <a href="#" class="btn btn-danger" id="delete-btn">Delete Account</a>
       </div>
     </div>
@@ -478,7 +526,7 @@
       <p>Are you sure you want to log out?</p>
       <div class="confirm-actions">
         <a href="{{ url_for('logout') }}" class="btn btn-accent">Yes</a>
-        <button class="btn btn-danger" data-close>Cancel</button>
+        <button class="btn btn-danger" data-close type="button">Cancel</button>
       </div>
     </div>
   </div>
@@ -489,8 +537,23 @@
       <p>This will permanently delete your account and all associated data.</p>
       <div class="confirm-actions">
         <a href="{{ url_for('delete_account') }}" class="btn btn-danger">Delete</a>
-        <button class="btn btn-accent" data-close>Cancel</button>
+        <button class="btn btn-ghost" data-close type="button">Cancel</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Password reset modal -->
+  <div class="confirm-modal" id="confirm-pwreset">
+    <div class="confirm-box">
+      <h2>Password reset</h2>
+      <p>Send a reset link to <b>{{ user_info['email'] }}</b>?</p>
+
+      <div class="confirm-actions">
+        <button class="btn btn-accent" id="pwreset-confirm" type="button">Send</button>
+        <button class="btn btn-ghost" data-close type="button">Cancel</button>
+      </div>
+
+      <p id="pwreset-status" style="margin:14px 0 0; color:var(--muted); font-size:.95rem;">—</p>
     </div>
   </div>
 
@@ -499,12 +562,63 @@
     const deleteBtn = document.getElementById('delete-btn');
     const logoutModal = document.getElementById('confirm-logout');
     const deleteModal = document.getElementById('confirm-delete');
-    const open = (m)=>m.classList.add('open');
-    const close = (m)=>m.classList.remove('open');
-    logoutBtn.onclick=e=>{e.preventDefault();open(logoutModal)};
-    deleteBtn.onclick=e=>{e.preventDefault();open(deleteModal)};
-    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>[logoutModal,deleteModal].forEach(close));
-    [logoutModal,deleteModal].forEach(m=>m.addEventListener('click',e=>{if(e.target===m)close(m)}));
+
+    const pwResetBtn = document.getElementById('pw-reset-btn');
+    const pwResetModal = document.getElementById('confirm-pwreset');
+    const pwResetConfirm = document.getElementById('pwreset-confirm');
+    const pwResetStatus = document.getElementById('pwreset-status');
+
+    const open = (m)=>m && m.classList.add('open');
+    const close = (m)=>m && m.classList.remove('open');
+
+    if (logoutBtn) logoutBtn.onclick = e => { e.preventDefault(); open(logoutModal); };
+    if (deleteBtn) deleteBtn.onclick = e => { e.preventDefault(); open(deleteModal); };
+
+    if (pwResetBtn) pwResetBtn.addEventListener("click", () => {
+      if (pwResetStatus) pwResetStatus.textContent = "—";
+      open(pwResetModal);
+    });
+
+    // POST /forgot-password with the current user email
+    if (pwResetConfirm) pwResetConfirm.addEventListener("click", async () => {
+      try {
+        pwResetConfirm.disabled = true;
+        if (pwResetStatus) pwResetStatus.textContent = "Sending…";
+
+        const fd = new FormData();
+        fd.append("email", "{{ user_info['email'] }}");
+
+        const res = await fetch("{{ url_for('forgot_password') }}", {
+          method: "POST",
+          body: fd
+        });
+
+        if (!res.ok) throw new Error("failed");
+
+        if (pwResetStatus) pwResetStatus.textContent = "Sent ✓ Check your inbox (and spam).";
+        setTimeout(() => close(pwResetModal), 850);
+      } catch {
+        if (pwResetStatus) pwResetStatus.textContent = "Failed to send. Try again.";
+      } finally {
+        pwResetConfirm.disabled = false;
+      }
+    });
+
+    // close buttons
+    document.querySelectorAll('[data-close]').forEach(b => {
+      b.onclick = () => [logoutModal, deleteModal, pwResetModal].forEach(close);
+    });
+
+    // backdrop click closes
+    [logoutModal, deleteModal, pwResetModal].forEach(m => {
+      if (!m) return;
+      m.addEventListener('click', e => { if (e.target === m) close(m); });
+    });
+
+    // escape closes
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") [logoutModal, deleteModal, pwResetModal].forEach(close);
+    });
   </script>
 </body>
 </html>
