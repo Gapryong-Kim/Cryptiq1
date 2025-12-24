@@ -223,6 +223,20 @@ def migrate_shared_labs():
     conn.commit()
     conn.close()
 
+def migrate_labs_pro_fields():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(users)")
+    cols = {r[1] for r in cur.fetchall()}
+
+    if "pro_current_period_end" not in cols:
+        cur.execute("ALTER TABLE users ADD COLUMN pro_current_period_end TEXT")  # ISO string
+
+    if "pro_cancel_at_period_end" not in cols:
+        cur.execute("ALTER TABLE users ADD COLUMN pro_cancel_at_period_end INTEGER NOT NULL DEFAULT 0")
+
+    conn.commit()
+    conn.close()
 
 
 def ensure_admin_flag():
@@ -237,6 +251,7 @@ init_db()
 migrate_db()
 ensure_admin_flag()
 migrate_shared_labs()
+migrate_labs_pro_fields()
 # ----- Utility -----
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -250,10 +265,26 @@ def is_admin(user):
     return (user.get("is_admin") == 1) or (user.get("email", "").lower() == ADMIN_EMAIL.lower())
 
 
+from datetime import datetime, timezone
+
 def is_pro(user):
     if not user:
         return False
-    return user.get("is_pro") == 1
+
+    # If you also store a boolean flag, you can keep it, but the end-date is the source of truth.
+    end = user.get("pro_current_period_end")
+    if not end:
+        return False
+
+    try:
+        # Accept either "2025-12-24T19:00:00Z" or "2025-12-24T19:00:00"
+        s = end.replace("Z", "+00:00") if isinstance(end, str) else str(end)
+        dt = datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt > datetime.now(timezone.utc)
+    except Exception:
+        return False
 
 
 
@@ -2651,8 +2682,28 @@ def weekly_open_lab():
 def labs_pro_page():
     user = current_user()
     viewer_is_pro = is_pro(user) if user else False
-    return render_template("labs_pro.html", user=user, viewer_is_pro=viewer_is_pro)
 
+    pro_end = None
+    cancel_at_period_end = False
+
+    if user:
+        # Refresh from DB so it’s accurate
+        conn = get_db()
+        fresh = conn.execute("SELECT * FROM users WHERE id=? LIMIT 1", (user["id"],)).fetchone()
+        conn.close()
+        if fresh:
+            fresh = dict(fresh)
+            viewer_is_pro = is_pro(fresh)
+            pro_end = fresh.get("pro_current_period_end")
+            cancel_at_period_end = bool(fresh.get("pro_cancel_at_period_end") or 0)
+
+    return render_template(
+        "labs_pro.html",
+        user=user,
+        viewer_is_pro=viewer_is_pro,
+        pro_end=pro_end,
+        cancel_at_period_end=cancel_at_period_end
+    )
 
 import secrets
 

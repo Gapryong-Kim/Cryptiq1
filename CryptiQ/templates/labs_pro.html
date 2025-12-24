@@ -339,8 +339,26 @@
           <div class="status">
             {% if user %}
               {% if viewer_is_pro %}
-                <span class="dot pro"></span> You’re currently on <strong>Labs Pro</strong>.
+                <span class="dot pro"></span> You’re currently on <strong>Labs   <span class="pro-badge">PRO</span>
+    </strong>.
+                
               {% else %}
+              {% if user and viewer_is_pro %}
+  {% if pro_end %}
+    <div style="margin-top:8px;color:var(--text-dim);font-weight:800;">
+      {% if cancel_at_period_end %}
+        Your subscription is set to end on
+      {% else %}
+        Next renewal:
+      {% endif %}
+      <span style="color:var(--text);font-weight:1000;">
+        {{ pro_end.replace("T"," ").replace("Z","")[:16] }}
+      </span>
+      <span style="color:var(--muted);font-weight:800;">(UTC)</span>
+    </div>
+  {% endif %}
+{% endif %}
+
                 <span class="dot free"></span> You’re currently on <strong>Free</strong>.
               {% endif %}
             {% else %}
