@@ -1278,6 +1278,135 @@
   justify-content: center;
   z-index: 9000; /* was 7000 — must be > .hmodal (8500) */
 }
+/* =========================================================
+   TEAM / SHARE MODAL
+   ========================================================= */
+.tmodal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 8800;
+}
+.tmodal.open{ display:flex; }
+
+.tmodal-backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+}
+
+.tmodal-box{
+  position:relative;
+  width: min(760px, 94vw);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  overflow:hidden;
+  animation: cmodalPop .12s ease-out;
+}
+
+.tmodal-top{
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--line);
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap:12px;
+}
+
+.tmodal-title{
+  font-weight: 1000;
+  color: var(--text);
+  font-size: 1rem;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.tmodal-x{
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--text);
+  font-weight: 900;
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor:pointer;
+}
+.tmodal-x:hover{
+  background: var(--input-hover);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.tmodal-body{
+  padding: 12px 14px 16px;
+  color: var(--muted);
+  display:grid;
+  gap: 12px;
+}
+
+.team-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.team-link{
+  flex: 1;
+  min-width: 220px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+  font-size: 13px;
+}
+
+.team-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:grid;
+  gap:10px;
+  max-height: min(50vh, 420px);
+  overflow:auto;
+  scrollbar-gutter: stable both-edges;
+}
+
+.team-item{
+  border:1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  padding: 10px 12px;
+  display:flex;
+  justify-content: space-between;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.team-name{
+  color: var(--text);
+  font-weight: 900;
+}
+
+.team-meta{
+  color: var(--muted);
+  font-weight: 800;
+  font-size: .82rem;
+}
+
+.team-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
 
   </style>
 </head>
@@ -1291,7 +1420,15 @@
       <header class="ws-topbar">
         <div class="ws-titlewrap">
           <span class="ws-dot" aria-hidden="true"></span>
-          <h1 class="ws-title">My Cipher Lab</h1>
+<h1 class="ws-title">
+  My Cipher Lab
+  {% if ws.is_shared %}
+    <span style="margin-left:8px;font-size:.72rem;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;
+                 padding:4px 8px;border-radius:999px;background:rgba(0,255,213,.12);border:1px solid var(--line);color:var(--accent);">
+      Shared
+    </span>
+  {% endif %}
+</h1>
           <span class="ws-sub" id="ws-id">#{{ ws.id }}</span>
         </div>
 
@@ -1308,8 +1445,9 @@
           <button class="tb-btn" id="ws-export-pdf" type="button" title="Export this lab as a PDF">Export PDF</button>
           <button class="tb-btn" id="ws-clone" type="button" title="Clone this lab">Clone</button>
           <button class="tb-btn" id="ws-history" type="button" title="View lab history snapshots">History</button>
-
           <div class="ws-status" id="save-status">—</div>
+          <button class="tb-btn" id="ws-team" type="button" title="Share this lab">Team</button>
+
         </div>
       </header>
 
@@ -1596,7 +1734,48 @@
       </div>
     </div>
   </div>
+  <!-- Team / Share Modal -->
+<div id="team-modal" class="tmodal" aria-hidden="true">
+  <div class="tmodal-backdrop" data-tclose="1"></div>
+  <div class="tmodal-box" role="dialog" aria-modal="true" aria-label="Team lab sharing">
+    <div class="tmodal-top">
+      <div class="tmodal-title">
+        <span class="pro-chip" style="box-shadow:none;">TEAM</span>
+        Share this lab
+      </div>
+      <button class="tmodal-x" id="team-x" type="button" aria-label="Close">✕</button>
+    </div>
 
+    <div class="tmodal-body">
+      <div id="team-status" class="hstatus">—</div>
+
+      <div class="team-row">
+        <input id="team-link" class="team-link" readonly value="" placeholder="Share link will appear here…" />
+        <button class="hbtn" id="team-copy" type="button">Copy link</button>
+
+        {% if ws_is_owner %}
+          <button class="hbtn primary" id="team-enable" type="button">Enable sharing</button>
+          <button class="hbtn" id="team-disable" type="button">Disable sharing</button>
+        {% endif %}
+      </div>
+
+      {% if ws_is_owner %}
+        <div class="hint">
+          Anyone with the link can join as an <strong>editor</strong>. Disabling sharing revokes the link and removes collaborators.
+        </div>
+
+        <ul class="team-list" id="team-list"></ul>
+      {% else %}
+        <div class="hint">
+          You can edit this lab because the owner shared it with you.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<script>
+  window.WS_CAN_EDIT = {{ "true" if ws_can_edit else "false" }};
+</script>
   <script>
   // ===========================
   // Helpers
@@ -1630,6 +1809,15 @@
     const data = await res.json();
     return data;
   }
+  if (!window.WS_CAN_EDIT) {
+  // disable edits
+  document.getElementById("ws-title-input")?.setAttribute("disabled","disabled");
+  document.getElementById("ws-notes")?.setAttribute("disabled","disabled");
+  document.getElementById("cipher-text")?.setAttribute("disabled","disabled");
+  document.getElementById("upload-cipher-image")?.setAttribute("disabled","disabled");
+  document.getElementById("delete-cipher-image")?.setAttribute("disabled","disabled");
+  setStatus("View only");
+}
 
   function setStatus(msg) {
     const el = document.getElementById("save-status");
@@ -2873,6 +3061,180 @@ async function workspaceCanCreateCheck() {
   // ===========================
   showTool("frequency");
   setStatus("—");
+  // ===========================
+// TEAM / SHARE
+// ===========================
+const teamBtn = document.getElementById("ws-team");
+const tModal = document.getElementById("team-modal");
+const tX = document.getElementById("team-x");
+const tStatus = document.getElementById("team-status");
+const tLink = document.getElementById("team-link");
+const tCopy = document.getElementById("team-copy");
+const tEnable = document.getElementById("team-enable");
+const tDisable = document.getElementById("team-disable");
+const tList = document.getElementById("team-list");
+
+function openTeamModal(){
+  if (!tModal) return;
+  tModal.classList.add("open");
+  tModal.setAttribute("aria-hidden","false");
+}
+function closeTeamModal(){
+  if (!tModal) return;
+  tModal.classList.remove("open");
+  tModal.setAttribute("aria-hidden","true");
+}
+
+tX?.addEventListener("click", closeTeamModal);
+tModal?.addEventListener("click", (e) => {
+  const closeEl = e.target?.closest?.("[data-tclose='1']");
+  if (closeEl) closeTeamModal();
+});
+
+async function refreshTeam(){
+  if (!tStatus) return;
+  tStatus.textContent = "Loading…";
+
+  try{
+    const res = await fetch(`/workspaces/{{ ws.id }}/share/collaborators`);
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || "failed");
+
+    const isShared = !!data.is_shared;
+    const url = data.share_url || "";
+
+    if (tLink) tLink.value = url;
+
+    // enable/disable buttons (owner only exists in DOM when owner)
+    if (tEnable) tEnable.disabled = isShared;
+    if (tDisable) tDisable.disabled = !isShared;
+
+    if (isShared) {
+      tStatus.textContent = "Sharing is ON.";
+    } else {
+      tStatus.textContent = "Sharing is OFF.";
+    }
+
+    // collaborators list (owner only)
+    if (tList) {
+      tList.innerHTML = "";
+      const items = Array.isArray(data.collaborators) ? data.collaborators : [];
+
+      if (!isShared) {
+        const li = document.createElement("div");
+        li.className = "hint";
+        li.textContent = "Enable sharing to generate a join link.";
+        tList.appendChild(li);
+        return;
+      }
+
+      if (items.length === 0) {
+        const li = document.createElement("div");
+        li.className = "hint";
+        li.textContent = "No collaborators yet. Share the link to invite editors.";
+        tList.appendChild(li);
+        return;
+      }
+
+      items.forEach((c) => {
+        const li = document.createElement("li");
+        li.className = "team-item";
+        li.innerHTML = `
+          <div>
+            <div class="team-name">${escapeHtml(c.username || ("User #" + c.user_id))}</div>
+            <div class="team-meta">Role: ${escapeHtml(c.role || "editor")} • Added: ${escapeHtml((c.added_at || "").replace("T"," ").slice(0,19) || "—")}</div>
+          </div>
+          <div class="team-actions">
+            <button class="cmodal-btn danger" data-remove="1">Remove</button>
+          </div>
+        `;
+
+        li.querySelector("[data-remove='1']")?.addEventListener("click", async () => {
+          const ok = await confirmDeleteModal({
+            title: "Remove collaborator?",
+            message: `Remove ${c.username || ("User #" + c.user_id)} from this lab?`,
+            confirmText: "Remove",
+            danger: true
+          });
+          if (!ok) return;
+
+          try{
+            tStatus.textContent = "Removing…";
+            const r = await fetch(`/workspaces/{{ ws.id }}/share/remove`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ user_id: c.user_id })
+            });
+            const rd = await r.json().catch(()=>({}));
+            if (!r.ok || !rd.ok) throw new Error(rd.error || "remove failed");
+            await refreshTeam();
+          } catch {
+            tStatus.textContent = "Remove failed.";
+            setTimeout(()=> tStatus.textContent = "—", 1200);
+          }
+        });
+
+        tList.appendChild(li);
+      });
+    }
+  } catch {
+    tStatus.textContent = "Couldn’t load sharing status.";
+  }
+}
+
+tCopy?.addEventListener("click", async () => {
+  const v = (tLink?.value || "").trim();
+  if (!v) {
+    tStatus.textContent = "No link yet — enable sharing first.";
+    setTimeout(()=> tStatus.textContent = "—", 1200);
+    return;
+  }
+  try{
+    await navigator.clipboard.writeText(v);
+    tStatus.textContent = "Copied ✓";
+    setTimeout(()=> tStatus.textContent = "—", 900);
+  } catch {}
+});
+
+tEnable?.addEventListener("click", async () => {
+  try{
+    tStatus.textContent = "Enabling…";
+    const res = await fetch(`/workspaces/{{ ws.id }}/share/create`, { method: "POST" });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || "failed");
+    await refreshTeam();
+  } catch {
+    tStatus.textContent = "Enable failed.";
+    setTimeout(()=> tStatus.textContent = "—", 1200);
+  }
+});
+
+tDisable?.addEventListener("click", async () => {
+  const ok = await confirmDeleteModal({
+    title: "Disable sharing?",
+    message: "This revokes the link and removes all collaborators from this lab.",
+    confirmText: "Disable",
+    danger: true
+  });
+  if (!ok) return;
+
+  try{
+    tStatus.textContent = "Disabling…";
+    const res = await fetch(`/workspaces/{{ ws.id }}/share/disable`, { method: "POST" });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || "failed");
+    await refreshTeam();
+  } catch {
+    tStatus.textContent = "Disable failed.";
+    setTimeout(()=> tStatus.textContent = "—", 1200);
+  }
+});
+
+teamBtn?.addEventListener("click", async () => {
+  openTeamModal();
+  await refreshTeam();
+});
+
   </script>
 </body>
 </html>

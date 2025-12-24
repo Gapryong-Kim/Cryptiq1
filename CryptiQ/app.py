@@ -181,6 +181,50 @@ def migrate_weekly_tables():
     conn.commit()
     conn.close()
 
+
+
+def migrate_shared_labs():
+    conn = get_db()
+    cur = conn.cursor()
+
+    # ensure FK enforcement (SQLite)
+    cur.execute("PRAGMA foreign_keys=ON")
+
+    # --- workspaces columns ---
+    cur.execute("PRAGMA table_info(workspaces)")
+    cols = {row["name"] if isinstance(row, sqlite3.Row) else row[1] for row in cur.fetchall()}
+
+    if "share_token" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN share_token TEXT")
+    if "is_shared" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN is_shared INTEGER NOT NULL DEFAULT 0")
+    if "last_edited_by" not in cols:
+        cur.execute("ALTER TABLE workspaces ADD COLUMN last_edited_by INTEGER")
+
+    # --- collaborators table ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS workspace_collaborators (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workspace_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      role TEXT NOT NULL DEFAULT 'editor',
+      added_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(workspace_id, user_id),
+      FOREIGN KEY(workspace_id) REFERENCES workspaces(id),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_wc_workspace ON workspace_collaborators(workspace_id)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_wc_user ON workspace_collaborators(user_id)")
+
+    # enforce uniqueness for tokens (since ALTER TABLE can't add UNIQUE)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_workspaces_share_token ON workspaces(share_token)")
+
+    conn.commit()
+    conn.close()
+
+
+
 def ensure_admin_flag():
     if not ADMIN_EMAIL:
         return
@@ -192,7 +236,7 @@ def ensure_admin_flag():
 init_db()
 migrate_db()
 ensure_admin_flag()
-
+migrate_shared_labs()
 # ----- Utility -----
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -2079,31 +2123,32 @@ init_workspaces()
 @app.route("/workspaces", methods=["GET"], endpoint="workspace_list")
 def workspace_list():
     user = current_user()
-    '''if not user:
-        flash("Please log in.", "warning")
-        return redirect(url_for("login"))'''
-    if user:
-        conn = get_db()
-        rows = conn.execute("""
-            SELECT id, title, cipher_text, notes, cipher_image_filename, created_at, updated_at
-            FROM workspaces
-            WHERE owner_id = ?
-            ORDER BY order_index ASC, datetime(updated_at) DESC
-        """, (user["id"],)).fetchall()
-        conn.close()
 
-        return render_template(
-            "workspace_list.html",
-            user=user,
-            workspaces=[dict(r) for r in rows]
-        )
-    else:
-        return render_template(
-            "workspace_list.html",
-            user=user,
-            viewer_is_pro=is_pro(user)
-        )
+    if not user:
+        # your old guest behavior
+        return render_template("workspace_list.html", user=user, viewer_is_pro=is_pro(user))
 
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT
+            w.id, w.title, w.cipher_text, w.notes, w.cipher_image_filename,
+            w.created_at, w.updated_at,
+            CASE WHEN w.owner_id=? THEN 1 ELSE 0 END AS is_owner
+        FROM workspaces w
+        WHERE w.owner_id=?
+           OR EXISTS (
+             SELECT 1 FROM workspace_collaborators wc
+             WHERE wc.workspace_id=w.id AND wc.user_id=?
+           )
+        ORDER BY is_owner DESC, w.order_index ASC, datetime(w.updated_at) DESC
+    """, (user["id"], user["id"], user["id"])).fetchall()
+    conn.close()
+
+    return render_template(
+        "workspace_list.html",
+        user=user,
+        workspaces=[dict(r) for r in rows]
+    )
 # ----------------------
 # Create workspace
 # GET shows create form, POST creates + redirects
@@ -2150,6 +2195,7 @@ def workspace_new():
 # endpoint MUST be workspace_view because your list template calls it
 # ----------------------
 @app.route("/workspaces/<int:ws_id>", methods=["GET"], endpoint="workspace_view")
+
 def workspace_view(ws_id):
     user = current_user()
     if not user:
@@ -2160,9 +2206,16 @@ def workspace_view(ws_id):
     row = conn.execute("""
         SELECT *
         FROM workspaces
-        WHERE id = ? AND owner_id = ?
+        WHERE id = ?
+          AND (
+            owner_id = ?
+            OR EXISTS (
+              SELECT 1 FROM workspace_collaborators
+              WHERE workspace_id = workspaces.id AND user_id = ?
+            )
+          )
         LIMIT 1
-    """, (ws_id, user["id"])).fetchone()
+    """, (ws_id, user["id"], user["id"])).fetchone()
     conn.close()
 
     if not row:
@@ -2186,30 +2239,32 @@ def workspace_save(ws_id):
     now = datetime.utcnow().isoformat()
 
     conn = get_db()
-    cur = conn.cursor()
 
+    # ✅ Editors can save
+    if not can_edit_workspace(conn, ws_id, user["id"]):
+        conn.close()
+        return jsonify({"ok": False, "error": "forbidden"}), 403
+
+    cur = conn.cursor()
     cur.execute("""
         UPDATE workspaces
         SET title = ?, notes = ?, cipher_text = ?, updated_at = ?
-        WHERE id = ? AND owner_id = ?
-    """, (title, notes, cipher_text, now, ws_id, user["id"]))
-
+        WHERE id = ?
+    """, (title, notes, cipher_text, now, ws_id))
     changed = cur.rowcount
 
-    # ✅ Pro feature: add snapshot to history
+    # ✅ Pro snapshot: only if is_pro(user) AND we can read ws
     try:
         if changed and is_pro(user):
             ws_row = conn.execute("""
                 SELECT id, owner_id, title, notes, cipher_text
                 FROM workspaces
-                WHERE id=? AND owner_id=?
+                WHERE id=?
                 LIMIT 1
-            """, (ws_id, user["id"])).fetchone()
-
+            """, (ws_id,)).fetchone()
             if ws_row:
                 _history_add_snapshot(conn, dict(ws_row), reason="save")
     except Exception as e:
-        # optional: log it so you can see failures
         app.logger.exception("history snapshot failed: %s", e)
 
     conn.commit()
@@ -2249,7 +2304,7 @@ def workspace_images_list(ws_id):
         return jsonify({"ok": False, "error": "login required"}), 401
 
     conn = get_db()
-    if not _workspace_owned(conn, ws_id, user["id"]):
+    if not can_access_workspace(conn, ws_id, user["id"]):
         conn.close()
         return jsonify({"ok": False, "error": "not found"}), 404
 
@@ -2291,14 +2346,15 @@ def workspace_image_upload(ws_id):
         return jsonify({"ok": False, "error": "unsupported file type"}), 400
 
     conn = get_db()
-    if not _workspace_owned(conn, ws_id, user["id"]):
-        conn.close()
-        return jsonify({"ok": False, "error": "not found"}), 404
 
-    # ✅ Count existing tabs/images for this lab
+    # ✅ Editors can upload
+    if not can_edit_workspace(conn, ws_id, user["id"]):
+        conn.close()
+        return jsonify({"ok": False, "error": "forbidden"}), 403
+
+    # enforce free tabs limit (only for non-pro)
     cur = conn.execute("SELECT COUNT(*) AS c FROM workspace_images WHERE workspace_id=?", (ws_id,))
     tab_count = cur.fetchone()["c"] or 0
-
     if (not is_pro(user)) and tab_count >= FREE_MAX_TABS:
         conn.close()
         return jsonify({
@@ -2306,7 +2362,6 @@ def workspace_image_upload(ws_id):
             "error": f"Free plan limit: {FREE_MAX_TABS} tabs per Lab. Upgrade to Labs Pro for unlimited tabs."
         }), 403
 
-    # next sort index
     row = conn.execute("""
         SELECT COALESCE(MAX(sort_index), -1) AS mx
         FROM workspace_images
@@ -2320,18 +2375,14 @@ def workspace_image_upload(ws_id):
 
     now = datetime.utcnow().isoformat()
     cur = conn.cursor()
-
     cur.execute("""
         INSERT INTO workspace_images (workspace_id, filename, label, sort_index)
         VALUES (?, ?, ?, ?)
     """, (ws_id, filename, label, next_index))
     new_id = cur.lastrowid
 
-    conn.execute("""
-        UPDATE workspaces
-        SET updated_at=?
-        WHERE id=? AND owner_id=?
-    """, (now, ws_id, user["id"]))
+    # ✅ no owner filter
+    conn.execute("UPDATE workspaces SET updated_at=? WHERE id=?", (now, ws_id))
 
     conn.commit()
     conn.close()
@@ -2366,9 +2417,10 @@ def workspace_image_delete(ws_id):
         return jsonify({"ok": False, "error": "image_id required"}), 400
 
     conn = get_db()
-    if not _workspace_owned(conn, ws_id, user["id"]):
+
+    if not can_edit_workspace(conn, ws_id, user["id"]):
         conn.close()
-        return jsonify({"ok": False, "error": "not found"}), 404
+        return jsonify({"ok": False, "error": "forbidden"}), 403
 
     row = conn.execute("""
         SELECT id, filename
@@ -2385,11 +2437,7 @@ def workspace_image_delete(ws_id):
     now = datetime.utcnow().isoformat()
 
     conn.execute("DELETE FROM workspace_images WHERE id=? AND workspace_id=?", (image_id, ws_id))
-    conn.execute("""
-        UPDATE workspaces
-        SET updated_at=?
-        WHERE id=? AND owner_id=?
-    """, (now, ws_id, user["id"]))
+    conn.execute("UPDATE workspaces SET updated_at=? WHERE id=?", (now, ws_id))
 
     conn.commit()
     conn.close()
@@ -2513,22 +2561,15 @@ def workspace_image_rename(ws_id):
     if not label:
         return jsonify({"ok": False, "error": "label required"}), 400
 
-    # optional: prevent stupid long names
     if len(label) > 60:
         label = label[:60].strip()
 
     conn = get_db()
 
-    # verify workspace belongs to user
-    ws = conn.execute(
-        "SELECT id FROM workspaces WHERE id=? AND owner_id=? LIMIT 1",
-        (ws_id, user["id"])
-    ).fetchone()
-    if not ws:
+    if not can_edit_workspace(conn, ws_id, user["id"]):
         conn.close()
-        return jsonify({"ok": False, "error": "not found"}), 404
+        return jsonify({"ok": False, "error": "forbidden"}), 403
 
-    # verify image belongs to workspace
     row = conn.execute("""
         SELECT id
         FROM workspace_images
@@ -2547,17 +2588,12 @@ def workspace_image_rename(ws_id):
         WHERE id=? AND workspace_id=?
     """, (label, image_id, ws_id))
 
-    conn.execute("""
-        UPDATE workspaces
-        SET updated_at=?
-        WHERE id=? AND owner_id=?
-    """, (now, ws_id, user["id"]))
+    conn.execute("UPDATE workspaces SET updated_at=? WHERE id=?", (now, ws_id))
 
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True, "label": label, "updated_at": now})
-
 @app.route("/weekly/open_lab", methods=["POST"])
 def weekly_open_lab():
     user = current_user()
@@ -2618,6 +2654,179 @@ def labs_pro_page():
     return render_template("labs_pro.html", user=user, viewer_is_pro=viewer_is_pro)
 
 
+import secrets
+
+def can_access_workspace(conn, ws_id, user_id):
+    row = conn.execute("""
+        SELECT 1
+        FROM workspaces w
+        WHERE w.id=?
+          AND (
+            w.owner_id=?
+            OR EXISTS (
+              SELECT 1 FROM workspace_collaborators wc
+              WHERE wc.workspace_id=w.id AND wc.user_id=?
+            )
+          )
+        LIMIT 1
+    """, (ws_id, user_id, user_id)).fetchone()
+    return bool(row)
+
+
+def collaborator_role(conn, ws_id, user_id):
+    row = conn.execute("""
+        SELECT role
+        FROM workspace_collaborators
+        WHERE workspace_id=? AND user_id=?
+        LIMIT 1
+    """, (ws_id, user_id)).fetchone()
+    return row["role"] if row else None
+
+def can_edit_workspace(conn, ws_id, user_id):
+    row = conn.execute("SELECT owner_id FROM workspaces WHERE id=? LIMIT 1", (ws_id,)).fetchone()
+    if not row:
+        return False
+    if row["owner_id"] == user_id:
+        return True
+    return collaborator_role(conn, ws_id, user_id) == "editor"
+
+@app.post("/workspaces/<int:ws_id>/share/create")
+def workspace_share_create(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+    ws = conn.execute("""
+        SELECT id FROM workspaces
+        WHERE id=? AND owner_id=?
+        LIMIT 1
+    """, (ws_id, user["id"])).fetchone()
+
+    if not ws:
+        conn.close()
+        return jsonify({"ok": False, "error": "forbidden"}), 403
+
+    token = secrets.token_urlsafe(18)  # unguessable
+    conn.execute("""
+        UPDATE workspaces
+        SET is_shared=1, share_token=?
+        WHERE id=? AND owner_id=?
+    """, (token, ws_id, user["id"]))
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "share_url": url_for("shared_lab_join", token=token, _external=True)
+    })
+
+
+@app.post("/workspaces/<int:ws_id>/share/disable")
+def workspace_share_disable(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+    ws = conn.execute("""
+        SELECT id FROM workspaces
+        WHERE id=? AND owner_id=?
+        LIMIT 1
+    """, (ws_id, user["id"])).fetchone()
+    if not ws:
+        conn.close()
+        return jsonify({"ok": False, "error": "forbidden"}), 403
+
+    # kill token + remove collaborators
+    conn.execute("UPDATE workspaces SET is_shared=0, share_token=NULL WHERE id=? AND owner_id=?", (ws_id, user["id"]))
+    conn.execute("DELETE FROM workspace_collaborators WHERE workspace_id=?", (ws_id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+@app.route("/labs/shared/<token>", methods=["GET"], endpoint="shared_lab_join")
+def shared_lab_join(token):
+    user = current_user()
+    if not user:
+        return redirect(url_for("login", next=request.path))
+
+    conn = get_db()
+    ws = conn.execute("""
+        SELECT id, owner_id
+        FROM workspaces
+        WHERE share_token=? AND is_shared=1
+        LIMIT 1
+    """, (token,)).fetchone()
+
+    if not ws:
+        conn.close()
+        abort(404)
+
+    # owner doesn't need collaborator row
+    if ws["owner_id"] != user["id"]:
+        conn.execute("""
+            INSERT OR IGNORE INTO workspace_collaborators (workspace_id, user_id, role)
+            VALUES (?, ?, 'editor')
+        """, (ws["id"], user["id"]))
+        conn.commit()
+
+    conn.close()
+    return redirect(url_for("workspace_view", ws_id=ws["id"]))
+@app.get("/workspaces/<int:ws_id>/share/collaborators")
+def workspace_share_collaborators(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+    ws = conn.execute("SELECT owner_id, share_token, is_shared FROM workspaces WHERE id=? LIMIT 1", (ws_id,)).fetchone()
+    if not ws:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+    if ws["owner_id"] != user["id"]:
+        conn.close()
+        return jsonify({"ok": False, "error": "forbidden"}), 403
+
+    rows = conn.execute("""
+        SELECT wc.user_id, wc.role, wc.added_at, u.username
+        FROM workspace_collaborators wc
+        LEFT JOIN users u ON u.id = wc.user_id
+        WHERE wc.workspace_id=?
+        ORDER BY datetime(wc.added_at) DESC
+    """, (ws_id,)).fetchall()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "is_shared": bool(ws["is_shared"]),
+        "share_url": url_for("shared_lab_join", token=ws["share_token"], _external=True) if ws["share_token"] else None,
+        "collaborators": [dict(r) for r in rows]
+    })
+@app.post("/workspaces/<int:ws_id>/share/remove")
+def workspace_share_remove(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    target_id = int(data.get("user_id") or 0)
+    if not target_id:
+        return jsonify({"ok": False, "error": "user_id required"}), 400
+
+    conn = get_db()
+    ws = conn.execute("SELECT owner_id FROM workspaces WHERE id=? LIMIT 1", (ws_id,)).fetchone()
+    if not ws:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+    if ws["owner_id"] != user["id"]:
+        conn.close()
+        return jsonify({"ok": False, "error": "forbidden"}), 403
+
+    conn.execute("DELETE FROM workspace_collaborators WHERE workspace_id=? AND user_id=?", (ws_id, target_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
 
 
 @app.route("/workspaces/can-create", methods=["GET"])
