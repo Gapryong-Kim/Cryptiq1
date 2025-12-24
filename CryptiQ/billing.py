@@ -81,21 +81,38 @@ def stripe_webhook():
             conn.commit()
 
     return jsonify({"ok": True})
+
+
+
 @billing.post("/billing/portal")
 def portal():
     user = current_user()
     if not user:
         return redirect(url_for("login", next=request.referrer or url_for("labs_pro_page")))
 
+    if not stripe.api_key:
+        return "Stripe is not configured (missing STRIPE_SECRET_KEY)", 500
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT stripe_customer_id FROM users WHERE id=?", (user["id"],))
+    cur.execute("SELECT id, email, stripe_customer_id FROM users WHERE id=?", (user["id"],))
     row = cur.fetchone()
-    if not row or not row[0]:
+    if not row:
+        conn.close()
         return redirect(url_for("labs_pro_page"))
 
+    user_id, email, stripe_customer_id = row
+
+    if not stripe_customer_id:
+        customer = stripe.Customer.create(email=email, metadata={"user_id": str(user_id)})
+        stripe_customer_id = customer["id"]
+        cur.execute("UPDATE users SET stripe_customer_id=? WHERE id=?", (stripe_customer_id, user_id))
+        conn.commit()
+
+    conn.close()
+
     portal_session = stripe.billing_portal.Session.create(
-        customer=row[0],
+        customer=stripe_customer_id,
         return_url=f"{BASE_URL}{url_for('labs_pro_page')}"
     )
     return redirect(portal_session.url, code=303)
