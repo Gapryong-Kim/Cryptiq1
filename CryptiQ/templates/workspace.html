@@ -1773,9 +1773,7 @@
     </div>
   </div>
 </div>
-<script>
-  window.WS_CAN_EDIT = {{ "true" if ws_can_edit else "false" }};
-</script>
+
   <script>
   // ===========================
   // Helpers
@@ -1809,15 +1807,6 @@
     const data = await res.json();
     return data;
   }
-  if (!window.WS_CAN_EDIT) {
-  // disable edits
-  document.getElementById("ws-title-input")?.setAttribute("disabled","disabled");
-  document.getElementById("ws-notes")?.setAttribute("disabled","disabled");
-  document.getElementById("cipher-text")?.setAttribute("disabled","disabled");
-  document.getElementById("upload-cipher-image")?.setAttribute("disabled","disabled");
-  document.getElementById("delete-cipher-image")?.setAttribute("disabled","disabled");
-  setStatus("View only");
-}
 
   function setStatus(msg) {
     const el = document.getElementById("save-status");
