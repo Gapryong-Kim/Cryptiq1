@@ -5,4 +5,5 @@ Flask-Mail==0.9.1
 psycopg2-binary
 psycopg2
 reportlab
+dotenv
 stripe
