@@ -76,6 +76,24 @@
       background: var(--accent);
       border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
       box-shadow: 0 0 0 3px var(--accent-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ✅ add a subtle shine like your modal */
+    .pro-pill::after{
+      content:"";
+      position:absolute;
+      inset:-40% -70%;
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.28) 45%, transparent 70%);
+      transform: translateX(-80%);
+      animation: proShine 2.6s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes proShine{
+      0%{ transform: translateX(-80%); }
+      55%{ transform: translateX(80%); }
+      100%{ transform: translateX(80%); }
     }
 
     .title{
@@ -203,7 +221,7 @@
       box-shadow: none;
     }
 
-    /* ===== Features grid (now 6 items) ===== */
+    /* ===== Features grid (re-ordered) ===== */
     .grid{
       display:grid;
       grid-template-columns: repeat(3, 1fr);
@@ -257,10 +275,7 @@
       color: var(--accent);
     }
 
-    .faq{
-      display:grid;
-      gap: 10px;
-    }
+    .faq{ display:grid; gap: 10px; }
     details{
       background: var(--panel);
       border: 1px solid var(--line);
@@ -374,8 +389,10 @@
       </div>
     </section>
 
-    <!-- ===== FEATURES (updated) ===== -->
+    <!-- ✅ FEATURES (reoriented: most valuable first) -->
     <div class="grid">
+
+      <!-- 1) Unlimited Labs -->
       <section class="card feat">
         <div class="icon">∞</div>
         <div>
@@ -384,6 +401,7 @@
         </div>
       </section>
 
+      <!-- 2) Unlimited Tabs -->
       <section class="card feat">
         <div class="icon">🗂️</div>
         <div>
@@ -392,22 +410,16 @@
         </div>
       </section>
 
+      <!-- 3) Sharing / CoLab -->
       <section class="card feat">
-        <div class="icon">📄</div>
+        <div class="icon">🤝</div>
         <div>
-          <h3>Export as PDF</h3>
-          <p>One click export of your lab (notes + ciphertext + images) so you can share, print, or archive.</p>
+          <h3>CoLab Sharing</h3>
+          <p>Enable sharing to generate a link, collaborate with friends, and manage collaborators from inside the lab.</p>
         </div>
       </section>
 
-      <section class="card feat">
-        <div class="icon">⎘</div>
-        <div>
-          <h3>Clone Labs</h3>
-          <p>Duplicate any lab instantly (including images) to branch ideas without losing your original work.</p>
-        </div>
-      </section>
-
+      <!-- 4) Lab History -->
       <section class="card feat">
         <div class="icon">⏱</div>
         <div>
@@ -416,6 +428,25 @@
         </div>
       </section>
 
+      <!-- 5) Export PDF -->
+      <section class="card feat">
+        <div class="icon">📄</div>
+        <div>
+          <h3>Export as PDF</h3>
+          <p>One click export of your lab (notes + ciphertext + images) so you can share, print, or archive.</p>
+        </div>
+      </section>
+
+      <!-- 6) Clone Labs -->
+      <section class="card feat">
+        <div class="icon">⎘</div>
+        <div>
+          <h3>Clone Labs</h3>
+          <p>Duplicate any lab instantly (including images) to branch ideas without losing your original work.</p>
+        </div>
+      </section>
+
+      <!-- 7) Pro Badge -->
       <section class="card feat">
         <div class="icon">✨</div>
         <div>
@@ -423,6 +454,7 @@
           <p>Your name gets a Pro badge across the site (posts, comments, leaderboards). Supporter flex.</p>
         </div>
       </section>
+
     </div>
 
     <section class="card">
@@ -468,7 +500,6 @@
     </section>
 
     {% include "base_footer.html" %}
-
   </main>
 </body>
 </html>
