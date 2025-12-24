@@ -12,66 +12,45 @@ normal_distribution = {
 }
 
 def analyse(message):
-    # --- Clean and prep (FIX: lowercase so stats match normal_distribution) ---
-    message = ''.join(ch.lower() for ch in message if ch.isalpha())
+    # --- Clean and prep ---
+    message = ''.join(ch for ch in message.lower() if ch.isalpha())
     n = len(message)
     if n == 0:
         return [], [], [], "No alphabetic content"
 
     # --- Count frequencies ---
     freq = Counter(message)
-    total = n
+    freq_dist = [(ltr, freq[ltr]) for ltr in sorted(freq)]
+    total = sum(freq.values())
+    rel_freqs = [freq[ltr]/total for ltr in sorted(normal_distribution.keys())]
 
-    # freq_dist: keep your structure (letter, count), sorted by count desc
-    freq_dist = sorted(freq.items(), key=lambda x: x[1], reverse=True)
-
-    # --- Build observed vector in a..z order ---
-    letters = list(normal_distribution.keys())  # already a..z in your dict
-    obs = [freq.get(l, 0) for l in letters]
-    rel_freqs = [c / total for c in obs]
-
-    # --- Correlation with English distribution ---
-    normal_vals = [normal_distribution[l] for l in letters]
+    # --- Compute correlation with English ---
+    normal_vals = list(normal_distribution.values())
     mean1 = sum(normal_vals) / 26
     mean2 = sum(rel_freqs) / 26
-    numerator = sum((a - mean1) * (b - mean2) for a, b in zip(normal_vals, rel_freqs))
-    denominator = math.sqrt(
-        sum((a - mean1) ** 2 for a in normal_vals) *
-        sum((b - mean2) ** 2 for b in rel_freqs)
-    )
-    corr = numerator / denominator if denominator else 0.0
+    numerator = sum((a-mean1)*(b-mean2) for a, b in zip(normal_vals, rel_freqs))
+    denominator = math.sqrt(sum((a-mean1)**2 for a in normal_vals) * sum((b-mean2)**2 for b in rel_freqs))
+    corr = numerator / denominator if denominator else 0
 
-    # --- Index of Coincidence ---
-    ic = sum(v * (v - 1) for v in freq.values()) / (n * (n - 1)) if n > 1 else 0.0
+    # --- Compute Index of Coincidence ---
+    ic = sum(v*(v-1) for v in freq.values()) / (n*(n-1)) if n > 1 else 0
 
-    # --- Chi-squared distance to English (helps reduce false poly flags) ---
-    # Lower chi2 => closer to English letter distribution.
-    exp = [normal_distribution[l] * total for l in letters]
-    chi2 = 0.0
-    for o, e in zip(obs, exp):
-        if e > 0:
-            chi2 += ((o - e) ** 2) / e
-
-    # --- Identify likely cipher type (more robust thresholds) ---
-    # Notes:
-    # - Transposition often: high corr + relatively English-like chi2
-    # - Monoalphabetic substitution often: IC near English-ish, but corr can be moderate
-    # - Polyalphabetic often: IC drops notably
-    if n < 20:
-        cipher_type = "Uncertain — text too short for reliable stats"
+    # --- Identify likely cipher type ---
+    if corr > 0.85:
+        cipher_type = "Transposition (letter order changed, frequencies intact)"
+    elif 0.5 <= corr <= 0.85 and ic >= 0.055:
+        cipher_type = "Monoalphabetic Substitution (Caesar, Affine, etc.)"
+    elif ic < 0.055 or corr < 0.5:
+        cipher_type = "Polyalphabetic Substitution (Vigenère or similar)"
     else:
-        if corr > 0.80 and chi2 < 200:
-            cipher_type = "Transposition (letter order changed, frequencies intact)"
-        elif ic >= 0.058:
-            cipher_type = "Monoalphabetic Substitution (Caesar, Affine, etc.)"
-        elif ic < 0.050:
-            cipher_type = "Polyalphabetic Substitution (Vigenère or similar)"
-        else:
-            # middle zone: could be substitution, transposition, or short-ish poly
-            cipher_type = "Uncertain — possibly mixed or short text"
+        cipher_type = "Uncertain — possibly mixed or short text"
 
-    # --- Common n-grams (same outputs: top 10 trigrams + bigrams) ---
-    trigrams = Counter(message[i:i+3] for i in range(len(message) - 2)).most_common(10)
-    bigrams  = Counter(message[i:i+2] for i in range(len(message) - 1)).most_common(10)
-
+    # --- Common n-grams ---
+    ngrams = []
+    for ngram_len in [3, 2]:
+        subs = Counter(message[i:i+ngram_len] for i in range(len(message)-ngram_len+1))
+        top = sorted(subs.items(), key=lambda x: x[1], reverse=True)[:10]
+        ngrams.append(top)
+        freq_dist=sorted(freq_dist,key=lambda x: x[1],reverse=True)
+    trigrams, bigrams = ngrams
     return trigrams, bigrams, freq_dist, cipher_type

@@ -465,6 +465,9 @@ def tools_run():
     if tool_type == "frequency":
         trigrams, bigrams, unigrams, cipher_type = analyse(text)
         unigrams_str = ", ".join([f"{letter}: {count}" for letter, count in unigrams])
+        trigrams=", ".join([f"{letter}: {count}" for letter, count in trigrams])
+        bigrams=", ".join([f"{letter}: {count}" for letter, count in bigrams])
+
         result_text = (
             f"Common trigrams: {trigrams}\n\n"
             f"Common bigrams: {bigrams}\n\n"
@@ -477,6 +480,10 @@ def tools_run():
         trigrams, bigrams, unigrams, cipher_type = analyse(initial_text)
         unigrams_str = ", ".join([f"{letter}: {count}" for letter, count in unigrams])
         result_text  = initial_text + "\n"
+        trigrams=", ".join([f"{letter}: {count}" for letter, count in trigrams])
+        unigrams_str = ", ".join([f"{letter}: {count}" for letter, count in unigrams])
+        trigrams=", ".join([f"{letter}: {count}" for letter, count in trigrams])
+        bigrams=", ".join([f"{letter}: {count}" for letter, count in bigrams])
         result_text += f"Common trigrams: {trigrams}\n"
         result_text += f"Common bigrams: {bigrams}\n"
         result_text += f"Letter frequencies: {unigrams_str}\n"
@@ -2725,7 +2732,11 @@ def workspace_share_create(ws_id):
     user = current_user()
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
-
+    
+    
+    if not is_pro(user):
+        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
+    
     conn = get_db()
     ws = conn.execute("""
         SELECT id FROM workspaces
@@ -2757,6 +2768,9 @@ def workspace_share_disable(ws_id):
     user = current_user()
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
+
+    if not is_pro(user):
+        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
 
     conn = get_db()
     ws = conn.execute("""
@@ -2809,6 +2823,11 @@ def workspace_share_collaborators(ws_id):
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
 
+    if not is_pro(user):
+        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
+
+
+
     conn = get_db()
     ws = conn.execute("SELECT owner_id, share_token, is_shared FROM workspaces WHERE id=? LIMIT 1", (ws_id,)).fetchone()
     if not ws:
@@ -2838,6 +2857,10 @@ def workspace_share_remove(ws_id):
     user = current_user()
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
+
+
+    if not is_pro(user):
+        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
 
     data = request.get_json(silent=True) or {}
     target_id = int(data.get("user_id") or 0)

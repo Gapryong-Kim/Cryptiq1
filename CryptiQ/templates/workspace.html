@@ -1608,27 +1608,27 @@
 
           <!-- ===== Collab ===== -->
          <button class="tb-btn pro" id="ws-export-pdf" type="button" title="Export this lab as a PDF">
-  Export PDF <span class="pro-chip-mini"><span class="spark">{% if user.is_pro %}
+  Export PDF <span class="pro-chip-mini"><span class="spark">
   <span class="pro-badge">PRO</span>
-{% endif %}
+
 </button>
 
 <button class="tb-btn pro" id="ws-clone" type="button" title="Clone this lab">
-  Clone <span class="pro-chip-mini"><span class="spark">{% if user.is_pro %}
+  Clone <span class="pro-chip-mini"><span class="spark">
   <span class="pro-badge">PRO</span>
-{% endif %}
+
 </button>
 
 <button class="tb-btn pro" id="ws-history" type="button" title="View lab history snapshots">
-  History <span class="pro-chip-mini"><span class="spark">{% if user.is_pro %}
+  History <span class="pro-chip-mini"><span class="spark">
   <span class="pro-badge">PRO</span>
-{% endif %}
+
 </button>
 
 <button class="tb-btn pro" id="ws-colab" type="button" title="CoLab (sharing + collaborators)">
-  CoLab <span class="pro-chip-mini"><span class="spark">{% if user.is_pro %}
+  CoLab <span class="pro-chip-mini"><span class="spark">
   <span class="pro-badge">PRO</span>
-{% endif %}
+
 </button>
 
           <div class="ws-status" id="save-status">—</div>
@@ -1980,7 +1980,7 @@
     </div>
   </div>
 
-  <script>
+<script>
   // ===========================
   // Helpers
   // ===========================
@@ -2162,7 +2162,8 @@
     document.addEventListener("keydown", onKey);
   }
 
-  async function maybeHandleProGate(res, data, context = "action") {
+  // ✅ PRO gate helper (CONSISTENT: any 402/403 => Pro popup)
+  function maybeHandleProGate(res, data, context = "action") {
     const status = res?.status;
 
     if (status === 402 || status === 403) {
@@ -2174,7 +2175,11 @@
             ? "Cloning a lab is a Labs Pro feature."
             : context === "export"
               ? "Exporting a lab as PDF is a Labs Pro feature."
-              : "This is a Labs Pro feature.",
+              : context === "colab"
+                ? "CoLab (sharing + collaborators) is a Labs Pro feature."
+                : context === "tabs"
+                  ? "Unlimited tabs (images) is a Labs Pro feature."
+                  : "This is a Labs Pro feature.",
         href: "/labs-pro",
         cta: "Upgrade to Pro"
       });
@@ -2757,7 +2762,13 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image_id: imageId })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
+      if (maybeHandleProGate(res, data, "tabs")) {
+        if (imgStatus) imgStatus.textContent = "—";
+        return;
+      }
+
       if (!data.ok) throw new Error(data.error || "delete failed");
 
       images = images.filter(x => x.id !== imageId);
@@ -2804,6 +2815,7 @@
       wrap.className = "cipher-tab-wrap";
       wrap.dataset.imageId = String(im.id);
 
+      // IMPORTANT: button cannot contain another button. Use div for inner layout.
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "cipher-tab" + (im.id === activeImageId ? " active" : "");
@@ -2813,7 +2825,7 @@
         <span class="cipher-tab-label" title="${escapeHtml(im.label || "")}">
           ${escapeHtml(im.label || "")}
         </span>
-        <button class="cipher-tab-more" type="button" aria-label="Tab options" title="Options">⋮</button>
+        <span class="cipher-tab-more" role="button" tabindex="0" aria-label="Tab options" title="Options">⋮</span>
       `;
 
       btn.addEventListener("click", (e) => {
@@ -2824,15 +2836,20 @@
       });
 
       const more = btn.querySelector(".cipher-tab-more");
-      more?.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      const openMenu = (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
 
         if (floatMenuForId === im.id && floatMenuEl?.classList.contains("open")) {
           closeFloatMenu();
           return;
         }
         openFloatMenuFor(im.id, more);
+      };
+
+      more?.addEventListener("click", openMenu);
+      more?.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") openMenu(ev);
       });
 
       btn.addEventListener("dblclick", (e) => {
@@ -2881,7 +2898,9 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image_id: imageId, label: finalLabel })
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+
+        if (maybeHandleProGate(res, data, "tabs")) return;
         if (!data.ok) throw new Error(data.error || "rename failed");
       } catch {
         im.label = oldLabel;
@@ -2903,7 +2922,9 @@
   async function loadImages() {
     try {
       const res = await fetch(`/workspaces/{{ ws.id }}/images`);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
+      if (maybeHandleProGate(res, data, "tabs")) return;
       if (!data.ok) throw new Error("failed");
 
       images = Array.isArray(data.images) ? data.images : [];
@@ -2942,7 +2963,7 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/image`, { method: "POST", body: fd });
       const data = await res.json().catch(() => ({}));
 
-      if (await maybeHandleProGate(res, data, "tabs")) {
+      if (maybeHandleProGate(res, data, "tabs")) {
         if (imgStatus) imgStatus.textContent = "—";
         return;
       }
@@ -3071,7 +3092,7 @@
       if (res.status === 403 || res.status === 402) {
         let data = {};
         try { data = await res.json(); } catch {}
-        await maybeHandleProGate(res, data, "export");
+        maybeHandleProGate(res, data, "export");
         return;
       }
 
@@ -3123,7 +3144,7 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/clone`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
 
-      if (await maybeHandleProGate(res, data, "clone")) return;
+      if (maybeHandleProGate(res, data, "clone")) return;
       if (!res.ok || !data.ok || !data.ws_id) throw new Error(data.error || "clone failed");
 
       window.location.href = `/workspaces/${data.ws_id}`;
@@ -3176,7 +3197,7 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/history`);
       const data = await res.json().catch(() => ({}));
 
-      if (await maybeHandleProGate(res, data, "history")) {
+      if (maybeHandleProGate(res, data, "history")) {
         closeHistoryModal();
         return;
       }
@@ -3217,7 +3238,7 @@
             const rres = await fetch(`/workspaces/{{ ws.id }}/history/${it.id}/restore`, { method: "POST" });
             const rdata = await rres.json().catch(() => ({}));
 
-            if (await maybeHandleProGate(rres, rdata, "history")) return;
+            if (maybeHandleProGate(rres, rdata, "history")) return;
             if (!rres.ok || !rdata.ok) throw new Error(rdata.error || "restore failed");
 
             window.location.reload();
@@ -3240,7 +3261,7 @@
   });
 
   // ===========================
-  // CoLab modal logic
+  // CoLab modal logic (PRO-GATED LIKE THE REST)
   // ===========================
   const colabBtn = document.getElementById("ws-colab");
   const colabModal = document.getElementById("colab-modal");
@@ -3333,8 +3354,6 @@
 
       const removeBtn = li.querySelector("[data-action='remove']");
       removeBtn?.addEventListener("click", async () => {
-        if (colabState.ownerOnly) return;
-
         const ok = await confirmDeleteModal({
           title: "Remove collaborator?",
           message: `Remove ${username} from this lab? They’ll lose access immediately.`,
@@ -3351,6 +3370,13 @@
             body: JSON.stringify({ user_id: c.user_id })
           });
           const data = await res.json().catch(() => ({}));
+
+          // ✅ PRO popup if not pro (like the rest)
+          if (maybeHandleProGate(res, data, "colab")) {
+            closeCoLabModal();
+            return;
+          }
+
           if (!res.ok || !data.ok) throw new Error(data.error || "remove failed");
           await loadCoLabState();
           setCoLabStatus("Removed ✓");
@@ -3361,12 +3387,6 @@
         }
       });
 
-      // If we detect ownerOnly, disable remove controls
-      if (colabState.ownerOnly) {
-        removeBtn.disabled = true;
-        removeBtn.title = "Only the owner can remove collaborators";
-      }
-
       colabList.appendChild(li);
     }
   }
@@ -3374,12 +3394,12 @@
   function applyCoLabUI() {
     setChip(!!colabState.is_shared);
 
-    // ownerOnly means: we got forbidden from collaborators endpoint
-    if (colabWarn) colabWarn.classList.toggle("show", !!colabState.ownerOnly);
+    // If you still want a warning element, keep it hidden by default
+    if (colabWarn) colabWarn.classList.remove("show");
 
     const isOn = !!colabState.is_shared;
-    if (colabEnableBtn) colabEnableBtn.disabled = colabState.ownerOnly || isOn;
-    if (colabDisableBtn) colabDisableBtn.disabled = colabState.ownerOnly || !isOn;
+    if (colabEnableBtn) colabEnableBtn.disabled = isOn;
+    if (colabDisableBtn) colabDisableBtn.disabled = !isOn;
 
     if (colabLinkbox) colabLinkbox.style.display = (isOn && colabState.share_url) ? "grid" : "none";
 
@@ -3391,23 +3411,14 @@
 
   async function loadCoLabState() {
     setCoLabStatus("Loading…");
-    colabState.ownerOnly = false;
 
     try {
       const res = await fetch(`/workspaces/{{ ws.id }}/share/collaborators`, { method: "GET" });
+      const data = await res.json().catch(() => ({}));
 
-      // If you’re not the owner, this endpoint returns 403 (by your route).
-      // We still want the modal to be useful for non-owners (show “sharing off/on”),
-      // but we can’t query it. So we show a clear message.
-      if (res.status === 403) {
-        colabState = {
-          is_shared: false,
-          share_url: null,
-          collaborators: [],
-          ownerOnly: true
-        };
-        setCoLabStatus("Owner-only: you can view a shared lab, but only the owner can manage CoLab.");
-        applyCoLabUI();
+      // ✅ PRO popup if not pro (like export/history/clone)
+      if (maybeHandleProGate(res, data, "colab")) {
+        closeCoLabModal();
         return;
       }
 
@@ -3417,7 +3428,6 @@
         return;
       }
 
-      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.error || "failed");
 
       colabState = {
@@ -3443,14 +3453,16 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/share/create`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
 
+      if (maybeHandleProGate(res, data, "colab")) {
+        closeCoLabModal();
+        return;
+      }
+
       if (res.status === 401) {
         setCoLabStatus("Login required");
         return;
       }
       if (!res.ok || !data.ok) throw new Error(data.error || "enable failed");
-
-      colabState.is_shared = true;
-      colabState.share_url = data.share_url || colabState.share_url;
 
       setCoLabStatus("Sharing enabled ✓");
       await loadCoLabState();
@@ -3479,18 +3491,19 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/share/disable`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
 
+      if (maybeHandleProGate(res, data, "colab")) {
+        closeCoLabModal();
+        return;
+      }
+
       if (res.status === 401) {
         setCoLabStatus("Login required");
         return;
       }
       if (!res.ok || !data.ok) throw new Error(data.error || "disable failed");
 
-      colabState.is_shared = false;
-      colabState.share_url = null;
-      colabState.collaborators = [];
-
       setCoLabStatus("Sharing disabled ✓");
-      applyCoLabUI();
+      await loadCoLabState();
       setTimeout(() => setCoLabStatus("—"), 900);
     } catch {
       setCoLabStatus("Disable failed");
@@ -3527,6 +3540,8 @@
   // ===========================
   showTool("frequency");
   setStatus("—");
-  </script>
+</script>
+
+
 </body>
   </html>
