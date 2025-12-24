@@ -16,14 +16,24 @@
       overflow-x: hidden;
     }
 
-    main {
-      min-height: calc(100dvh - 1dvh);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 40px 16px 40px;
-    }
+    main{
+  min-height: 100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding: 40px 16px 40px;
+  width: 100%;
+}
+
+/* push footer to the bottom of main when there's not much content */
+main > footer,
+main > .site-footer,
+main > #site-footer{
+  margin-top: auto;
+  width: 100%;
+}
+
 
     .ed-header {
       display: flex;
@@ -426,6 +436,7 @@
       background: var(--input-focus, #161616);
       box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
     }
+  
   </style>
 </head>
 
@@ -537,6 +548,8 @@
     <p class="breaker-link">
       Want to decode with no key? <a href="/breaker">Try our Cipher Breaker →</a>
     </p>
+          {% include "base_footer.html" %}
+
   </main>
 
   <!-- ===== Labs Modal ===== -->
@@ -573,6 +586,7 @@
         <button class="lab-btn primary" id="labs-confirm" type="button">Create Lab</button>
       </div>
     </div>
+  
   </div>
   <!-- ===== Labs Pro Limit Modal (nice) ===== -->
 <div id="pro-modal" class="promodal" aria-hidden="true">
@@ -606,6 +620,7 @@
       <a class="promodal-btn primary" id="pro-cta" href="{{ url_for('labs_pro_page') }}">Upgrade to Pro</a>
     </div>
   </div>
+  
 </div>
 
 
@@ -1181,5 +1196,6 @@ ${output}
 
   
   </script>
+  
 </body>
 </html>

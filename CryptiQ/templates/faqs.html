@@ -1,0 +1,379 @@
+<!-- templates/faqs.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FAQ — The Cipher Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    .faq-wrap{
+      width: min(980px, 94%);
+      margin: 110px auto 90px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .faq-hero{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px 20px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .faq-hero::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background:
+        radial-gradient(70% 60% at 15% 20%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+        radial-gradient(55% 50% at 85% 10%, rgba(0,255,213,.10) 0%, rgba(0,255,213,0) 55%);
+      pointer-events:none;
+    }
+
+    .faq-hero-inner{ position: relative; }
+
+    .faq-kicker{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .02em;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .faq-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-weight: 1000;
+      font-size: .78rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: #0f0f0f;
+      background: var(--accent);
+      border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .faq-title{
+      margin: 0;
+      font-size: clamp(1.7rem, 4.4vw, 2.4rem);
+      font-weight: 1000;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      line-height: 1.08;
+    }
+
+    .faq-sub{
+      margin-top: 8px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      font-size: 1.02rem;
+      max-width: 70ch;
+    }
+
+    .faq-controls{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-top: 14px;
+    }
+
+    .faq-search{
+      flex: 1 1 260px;
+      min-width: 220px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 12px;
+      font-weight: 800;
+      font-family: 'Inter','Segoe UI',Tahoma,sans-serif;
+      transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    }
+    .faq-search:focus{
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .faq-btn{
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 1000;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .faq-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .faq-btn:active{ transform: translateY(1px); }
+
+    .faq-grid{
+      display:grid;
+      gap: 10px;
+    }
+
+    details.faq-item{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.22);
+    }
+
+    details.faq-item[open]{
+      border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
+      box-shadow: 0 0 0 2px var(--accent-soft), 0 12px 26px rgba(0,0,0,.28);
+    }
+
+    summary.faq-q{
+      cursor:pointer;
+      font-weight: 1000;
+      color: var(--text);
+      list-style: none;
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    summary.faq-q::-webkit-details-marker{ display:none; }
+
+    .faq-chevron{
+      opacity: .7;
+      transition: transform .15s ease, opacity .15s ease;
+      font-weight: 1000;
+    }
+    details[open] .faq-chevron{
+      transform: rotate(180deg);
+      opacity: 1;
+    }
+
+    .faq-a{
+      margin: 10px 0 0;
+      color: var(--text-dim);
+      line-height: 1.65;
+      font-size: .98rem;
+    }
+
+    .faq-a code{
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: .92em;
+      padding: 1px 6px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
+    .faq-muted{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 700px){
+      .faq-wrap{ margin: 95px auto 70px; }
+      .faq-kicker{ justify-content: center; text-align:center; }
+      .faq-controls{ justify-content: center; }
+      .faq-search{ flex: 1 1 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  {% include 'base_nav.html' %}
+
+  <main class="faq-wrap">
+    <section class="faq-hero">
+      <div class="faq-hero-inner">
+        <div class="faq-kicker">
+          <span class="faq-pill">FAQ</span>
+          <span>Quick answers + how things work.</span>
+        </div>
+
+        <h1 class="faq-title">Frequently Asked Questions</h1>
+        <p class="faq-sub">
+          Search the FAQ or expand any question. If something’s missing, post it as feedback or DM me via a post.
+        </p>
+
+        <div class="faq-controls">
+          <input id="faq-search" class="faq-search" type="text" placeholder="Search: labs, pro, weekly cipher, notifications…" />
+          <button class="faq-btn" id="faq-expand" type="button">Expand all</button>
+          <button class="faq-btn" id="faq-collapse" type="button">Collapse</button>
+        </div>
+
+        <div class="faq-muted" id="faq-count" style="margin-top:10px;">—</div>
+      </div>
+    </section>
+
+    <section class="faq-grid" id="faq-grid">
+      <details class="faq-item" data-tags="labs workspace autosave">
+        <summary class="faq-q">
+          <span>What are Labs?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          Labs are private workspaces where you can store your notes/plaintext, ciphertext, images, and tool outputs.
+          They autosave as you work.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="labs pro limits">
+        <summary class="faq-q">
+          <span>What does Labs Pro unlock?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          Unlimited Labs, unlimited image tabs, plus premium Lab features like PDF export, cloning, and history snapshots.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="labs history snapshots restore">
+        <summary class="faq-q">
+          <span>How does Lab History work?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          On Pro, snapshots are created on saves. You can restore any snapshot from the History modal.
+          Restoring overwrites your current lab content.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="export pdf pro">
+        <summary class="faq-q">
+          <span>What’s included in PDF export?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          Your lab title, notes/plaintext, ciphertext, and uploaded images. It’s designed to be printable and shareable.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="tools breaker frequency substitution">
+        <summary class="faq-q">
+          <span>What’s the difference between Tools and the Breaker?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          Tools are focused transforms/analysis (like frequency, spacing, replace).
+          The Breaker tries to automatically solve a cipher (or narrow it down) for supported cipher types.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="substitution mapping">
+        <summary class="faq-q">
+          <span>How does the Substitution grid work?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          It’s a live mapping: you enter ciphertext letters A–Z under each plaintext letter marker.
+          The cipher box updates in real-time so you can see patterns quickly.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="weekly cipher leaderboard scoring">
+        <summary class="faq-q">
+          <span>Does Pro affect Weekly Cipher or leaderboards?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          No — Weekly Cipher scoring stays fair. Pro is about Labs capacity + QoL features.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="notifications bell">
+        <summary class="faq-q">
+          <span>How do notifications work?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          The bell shows unread notifications. Opening the dropdown fetches them and marks them as read.
+          Clicking a notification takes you to the linked page.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="privacy public posts">
+        <summary class="faq-q">
+          <span>Are Labs private?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          Yes — Labs are private to your account. Public content is only what you post in Posts / Weekly Cipher.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="accounts login register">
+        <summary class="faq-q">
+          <span>Do I need an account?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          You can browse as a guest, but you need an account to create Labs, post, comment, or enter Weekly Cipher.
+        </p>
+      </details>
+
+      <details class="faq-item" data-tags="feedback bugs">
+        <summary class="faq-q">
+          <span>I found a bug — how do I report it?</span><span class="faq-chevron">⌄</span>
+        </summary>
+        <p class="faq-a">
+          Make a post describing what happened (screenshots help). Include the page and steps to reproduce.
+        </p>
+      </details>
+    </section>
+  </main>
+
+
+  <script>
+    (function(){
+      const search = document.getElementById("faq-search");
+      const grid = document.getElementById("faq-grid");
+      const count = document.getElementById("faq-count");
+      const btnExpand = document.getElementById("faq-expand");
+      const btnCollapse = document.getElementById("faq-collapse");
+
+      const items = Array.from(grid.querySelectorAll(".faq-item"));
+
+      function updateCount(visible){
+        count.textContent = visible === 1 ? "Showing 1 question" : `Showing ${visible} questions`;
+      }
+
+      function applyFilter(q){
+        const query = (q || "").trim().toLowerCase();
+        let visible = 0;
+
+        items.forEach(d => {
+          const text = (d.textContent || "").toLowerCase();
+          const tags = (d.getAttribute("data-tags") || "").toLowerCase();
+          const ok = !query || text.includes(query) || tags.includes(query);
+          d.style.display = ok ? "" : "none";
+          if (ok) visible++;
+        });
+
+        updateCount(visible);
+      }
+
+      search?.addEventListener("input", () => applyFilter(search.value));
+
+      btnExpand?.addEventListener("click", () => {
+        items.forEach(d => { if (d.style.display !== "none") d.open = true; });
+      });
+
+      btnCollapse?.addEventListener("click", () => {
+        items.forEach(d => d.open = false);
+      });
+
+      applyFilter("");
+    })();
+  </script>
+</body>
+</html>

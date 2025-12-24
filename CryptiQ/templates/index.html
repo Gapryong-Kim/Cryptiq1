@@ -6,310 +6,227 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
+  <style>
+    /* =========================================================
+       INDEX PAGE OVERRIDES (your global style.css centers body)
+       ========================================================= */
+    body{
+      /* override global:
+         body { display:flex; justify-content:center; align-items:flex-start; }
+         which can create “shunted left / big band” on full-width pages */
+      display: block;
+      justify-content: initial;
+      align-items: initial;
+      min-height: 100vh;
+    }
 
-<style>
-/* === DARK THEME DEFAULT === */
-:root {
-  --accent: #00ffd5;
-  --bg: #0b0b0b;
-  --text: #f0f0f0;
-  --subtext: #bcbcbc;
-  --panel: #1a1a1a;
-  --border: rgba(255,255,255,0.08);
+    /* You already have this rule in nav CSS:
+       body.no-nav-padding { padding-top: 0 !important; }
+       so we put class on body, not main. */
 
-  --nav-height: 110px; /* desktop */
-}
+    /* Optional: keep a nice consistent page background */
+    .page{
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-/* === LIGHT THEME OVERRIDES === */
-html[data-theme="light"] {
-  --accent: #00b3a0;
-  --bg: #f9f9fb;
-  --text: #111;
-  --subtext: #555;
-  --panel: #f3f3f3;
-  --border: rgba(0,0,0,0.08);
-}
+    /* ===== HERO SECTION ===== */
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
 
-/* MOBILE NAV HEIGHT */
-@media (max-width: 900px) {
-  :root { --nav-height: 140px; }
-}
+      min-height: 70vh;
+      width: 100%;
+      padding: 0 8%;
 
-/* === BASE LAYOUT === */
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  overflow-x: hidden;
-  transition: background 0.4s ease, color 0.4s ease;
-}
+      background: linear-gradient(180deg, var(--bg) 0%, var(--panel) 100%);
+      box-sizing: border-box;
+      gap: 60px;
 
-/* Hide scrollbar on desktop */
-@media (min-width: 900px) {
-  ::-webkit-scrollbar { width: 0; background: transparent; }
-  html { scrollbar-width: none; -ms-overflow-style: none; }
-}
+      opacity: 0;
+      animation: fadeIn 1.2s ease forwards;
+    }
 
-main {
-  flex: 1;
-}
+    .hero-text {
+      flex: 1;
+      max-width: 540px;
+      opacity: 0;
+      animation: slideInLeft 1.4s ease forwards;
+    }
 
-/* === HERO SECTION === */
-.hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    .hero-text h1 {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin: 0 0 22px;
+      color: var(--text);
+    }
 
-  min-height: 70vh;
-  width: 100%;
-  padding: 0 8%;
+    .hero-text h1 span { color: var(--accent); }
 
-  background: linear-gradient(180deg, var(--bg) 0%, var(--panel) 100%);
-  box-sizing: border-box;
-  gap: 60px;
+    .hero-text p {
+      font-size: 1.1rem;
+      color: var(--muted, var(--text-dim));
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
 
-  opacity: 0;
-  animation: fadeIn 1.2s ease forwards;
-}
-/* HERO TEXT */
-.hero-text {
-  flex: 1;
-  max-width: 540px;
-  opacity: 0;
-  animation: slideInLeft 1.4s ease forwards;
-}
+    .cta {
+      background: var(--accent);
+      color: #0f0f0f;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px 34px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .12s ease, filter .12s ease;
+      font-family: inherit;
+    }
+    .cta:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .cta:active { transform: translateY(0); }
 
-.hero-text h1 {
-  font-size: 3.2rem;
-  font-weight: 800;
-  line-height: 1.15;
-  margin: 0 0 22px;
-  color: var(--text);
-}
-
-.hero-text h1 span {
-  color: var(--accent);
-}
-
-.hero-text p {
-  font-size: 1.1rem;
-  color: var(--subtext);
-  line-height: 1.6;
-  margin-bottom: 36px;
-}
-
-/* CTA */
-.cta {
-  background: var(--accent);
-  color: #0f0f0f;
-  border: none;
-  border-radius: 8px;
-  padding: 14px 34px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s ease;
-}
-.cta:hover {
-  background: #00e6c2;
-  transform: scale(1.05);
-}
-
-/* === CIPHER BOX === */
-.hero-code {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  opacity: 0;
-  animation: slideInRight 1.4s ease forwards;
-}
+    /* ===== CIPHER BOX ===== */
+    .hero-code {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      animation: slideInRight 1.4s ease forwards;
+    }
 
     .cipher-box {
-      width: 520px;
+      width: min(520px, 92vw);
       background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      border: 1px solid var(--line, rgba(255,255,255,0.08));
+      border-radius: 14px;
       padding: 32px;
       box-shadow: 0 0 50px rgba(0,255,213,0.08), 0 10px 35px rgba(0,0,0,0.4);
-      font-family: "Consolas", monospace;
+      font-family: "Consolas", "Fira Code", monospace;
       animation: pulseGlow 5s ease-in-out infinite;
     }
 
-    .cipher-header { color: var(--accent); font-weight: bold; margin-bottom: 8px; }
-    .cipher-label { color: var(--subtext); }
+    .cipher-header { color: var(--accent); font-weight: 900; margin-bottom: 10px; }
+    .cipher-line { margin-top: 10px; color: var(--text); }
+    .cipher-label { color: var(--muted, #bcbcbc); font-weight: 700; margin-right: 8px; }
 
     #cipher-output {
       color: var(--accent);
-      font-weight: 600;
-      letter-spacing: 1.5px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
     }
-/* ================================
-      FIRST TIME SECTION
-================================ */
-.first-time {
-  width: 100%;
-  padding: 120px 0 130px;
-  background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
-  display: flex;
-  justify-content: center;
-}
 
-.ft-container {
-  width: min(1100px, 90%);
-  text-align: center;
-}
+    /* ===== FIRST TIME SECTION ===== */
+    .first-time {
+      width: 100%;
+      padding: 120px 0 130px;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
+      display: flex;
+      justify-content: center;
+    }
 
-.ft-heading {
-  font-size: 2.3rem;
-  font-weight: 800;
-  margin-bottom: 14px;
-}
+    .ft-container {
+      width: min(1100px, 90%);
+      text-align: center;
+    }
 
-.ft-subheading {
-  color: var(--subtext);
-  font-size: 1rem;
-  max-width: 580px;
-  margin: 0 auto 55px;
-  line-height: 1.65;
-}
+    .ft-heading {
+      font-size: 2.3rem;
+      font-weight: 900;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
 
-.ft-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 28px;
-}
+    .ft-subheading {
+      color: var(--muted, var(--text-dim));
+      font-size: 1rem;
+      max-width: 580px;
+      margin: 0 auto 55px;
+      line-height: 1.65;
+    }
 
-.ft-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 30px 26px;
-  text-align: left;
-  box-shadow: 0 0 20px rgba(0,0,0,0.30);
-  transition: all 0.25s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  text-decoration: none;
-}
-.ft-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-8px);
-}
-.ft-card {
-  transition: transform 0.25s ease, border-color 0.25s ease;
-}
+    .ft-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+    }
 
+    .ft-card {
+      background: var(--panel);
+      border: 1px solid var(--line, rgba(255,255,255,0.08));
+      border-radius: 14px;
+      padding: 30px 26px;
+      text-align: left;
+      box-shadow: 0 0 20px rgba(0,0,0,0.30);
+      transition: transform .18s ease, border-color .18s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+      min-width: 0;
+    }
+    .ft-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-6px);
+    }
 
-.ft-card h3 { color: var(--text); margin: 0; }
-.ft-card p { color: var(--subtext); margin: 0; }
+    .ft-card h3 { color: var(--text); margin: 0; font-weight: 900; }
+    .ft-card p  { color: var(--muted, var(--text-dim)); margin: 0; line-height: 1.55; }
 
-/* FOOTER */
-.footer-text {
-  width: 100%;
-  text-align: center;
-  background: var(--panel);
-  color: var(--subtext);
-  padding: 35px 20px;
-  font-size: 0.9rem;
-  border-top: 1px solid var(--border);
-}
+    /* ===== FOOTER (simple, clean) ===== */
+    .footer-text {
+      width: 100%;
+      text-align: center;
+      background: color-mix(in oklab, var(--panel) 75%, #000);
+      color: var(--muted, var(--text-dim));
+      padding: 28px 18px;
+      font-size: 0.95rem;
+      border-top: 1px solid var(--line, rgba(255,255,255,0.08));
+    }
 
-/* ================================
-        MOBILE HERO FIX  
-================================ */
-@media (max-width: 900px) {
+    /* ===== MOBILE ===== */
+    @media (max-width: 900px) {
+      .hero {
+        flex-direction: column;
+        text-align: center;
+        gap: 32px;
+        padding-top: 5vh;
+        min-height: auto;
+      }
 
-  .hero {
-    flex-direction: column;
-    text-align: center;
-    gap: 32px;
-    padding-top: 5vh;
-    min-height: auto;
-  }
+      .hero-text { max-width: 100%; animation: none; opacity: 1; }
+      .hero-code { width: 100%; justify-content: center; animation: none; opacity: 1; }
 
-  .hero-text {
-    max-width: 100%;
-    animation: none;
-    opacity: 1;
-  }
+      .hero-text h1 { font-size: 2.3rem; }
+      .hero-text p  { font-size: 1rem; margin-bottom: 24px; }
 
-  .hero-text h1 { font-size: 2.3rem; }
-  .hero-text p { font-size: 1rem; margin-bottom: 24px; }
+      .cipher-box { padding: 24px; }
+    }
 
-  .hero-code {
-    width: 100%;
-    justify-content: center;
-    animation: none;
-    opacity: 1;
-  }
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideInLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 
-  .cipher-box {
-    width: 92%;
-    max-width: 380px;
-    padding: 24px;
-  }
-}
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
 
-/* === ANIMATIONS === */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-40px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(40px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-/* === SCROLL REVEAL ANIMATION === */
-
-.reveal {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
-}
-
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-@keyframes pulseGlow {
-  0% {
-    box-shadow:
-      0 0 28px rgba(0,255,213,0.14),
-      0 0 12px rgba(0,255,213,0.08);
-  }
-  50% {
-    box-shadow:
-      0 0 44px rgba(0,255,213,0.22),
-      0 0 26px rgba(0,255,213,0.12);
-  }
-  100% {
-    box-shadow:
-      0 0 28px rgba(0,255,213,0.14),
-      0 0 12px rgba(0,255,213,0.08);
-  }
-}
-
-</style>
-
+    @keyframes pulseGlow {
+      0%   { box-shadow: 0 0 28px rgba(0,255,213,0.14), 0 0 12px rgba(0,255,213,0.08); }
+      50%  { box-shadow: 0 0 44px rgba(0,255,213,0.22), 0 0 26px rgba(0,255,213,0.12); }
+      100% { box-shadow: 0 0 28px rgba(0,255,213,0.14), 0 0 12px rgba(0,255,213,0.08); }
+    }
+    
+  </style>
 </head>
 
-<body>
-
+<body >
   {% include 'base_nav.html' %}
 
-  <main class="no-nav-padding">
-
+  <div class="page">
     <!-- HERO -->
     <section class="hero">
       <div class="hero-text">
@@ -321,7 +238,7 @@ main {
         </p>
 
         <a href="{{ url_for('breaker') }}">
-          <button class="cta">Explore Tools</button>
+          <button class="cta" type="button">Explore Tools</button>
         </a>
       </div>
 
@@ -346,113 +263,102 @@ main {
       </div>
     </section>
 
-<!-- FIRST TIME -->
-<section class="first-time">
-  <div class="ft-container">
+    <!-- FIRST TIME -->
+    <section class="first-time">
+      <div class="ft-container">
+        <h2 class="ft-heading">New here? Start exploring.</h2>
+        <p class="ft-subheading">Begin your cryptography journey with these essential tools and challenges.</p>
 
-    <h2 class="ft-heading">New here? Start exploring.</h2>
-    <p class="ft-subheading">Begin your cryptography journey with these essential tools and challenges.</p>
+        <div class="ft-cards">
+          <a href="{{ url_for('breaker') }}" class="ft-card reveal">
+            <div class="ft-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16" y1="16" x2="22" y2="22"></line>
+              </svg>
+            </div>
+            <h3>Break a Cipher</h3>
+            <p>Automatically detect and crack classical ciphers with one click.</p>
+          </a>
 
-    <div class="ft-cards">
+          <a href="{{ url_for('tools_page') }}" class="ft-card reveal">
+            <div class="ft-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                <rect x="3" y="7" width="18" height="13"></rect>
+                <path d="M8 7V5h8v2"></path>
+              </svg>
+            </div>
+            <h3>Explore Tools</h3>
+            <p>Use encoders, decoders, analysers and helper utilities.</p>
+          </a>
 
-      <!-- Break a Cipher -->
-      <a href="{{ url_for('breaker') }}" class="ft-card reveal">
-        <div class="ft-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-            <circle cx="11" cy="11" r="7"></circle>
-            <line x1="16" y1="16" x2="22" y2="22"></line>
-          </svg>
+          <a href="{{ url_for('weekly_page') }}" class="ft-card reveal">
+            <div class="ft-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                <path d="M8 21h8"></path>
+                <path d="M12 17v4"></path>
+                <path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
+                <path d="M4 4h3v2a3 3 0 0 1-3 3"></path>
+                <path d="M20 4h-3v2a3 3 0 0 0 3 3"></path>
+              </svg>
+            </div>
+            <h3>Weekly Cipher Challenge</h3>
+            <p>Compete globally and climb the leaderboard.</p>
+          </a>
         </div>
-        <h3>Break a Cipher</h3>
-        <p>Automatically detect and crack classical ciphers with one click.</p>
-      </a>
+      </div>
+    </section>
 
-      <!-- Tools -->
-      <a href="{{ url_for('tools') }}" class="ft-card reveal">
-        <div class="ft-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-            <rect x="3" y="7" width="18" height="13"></rect>
-            <path d="M8 7V5h8v2"></path>
-          </svg>
-        </div>
-        <h3>Explore Tools</h3>
-        <p>Use encoders, decoders, analysers and helper utilities.</p>
-      </a>
-
-      <!-- Weekly Challenge -->
-      <a href="{{ url_for('weekly_page') }}" class="ft-card reveal">
-        <div class="ft-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-            <path d="M8 21h8"></path>
-            <path d="M12 17v4"></path>
-            <path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
-            <path d="M4 4h3v2a3 3 0 0 1-3 3"></path>
-            <path d="M20 4h-3v2a3 3 0 0 0 3 3"></path>
-          </svg>
-        </div>
-        <h3>Weekly Cipher Challenge</h3>
-        <p>Compete globally and climb the leaderboard.</p>
-      </a>
-
-    </div>
-
+{% include "base_footer.html" %}
   </div>
-</section>
 
-    <p class="footer-text">© 2025 The Cipher Lab — Tools. Posts. Community.</p>
-  </main>
+  <script>
+    /* ===============================
+       Caesar Cipher Typing Animation
+    ================================ */
+    const ciphertext = "BJQHTRJ YT YMJ HNUMJW QFG!";
+    const shift = 5;
+    const output = document.getElementById("cipher-output");
 
+    function caesarDecrypt(char, shift) {
+      const code = char.charCodeAt(0);
+      if (code >= 65 && code <= 90) return String.fromCharCode(((code - 65 - shift + 26) % 26) + 65);
+      if (code >= 97 && code <= 122) return String.fromCharCode(((code - 97 - shift + 26) % 26) + 97);
+      return char;
+    }
 
-<script>
-/* ===============================
-   Caesar Cipher Typing Animation
-================================ */
-const ciphertext = "BJQHTRJ YT YMJ HNUMJW QFG!";
-const shift = 5;
-const output = document.getElementById("cipher-output");
+    let index = 0;
+    let decrypted = "";
 
-function caesarDecrypt(char, shift) {
-  const code = char.charCodeAt(0);
-  if (code >= 65 && code <= 90)
-    return String.fromCharCode(((code - 65 - shift + 26) % 26) + 65);
-  if (code >= 97 && code <= 122)
-    return String.fromCharCode(((code - 97 - shift + 26) % 26) + 97);
-  return char;
-}
-
-let index = 0;
-let decrypted = "";
-
-function typeDecrypt() {
-  if (index < ciphertext.length) {
-    decrypted += caesarDecrypt(ciphertext[index], shift);
-    output.textContent = decrypted;
-    index++;
-    setTimeout(typeDecrypt, 40);
-  }
-}
-
-window.addEventListener("load", () => setTimeout(typeDecrypt, 1200));
-</script>
-<script>
-/* === Scroll Reveal for FT Cards === */
-
-const revealElements = document.querySelectorAll('.reveal');
-
-const observer = new IntersectionObserver(
-  entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target); // animate only once
+    function typeDecrypt() {
+      if (index < ciphertext.length) {
+        decrypted += caesarDecrypt(ciphertext[index], shift);
+        output.textContent = decrypted;
+        index++;
+        setTimeout(typeDecrypt, 40);
       }
-    });
-  },
-  { threshold: 0.15 }
-);
+    }
 
-revealElements.forEach(el => observer.observe(el));
-</script>
+    window.addEventListener("load", () => setTimeout(typeDecrypt, 900));
+  </script>
 
+  <script>
+    /* === Scroll Reveal for FT Cards === */
+    const revealElements = document.querySelectorAll('.reveal');
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    revealElements.forEach(el => observer.observe(el));
+  </script>
 </body>
 </html>

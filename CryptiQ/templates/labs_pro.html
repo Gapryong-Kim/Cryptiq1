@@ -174,6 +174,8 @@
       border: 1px solid var(--line);
       transition: transform .12s ease, filter .12s ease, box-shadow .12s ease, background .12s ease;
       user-select:none;
+      font-family: inherit;
+      font-size: 1rem;
     }
 
     .btn.primary{
@@ -282,6 +284,20 @@
       .grid{ grid-template-columns: 1fr; }
       .pro-wrap{ margin: 95px auto 70px; }
     }
+    @media (max-width: 420px) {
+      .kicker {
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+    }
+    @media (max-width: 600px) {
+      .kicker {
+        justify-content: center;
+        text-align: center;
+        flex-wrap: wrap;
+      }
+    }
   </style>
 </head>
 
@@ -322,23 +338,31 @@
           <div style="font-weight:900;color:var(--text);">Labs Pro</div>
 
           <div class="price">
-            <div class="amount">£5</div>
+            <div class="amount">£2.99</div>
             <div class="per">/ month</div>
           </div>
 
           <div class="fine">
-            Cancel anytime. This is a placeholder price — we’ll wire Stripe later.
+            Cancel anytime. Secure checkout powered by Stripe.
           </div>
 
           <div class="btn-row">
             {% if not user %}
               <a class="btn primary" href="{{ url_for('login') }}?next={{ request.path }}">Log in to upgrade</a>
+
             {% elif viewer_is_pro %}
               <a class="btn primary" href="{{ url_for('workspace_list') }}">Open your Labs</a>
-              <a class="btn ghost" aria-disabled="true">Manage billing (soon)</a>
+
+              {# Optional: only works if you add POST /billing/portal in your billing blueprint #}
+              <form action="{{ url_for('billing.portal') }}" method="POST" style="margin:0;">
+                <button class="btn ghost" type="submit">Manage billing</button>
+              </form>
+
             {% else %}
-              <!-- Later you'll point this to Stripe checkout -->
-              <a class="btn primary" href="{{ url_for('workspace_list') }}">Upgrade (coming soon)</a>
+              <form action="{{ url_for('billing.billing_checkout') }}" method="POST" style="margin:0;">
+                <button class="btn primary" type="submit">Upgrade to Labs Pro</button>
+              </form>
+
               <a class="btn ghost" href="{{ url_for('workspace_list') }}">Try Labs</a>
             {% endif %}
           </div>
@@ -442,6 +466,8 @@
         <p>We’ll show a clean popup that explains the limit and links here to upgrade.</p>
       </details>
     </section>
+
+    {% include "base_footer.html" %}
 
   </main>
 </body>

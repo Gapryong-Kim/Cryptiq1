@@ -1,0 +1,80 @@
+<!-- templates/base_footer.html -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <div class="footer-brand">© {{ now_year or 2025 }} The Cipher Lab</div>
+    </div>
+
+    <nav class="footer-right" aria-label="Footer">
+      <a href="{{ url_for('faqs_page') }}">FAQ</a>
+      <a href="{{ url_for('labs_pro_page') }}">Labs Pro</a>
+      <a href="{{ url_for('info_page') }}">Info</a>
+      <a href="{{ url_for('posts_list') }}">Posts</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  /* Clean, Mosh-style footer */
+  .site-footer{
+    width: 100%;
+    border-top: 1px solid var(--line);
+    background:  linear-gradient(
+    to bottom,
+    var(--panel) 0%,
+    color-mix(in oklab, var(--panel) 55%, #000) 55%,
+    #000 100%
+  );
+    padding: 22px 0;
+    margin-top: 3vh;
+  }
+  .site-footer {
+  background: transparent;   /* IMPORTANT */
+  border-top: 1px solid var(--line);
+}
+
+
+
+  .footer-inner{
+    width: min(1100px, 92%);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .footer-brand{
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: .2px;
+    font-size: .95rem;
+  }
+
+  .footer-right{
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .footer-right a{
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 800;
+    font-size: .92rem;
+    transition: color .15s ease, transform .15s ease;
+  }
+  .footer-right a:hover{
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 640px){
+    .footer-inner{
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .footer-right{ gap: 14px; }
+  }
+</style>

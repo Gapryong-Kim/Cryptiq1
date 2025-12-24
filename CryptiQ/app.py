@@ -3025,10 +3025,45 @@ def workspace_export_pdf(ws_id):
     return send_file(buf, mimetype="application/pdf", as_attachment=True, download_name=filename)
 
 
+# app.py — add this route + template render
+@app.route("/faqs")
+def faqs_page():
+    user = current_user()
+    return render_template("faqs.html", user=user, viewer_is_pro=is_pro(user) if user else False)
+
+# app.py
+from datetime import datetime
+
+@app.context_processor
+def inject_now_year():
+    return {"now_year": datetime.utcnow().year}
 
 
+import os
+import stripe
+from flask import Blueprint, request, jsonify, redirect, url_for
+from datetime import datetime
 
+billing = Blueprint("billing", __name__)
 
+stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+
+PRICE_ID = os.environ["STRIPE_PRICE_ID_PRO_MONTHLY"]
+BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:5000")
+
+# --- helpers you should already have ---
+# current_user() -> dict or None
+# get_db() -> sqlite connection
+# ensure your users table has: stripe_customer_id, is_pro, pro_until (optional)
+
+from flask import Flask
+from billing import billing
+
+app = Flask(__name__)
+app.register_blueprint(billing)
+
+if __name__ == "__main__":
+    app.run(debug=True)
 
 # ------------------- Run -------------------
 if __name__ == "__main__":

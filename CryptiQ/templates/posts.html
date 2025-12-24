@@ -857,7 +857,7 @@
           <div class="post-author">
             by {{ p.username or '[Deleted User]' }}
             {% if p.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
-            {% if user.is_pro %}
+            {% if p.is_pro %}
   <span class="pro-badge">PRO</span>
 {% endif %}
             {% if p.banned %}<span class="banned-badge">BANNED</span>{% endif %}
@@ -1004,6 +1004,8 @@
         </div>
       </div>
     </div>
+              {% include "base_footer.html" %}
+
   </main>
 
 <script>

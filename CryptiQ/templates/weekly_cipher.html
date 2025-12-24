@@ -425,6 +425,26 @@
       .weekly-header { flex-direction: column; align-items: flex-start; gap: 10px; }
       .admin-menu { position: static; align-self: flex-start; right: auto; top: auto; }
     }
+    /* override global body flex centering for this page */
+body{
+  display: block;
+  margin: 0;
+}
+
+/* make main take full viewport height and push footer down */
+main.weekly-wrap{
+  min-height: calc(100dvh - 65px); /* 65px = your fixed navbar height */
+  display: flex;
+  flex-direction: column;
+}
+
+/* footer sits at bottom when content is short */
+main.weekly-wrap > footer,
+main.weekly-wrap > .site-footer,
+main.weekly-wrap > #site-footer{
+  margin-top: auto;
+}
+
   </style>
 </head>
 
@@ -511,6 +531,8 @@
         {% endif %}
       </div>
     </section>
+      {% include "base_footer.html" %}
+
   </main>
 
   <!-- Info Modal -->
@@ -713,5 +735,6 @@
     }
   })();
   </script>
+  
 </body>
 </html>

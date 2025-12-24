@@ -203,11 +203,37 @@
     color: var(--accent);
     text-decoration: none;
   }
+  /* override global flex-centering body */
+body{
+  display: block;
+  margin: 0;
+}
+
+/* make the page able to push footer to bottom */
+.page{
+  min-height: calc(100dvh - 65px); /* navbar height */
+  display: flex;
+  flex-direction: column;
+}
+
+/* your existing leaderboard card stays the same */
+.leaderboard-wrap{
+  flex: 0 0 auto;
+}
+
+/* footer gets pushed down when content is short */
+.page > footer,
+.page > .site-footer,
+.page > #site-footer{
+  margin-top: auto;
+}
+
   </style>
 </head>
 
 <body>
   {% include 'base_nav.html' %}
+  <div class="page">
 
   <div class="leaderboard-wrap">
     <h2>Leaderboard</h2>
@@ -326,8 +352,11 @@
       </table>
       {% endif %}
     </section>
-  </div>
 
+  </div>
+      {% include "base_footer.html" %}
+
+</div>
   <script>
     // ---------- TAB HANDLING ----------
     const tabs = document.querySelectorAll(".tab");
