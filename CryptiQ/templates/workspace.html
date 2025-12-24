@@ -806,7 +806,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 7000;
+      z-index: 9000;
     }
     .cmodal.open{ display: flex; }
 
@@ -1269,145 +1269,215 @@
       color: var(--muted);
       min-height: 18px;
     }
-    /* ===== Confirm modal ===== */
-.cmodal{
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9000; /* was 7000 — must be > .hmodal (8500) */
-}
-/* =========================================================
-   TEAM / SHARE MODAL
-   ========================================================= */
-.tmodal{
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 8800;
-}
-.tmodal.open{ display:flex; }
 
-.tmodal-backdrop{
-  position:absolute;
-  inset:0;
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(6px);
-}
+    /* =========================================================
+       CoLab modal (sharing + collaborators)
+       ========================================================= */
+    .colab{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8600; /* above history (8500) */
+    }
+    .colab.open{ display: flex; }
 
-.tmodal-box{
-  position:relative;
-  width: min(760px, 94vw);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: 0 18px 60px rgba(0,0,0,.55);
-  overflow:hidden;
-  animation: cmodalPop .12s ease-out;
-}
+    .colab-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.66);
+      backdrop-filter: blur(7px);
+    }
 
-.tmodal-top{
-  padding: 14px 14px 10px;
-  border-bottom: 1px solid var(--line);
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
-  gap:12px;
-}
+    .colab-box{
+      position: relative;
+      width: min(760px, 94vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 22px 70px rgba(0,0,0,.6);
+      overflow: hidden;
+      animation: cmodalPop .12s ease-out;
+    }
 
-.tmodal-title{
-  font-weight: 1000;
-  color: var(--text);
-  font-size: 1rem;
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
+    .colab-hero{
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(70% 60% at 15% 20%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+        radial-gradient(55% 50% at 85% 10%, rgba(0,255,213,.10) 0%, rgba(0,255,213,0) 55%);
+    }
 
-.tmodal-x{
-  border: 1px solid var(--line-2);
-  background: transparent;
-  color: var(--text);
-  font-weight: 900;
-  border-radius: 12px;
-  padding: 8px 10px;
-  cursor:pointer;
-}
-.tmodal-x:hover{
-  background: var(--input-hover);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-}
+    .colab-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
 
-.tmodal-body{
-  padding: 12px 14px 16px;
-  color: var(--muted);
-  display:grid;
-  gap: 12px;
-}
+    .colab-title{
+      font-weight: 1000;
+      color: var(--text);
+      font-size: 1.05rem;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
 
-.team-row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
+    .colab-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .colab-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
 
-.team-link{
-  flex: 1;
-  min-width: 220px;
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  color: var(--text);
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
-  font-size: 13px;
-}
+    .colab-body{
+      padding: 14px 16px 16px;
+      display: grid;
+      gap: 12px;
+      color: var(--muted);
+    }
 
-.team-list{
-  list-style:none;
-  margin:0;
-  padding:0;
-  display:grid;
-  gap:10px;
-  max-height: min(50vh, 420px);
-  overflow:auto;
-  scrollbar-gutter: stable both-edges;
-}
+    .colab-row{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-.team-item{
-  border:1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(255,255,255,0.03);
-  padding: 10px 12px;
-  display:flex;
-  justify-content: space-between;
-  gap:12px;
-  align-items:center;
-  flex-wrap:wrap;
-}
+    .colab-chip{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-weight: 900;
+      font-size: .78rem;
+    }
+    .colab-chip.on{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+      color: var(--text);
+    }
 
-.team-name{
-  color: var(--text);
-  font-weight: 900;
-}
+    .colab-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
 
-.team-meta{
-  color: var(--muted);
-  font-weight: 800;
-  font-size: .82rem;
-}
+    .colab-linkbox{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
 
-.team-actions{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
+    .colab-linkrow{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
 
+    .colab-link{
+      flex: 1;
+      min-width: 220px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+    }
+
+    .colab-divider{
+      height: 1px;
+      background: var(--line);
+      opacity: .9;
+      margin: 2px 0 0;
+    }
+
+    .colab-list{
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+      max-height: min(46vh, 420px);
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .colab-item{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .colab-who{
+      display: grid;
+      gap: 2px;
+    }
+    .colab-name{
+      color: var(--text);
+      font-weight: 1000;
+      font-size: .95rem;
+    }
+    .colab-meta{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .82rem;
+    }
+
+    .colab-item-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .colab-status{
+      min-height: 18px;
+      font-size: .86rem;
+      color: var(--muted);
+    }
+
+    .colab-warn{
+      border: 1px solid rgba(255, 193, 7, 0.35);
+      background: rgba(255, 193, 7, 0.08);
+      color: #ffd36b;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 900;
+      font-size: .86rem;
+      display: none;
+    }
+    .colab-warn.show{ display:block; }
   </style>
 </head>
 
@@ -1420,15 +1490,7 @@
       <header class="ws-topbar">
         <div class="ws-titlewrap">
           <span class="ws-dot" aria-hidden="true"></span>
-<h1 class="ws-title">
-  My Cipher Lab
-  {% if ws.is_shared %}
-    <span style="margin-left:8px;font-size:.72rem;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;
-                 padding:4px 8px;border-radius:999px;background:rgba(0,255,213,.12);border:1px solid var(--line);color:var(--accent);">
-      Shared
-    </span>
-  {% endif %}
-</h1>
+          <h1 class="ws-title">My Cipher Lab</h1>
           <span class="ws-sub" id="ws-id">#{{ ws.id }}</span>
         </div>
 
@@ -1441,13 +1503,15 @@
           <button class="tb-btn" data-tool="remove_punctuation" type="button">No punct</button>
           <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
 
+          <!-- ===== Collab ===== -->
+          <button class="tb-btn" id="ws-colab" type="button" title="Share this lab and manage collaborators">CoLab</button>
+
           <!-- ===== PRO FEATURES ===== -->
           <button class="tb-btn" id="ws-export-pdf" type="button" title="Export this lab as a PDF">Export PDF</button>
           <button class="tb-btn" id="ws-clone" type="button" title="Clone this lab">Clone</button>
           <button class="tb-btn" id="ws-history" type="button" title="View lab history snapshots">History</button>
-          <div class="ws-status" id="save-status">—</div>
-          <button class="tb-btn" id="ws-team" type="button" title="Share this lab">Team</button>
 
+          <div class="ws-status" id="save-status">—</div>
         </div>
       </header>
 
@@ -1734,45 +1798,67 @@
       </div>
     </div>
   </div>
-  <!-- Team / Share Modal -->
-<div id="team-modal" class="tmodal" aria-hidden="true">
-  <div class="tmodal-backdrop" data-tclose="1"></div>
-  <div class="tmodal-box" role="dialog" aria-modal="true" aria-label="Team lab sharing">
-    <div class="tmodal-top">
-      <div class="tmodal-title">
-        <span class="pro-chip" style="box-shadow:none;">TEAM</span>
-        Share this lab
-      </div>
-      <button class="tmodal-x" id="team-x" type="button" aria-label="Close">✕</button>
-    </div>
 
-    <div class="tmodal-body">
-      <div id="team-status" class="hstatus">—</div>
+  <!-- CoLab Modal (sharing + collaborators) -->
+  <div id="colab-modal" class="colab" aria-hidden="true">
+    <div class="colab-backdrop" data-colab-close="1"></div>
 
-      <div class="team-row">
-        <input id="team-link" class="team-link" readonly value="" placeholder="Share link will appear here…" />
-        <button class="hbtn" id="team-copy" type="button">Copy link</button>
-
-        {% if ws_is_owner %}
-          <button class="hbtn primary" id="team-enable" type="button">Enable sharing</button>
-          <button class="hbtn" id="team-disable" type="button">Disable sharing</button>
-        {% endif %}
+    <div class="colab-box" role="dialog" aria-modal="true" aria-label="CoLab">
+      <div class="colab-hero">
+        <div class="colab-top">
+          <div class="colab-title">
+            <span style="display:inline-flex;align-items:center;gap:10px;">
+              <span class="ws-dot" aria-hidden="true" style="width:10px;height:10px;"></span>
+              CoLab
+            </span>
+            <span class="colab-chip" id="colab-chip">Sharing: off</span>
+          </div>
+          <button class="colab-x" id="colab-x" type="button" aria-label="Close">✕</button>
+        </div>
       </div>
 
-      {% if ws_is_owner %}
-        <div class="hint">
-          Anyone with the link can join as an <strong>editor</strong>. Disabling sharing revokes the link and removes collaborators.
+      <div class="colab-body">
+        <div class="colab-status" id="colab-status">—</div>
+
+        <div class="colab-warn" id="colab-warn">
+          Only the lab owner can enable/disable sharing or remove collaborators.
         </div>
 
-        <ul class="team-list" id="team-list"></ul>
-      {% else %}
-        <div class="hint">
-          You can edit this lab because the owner shared it with you.
+        <div class="colab-row">
+          <div class="hint" style="max-width: 56ch;">
+            Turn on sharing to generate a join link. Anyone with the link who is logged in can join as an editor (you can remove them).
+          </div>
+
+          <div class="colab-actions">
+            <button class="run-btn" id="colab-enable" type="button">Enable sharing</button>
+            <button class="run-btn secondary" id="colab-disable" type="button">Disable sharing</button>
+          </div>
         </div>
-      {% endif %}
+
+        <div class="colab-linkbox" id="colab-linkbox" style="display:none;">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+            <div style="font-weight:1000;color:var(--text);">Share link</div>
+            <div class="hint">Send this to friends.</div>
+          </div>
+
+          <div class="colab-linkrow">
+            <input class="colab-link" id="colab-link" readonly value="" />
+            <button class="run-btn secondary" id="colab-copy" type="button">Copy</button>
+            <a class="run-btn" id="colab-open" href="#" target="_blank" rel="noopener">Open</a>
+          </div>
+
+          <div class="colab-divider"></div>
+
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+            <div style="font-weight:1000;color:var(--text);">Collaborators</div>
+            <button class="run-btn secondary" id="colab-refresh" type="button">Refresh</button>
+          </div>
+
+          <ul class="colab-list" id="colab-list"></ul>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
   <script>
   // ===========================
@@ -1844,71 +1930,69 @@
   }
 
   // ===== Custom confirm modal (NO window.confirm) =====
+  function confirmDeleteModal({
+    title = "Confirm",
+    message = "Are you sure?",
+    confirmText = "Confirm",
+    cancelText = "Cancel",
+    danger = false
+  } = {}) {
+    const modal = document.getElementById("confirm-modal");
+    const titleEl = document.getElementById("cmodal-title");
+    const bodyEl = document.getElementById("cmodal-body");
+    const btnCancel = document.getElementById("cmodal-cancel");
+    const btnConfirm = document.getElementById("cmodal-confirm");
+    const btnX = document.getElementById("cmodal-x");
 
-function confirmDeleteModal({
-  title = "Confirm",
-  message = "Are you sure?",
-  confirmText = "Confirm",
-  cancelText = "Cancel",
-  danger = false
-} = {}) {
-  const modal = document.getElementById("confirm-modal");
-  const titleEl = document.getElementById("cmodal-title");
-  const bodyEl = document.getElementById("cmodal-body");
-  const btnCancel = document.getElementById("cmodal-cancel");
-  const btnConfirm = document.getElementById("cmodal-confirm");
-  const btnX = document.getElementById("cmodal-x");
+    if (!modal || !btnCancel || !btnConfirm) return Promise.resolve(false);
 
-  if (!modal || !btnCancel || !btnConfirm) return Promise.resolve(false);
+    titleEl.textContent = title;
+    bodyEl.textContent = message;
 
-  titleEl.textContent = title;
-  bodyEl.textContent = message;
+    btnCancel.textContent = cancelText;
+    btnConfirm.textContent = confirmText;
 
-  btnCancel.textContent = cancelText;
-  btnConfirm.textContent = confirmText;
+    // toggle danger styling
+    btnConfirm.classList.toggle("danger", !!danger);
 
-  // toggle danger styling
-  btnConfirm.classList.toggle("danger", !!danger);
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    setTimeout(() => btnConfirm.focus(), 0);
 
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-  setTimeout(() => btnConfirm.focus(), 0);
+    return new Promise((resolve) => {
+      const cleanup = (result) => {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
 
-  return new Promise((resolve) => {
-    const cleanup = (result) => {
-      modal.classList.remove("open");
-      modal.setAttribute("aria-hidden", "true");
+        btnCancel.removeEventListener("click", onCancel);
+        btnConfirm.removeEventListener("click", onConfirm);
+        btnX?.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKey);
 
-      btnCancel.removeEventListener("click", onCancel);
-      btnConfirm.removeEventListener("click", onConfirm);
-      btnX?.removeEventListener("click", onCancel);
-      modal.removeEventListener("click", onBackdrop);
-      document.removeEventListener("keydown", onKey);
+        resolve(result);
+      };
 
-      resolve(result);
-    };
+      const onCancel = () => cleanup(false);
+      const onConfirm = () => cleanup(true);
 
-    const onCancel = () => cleanup(false);
-    const onConfirm = () => cleanup(true);
+      const onBackdrop = (e) => {
+        const closeEl = e.target?.closest?.("[data-close='1']");
+        if (closeEl) cleanup(false);
+      };
 
-    const onBackdrop = (e) => {
-      const closeEl = e.target?.closest?.("[data-close='1']");
-      if (closeEl) cleanup(false);
-    };
+      const onKey = (e) => {
+        if (e.key === "Escape") cleanup(false);
+        if (e.key === "Enter") cleanup(true);
+      };
 
-    const onKey = (e) => {
-      if (e.key === "Escape") cleanup(false);
-      if (e.key === "Enter") cleanup(true);
-    };
-
-    btnCancel.addEventListener("click", onCancel);
-    btnConfirm.addEventListener("click", onConfirm);
-    btnX?.addEventListener("click", onCancel);
-    modal.addEventListener("click", onBackdrop);
-    document.addEventListener("keydown", onKey);
-  });
-}
-
+      btnCancel.addEventListener("click", onCancel);
+      btnConfirm.addEventListener("click", onConfirm);
+      btnX?.addEventListener("click", onCancel);
+      modal.addEventListener("click", onBackdrop);
+      document.addEventListener("keydown", onKey);
+    });
+  }
 
   // ===== Labs Pro modal =====
   function openProModal({
@@ -2838,39 +2922,32 @@ function confirmDeleteModal({
   const cloneBtn  = document.getElementById("ws-clone");
   const histBtn   = document.getElementById("ws-history");
 
-async function workspaceCanCreateCheck() {
-  // Expected JSON: { ok:true, can_create:true } or { ok:false, can_create:false, error:"..." }
-  try {
-    const res = await fetch(`/workspaces/can-create`, { method: "GET" });
+  async function workspaceCanCreateCheck() {
+    try {
+      const res = await fetch(`/workspaces/can-create`, { method: "GET" });
 
-    // if not logged in, treat as can't create (or redirect if you prefer)
-    if (res.status === 401) {
-      return { ok: false, can_create: false, error: "login required" };
+      if (res.status === 401) {
+        return { ok: false, can_create: false, error: "login required" };
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, can_create: false, error: data.error || "not allowed" };
+
+      if (typeof data.can_create === "boolean") return data;
+
+      return { ok: true, can_create: true };
+    } catch {
+      return { ok: true, can_create: true };
     }
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) return { ok: false, can_create: false, error: data.error || "not allowed" };
-
-    if (typeof data.can_create === "boolean") return data;
-
-    // fallback if server returned {ok:true} only
-    return { ok: true, can_create: true };
-  } catch {
-    // if network weird, fallback to "try anyway"
-    return { ok: true, can_create: true };
   }
-}
 
   exportBtn?.addEventListener("click", async () => {
-    // We do a HEAD-ish preflight by fetching JSON first if blocked,
-    // but easiest: just hit endpoint and if 403 show modal.
     try {
       exportBtn.disabled = true;
       setStatus("Preparing PDF…");
 
       const res = await fetch(`/workspaces/{{ ws.id }}/export.pdf`, { method: "GET" });
 
-      // If server returns JSON 403 instead of PDF
       if (res.status === 403 || res.status === 402) {
         let data = {};
         try { data = await res.json(); } catch {}
@@ -2880,7 +2957,6 @@ async function workspaceCanCreateCheck() {
 
       if (!res.ok) throw new Error("export failed");
 
-      // It's a PDF blob: force download
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
 
@@ -2903,7 +2979,6 @@ async function workspaceCanCreateCheck() {
   });
 
   cloneBtn?.addEventListener("click", async () => {
-    // hard stop if user can't create (your requirement)
     const can = await workspaceCanCreateCheck();
     if (can && can.can_create === false) {
       openProModal({
@@ -3025,7 +3100,6 @@ async function workspaceCanCreateCheck() {
             if (await maybeHandleProGate(rres, rdata, "history")) return;
             if (!rres.ok || !rdata.ok) throw new Error(rdata.error || "restore failed");
 
-            // Reload page so everything matches the restored state (including autosave baseline)
             window.location.reload();
           } catch {
             hStatus.textContent = "Restore failed";
@@ -3046,184 +3120,293 @@ async function workspaceCanCreateCheck() {
   });
 
   // ===========================
+  // CoLab modal logic
+  // ===========================
+  const colabBtn = document.getElementById("ws-colab");
+  const colabModal = document.getElementById("colab-modal");
+  const colabX = document.getElementById("colab-x");
+  const colabStatus = document.getElementById("colab-status");
+  const colabChip = document.getElementById("colab-chip");
+
+  const colabEnableBtn = document.getElementById("colab-enable");
+  const colabDisableBtn = document.getElementById("colab-disable");
+
+  const colabLinkbox = document.getElementById("colab-linkbox");
+  const colabLinkEl = document.getElementById("colab-link");
+  const colabCopyBtn = document.getElementById("colab-copy");
+  const colabOpenA = document.getElementById("colab-open");
+  const colabRefreshBtn = document.getElementById("colab-refresh");
+  const colabList = document.getElementById("colab-list");
+  const colabWarn = document.getElementById("colab-warn");
+
+  let colabState = {
+    is_shared: false,
+    share_url: null,
+    collaborators: [],
+    ownerOnly: false
+  };
+
+  function openCoLabModal() {
+    if (!colabModal) return;
+    colabModal.classList.add("open");
+    colabModal.setAttribute("aria-hidden", "false");
+  }
+  function closeCoLabModal() {
+    if (!colabModal) return;
+    colabModal.classList.remove("open");
+    colabModal.setAttribute("aria-hidden", "true");
+  }
+
+  colabX?.addEventListener("click", closeCoLabModal);
+  colabModal?.addEventListener("click", (e) => {
+    const closeEl = e.target?.closest?.("[data-colab-close='1']");
+    if (closeEl) closeCoLabModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && colabModal?.classList.contains("open")) closeCoLabModal();
+  });
+
+  function setCoLabStatus(msg) {
+    if (colabStatus) colabStatus.textContent = msg || "—";
+  }
+
+  function setChip(on) {
+    if (!colabChip) return;
+    colabChip.classList.toggle("on", !!on);
+    colabChip.textContent = on ? "Sharing: on" : "Sharing: off";
+  }
+
+  function renderCollaborators() {
+    if (!colabList) return;
+    colabList.innerHTML = "";
+
+    const items = Array.isArray(colabState.collaborators) ? colabState.collaborators : [];
+    if (items.length === 0) {
+      const li = document.createElement("li");
+      li.className = "colab-item";
+      li.innerHTML = `
+        <div class="colab-who">
+          <div class="colab-name">No collaborators yet</div>
+          <div class="colab-meta">Share the link — people who open it will appear here.</div>
+        </div>
+      `;
+      colabList.appendChild(li);
+      return;
+    }
+
+    for (const c of items) {
+      const username = c.username || `User #${c.user_id}`;
+      const role = (c.role || "editor").toLowerCase();
+      const added = (c.added_at || "").replace("T"," ").slice(0,19);
+
+      const li = document.createElement("li");
+      li.className = "colab-item";
+      li.innerHTML = `
+        <div class="colab-who">
+          <div class="colab-name">${escapeHtml(username)}</div>
+          <div class="colab-meta">Role: ${escapeHtml(role)}${added ? " • Added: " + escapeHtml(added) : ""}</div>
+        </div>
+        <div class="colab-item-actions">
+          <button class="run-btn secondary" data-action="remove" data-id="${c.user_id}">Remove</button>
+        </div>
+      `;
+
+      const removeBtn = li.querySelector("[data-action='remove']");
+      removeBtn?.addEventListener("click", async () => {
+        if (colabState.ownerOnly) return;
+
+        const ok = await confirmDeleteModal({
+          title: "Remove collaborator?",
+          message: `Remove ${username} from this lab? They’ll lose access immediately.`,
+          confirmText: "Remove",
+          danger: true
+        });
+        if (!ok) return;
+
+        try {
+          setCoLabStatus("Removing…");
+          const res = await fetch(`/workspaces/{{ ws.id }}/share/remove`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: c.user_id })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) throw new Error(data.error || "remove failed");
+          await loadCoLabState();
+          setCoLabStatus("Removed ✓");
+          setTimeout(() => setCoLabStatus("—"), 1000);
+        } catch {
+          setCoLabStatus("Remove failed");
+          setTimeout(() => setCoLabStatus("—"), 1300);
+        }
+      });
+
+      // If we detect ownerOnly, disable remove controls
+      if (colabState.ownerOnly) {
+        removeBtn.disabled = true;
+        removeBtn.title = "Only the owner can remove collaborators";
+      }
+
+      colabList.appendChild(li);
+    }
+  }
+
+  function applyCoLabUI() {
+    setChip(!!colabState.is_shared);
+
+    // ownerOnly means: we got forbidden from collaborators endpoint
+    if (colabWarn) colabWarn.classList.toggle("show", !!colabState.ownerOnly);
+
+    const isOn = !!colabState.is_shared;
+    if (colabEnableBtn) colabEnableBtn.disabled = colabState.ownerOnly || isOn;
+    if (colabDisableBtn) colabDisableBtn.disabled = colabState.ownerOnly || !isOn;
+
+    if (colabLinkbox) colabLinkbox.style.display = (isOn && colabState.share_url) ? "grid" : "none";
+
+    if (colabLinkEl) colabLinkEl.value = colabState.share_url || "";
+    if (colabOpenA) colabOpenA.href = colabState.share_url || "#";
+
+    renderCollaborators();
+  }
+
+  async function loadCoLabState() {
+    setCoLabStatus("Loading…");
+    colabState.ownerOnly = false;
+
+    try {
+      const res = await fetch(`/workspaces/{{ ws.id }}/share/collaborators`, { method: "GET" });
+
+      // If you’re not the owner, this endpoint returns 403 (by your route).
+      // We still want the modal to be useful for non-owners (show “sharing off/on”),
+      // but we can’t query it. So we show a clear message.
+      if (res.status === 403) {
+        colabState = {
+          is_shared: false,
+          share_url: null,
+          collaborators: [],
+          ownerOnly: true
+        };
+        setCoLabStatus("Owner-only: you can view a shared lab, but only the owner can manage CoLab.");
+        applyCoLabUI();
+        return;
+      }
+
+      if (res.status === 401) {
+        setCoLabStatus("Login required");
+        applyCoLabUI();
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "failed");
+
+      colabState = {
+        is_shared: !!data.is_shared,
+        share_url: data.share_url || null,
+        collaborators: Array.isArray(data.collaborators) ? data.collaborators : [],
+        ownerOnly: false
+      };
+
+      setCoLabStatus("—");
+      applyCoLabUI();
+    } catch {
+      setCoLabStatus("Couldn’t load CoLab state.");
+      applyCoLabUI();
+    }
+  }
+
+  async function enableSharing() {
+    try {
+      setCoLabStatus("Enabling…");
+      colabEnableBtn.disabled = true;
+
+      const res = await fetch(`/workspaces/{{ ws.id }}/share/create`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        setCoLabStatus("Login required");
+        return;
+      }
+      if (!res.ok || !data.ok) throw new Error(data.error || "enable failed");
+
+      colabState.is_shared = true;
+      colabState.share_url = data.share_url || colabState.share_url;
+
+      setCoLabStatus("Sharing enabled ✓");
+      await loadCoLabState();
+      setTimeout(() => setCoLabStatus("—"), 900);
+    } catch {
+      setCoLabStatus("Enable failed");
+      setTimeout(() => setCoLabStatus("—"), 1200);
+    } finally {
+      colabEnableBtn.disabled = false;
+    }
+  }
+
+  async function disableSharing() {
+    const ok = await confirmDeleteModal({
+      title: "Disable sharing?",
+      message: "This will invalidate the link and remove all collaborators for this lab.",
+      confirmText: "Disable",
+      danger: true
+    });
+    if (!ok) return;
+
+    try {
+      setCoLabStatus("Disabling…");
+      colabDisableBtn.disabled = true;
+
+      const res = await fetch(`/workspaces/{{ ws.id }}/share/disable`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        setCoLabStatus("Login required");
+        return;
+      }
+      if (!res.ok || !data.ok) throw new Error(data.error || "disable failed");
+
+      colabState.is_shared = false;
+      colabState.share_url = null;
+      colabState.collaborators = [];
+
+      setCoLabStatus("Sharing disabled ✓");
+      applyCoLabUI();
+      setTimeout(() => setCoLabStatus("—"), 900);
+    } catch {
+      setCoLabStatus("Disable failed");
+      setTimeout(() => setCoLabStatus("—"), 1200);
+    } finally {
+      colabDisableBtn.disabled = false;
+    }
+  }
+
+  colabEnableBtn?.addEventListener("click", enableSharing);
+  colabDisableBtn?.addEventListener("click", disableSharing);
+
+  colabRefreshBtn?.addEventListener("click", async () => {
+    await loadCoLabState();
+  });
+
+  colabCopyBtn?.addEventListener("click", async () => {
+    try {
+      const v = (colabLinkEl?.value || "").trim();
+      if (!v) return;
+      await navigator.clipboard.writeText(v);
+      setCoLabStatus("Copied ✓");
+      setTimeout(() => setCoLabStatus("—"), 900);
+    } catch {}
+  });
+
+  colabBtn?.addEventListener("click", async () => {
+    openCoLabModal();
+    await loadCoLabState();
+  });
+
+  // ===========================
   // Default tool state
   // ===========================
   showTool("frequency");
   setStatus("—");
-  // ===========================
-// TEAM / SHARE
-// ===========================
-const teamBtn = document.getElementById("ws-team");
-const tModal = document.getElementById("team-modal");
-const tX = document.getElementById("team-x");
-const tStatus = document.getElementById("team-status");
-const tLink = document.getElementById("team-link");
-const tCopy = document.getElementById("team-copy");
-const tEnable = document.getElementById("team-enable");
-const tDisable = document.getElementById("team-disable");
-const tList = document.getElementById("team-list");
-
-function openTeamModal(){
-  if (!tModal) return;
-  tModal.classList.add("open");
-  tModal.setAttribute("aria-hidden","false");
-}
-function closeTeamModal(){
-  if (!tModal) return;
-  tModal.classList.remove("open");
-  tModal.setAttribute("aria-hidden","true");
-}
-
-tX?.addEventListener("click", closeTeamModal);
-tModal?.addEventListener("click", (e) => {
-  const closeEl = e.target?.closest?.("[data-tclose='1']");
-  if (closeEl) closeTeamModal();
-});
-
-async function refreshTeam(){
-  if (!tStatus) return;
-  tStatus.textContent = "Loading…";
-
-  try{
-    const res = await fetch(`/workspaces/{{ ws.id }}/share/collaborators`);
-    const data = await res.json().catch(()=>({}));
-    if (!res.ok || !data.ok) throw new Error(data.error || "failed");
-
-    const isShared = !!data.is_shared;
-    const url = data.share_url || "";
-
-    if (tLink) tLink.value = url;
-
-    // enable/disable buttons (owner only exists in DOM when owner)
-    if (tEnable) tEnable.disabled = isShared;
-    if (tDisable) tDisable.disabled = !isShared;
-
-    if (isShared) {
-      tStatus.textContent = "Sharing is ON.";
-    } else {
-      tStatus.textContent = "Sharing is OFF.";
-    }
-
-    // collaborators list (owner only)
-    if (tList) {
-      tList.innerHTML = "";
-      const items = Array.isArray(data.collaborators) ? data.collaborators : [];
-
-      if (!isShared) {
-        const li = document.createElement("div");
-        li.className = "hint";
-        li.textContent = "Enable sharing to generate a join link.";
-        tList.appendChild(li);
-        return;
-      }
-
-      if (items.length === 0) {
-        const li = document.createElement("div");
-        li.className = "hint";
-        li.textContent = "No collaborators yet. Share the link to invite editors.";
-        tList.appendChild(li);
-        return;
-      }
-
-      items.forEach((c) => {
-        const li = document.createElement("li");
-        li.className = "team-item";
-        li.innerHTML = `
-          <div>
-            <div class="team-name">${escapeHtml(c.username || ("User #" + c.user_id))}</div>
-            <div class="team-meta">Role: ${escapeHtml(c.role || "editor")} • Added: ${escapeHtml((c.added_at || "").replace("T"," ").slice(0,19) || "—")}</div>
-          </div>
-          <div class="team-actions">
-            <button class="cmodal-btn danger" data-remove="1">Remove</button>
-          </div>
-        `;
-
-        li.querySelector("[data-remove='1']")?.addEventListener("click", async () => {
-          const ok = await confirmDeleteModal({
-            title: "Remove collaborator?",
-            message: `Remove ${c.username || ("User #" + c.user_id)} from this lab?`,
-            confirmText: "Remove",
-            danger: true
-          });
-          if (!ok) return;
-
-          try{
-            tStatus.textContent = "Removing…";
-            const r = await fetch(`/workspaces/{{ ws.id }}/share/remove`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ user_id: c.user_id })
-            });
-            const rd = await r.json().catch(()=>({}));
-            if (!r.ok || !rd.ok) throw new Error(rd.error || "remove failed");
-            await refreshTeam();
-          } catch {
-            tStatus.textContent = "Remove failed.";
-            setTimeout(()=> tStatus.textContent = "—", 1200);
-          }
-        });
-
-        tList.appendChild(li);
-      });
-    }
-  } catch {
-    tStatus.textContent = "Couldn’t load sharing status.";
-  }
-}
-
-tCopy?.addEventListener("click", async () => {
-  const v = (tLink?.value || "").trim();
-  if (!v) {
-    tStatus.textContent = "No link yet — enable sharing first.";
-    setTimeout(()=> tStatus.textContent = "—", 1200);
-    return;
-  }
-  try{
-    await navigator.clipboard.writeText(v);
-    tStatus.textContent = "Copied ✓";
-    setTimeout(()=> tStatus.textContent = "—", 900);
-  } catch {}
-});
-
-tEnable?.addEventListener("click", async () => {
-  try{
-    tStatus.textContent = "Enabling…";
-    const res = await fetch(`/workspaces/{{ ws.id }}/share/create`, { method: "POST" });
-    const data = await res.json().catch(()=>({}));
-    if (!res.ok || !data.ok) throw new Error(data.error || "failed");
-    await refreshTeam();
-  } catch {
-    tStatus.textContent = "Enable failed.";
-    setTimeout(()=> tStatus.textContent = "—", 1200);
-  }
-});
-
-tDisable?.addEventListener("click", async () => {
-  const ok = await confirmDeleteModal({
-    title: "Disable sharing?",
-    message: "This revokes the link and removes all collaborators from this lab.",
-    confirmText: "Disable",
-    danger: true
-  });
-  if (!ok) return;
-
-  try{
-    tStatus.textContent = "Disabling…";
-    const res = await fetch(`/workspaces/{{ ws.id }}/share/disable`, { method: "POST" });
-    const data = await res.json().catch(()=>({}));
-    if (!res.ok || !data.ok) throw new Error(data.error || "failed");
-    await refreshTeam();
-  } catch {
-    tStatus.textContent = "Disable failed.";
-    setTimeout(()=> tStatus.textContent = "—", 1200);
-  }
-});
-
-teamBtn?.addEventListener("click", async () => {
-  openTeamModal();
-  await refreshTeam();
-});
-
   </script>
 </body>
-</html>
+  </html>
