@@ -1478,6 +1478,109 @@
       display: none;
     }
     .colab-warn.show{ display:block; }
+  
+  /* ===============================
+   PRO BUTTON (PRIMARY)
+   =============================== */
+
+.btn.pro {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--accent) 88%, white),
+    var(--accent)
+  );
+  color: #0b0b0b;
+  border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+  font-weight: 900;
+  letter-spacing: .02em;
+
+  box-shadow:
+    0 0 0 3px var(--accent-soft),
+    0 10px 28px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.35);
+
+  overflow: hidden;
+}
+
+/* soft animated glow */
+.btn.pro::before{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  background:
+    radial-gradient(
+      circle at 30% 30%,
+      rgba(255,255,255,.35),
+      transparent 55%
+    );
+  opacity:.55;
+  pointer-events:none;
+}
+
+/* shine sweep */
+.btn.pro::after{
+  content:"";
+  position:absolute;
+  inset:-120% -80%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255,255,255,.55) 45%,
+    transparent 70%
+  );
+  transform: translateX(-80%);
+  transition: transform .6s ease;
+  pointer-events:none;
+}
+
+.btn.pro:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow:
+    0 0 0 4px var(--accent-soft),
+    0 14px 36px rgba(0,0,0,.45);
+}
+
+.btn.pro:hover::after{
+  transform: translateX(80%);
+}
+
+.btn.pro:active{
+  transform: translateY(0);
+  box-shadow:
+    0 0 0 3px var(--accent-soft),
+    0 8px 18px rgba(0,0,0,.35);
+}
+
+/* ===============================
+   PRO GHOST (secondary)
+   =============================== */
+
+.btn.pro-ghost{
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,.04),
+    rgba(255,255,255,.01)
+  );
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-weight: 800;
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.btn.pro-ghost:hover{
+  background: rgba(0,255,213,.08);
+  transform: translateY(-1px);
+}
+
+/* Optional tiny star */
+.btn.pro .star{
+  font-size: .9em;
+  opacity: .9;
+}
+
   </style>
 </head>
 
@@ -1504,12 +1607,29 @@
           <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
 
           <!-- ===== Collab ===== -->
-          <button class="tb-btn" id="ws-colab" type="button" title="Share this lab and manage collaborators">CoLab</button>
+         <button class="tb-btn pro" id="ws-export-pdf" type="button" title="Export this lab as a PDF">
+  Export PDF <span class="pro-chip-mini"><span class="spark">{% if user.is_pro %}
+  <span class="pro-badge">PRO</span>
+{% endif %}
+</button>
 
-          <!-- ===== PRO FEATURES ===== -->
-          <button class="tb-btn" id="ws-export-pdf" type="button" title="Export this lab as a PDF">Export PDF</button>
-          <button class="tb-btn" id="ws-clone" type="button" title="Clone this lab">Clone</button>
-          <button class="tb-btn" id="ws-history" type="button" title="View lab history snapshots">History</button>
+<button class="tb-btn pro" id="ws-clone" type="button" title="Clone this lab">
+  Clone <span class="pro-chip-mini"><span class="spark">{% if user.is_pro %}
+  <span class="pro-badge">PRO</span>
+{% endif %}
+</button>
+
+<button class="tb-btn pro" id="ws-history" type="button" title="View lab history snapshots">
+  History <span class="pro-chip-mini"><span class="spark">{% if user.is_pro %}
+  <span class="pro-badge">PRO</span>
+{% endif %}
+</button>
+
+<button class="tb-btn pro" id="ws-colab" type="button" title="CoLab (sharing + collaborators)">
+  CoLab <span class="pro-chip-mini"><span class="spark">{% if user.is_pro %}
+  <span class="pro-badge">PRO</span>
+{% endif %}
+</button>
 
           <div class="ws-status" id="save-status">—</div>
         </div>
