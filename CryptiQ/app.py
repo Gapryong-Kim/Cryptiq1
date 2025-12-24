@@ -5,7 +5,8 @@ from cipher_tools.breakers import (
     binary_break,
     baconian_break
 )
-
+from dotenv import load_dotenv
+load_dotenv()
 from flask import (
     Flask, request, jsonify, render_template, redirect,
     url_for, session, flash, send_from_directory, abort
@@ -45,6 +46,7 @@ from cipher_tools.auto_break import auto_break  #  new auto detector
 from cipher_tools.random_tools import nospace
 from cipher_tools.random_tools import remove_punc
 # from cipher_tools.playfair import make_score_fn, playfair_break
+from helpers import get_db, current_user
 
 # PLAYFAIR_SCORE_FN, PLAYFAIR_USING_FILE = make_score_fn("english_tetragrams.txt")
 
@@ -113,10 +115,7 @@ app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6 MB upload limit
 serializer = URLSafeTimedSerializer(app.secret_key)
 
 # ----- Database helpers -----
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+
 
 def init_db():
     conn = get_db()
@@ -198,21 +197,6 @@ ensure_admin_flag()
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def current_user():
-    if "user_id" in session:
-        conn = get_db()
-        cur = conn.execute(
-            """
-            SELECT id, username, email, is_admin, banned, labs_info_seen,is_pro
-            FROM users
-            WHERE id = ?
-            """,
-            (session["user_id"],)
-        )
-        row = cur.fetchone()
-        conn.close()
-        return dict(row) if row else None
-    return None
 
 
 
@@ -3039,17 +3023,6 @@ def inject_now_year():
     return {"now_year": datetime.utcnow().year}
 
 
-import os
-import stripe
-from flask import Blueprint, request, jsonify, redirect, url_for
-from datetime import datetime
-
-billing = Blueprint("billing", __name__)
-
-stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
-
-PRICE_ID = os.environ["STRIPE_PRICE_ID_PRO_MONTHLY"]
-BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:5000")
 
 # --- helpers you should already have ---
 # current_user() -> dict or None
@@ -3059,11 +3032,8 @@ BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:5000")
 from flask import Flask
 from billing import billing
 
-app = Flask(__name__)
 app.register_blueprint(billing)
 
-if __name__ == "__main__":
-    app.run(debug=True)
 
 # ------------------- Run -------------------
 if __name__ == "__main__":
