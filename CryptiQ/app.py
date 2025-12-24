@@ -1365,73 +1365,138 @@ def login():
     return render_template("login.html", user=current_user(), next=next_url)
 
 # ------------------- Forgot/Reset Password -------------------
-
+import os
 import threading
-import socket
-import smtplib
 import logging
-# Make SMTP fail fast instead of hanging forever
-app.config["MAIL_TIMEOUT"] = int(os.environ.get("MAIL_TIMEOUT", "10"))
-
-def _send_mail_async(app, msg):
-    """Send email off-thread so web requests don't block (prevents Gunicorn timeouts)."""
-    with app.app_context():
-        try:
-            mail.send(msg)
-        except (socket.timeout, smtplib.SMTPException, OSError) as e:
-            app.logger.warning(f"[MAIL] Send failed: {e}")
-
-def send_mail_nonblocking(msg):
-    t = threading.Thread(target=_send_mail_async, args=(app, msg), daemon=True)
-    t.start()
-
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.security import generate_password_hash
+from flask import request, redirect, url_for, flash, render_template
 
+import sendgrid
+from sendgrid.helpers.mail import Mail
+
+# -------------------------------------------------
+# Proxy fix (Render / reverse proxy safe)
+# -------------------------------------------------
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
+# -------------------------------------------------
+# SendGrid async sender (NO SMTP)
+# -------------------------------------------------
+MAIL_FROM = os.environ.get(
+    "MAIL_DEFAULT_SENDER",
+    "The Cipher Lab Support <thecipherlab@gmail.com>"
+)
 
+def _parse_sender(sender):
+    if "<" in sender and ">" in sender:
+        name = sender.split("<", 1)[0].strip()
+        email = sender.split("<", 1)[1].split(">", 1)[0].strip()
+        return email, name
+    return sender, None
+
+def _send_sendgrid_async(flask_app, to_email, subject, text_body, html_body=None):
+    with flask_app.app_context():
+        api_key = os.environ.get("SENDGRID_API_KEY")
+        if not api_key:
+            flask_app.logger.warning("[MAIL] SENDGRID_API_KEY not set")
+            return
+
+        from_email, from_name = _parse_sender(MAIL_FROM)
+
+        try:
+            sg = sendgrid.SendGridAPIClient(api_key=api_key)
+            message = Mail(
+                from_email=(from_email, from_name) if from_name else from_email,
+                to_emails=to_email,
+                subject=subject,
+                plain_text_content=text_body,
+                html_content=html_body
+            )
+            resp = sg.send(message)
+
+            if resp.status_code not in (200, 202):
+                flask_app.logger.warning(
+                    f"[MAIL] SendGrid returned {resp.status_code}"
+                )
+        except Exception as e:
+            flask_app.logger.warning(f"[MAIL] SendGrid send failed: {e}")
+
+def send_mail_nonblocking(to_email, subject, text_body, html_body=None):
+    threading.Thread(
+        target=_send_sendgrid_async,
+        args=(app, to_email, subject, text_body, html_body),
+        daemon=True
+    ).start()
+
+# -------------------------------------------------
+# Forgot password
+# -------------------------------------------------
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         email = (request.form.get("email") or "").strip().lower()
 
         conn = get_db()
-        cur = conn.execute("SELECT id, email FROM users WHERE lower(email)=?", (email,))
-        user = cur.fetchone()
+        user = conn.execute(
+            "SELECT id FROM users WHERE lower(email)=?",
+            (email,)
+        ).fetchone()
         conn.close()
 
-        # Always show generic response (prevents account enumeration)
-        flash("If an account with that email exists, a reset link has been sent.", "info")
+        # Prevent account enumeration
+        flash(
+            "If an account with that email exists, a reset link has been sent.",
+            "info"
+        )
 
         if user:
             token = serializer.dumps(email, salt="password-reset")
-            reset_url = url_for("reset_password", token=token, _external=True)
-
-            msg = Message(
-                subject="CryptiQ — Password Reset",
-                recipients=[email],
-                body=f"Reset your password using this link (valid for 1 hour):\n\n{reset_url}\n"
+            reset_url = url_for(
+                "reset_password",
+                token=token,
+                _external=True
             )
 
-            # IMPORTANT: non-blocking send (prevents Gunicorn worker timeout)
-            send_mail_nonblocking(msg)
+            subject = "CryptiQ — Password Reset"
+            text_body = (
+                "Reset your password using this link (valid for 1 hour):\n\n"
+                f"{reset_url}\n"
+            )
+            html_body = f"""
+              <div style="font-family:Arial,sans-serif;line-height:1.6">
+                <h2>Password reset</h2>
+                <p>This link is valid for <b>1 hour</b>.</p>
+                <p><a href="{reset_url}">Reset your password</a></p>
+                <p style="font-size:12px;color:#666">
+                  If you didn’t request this, you can safely ignore this email.
+                </p>
+              </div>
+            """
 
-        # Redirect after POST (avoids resubmits)
+            send_mail_nonblocking(email, subject, text_body, html_body)
+
         return redirect(url_for("forgot_password"))
 
     return render_template("forgot_password.html", user=current_user())
 
-from werkzeug.security import generate_password_hash
-
+# -------------------------------------------------
+# Reset password
+# -------------------------------------------------
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
     try:
-        email = serializer.loads(token, salt="password-reset", max_age=3600)
+        email = serializer.loads(
+            token,
+            salt="password-reset",
+            max_age=3600
+        )
     except Exception:
         flash("Invalid or expired reset link.", "error")
         return redirect(url_for("forgot_password"))
 
     email_norm = (email or "").strip().lower()
+
     if request.method == "POST":
         new_pass = request.form.get("password", "")
         confirm = request.form.get("confirm", "")
@@ -1445,8 +1510,12 @@ def reset_password(token):
             return redirect(url_for("reset_password", token=token))
 
         hashed = generate_password_hash(new_pass)
+
         conn = get_db()
-        conn.execute("UPDATE users SET password_hash=? WHERE lower(email)=?", (hashed, email_norm))
+        conn.execute(
+            "UPDATE users SET password_hash=? WHERE lower(email)=?",
+            (hashed, email_norm)
+        )
         conn.commit()
         conn.close()
 
