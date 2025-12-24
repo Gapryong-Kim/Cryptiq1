@@ -1385,6 +1385,9 @@ def send_mail_nonblocking(msg):
     t = threading.Thread(target=_send_mail_async, args=(app, msg), daemon=True)
     t.start()
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 
 @app.route("/forgot-password", methods=["GET", "POST"])
@@ -1422,52 +1425,36 @@ from werkzeug.security import generate_password_hash
 
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
-    # 1) Validate token -> email
     try:
         email = serializer.loads(token, salt="password-reset", max_age=3600)
-        email = (email or "").strip().lower()
-        if not email:
-            raise ValueError("empty email")
     except Exception:
-        flash("Invalid or expired reset link. Please request a new one.", "error")
+        flash("Invalid or expired reset link.", "error")
         return redirect(url_for("forgot_password"))
 
-    # 2) Confirm user exists (prevents updating nothing silently)
-    conn = get_db()
-    user = conn.execute("SELECT id, email FROM users WHERE lower(email)=?", (email,)).fetchone()
-    if not user:
-        conn.close()
-        flash("That reset link is no longer valid. Please request a new one.", "error")
-        return redirect(url_for("forgot_password"))
-
+    email_norm = (email or "").strip().lower()
     if request.method == "POST":
-        new_pass = (request.form.get("password") or "").strip()
-        confirm = (request.form.get("confirm") or "").strip()
-
-        if len(new_pass) < 8:
-            conn.close()
-            flash("Password must be at least 8 characters.", "error")
-            return redirect(url_for("reset_password", token=token))
+        new_pass = request.form.get("password", "")
+        confirm = request.form.get("confirm", "")
 
         if new_pass != confirm:
-            conn.close()
             flash("Passwords do not match.", "error")
             return redirect(url_for("reset_password", token=token))
 
-        hashed = generate_password_hash(new_pass)
+        if len(new_pass) < 8:
+            flash("Password must be at least 8 characters.", "error")
+            return redirect(url_for("reset_password", token=token))
 
-        conn.execute(
-            "UPDATE users SET password_hash=? WHERE id=?",
-            (hashed, user["id"])
-        )
+        hashed = generate_password_hash(new_pass)
+        conn = get_db()
+        conn.execute("UPDATE users SET password_hash=? WHERE lower(email)=?", (hashed, email_norm))
         conn.commit()
         conn.close()
 
-        flash("🎉 Your password has been reset successfully! You can now log in.", "success")
+        flash("Password reset successfully. You can now log in.", "success")
         return redirect(url_for("login"))
 
-    conn.close()
-    return render_template("reset_password.html", email=email)
+    return render_template("reset_password.html", email=email_norm)
+
 
 @app.route("/logout")
 def logout():
