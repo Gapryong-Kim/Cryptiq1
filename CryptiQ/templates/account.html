@@ -107,6 +107,13 @@
       font-size: 1.35rem;
       font-weight: 900;
       text-align: center;
+      display: inline-flex;
+      flex-wrap: wrap;           /* ✅ badges wrap */
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      line-height: 1.2;
+      max-width: 100%;
     }
 
     .hero-info p {
@@ -114,6 +121,30 @@
       color: var(--muted);
       font-size: .95rem;
       text-align: center;
+    }
+
+    /* Badges (wrap-safe) */
+    .admin-badge, .pro-badge{
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: .75rem;
+      letter-spacing: .4px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.04);
+      white-space: nowrap;
+    }
+    .admin-badge{
+      border-color: rgba(255, 200, 0, 0.35);
+      background: rgba(255, 200, 0, 0.08);
+      color: #ffd24a;
+    }
+    .pro-badge{
+      border-color: rgba(0,255,213,0.35);
+      background: rgba(0,255,213,0.08);
+      color: var(--accent);
     }
 
     /* ===== Tabs / Links ===== */
@@ -381,20 +412,65 @@
       background: color-mix(in oklab, var(--panel) 88%, transparent);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      max-width: 440px;
-      width: min(440px, 92vw);
+      max-width: 520px;
+      width: min(520px, 92vw);
       padding: 22px;
-      text-align: center;
+      text-align: left;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
 
-    .confirm-box h2 { color: var(--accent); margin: 0 0 8px; font-weight: 900; }
-    .confirm-box p { color: var(--text); margin-bottom: 16px; line-height: 1.5; }
-    .confirm-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .confirm-box h2 { color: var(--accent); margin: 0 0 6px; font-weight: 900; }
+    .confirm-box p { color: var(--muted); margin: 0 0 14px; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
 
     @keyframes fadeIn {
       from {opacity: 0; transform: translateY(6px);}
       to {opacity: 1; transform: translateY(0);}
+    }
+
+    /* ===== Password fields (use your curated bar styles) ===== */
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+      font-size: .95rem;
+    }
+
+    .auth-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .password-field {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .toggle-pass {
+      position: absolute;
+      right: 8px;
+      top: 15%;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: .85rem;
+      /* 🔒 no movement / no animation */
+    }
+
+    .toggle-pass:hover {
+      background: var(--panel-2);
+      border-color: var(--accent);
     }
 
     @media (max-width: 700px) {
@@ -443,7 +519,7 @@
         <p>Your profile summary appears above. More options coming soon.</p>
       </div>
 
-      <!-- ===== Security (clean) ===== -->
+      <!-- ===== Security (Discord-style change password modal) ===== -->
       <div id="security" class="section">
         <h3>Security</h3>
 
@@ -451,21 +527,18 @@
           <div class="setting-left">
             <div class="setting-title">
               <span class="dot"></span>
-              Password reset
+              Password
             </div>
             <div class="setting-desc">
-              Send a reset link to <b>{{ user_info['email'] }}</b>. The link expires after 1 hour.
+              Update your password by entering your current password, then a new one.
             </div>
           </div>
+
           <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
-            <button class="btn btn-accent" id="pw-reset-btn" type="button">Send reset link</button>
-            <a class="btn btn-ghost" href="{{ url_for('forgot_password') }}">Open reset page</a>
+            <button class="btn btn-accent" id="pw-change-btn" type="button">Change password</button>
           </div>
         </div>
 
-        <p style="margin-top:10px; color:var(--muted); font-size:.93rem;">
-          Tip: if you don’t see it within a minute, check spam/junk.
-        </p>
       </div>
 
       <!-- ===== Leaderboard ===== -->
@@ -521,10 +594,10 @@
 
   <!-- ===== Modals ===== -->
   <div class="confirm-modal" id="confirm-logout">
-    <div class="confirm-box">
+    <div class="confirm-box" style="text-align:center;">
       <h2>Logout</h2>
-      <p>Are you sure you want to log out?</p>
-      <div class="confirm-actions">
+      <p style="color:var(--text);">Are you sure you want to log out?</p>
+      <div class="confirm-actions" style="justify-content:center;">
         <a href="{{ url_for('logout') }}" class="btn btn-accent">Yes</a>
         <button class="btn btn-danger" data-close type="button">Cancel</button>
       </div>
@@ -532,28 +605,55 @@
   </div>
 
   <div class="confirm-modal" id="confirm-delete">
-    <div class="confirm-box">
+    <div class="confirm-box" style="text-align:center;">
       <h2>Delete Account</h2>
-      <p>This will permanently delete your account and all associated data.</p>
-      <div class="confirm-actions">
+      <p style="color:var(--text);">This will permanently delete your account and all associated data.</p>
+      <div class="confirm-actions" style="justify-content:center;">
         <a href="{{ url_for('delete_account') }}" class="btn btn-danger">Delete</a>
         <button class="btn btn-ghost" data-close type="button">Cancel</button>
       </div>
     </div>
   </div>
 
-  <!-- Password reset modal -->
-  <div class="confirm-modal" id="confirm-pwreset">
+  <!-- Change password modal (POSTs to your new route) -->
+  <div class="confirm-modal" id="confirm-pwchange" aria-hidden="true">
     <div class="confirm-box">
-      <h2>Password reset</h2>
-      <p>Send a reset link to <b>{{ user_info['email'] }}</b>?</p>
-
-      <div class="confirm-actions">
-        <button class="btn btn-accent" id="pwreset-confirm" type="button">Send</button>
-        <button class="btn btn-ghost" data-close type="button">Cancel</button>
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+        <div>
+          <h2 style="margin-bottom:6px;">Update your password</h2>
+          <p>Enter your current password and a new password.</p>
+        </div>
+        <button type="button" class="btn btn-ghost" id="pwchange-x" style="padding:8px 10px;">✕</button>
       </div>
 
-      <p id="pwreset-status" style="margin:14px 0 0; color:var(--muted); font-size:.95rem;">—</p>
+      <form method="post" action="{{ url_for('account_change_password') }}" autocomplete="off">
+        <label for="old_password">Current Password</label>
+        <div class="password-field">
+          <input class="auth-input" id="old_password" name="old_password" type="password" required>
+          <button type="button" class="toggle-pass" data-toggle="old_password">Show</button>
+        </div>
+
+        <label for="new_password">New Password</label>
+        <div class="password-field">
+          <input class="auth-input" id="new_password" name="new_password" type="password" required>
+          <button type="button" class="toggle-pass" data-toggle="new_password">Show</button>
+        </div>
+
+        <label for="confirm_password">Confirm New Password</label>
+        <div class="password-field" style="margin-bottom:0;">
+          <input class="auth-input" id="confirm_password" name="confirm_password" type="password" required>
+          <button type="button" class="toggle-pass" data-toggle="confirm_password">Show</button>
+        </div>
+
+        <div class="confirm-actions">
+          <button class="btn btn-ghost" data-close type="button">Cancel</button>
+          <button class="btn btn-accent" type="submit">Done</button>
+        </div>
+      </form>
+
+      <p style="margin:10px 0 0; font-size:.9rem; color:var(--muted);">
+        Password must be at least 8 characters.
+      </p>
     </div>
   </div>
 
@@ -563,10 +663,9 @@
     const logoutModal = document.getElementById('confirm-logout');
     const deleteModal = document.getElementById('confirm-delete');
 
-    const pwResetBtn = document.getElementById('pw-reset-btn');
-    const pwResetModal = document.getElementById('confirm-pwreset');
-    const pwResetConfirm = document.getElementById('pwreset-confirm');
-    const pwResetStatus = document.getElementById('pwreset-status');
+    const pwChangeBtn = document.getElementById('pw-change-btn');
+    const pwChangeModal = document.getElementById('confirm-pwchange');
+    const pwChangeX = document.getElementById('pwchange-x');
 
     const open = (m)=>m && m.classList.add('open');
     const close = (m)=>m && m.classList.remove('open');
@@ -574,50 +673,40 @@
     if (logoutBtn) logoutBtn.onclick = e => { e.preventDefault(); open(logoutModal); };
     if (deleteBtn) deleteBtn.onclick = e => { e.preventDefault(); open(deleteModal); };
 
-    if (pwResetBtn) pwResetBtn.addEventListener("click", () => {
-      if (pwResetStatus) pwResetStatus.textContent = "—";
-      open(pwResetModal);
-    });
+    if (pwChangeBtn) pwChangeBtn.onclick = () => {
+      open(pwChangeModal);
+      // focus first field
+      setTimeout(() => document.getElementById("old_password")?.focus(), 50);
+    };
 
-    // POST /forgot-password with the current user email
-    if (pwResetConfirm) pwResetConfirm.addEventListener("click", async () => {
-      try {
-        pwResetConfirm.disabled = true;
-        if (pwResetStatus) pwResetStatus.textContent = "Sending…";
+    if (pwChangeX) pwChangeX.onclick = () => close(pwChangeModal);
 
-        const fd = new FormData();
-        fd.append("email", "{{ user_info['email'] }}");
-
-        const res = await fetch("{{ url_for('forgot_password') }}", {
-          method: "POST",
-          body: fd
-        });
-
-        if (!res.ok) throw new Error("failed");
-
-        if (pwResetStatus) pwResetStatus.textContent = "Sent ✓ Check your inbox (and spam).";
-        setTimeout(() => close(pwResetModal), 850);
-      } catch {
-        if (pwResetStatus) pwResetStatus.textContent = "Failed to send. Try again.";
-      } finally {
-        pwResetConfirm.disabled = false;
-      }
+    // show/hide password (no movement)
+    document.querySelectorAll(".toggle-pass").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-toggle");
+        const input = document.getElementById(id);
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "Hide" : "Show";
+      });
     });
 
     // close buttons
     document.querySelectorAll('[data-close]').forEach(b => {
-      b.onclick = () => [logoutModal, deleteModal, pwResetModal].forEach(close);
+      b.onclick = () => [logoutModal, deleteModal, pwChangeModal].forEach(close);
     });
 
     // backdrop click closes
-    [logoutModal, deleteModal, pwResetModal].forEach(m => {
+    [logoutModal, deleteModal, pwChangeModal].forEach(m => {
       if (!m) return;
       m.addEventListener('click', e => { if (e.target === m) close(m); });
     });
 
     // escape closes
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") [logoutModal, deleteModal, pwResetModal].forEach(close);
+      if (e.key === "Escape") [logoutModal, deleteModal, pwChangeModal].forEach(close);
     });
   </script>
 </body>

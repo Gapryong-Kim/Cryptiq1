@@ -1525,6 +1525,68 @@ def reset_password(token):
     return render_template("reset_password.html", email=email_norm)
 
 
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from werkzeug.security import generate_password_hash, check_password_hash
+
+@app.route("/account/change-password", methods=["POST"])
+def account_change_password():
+    user = current_user()
+    if not user:
+        flash("Please log in to change your password.", "error")
+        return redirect(url_for("login"))
+
+    old_pass = request.form.get("old_password", "")
+    new_pass = request.form.get("new_password", "")
+    confirm  = request.form.get("confirm_password", "")
+
+    # Always send them back to the account security section (GET-safe)
+    back = url_for("account") + "#security"
+
+    if not old_pass or not new_pass or not confirm:
+        flash("Please fill in all fields.", "error")
+        return redirect(back)
+
+    if old_pass == new_pass:
+        flash("New password must be different from your current password.", "error")
+        return redirect(back)
+
+    if new_pass != confirm:
+        flash("New passwords do not match.", "error")
+        return redirect(back)
+
+    if len(new_pass) < 8:
+        flash("Password must be at least 8 characters.", "error")
+        return redirect(back)
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT password_hash FROM users WHERE id=?",
+        (user["id"],)
+    ).fetchone()
+
+    if not row or not row["password_hash"]:
+        conn.close()
+        flash("Account error: password not found.", "error")
+        return redirect(back)
+
+    if not check_password_hash(row["password_hash"], old_pass):
+        conn.close()
+        flash("Current password is incorrect.", "error")
+        return redirect(back)
+
+    new_hash = generate_password_hash(new_pass)
+    conn.execute(
+        "UPDATE users SET password_hash=? WHERE id=?",
+        (new_hash, user["id"])
+    )
+    conn.commit()
+    conn.close()
+
+    flash("Password updated.", "success")
+    return redirect(back)
+
+
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
@@ -2307,6 +2369,7 @@ def workspace_new():
 # ----------------------
 @app.route("/workspaces/<int:ws_id>", methods=["GET"], endpoint="workspace_view")
 
+@app.route("/workspaces/<int:ws_id>", methods=["GET"], endpoint="workspace_view")
 def workspace_view(ws_id):
     user = current_user()
     if not user:
@@ -2327,12 +2390,41 @@ def workspace_view(ws_id):
           )
         LIMIT 1
     """, (ws_id, user["id"], user["id"])).fetchone()
-    conn.close()
 
     if not row:
+        conn.close()
         abort(404)
 
-    return render_template("workspace.html", user=user, ws=dict(row))
+    ws = dict(row)
+
+    # Viewer context
+    is_owner = (ws["owner_id"] == user["id"])
+    role = None
+    if not is_owner:
+        r = conn.execute("""
+            SELECT role FROM workspace_collaborators
+            WHERE workspace_id=? AND user_id=?
+            LIMIT 1
+        """, (ws_id, user["id"])).fetchone()
+        role = (r["role"] if r else "viewer")  # default safe
+
+    viewer_can_edit = True if is_owner else (role == "editor")
+
+    # refresh user for pro flag correctness
+    fresh_user = conn.execute("SELECT * FROM users WHERE id=? LIMIT 1", (user["id"],)).fetchone()
+    fresh_user = dict(fresh_user) if fresh_user else user
+
+    conn.close()
+
+    return render_template(
+        "workspace.html",
+        user=fresh_user,
+        ws=ws,
+        is_owner=is_owner,
+        viewer_role=("owner" if is_owner else (role or "viewer")),
+        viewer_can_edit=viewer_can_edit,
+        viewer_is_pro=is_pro(fresh_user),
+    )
 
 # ----------------------
 # Save workspace (AJAX)
@@ -2904,25 +2996,53 @@ def shared_lab_join(token):
 
     conn.close()
     return redirect(url_for("workspace_view", ws_id=ws["id"]))
+
+
+
 @app.get("/workspaces/<int:ws_id>/share/collaborators")
 def workspace_share_collaborators(ws_id):
     user = current_user()
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
 
+    # CoLab is Pro-only in your product rules
     if not is_pro(user):
         return jsonify({"ok": False, "error": "Labs Pro required"}), 403
 
-
-
     conn = get_db()
-    ws = conn.execute("SELECT owner_id, share_token, is_shared FROM workspaces WHERE id=? LIMIT 1", (ws_id,)).fetchone()
+    ws = conn.execute("""
+        SELECT owner_id, share_token, is_shared
+        FROM workspaces
+        WHERE id=?
+        LIMIT 1
+    """, (ws_id,)).fetchone()
+
     if not ws:
         conn.close()
         return jsonify({"ok": False, "error": "not found"}), 404
-    if ws["owner_id"] != user["id"]:
-        conn.close()
-        return jsonify({"ok": False, "error": "forbidden"}), 403
+
+    owner_id = ws["owner_id"]
+
+    # Determine my role
+    if owner_id == user["id"]:
+        my_role = "owner"
+        owner_only = False
+    else:
+        r = conn.execute("""
+            SELECT role
+            FROM workspace_collaborators
+            WHERE workspace_id=? AND user_id=?
+            LIMIT 1
+        """, (ws_id, user["id"])).fetchone()
+
+        if not r:
+            conn.close()
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+
+        my_role = (r["role"] or "viewer").strip().lower()
+        if my_role not in ("editor", "viewer"):
+            my_role = "viewer"
+        owner_only = True
 
     rows = conn.execute("""
         SELECT wc.user_id, wc.role, wc.added_at, u.username
@@ -2931,14 +3051,23 @@ def workspace_share_collaborators(ws_id):
         WHERE wc.workspace_id=?
         ORDER BY datetime(wc.added_at) DESC
     """, (ws_id,)).fetchall()
+
     conn.close()
 
     return jsonify({
         "ok": True,
+        "owner_id": owner_id,
+        "my_role": my_role,
+        "owner_only": owner_only,
+
         "is_shared": bool(ws["is_shared"]),
         "share_url": url_for("shared_lab_join", token=ws["share_token"], _external=True) if ws["share_token"] else None,
+
         "collaborators": [dict(r) for r in rows]
     })
+
+
+
 @app.post("/workspaces/<int:ws_id>/share/remove")
 def workspace_share_remove(ws_id):
     user = current_user()
@@ -3092,6 +3221,8 @@ def workspace_history_restore(ws_id, h_id):
     conn.close()
 
     return jsonify({"ok": True, "updated_at": now})
+
+
 @app.route("/workspaces/<int:ws_id>/clone", methods=["POST"])
 def workspace_clone(ws_id):
     user = current_user()
@@ -3099,10 +3230,14 @@ def workspace_clone(ws_id):
         return jsonify({"ok": False, "error": "login required"}), 401
 
     if not is_pro(user):
-        print('UNSAFE')
-        return jsonify({"ok": False, "error": "Labs Pro required"}), 403
+        return jsonify({"ok": False, "error": "pro_required"}), 402
 
     conn = get_db()
+
+    # owner-only clone
+    if not _workspace_owned(conn, ws_id, user["id"]):
+        conn.close()
+        return jsonify({"ok": False, "error": "owner_required"}), 403
 
     src = conn.execute("""
         SELECT id, owner_id, title, notes, cipher_text
@@ -3126,7 +3261,7 @@ def workspace_clone(ws_id):
     """, (user["id"], new_title, src["cipher_text"] or "", src["notes"] or "", now, now))
     new_id = cur.lastrowid
 
-    # clone images rows if your table exists
+    # clone images rows (same filenames)
     try:
         rows = conn.execute("""
             SELECT filename, label, sort_index
@@ -3148,6 +3283,46 @@ def workspace_clone(ws_id):
 
     return jsonify({"ok": True, "ws_id": new_id})
 
+@app.post("/workspaces/<int:ws_id>/share/role")
+def workspace_share_set_role(ws_id):
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    if not is_pro(user):
+        return jsonify({"ok": False, "error": "pro_required"}), 402
+
+    data = request.get_json(silent=True) or {}
+    try:
+        target_id = int(data.get("user_id") or 0)
+    except Exception:
+        target_id = 0
+    role = (data.get("role") or "").strip().lower()
+
+    if not target_id:
+        return jsonify({"ok": False, "error": "user_id required"}), 400
+    if role not in ("editor", "viewer"):
+        return jsonify({"ok": False, "error": "invalid role"}), 400
+
+    conn = get_db()
+    ws = conn.execute("SELECT owner_id FROM workspaces WHERE id=? LIMIT 1", (ws_id,)).fetchone()
+    if not ws:
+        conn.close()
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    if ws["owner_id"] != user["id"]:
+        conn.close()
+        return jsonify({"ok": False, "error": "owner_required"}), 403
+
+    conn.execute("""
+        UPDATE workspace_collaborators
+        SET role=?
+        WHERE workspace_id=? AND user_id=?
+    """, (role, ws_id, target_id))
+
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "role": role})
 
 from io import BytesIO
 import os

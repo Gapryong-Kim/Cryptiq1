@@ -1441,6 +1441,7 @@
     .colab-who{
       display: grid;
       gap: 2px;
+      min-width: 220px;
     }
     .colab-name{
       color: var(--text);
@@ -1478,509 +1479,668 @@
       display: none;
     }
     .colab-warn.show{ display:block; }
-  
-  /* ===============================
-   PRO BUTTON (PRIMARY)
-   =============================== */
 
-.btn.pro {
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    color-mix(in oklab, var(--accent) 88%, white),
-    var(--accent)
-  );
-  color: #0b0b0b;
-  border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
-  font-weight: 900;
-  letter-spacing: .02em;
+    /* ===== NEW: role controls ===== */
+    .role-wrap{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .role-label{
+      color: var(--muted);
+      font-weight: 900;
+      font-size: .78rem;
+      letter-spacing: .02em;
+    }
+    .role-select{
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-weight: 900;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+    }
+    .role-select:focus{
+      outline:none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .role-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-weight: 1000;
+      font-size: .75rem;
+      letter-spacing:.02em;
+    }
+    .role-badge.owner{
+      border-color: rgba(255, 215, 0, 0.35);
+      color: #ffd36b;
+      background: rgba(255, 215, 0, 0.08);
+    }
 
-  box-shadow:
-    0 0 0 3px var(--accent-soft),
-    0 10px 28px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.35);
+    /* ===============================
+       PRO BUTTON (PRIMARY)
+       =============================== */
 
-  overflow: hidden;
+    .btn.pro {
+      position: relative;
+      background: linear-gradient(
+        135deg,
+        color-mix(in oklab, var(--accent) 88%, white),
+        var(--accent)
+      );
+      color: #0b0b0b;
+      border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+      font-weight: 900;
+      letter-spacing: .02em;
+
+      box-shadow:
+        0 0 0 3px var(--accent-soft),
+        0 10px 28px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.35);
+
+      overflow: hidden;
+    }
+
+    .btn.pro::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        radial-gradient(
+          circle at 30% 30%,
+          rgba(255,255,255,.35),
+          transparent 55%
+        );
+      opacity:.55;
+      pointer-events:none;
+    }
+
+    .btn.pro::after{
+      content:"";
+      position:absolute;
+      inset:-120% -80%;
+      background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255,255,255,.55) 45%,
+        transparent 70%
+      );
+      transform: translateX(-80%);
+      transition: transform .6s ease;
+      pointer-events:none;
+    }
+
+    .btn.pro:hover{
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+      box-shadow:
+        0 0 0 4px var(--accent-soft),
+        0 14px 36px rgba(0,0,0,.45);
+    }
+
+    .btn.pro:hover::after{
+      transform: translateX(80%);
+    }
+
+    .btn.pro:active{
+      transform: translateY(0);
+      box-shadow:
+        0 0 0 3px var(--accent-soft),
+        0 8px 18px rgba(0,0,0,.35);
+    }
+
+    .btn.pro-ghost{
+      position: relative;
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,.04),
+        rgba(255,255,255,.01)
+      );
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-weight: 800;
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .btn.pro-ghost:hover{
+      background: rgba(0,255,213,.08);
+      transform: translateY(-1px);
+    }
+
+    .btn.pro .star{
+      font-size: .9em;
+      opacity: .9;
+    }
+    
+    /* ===== Image Zoom Modal (FIXED) ===== */
+/* ===== Image Lightbox (true fullscreen) ===== */
+.img-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,.85);
+
+  display: none;            /* closed */
+  align-items: center;      /* center image vertically */
+  justify-content: center;  /* center image horizontally */
+
+  padding: 24px;
+  box-sizing: border-box;
 }
 
-/* soft animated glow */
-.btn.pro::before{
-  content:"";
-  position:absolute;
-  inset:-40%;
-  background:
-    radial-gradient(
-      circle at 30% 30%,
-      rgba(255,255,255,.35),
-      transparent 55%
-    );
-  opacity:.55;
-  pointer-events:none;
+.img-lightbox.open {
+  display: flex;
 }
 
-/* shine sweep */
-.btn.pro::after{
-  content:"";
-  position:absolute;
-  inset:-120% -80%;
-  background: linear-gradient(
-    120deg,
-    transparent 0%,
-    rgba(255,255,255,.55) 45%,
-    transparent 70%
-  );
-  transform: translateX(-80%);
-  transition: transform .6s ease;
-  pointer-events:none;
+.img-lightbox-img {
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 48px);
+
+  width: auto;
+  height: auto;
+
+  object-fit: contain;
+  display: block;
+
+  border-radius: 12px;
+  background: #111;
 }
 
-.btn.pro:hover{
-  transform: translateY(-2px);
-  filter: brightness(1.06);
-  box-shadow:
-    0 0 0 4px var(--accent-soft),
-    0 14px 36px rgba(0,0,0,.45);
+.img-lightbox-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100000;
+
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  cursor: pointer;
 }
 
-.btn.pro:hover::after{
-  transform: translateX(80%);
-}
-
-.btn.pro:active{
-  transform: translateY(0);
-  box-shadow:
-    0 0 0 3px var(--accent-soft),
-    0 8px 18px rgba(0,0,0,.35);
-}
-
-/* ===============================
-   PRO GHOST (secondary)
-   =============================== */
-
-.btn.pro-ghost{
+  .tb-btn.pro {
   position: relative;
   background: linear-gradient(
     180deg,
-    rgba(255,255,255,.04),
-    rgba(255,255,255,.01)
+    rgba(24, 24, 24, 0.95),
+    rgba(16, 16, 16, 0.95)
   );
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  font-weight: 800;
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 8px 22px rgba(0,0,0,0.35);
 }
 
-.btn.pro-ghost:hover{
-  background: rgba(0,255,213,.08);
-  transform: translateY(-1px);
+.tb-btn.pro:hover {
+  border-color: rgba(255, 215, 0, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 10px 28px rgba(0,0,0,0.45);
+}
+/* Vertical divider before PRO actions */
+.tb-btn.pro:first-of-type {
+  position: relative;
+  margin-left: 14px;
 }
 
-/* Optional tiny star */
-.btn.pro .star{
-  font-size: .9em;
-  opacity: .9;
+.tb-btn.pro:first-of-type::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 60%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255,255,255,0.18),
+    transparent
+  );
 }
-
+.tb-btn.pro:first-of-type::before {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 200, 0, 0.35),
+    transparent
+  );
+}
+.tb-btn.pro {
+      background: linear-gradient(135deg,
+ color-mix(in oklab, var(--accent) 88%, white), var(--accent));
+    }
   </style>
 </head>
 
 <body>
   {% include 'base_nav.html' %}
 
-  <main class="ws-shell">
-    <section class="ws-card" aria-label="Cipher Workspace">
-      <!-- Top Bar -->
-      <header class="ws-topbar">
-        <div class="ws-titlewrap">
-          <span class="ws-dot" aria-hidden="true"></span>
-          <h1 class="ws-title">My Cipher Lab</h1>
-          <span class="ws-sub" id="ws-id">#{{ ws.id }}</span>
-        </div>
+ <main class="ws-shell">
+  <section class="ws-card" aria-label="Cipher Workspace">
+    <!-- Top Bar -->
+    <header class="ws-topbar">
+      <div class="ws-titlewrap">
+        <span class="ws-dot" aria-hidden="true"></span>
+        <h1 class="ws-title">My Cipher Lab</h1>
+        <span class="ws-sub" id="ws-id">#{{ ws.id }}</span>
+      </div>
 
-        <div class="ws-tools" role="toolbar" aria-label="Workspace tools">
-          <button class="tb-btn active" data-tool="frequency" type="button">Frequency</button>
-          <button class="tb-btn" data-tool="substitution" type="button">Substitution</button>
-          <button class="tb-btn" data-tool="replacer" type="button">Replace</button>
-          <button class="tb-btn" data-tool="spacer" type="button">Spacer</button>
-          <button class="tb-btn" data-tool="remove_spaces" type="button">No spaces</button>
-          <button class="tb-btn" data-tool="remove_punctuation" type="button">No punct</button>
-          <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
+      <div class="ws-tools" role="toolbar" aria-label="Workspace tools">
+        <button class="tb-btn active" data-tool="frequency" type="button">Frequency</button>
+        <button class="tb-btn" data-tool="substitution" type="button">Substitution</button>
+        <button class="tb-btn" data-tool="replacer" type="button">Replace</button>
+        <button class="tb-btn" data-tool="spacer" type="button">Spacer</button>
+        <button class="tb-btn" data-tool="remove_spaces" type="button">No spaces</button>
+        <button class="tb-btn" data-tool="remove_punctuation" type="button">No punct</button>
+        <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
 
-          <!-- ===== Collab ===== -->
-         <button class="tb-btn pro" id="ws-export-pdf" type="button" title="Export this lab as a PDF">
-  Export PDF <span class="pro-chip-mini"><span class="spark">
-  <span class="pro-badge">PRO</span>
+        <!-- PRO buttons -->
+        <button style=".tb-btn.pro:first-of-type {margin-left: 10px;}" class="tb-btn pro" id="ws-export-pdf" type="button" title="Export this lab as a PDF">
+          Export PDF
+          <span class="pro-chip-mini">
+            <span class="spark" aria-hidden="true"></span>
+            <span class="pro-badge">PRO</span>
+          </span>
+        </button>
 
-</button>
+        <button class="tb-btn pro" id="ws-clone" type="button" title="Clone this lab">
+          Clone
+          <span class="pro-chip-mini">
+            <span class="spark" aria-hidden="true"></span>
+            <span class="pro-badge">PRO</span>
+          </span>
+        </button>
 
-<button class="tb-btn pro" id="ws-clone" type="button" title="Clone this lab">
-  Clone <span class="pro-chip-mini"><span class="spark">
-  <span class="pro-badge">PRO</span>
+        <button class="tb-btn pro" id="ws-history" type="button" title="View lab history snapshots">
+          History
+          <span class="pro-chip-mini">
+            <span class="spark" aria-hidden="true"></span>
+            <span class="pro-badge">PRO</span>
+          </span>
+        </button>
 
-</button>
+        <button class="tb-btn pro" id="ws-colab" type="button" title="CoLab (sharing + collaborators)">
+          CoLab
+          <span class="pro-chip-mini">
+            <span class="spark" aria-hidden="true"></span>
+            <span class="pro-badge">PRO</span>
+          </span>
+        </button>
 
-<button class="tb-btn pro" id="ws-history" type="button" title="View lab history snapshots">
-  History <span class="pro-chip-mini"><span class="spark">
-  <span class="pro-badge">PRO</span>
+        <div class="ws-status" id="save-status">—</div>
+      </div>
+    </header>
 
-</button>
+    <div class="ws-grid">
+      <!-- Left: Doc + Tool Dock -->
+      <div class="ws-panel">
+        <div class="doc-wrap">
+          <div class="doc-meta">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <span style="color:var(--text-dim);font-weight:800;">Notes / Plaintext</span>
 
-<button class="tb-btn pro" id="ws-colab" type="button" title="CoLab (sharing + collaborators)">
-  CoLab <span class="pro-chip-mini"><span class="spark">
-  <span class="pro-badge">PRO</span>
+              <!-- Autosave indicator -->
+              <span class="autosave-pill" id="autosave-pill" aria-live="polite">
+                <span class="spinner" id="autosave-spinner" aria-hidden="true"></span>
+                <span id="autosave-text">Autosave on</span>
+              </span>
+            </div>
 
-</button>
+            <div style="color:var(--muted);">
+              Updated: <span id="updated-at">{{ ws.updated_at if ws.updated_at else "—" }}</span>
+            </div>
+          </div>
 
-          <div class="ws-status" id="save-status">—</div>
-        </div>
-      </header>
+          <input
+            id="ws-title-input"
+            class="doc-title"
+            placeholder="Lab title"
+            value="{{ ws.title or 'Untitled Workspace' }}"
+          />
 
-      <div class="ws-grid">
-        <!-- Left: Doc + Tool Dock -->
-        <div class="ws-panel">
-          <div class="doc-wrap">
-            <div class="doc-meta">
-              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                <span style="color:var(--text-dim);font-weight:800;">Notes / Plaintext</span>
+          <textarea
+            id="ws-notes"
+            class="doc-text"
+            placeholder="Write notes, partial plaintext, hypotheses…"
+          >{{ ws.notes or "" }}</textarea>
 
-                <!-- ✅ Autosave indicator -->
-                <span class="autosave-pill" id="autosave-pill" aria-live="polite">
-                  <span class="spinner" id="autosave-spinner" aria-hidden="true"></span>
-                  <span id="autosave-text">Autosave on</span>
-                </span>
+          <div class="doc-actions">
+            <button class="mini-btn" id="insert-tool-output" type="button">Insert tool output → doc</button>
+            <button class="mini-btn" id="copy-doc" type="button">Copy doc</button>
+          </div>
+
+          <!-- Tool Dock -->
+          <div class="ws-panel tool-panel" style="padding: 14px;">
+            <h3>Tool Dock</h3>
+
+            <!-- Frequency -->
+            <div class="tool-card active" id="tool-frequency">
+              <div class="tool-row">
+                <button class="run-btn" id="run-frequency" type="button">Run frequency</button>
+                <button class="run-btn secondary" id="copy-tool" type="button">Copy output</button>
               </div>
-
-              <div style="color:var(--muted);">
-                Updated: <span id="updated-at">{{ ws.updated_at if ws.updated_at else "—" }}</span>
+              <div class="result" id="tool-output">Run a tool to see output here.</div>
+              <div class="hint">
+                Uses your existing <code>/tools/run</code> API (<code>tool_type=frequency</code>).
               </div>
             </div>
 
-            <input id="ws-title-input" class="doc-title" placeholder="Lab title"
-                   value="{{ ws.title or 'Untitled Workspace' }}"/>
+            <!-- Substitution -->
+            <div class="tool-card" id="tool-substitution">
+              <div class="hint">
+                Map plaintext letters (top) → ciphertext letters (input). This MVP applies the mapping live to the cipher text below.
+              </div>
 
-            <textarea id="ws-notes" class="doc-text" placeholder="Write notes, partial plaintext, hypotheses…">{{ ws.notes or "" }}</textarea>
+              <div class="sub-grid" id="sub-grid"></div>
 
-            <div class="doc-actions">
-              <button class="mini-btn" id="insert-tool-output" type="button">Insert tool output → doc</button>
-              <button class="mini-btn" id="copy-doc" type="button">Copy doc</button>
+              <div class="helper">
+                <div>Tip: enter ciphertext letters as <strong>A–Z</strong> under each marker.</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="run-btn secondary" id="sub-clear" type="button">Clear mapping</button>
+                  <button class="run-btn secondary" id="sub-reset" type="button">Reset view</button>
+                  <button class="run-btn" id="sub-frequency" type="button">Freq from cipher</button>
+                </div>
+              </div>
+
+              <div class="result" id="sub-freq-output">Frequency output will appear here.</div>
             </div>
 
-            <!-- Tool Dock -->
-            <div class="ws-panel tool-panel" style="padding: 14px;">
-              <h3>Tool Dock</h3>
-
-              <!-- Frequency -->
-              <div class="tool-card active" id="tool-frequency">
-                <div class="tool-row">
-                  <button class="run-btn" id="run-frequency" type="button">Run frequency</button>
-                  <button class="run-btn secondary" id="copy-tool" type="button">Copy output</button>
+            <!-- Text Replacer -->
+            <div class="tool-card" id="tool-replacer">
+              <div class="tool-row" style="align-items:flex-end;">
+                <div style="display:grid;gap:6px;flex:1;">
+                  <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Find</label>
+                  <input id="rep-find" type="text" placeholder="e.g. XQ" />
                 </div>
-                <div class="result" id="tool-output">Run a tool to see output here.</div>
-                <div class="hint">
-                  Uses your existing <code>/tools/run</code> API (<code>tool_type=frequency</code>).
+                <div style="display:grid;gap:6px;flex:1;">
+                  <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Replace</label>
+                  <input id="rep-with" type="text" placeholder="e.g. TH" />
                 </div>
+                <button class="run-btn" id="run-replace" type="button">Run</button>
               </div>
 
-              <!-- Substitution -->
-              <div class="tool-card" id="tool-substitution">
-                <div class="hint">
-                  Map plaintext letters (top) → ciphertext letters (input). This MVP applies the mapping live to the cipher text below.
+              <div class="result" id="tool-output-replace">Output will appear here.</div>
+              <div class="hint">Calls <code>/tools/run</code> with <code>tool_type=text_replacer</code>.</div>
+            </div>
+
+            <!-- Spacer -->
+            <div class="tool-card" id="tool-spacer">
+              <div class="tool-row" style="align-items:flex-end;">
+                <div style="display:grid;gap:6px;">
+                  <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Block length</label>
+                  <input id="spacer-len" type="number" min="1" value="5" style="width:120px;" />
                 </div>
-
-                <div class="sub-grid" id="sub-grid"></div>
-
-                <div class="helper">
-                  <div>Tip: enter ciphertext letters as <strong>A–Z</strong> under each marker.</div>
-                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <button class="run-btn secondary" id="sub-clear" type="button">Clear mapping</button>
-                    <button class="run-btn secondary" id="sub-reset" type="button">Reset view</button>
-                    <button class="run-btn" id="sub-frequency" type="button">Freq from cipher</button>
-                  </div>
-                </div>
-
-                <div class="result" id="sub-freq-output">Frequency output will appear here.</div>
+                <button class="run-btn" id="run-spacer" type="button">Run</button>
               </div>
 
-              <!-- Text Replacer -->
-              <div class="tool-card" id="tool-replacer">
-                <div class="tool-row" style="align-items:flex-end;">
-                  <div style="display:grid;gap:6px;flex:1;">
-                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Find</label>
-                    <input id="rep-find" type="text" placeholder="e.g. XQ" />
-                  </div>
-                  <div style="display:grid;gap:6px;flex:1;">
-                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Replace</label>
-                    <input id="rep-with" type="text" placeholder="e.g. TH" />
-                  </div>
-                  <button class="run-btn" id="run-replace" type="button">Run</button>
-                </div>
+              <div class="result" id="tool-output-spacer">Output will appear here.</div>
+              <div class="hint">Calls <code>/tools/run</code> with <code>tool_type=text_spacer</code>.</div>
+            </div>
 
-                <div class="result" id="tool-output-replace">Output will appear here.</div>
-                <div class="hint">Calls <code>/tools/run</code> with <code>tool_type=text_replacer</code>.</div>
+            <!-- Remove spaces -->
+            <div class="tool-card" id="tool-remove_spaces">
+              <div class="tool-row">
+                <button class="run-btn" id="run-remove-spaces" type="button">Remove spaces</button>
+              </div>
+              <div class="result" id="tool-output-remove-spaces">Output will appear here.</div>
+            </div>
+
+            <!-- Remove punctuation -->
+            <div class="tool-card" id="tool-remove_punctuation">
+              <div class="tool-row">
+                <button class="run-btn" id="run-remove-punct" type="button">Remove punctuation</button>
+              </div>
+              <div class="result" id="tool-output-remove-punct">Output will appear here.</div>
+            </div>
+
+            <!-- Breaker -->
+            <div class="tool-card" id="tool-breaker">
+              <div class="hint">
+                Calls <code>/breaker</code>. Optional fixed-map format: <code>AB=TH, CD=ER</code>
               </div>
 
-              <!-- Spacer -->
-              <div class="tool-card" id="tool-spacer">
-                <div class="tool-row" style="align-items:flex-end;">
-                  <div style="display:grid;gap:6px;">
-                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Block length</label>
-                    <input id="spacer-len" type="number" min="1" value="5" style="width:120px;" />
-                  </div>
-                  <button class="run-btn" id="run-spacer" type="button">Run</button>
+              <div class="tool-row" style="align-items:flex-end;">
+                <div style="display:grid;gap:6px;flex:1;min-width:180px;">
+                  <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Cipher type</label>
+                  <select id="breaker-type">
+                    <option value="auto">auto</option>
+                    <option value="caesar">caesar</option>
+                    <option value="vigenere" selected>vigenere</option>
+                    <option value="affine">affine</option>
+                    <option value="amsco">amsco</option>
+                    <option value="railfence">railfence</option>
+                    <option value="columnar">columnar</option>
+                    <option value="permutation">permutation</option>
+                    <option value="polybius">polybius</option>
+                    <option value="substitution">substitution</option>
+                    <option value="atbash">atbash</option>
+                    <option value="base64">base64</option>
+                    <option value="hex">hex</option>
+                    <option value="binary">binary</option>
+                    <option value="baconian">baconian</option>
+                  </select>
                 </div>
 
-                <div class="result" id="tool-output-spacer">Output will appear here.</div>
-                <div class="hint">Calls <code>/tools/run</code> with <code>tool_type=text_spacer</code>.</div>
+                <button class="run-btn" id="run-breaker" type="button">Run breaker</button>
+                <button class="run-btn secondary" id="copy-breaker" type="button">Copy output</button>
               </div>
 
-              <!-- Remove spaces -->
-              <div class="tool-card" id="tool-remove_spaces">
-                <div class="tool-row">
-                  <button class="run-btn" id="run-remove-spaces" type="button">Remove spaces</button>
-                </div>
-                <div class="result" id="tool-output-remove-spaces">Output will appear here.</div>
+              <div style="display:grid;gap:6px;margin-top:6px;">
+                <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Known plaintext / fixed map (optional)</label>
+                <input id="breaker-known" type="text" placeholder="e.g. AB=TH, CD=ER" />
               </div>
 
-              <!-- Remove punctuation -->
-              <div class="tool-card" id="tool-remove_punctuation">
-                <div class="tool-row">
-                  <button class="run-btn" id="run-remove-punct" type="button">Remove punctuation</button>
-                </div>
-                <div class="result" id="tool-output-remove-punct">Output will appear here.</div>
-              </div>
-
-              <!-- Breaker -->
-              <div class="tool-card" id="tool-breaker">
-                <div class="hint">
-                  Calls <code>/breaker</code>. Optional fixed-map format: <code>AB=TH, CD=ER</code>
-                </div>
-
-                <div class="tool-row" style="align-items:flex-end;">
-                  <div style="display:grid;gap:6px;flex:1;min-width:180px;">
-                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Cipher type</label>
-                    <select id="breaker-type">
-                      <option value="auto">auto</option>
-                      <option value="caesar">caesar</option>
-                      <option value="vigenere" selected>vigenere</option>
-                      <option value="affine">affine</option>
-                      <option value="amsco">amsco</option>
-                      <option value="railfence">railfence</option>
-                      <option value="columnar">columnar</option>
-                      <option value="permutation">permutation</option>
-                      <option value="polybius">polybius</option>
-                      <option value="substitution">substitution</option>
-                      <option value="atbash">atbash</option>
-                      <option value="base64">base64</option>
-                      <option value="hex">hex</option>
-                      <option value="binary">binary</option>
-                      <option value="baconian">baconian</option>
-                    </select>
-                  </div>
-
-                  <button class="run-btn" id="run-breaker" type="button">Run breaker</button>
-                  <button class="run-btn secondary" id="copy-breaker" type="button">Copy output</button>
-                </div>
-
-                <div style="display:grid;gap:6px;margin-top:6px;">
-                  <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Known plaintext / fixed map (optional)</label>
-                  <input id="breaker-known" type="text" placeholder="e.g. AB=TH, CD=ER" />
-                </div>
-
-                <div class="result" id="breaker-output">Run breaker to see output here.</div>
-              </div>
-
+              <div class="result" id="breaker-output">Run breaker to see output here.</div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Right: Cipher View -->
-        <aside class="ws-panel cipher-side" aria-label="Cipher sidebar">
-          <div class="ws-panel" style="padding:14px;">
-            <h3>Cipher View</h3>
+      <!-- Right: Cipher View -->
+      <aside class="ws-panel cipher-side" aria-label="Cipher sidebar">
+        <div class="ws-panel" style="padding:14px;">
+          <h3>Cipher View</h3>
 
-            <input id="cipher-image-input" type="file" accept="image/*" />
+          <input id="cipher-image-input" type="file" accept="image/*" style="display:none;" />
 
-            <div class="cipher-upload">
-              <div class="cipher-upload-row">
-                <div class="cipher-upload-actions">
-                  <button class="img-btn primary" id="upload-cipher-image" type="button">Upload image</button>
-                  <button class="img-btn danger" id="delete-cipher-image" type="button">Remove</button>
-                </div>
-              </div>
-              <div class="cipher-upload-status" id="cipher-image-status">—</div>
-
-              <div class="cipher-tabs" id="cipher-tabs" aria-label="Cipher image tabs"></div>
-              <div class="hint" id="cipher-tabs-hint" style="display:none;margin-top:-2px;">
-                Tip: double-click a tab to rename it.
+          <div class="cipher-upload">
+            <div class="cipher-upload-row">
+              <div class="cipher-upload-actions">
+                <button class="img-btn primary" id="upload-cipher-image" type="button">Upload image</button>
+                <button class="img-btn danger" id="delete-cipher-image" type="button">Remove</button>
               </div>
             </div>
 
-            <div class="cipher-img-wrap" id="cipher-image-wrap">
-              <h3 style="margin-bottom:8px;">Cipher Image</h3>
-              <img id="cipher-img" class="cipher-img" src="" alt="Cipher image" />
-              <div class="hint">Tap/click to zoom.</div>
-            </div>
+            <div class="cipher-upload-status" id="cipher-image-status">—</div>
 
-            <textarea id="cipher-text" class="cipher-text" placeholder="Paste ciphertext here…">{{ ws.cipher_text or "" }}</textarea>
-
-            <div class="hint" style="margin-top:8px;">
-              Paste your cipher here. Tools read from this box. Save stores it in the workspace.
+            <div class="cipher-tabs" id="cipher-tabs" aria-label="Cipher image tabs"></div>
+            <div class="hint" id="cipher-tabs-hint" style="display:none;margin-top:-2px;">
+              Tip: double-click a tab to rename it.
             </div>
           </div>
-        </aside>
-      </div>
-    </section>
-  </main>
 
-  <!-- Image Zoom Modal -->
-  <div id="img-modal" class="img-modal" aria-hidden="true">
-    <div class="img-modal-box" role="dialog" aria-modal="true" aria-label="Cipher image zoom">
-      <div class="img-modal-top">
-        <div class="img-modal-title">Cipher Image</div>
-        <button class="img-close" id="img-close" type="button">Close</button>
-      </div>
-      <img id="img-modal-img" class="img-modal-img" alt="Cipher image zoomed" />
+          <div class="cipher-img-wrap" id="cipher-image-wrap" style="display:none;">
+            <h3 style="margin-bottom:8px;">Cipher Image</h3>
+            <img id="cipher-img" class="cipher-img" src="" alt="Cipher image" />
+            <div class="hint">Tap/click to zoom.</div>
+          </div>
+
+          <textarea id="cipher-text" class="cipher-text" placeholder="Paste ciphertext here…">{{ ws.cipher_text or "" }}</textarea>
+
+          <div class="hint" style="margin-top:8px;">
+            Paste your cipher here. Tools read from this box. Save stores it in the workspace.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<!-- Image Zoom Modal -->
+<div id="img-modal" class="img-modal" aria-hidden="true">
+  <div class="img-modal-box" role="dialog" aria-modal="true" aria-label="Cipher image zoom">
+    <div class="img-modal-top">
+      <div class="img-modal-title">Cipher Image</div>
+      <button class="img-close" id="img-close" type="button">Close</button>
+    </div>
+    <img id="img-modal-img" class="img-modal-img" alt="Cipher image zoomed" />
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div id="confirm-modal" class="cmodal" aria-hidden="true">
+  <div class="cmodal-backdrop" data-close="1"></div>
+
+  <div class="cmodal-box" role="dialog" aria-modal="true" aria-label="Confirm">
+    <div class="cmodal-top">
+      <div class="cmodal-title" id="cmodal-title">Confirm</div>
+      <button class="cmodal-x" id="cmodal-x" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="cmodal-body" id="cmodal-body">Are you sure?</div>
+
+    <div class="cmodal-actions">
+      <button class="cmodal-btn ghost" id="cmodal-cancel" type="button">Cancel</button>
+      <button class="cmodal-btn danger" id="cmodal-confirm" type="button">Confirm</button>
     </div>
   </div>
+</div>
 
-  <!-- Confirm Delete Modal -->
-  <div id="confirm-modal" class="cmodal" aria-hidden="true">
-    <div class="cmodal-backdrop" data-close="1"></div>
+<!-- Labs Pro Modal -->
+<div id="pro-modal" class="promodal" aria-hidden="true">
+  <div class="promodal-backdrop" data-pro-close="1"></div>
 
-    <div class="cmodal-box" role="dialog" aria-modal="true" aria-label="Confirm delete">
-      <div class="cmodal-top">
-        <div class="cmodal-title" id="cmodal-title">Delete image?</div>
-        <button class="cmodal-x" id="cmodal-x" type="button" aria-label="Close">✕</button>
+  <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Labs Pro required">
+    <div class="promodal-hero">
+      <div class="promodal-top">
+        <div class="promodal-title">
+          <span class="pro-chip">PRO</span>
+          <span id="pro-title">Labs Pro required</span>
+        </div>
+        <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="promodal-body">
+      <div id="pro-body">You’ve hit the free limit. Upgrade to Labs Pro to keep going.</div>
+
+      <ul class="promodal-list">
+        <li><span class="tick">✓</span> Export lab as PDF</li>
+        <li><span class="tick">✓</span> Clone any lab instantly</li>
+        <li><span class="tick">✓</span> Lab history (snapshots)</li>
+        <li><span class="tick">✓</span> Unlimited Labs</li>
+        <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+        <li><span class="tick">✓</span> Pro badge across the site</li>
+      </ul>
+    </div>
+
+    <div class="promodal-actions">
+      <button class="promodal-btn" id="pro-cancel" type="button">Not now</button>
+      <a class="promodal-btn primary" id="pro-go" href="/labs-pro">View Labs Pro</a>
+    </div>
+  </div>
+</div>
+
+<!-- History Modal (Pro) -->
+<div id="history-modal" class="hmodal" aria-hidden="true">
+  <div class="hmodal-backdrop" data-hclose="1"></div>
+  <div class="hmodal-box" role="dialog" aria-modal="true" aria-label="Lab history">
+    <div class="hmodal-top">
+      <div class="hmodal-title">
+        <span class="pro-chip" style="box-shadow:none;">PRO</span>
+        Lab history
+      </div>
+      <button class="hmodal-x" id="history-x" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="hmodal-body">
+      <div class="hstatus" id="history-status">—</div>
+      <ul class="hlist" id="history-list"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- CoLab Modal (sharing + collaborators) -->
+<div id="colab-modal" class="colab" aria-hidden="true">
+  <div class="colab-backdrop" data-colab-close="1"></div>
+
+  <div class="colab-box" role="dialog" aria-modal="true" aria-label="CoLab">
+    <div class="colab-hero">
+      <div class="colab-top">
+        <div class="colab-title">
+          <span style="display:inline-flex;align-items:center;gap:10px;">
+            <span class="ws-dot" aria-hidden="true" style="width:10px;height:10px;"></span>
+            CoLab
+          </span>
+          <span class="colab-chip" id="colab-chip">Sharing: off</span>
+        </div>
+        <button class="colab-x" id="colab-x" type="button" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="colab-body">
+      <div class="colab-status" id="colab-status">—</div>
+
+      <div class="colab-warn" id="colab-warn">
+        Only the lab owner can enable/disable sharing, change roles, or remove collaborators.
       </div>
 
-      <div class="cmodal-body" id="cmodal-body">
-        Are you sure you want to delete this image?
+      <div class="colab-row">
+        <div class="hint" style="max-width: 56ch;">
+          Turn on sharing to generate a join link. Anyone with the link who is logged in can join (default role is whatever your server sets — you can change it below).
+        </div>
+
+        <div class="colab-actions">
+          <button class="run-btn" id="colab-enable" type="button">Enable sharing</button>
+          <button class="run-btn secondary" id="colab-disable" type="button">Disable sharing</button>
+        </div>
       </div>
 
-      <div class="cmodal-actions">
-        <button class="cmodal-btn ghost" id="cmodal-cancel" type="button">Cancel</button>
-        <button class="cmodal-btn danger" id="cmodal-confirm" type="button">Delete</button>
+      <div class="colab-linkbox" id="colab-linkbox" style="display:none;">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+          <div style="font-weight:1000;color:var(--text);">Share link</div>
+          <div class="hint">Send this to friends.</div>
+        </div>
+
+        <div class="colab-linkrow">
+          <input class="colab-link" id="colab-link" readonly value="" />
+          <button class="run-btn secondary" id="colab-copy" type="button">Copy</button>
+          <a class="run-btn" id="colab-open" href="#" target="_blank" rel="noopener">Open</a>
+        </div>
+
+        <div class="colab-divider"></div>
+
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+          <div style="font-weight:1000;color:var(--text);">Collaborators</div>
+          <button class="run-btn secondary" id="colab-refresh" type="button">Refresh</button>
+        </div>
+
+        <ul class="colab-list" id="colab-list"></ul>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Labs Pro Modal -->
-  <div id="pro-modal" class="promodal" aria-hidden="true">
-    <div class="promodal-backdrop" data-pro-close="1"></div>
-
-    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Labs Pro required">
-      <div class="promodal-hero">
-        <div class="promodal-top">
-          <div class="promodal-title">
-            <span class="pro-chip">PRO</span>
-            <span id="pro-title">Labs Pro required</span>
-          </div>
-          <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
-        </div>
-      </div>
-
-      <div class="promodal-body">
-        <div id="pro-body">
-          You’ve hit the free limit. Upgrade to Labs Pro to keep going.
-        </div>
-
-        <ul class="promodal-list">
-          <li><span class="tick">✓</span> Export lab as PDF</li>
-          <li><span class="tick">✓</span> Clone any lab instantly</li>
-          <li><span class="tick">✓</span> Lab history (snapshots)</li>
-          <li><span class="tick">✓</span> Unlimited Labs</li>
-          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
-          <li><span class="tick">✓</span> Pro badge across the site</li>
-        </ul>
-      </div>
-
-      <div class="promodal-actions">
-        <button class="promodal-btn" id="pro-cancel" type="button">Not now</button>
-        <a class="promodal-btn primary" id="pro-go" href="/labs-pro">View Labs Pro</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- History Modal (Pro) -->
-  <div id="history-modal" class="hmodal" aria-hidden="true">
-    <div class="hmodal-backdrop" data-hclose="1"></div>
-    <div class="hmodal-box" role="dialog" aria-modal="true" aria-label="Lab history">
-      <div class="hmodal-top">
-        <div class="hmodal-title">
-          <span class="pro-chip" style="box-shadow:none;">PRO</span>
-          Lab history
-        </div>
-        <button class="hmodal-x" id="history-x" type="button" aria-label="Close">✕</button>
-      </div>
-      <div class="hmodal-body">
-        <div class="hstatus" id="history-status">—</div>
-        <ul class="hlist" id="history-list"></ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- CoLab Modal (sharing + collaborators) -->
-  <div id="colab-modal" class="colab" aria-hidden="true">
-    <div class="colab-backdrop" data-colab-close="1"></div>
-
-    <div class="colab-box" role="dialog" aria-modal="true" aria-label="CoLab">
-      <div class="colab-hero">
-        <div class="colab-top">
-          <div class="colab-title">
-            <span style="display:inline-flex;align-items:center;gap:10px;">
-              <span class="ws-dot" aria-hidden="true" style="width:10px;height:10px;"></span>
-              CoLab
-            </span>
-            <span class="colab-chip" id="colab-chip">Sharing: off</span>
-          </div>
-          <button class="colab-x" id="colab-x" type="button" aria-label="Close">✕</button>
-        </div>
-      </div>
-
-      <div class="colab-body">
-        <div class="colab-status" id="colab-status">—</div>
-
-        <div class="colab-warn" id="colab-warn">
-          Only the lab owner can enable/disable sharing or remove collaborators.
-        </div>
-
-        <div class="colab-row">
-          <div class="hint" style="max-width: 56ch;">
-            Turn on sharing to generate a join link. Anyone with the link who is logged in can join as an editor (you can remove them).
-          </div>
-
-          <div class="colab-actions">
-            <button class="run-btn" id="colab-enable" type="button">Enable sharing</button>
-            <button class="run-btn secondary" id="colab-disable" type="button">Disable sharing</button>
-          </div>
-        </div>
-
-        <div class="colab-linkbox" id="colab-linkbox" style="display:none;">
-          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
-            <div style="font-weight:1000;color:var(--text);">Share link</div>
-            <div class="hint">Send this to friends.</div>
-          </div>
-
-          <div class="colab-linkrow">
-            <input class="colab-link" id="colab-link" readonly value="" />
-            <button class="run-btn secondary" id="colab-copy" type="button">Copy</button>
-            <a class="run-btn" id="colab-open" href="#" target="_blank" rel="noopener">Open</a>
-          </div>
-
-          <div class="colab-divider"></div>
-
-          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
-            <div style="font-weight:1000;color:var(--text);">Collaborators</div>
-            <button class="run-btn secondary" id="colab-refresh" type="button">Refresh</button>
-          </div>
-
-          <ul class="colab-list" id="colab-list"></ul>
-        </div>
-      </div>
-    </div>
-  </div>
 
 <script>
+  // ===========================
+  // Viewer / role gate (server truth)
+  // ===========================
+  const VIEWER_ROLE = "{{ viewer_role }}"; // "owner" | "editor" | "viewer"
+  const CAN_EDIT = {{ "true" if viewer_can_edit else "false" }};
+
   // ===========================
   // Helpers
   // ===========================
@@ -2021,6 +2181,13 @@
     const pill = document.getElementById("autosave-pill");
     const text = document.getElementById("autosave-text");
     if (!pill || !text) return;
+
+    // View-only override
+    if (!CAN_EDIT) {
+      pill.classList.remove("saving");
+      text.textContent = "View-only";
+      return;
+    }
 
     const m = (msg || "").toLowerCase();
 
@@ -2072,7 +2239,6 @@
     btnCancel.textContent = cancelText;
     btnConfirm.textContent = confirmText;
 
-    // toggle danger styling
     btnConfirm.classList.toggle("danger", !!danger);
 
     modal.classList.add("open");
@@ -2111,6 +2277,33 @@
       btnX?.addEventListener("click", onCancel);
       modal.addEventListener("click", onBackdrop);
       document.addEventListener("keydown", onKey);
+    });
+  }
+
+  // ===== Info modal (single OK) =====
+  function infoModal({ title = "Notice", message = "—", okText = "OK" } = {}) {
+    const modal = document.getElementById("confirm-modal");
+    const btnCancel = document.getElementById("cmodal-cancel");
+    const btnConfirm = document.getElementById("cmodal-confirm");
+    const btnX = document.getElementById("cmodal-x");
+
+    if (!modal || !btnCancel || !btnConfirm) return Promise.resolve();
+
+    const prevCancelDisplay = btnCancel.style.display;
+    const prevConfirmDanger = btnConfirm.classList.contains("danger");
+
+    btnCancel.style.display = "none";
+    btnConfirm.classList.remove("danger");
+
+    return confirmDeleteModal({
+      title,
+      message,
+      confirmText: okText,
+      cancelText: "Cancel"
+    }).finally(() => {
+      btnCancel.style.display = prevCancelDisplay;
+      btnConfirm.classList.toggle("danger", prevConfirmDanger);
+      btnX?.blur?.();
     });
   }
 
@@ -2162,11 +2355,58 @@
     document.addEventListener("keydown", onKey);
   }
 
-  // ✅ PRO gate helper (CONSISTENT: any 402/403 => Pro popup)
+  // ============================================================
+  // PRO / PERMISSION GATES
+  // ============================================================
+  function isProError(data) {
+    const err = String(data?.error || "").toLowerCase();
+    return (
+      data?.pro_required === true ||
+      err.includes("pro") ||
+      err.includes("upgrade") ||
+      err.includes("payment") ||
+      err.includes("subscribe") ||
+      err.includes("plan limit") ||
+      err.includes("free limit")
+    );
+  }
+
+  function isPermissionError(data) {
+    const err = String(data?.error || "").toLowerCase();
+    return (
+      data?.permission_denied === true ||
+      data?.owner_only === true ||
+      err.includes("permission") ||
+      err.includes("forbidden") ||
+      err.includes("not allowed") ||
+      err.includes("owner") ||
+      err.includes("role")
+    );
+  }
+
+  async function handleForbidden(res, data, context = "action") {
+    if (res?.status !== 403) return false;
+    if (isProError(data)) return false;
+
+    const msg =
+      data?.error ||
+      (context === "colab"
+        ? "You don’t have permission to do that in this lab. Only the owner can manage sharing/collaborators."
+        : "You don’t have permission to do that in this lab.");
+
+    await infoModal({
+      title: "Permission denied",
+      message: msg,
+      okText: "OK"
+    });
+
+    return true;
+  }
+
   function maybeHandleProGate(res, data, context = "action") {
     const status = res?.status;
 
-    if (status === 402 || status === 403) {
+    if (status === 402) {
       openProModal({
         title: "Labs Pro required",
         body: context === "history"
@@ -2186,8 +2426,7 @@
       return true;
     }
 
-    const err = (data?.error || "").toLowerCase();
-    if (err.includes("pro") || err.includes("limit") || err.includes("upgrade")) {
+    if (status === 403 && isProError(data)) {
       openProModal({
         title: "Labs Pro required",
         body: data?.error || "This is a Labs Pro feature.",
@@ -2196,6 +2435,17 @@
       });
       return true;
     }
+
+    if (isProError(data)) {
+      openProModal({
+        title: "Labs Pro required",
+        body: data?.error || "This is a Labs Pro feature.",
+        href: "/labs-pro",
+        cta: "View Labs Pro"
+      });
+      return true;
+    }
+
     return false;
   }
 
@@ -2226,12 +2476,67 @@
   });
 
   // ===========================
-  // Save + Autosave
+  // View-only enforcement (client)
   // ===========================
   const notesEl = document.getElementById("ws-notes");
   const titleEl = document.getElementById("ws-title-input");
   const cipherEl = document.getElementById("cipher-text");
 
+  function applyViewOnlyUI() {
+    if (CAN_EDIT) return;
+
+    // hard lock main editors
+    if (titleEl) {
+      titleEl.readOnly = true;
+      titleEl.setAttribute("aria-readonly", "true");
+    }
+    if (notesEl) {
+      notesEl.readOnly = true;
+      notesEl.setAttribute("aria-readonly", "true");
+    }
+    if (cipherEl) {
+      cipherEl.readOnly = true;
+      cipherEl.setAttribute("aria-readonly", "true");
+    }
+
+    // hide/disable anything that would write to the server
+    document.querySelectorAll("#upload-cipher-image, #delete-cipher-image, #ws-export-pdf, #ws-clone, #ws-history")
+      .forEach(el => {
+        // export/history are still ok as viewer if your backend allows;
+        // only hard-disable clone (creates) and image ops. Keep export/history enabled.
+        // We'll selectively disable below.
+      });
+
+    // Disable image ops
+    const imgUploadBtn = document.getElementById("upload-cipher-image");
+    const imgDeleteBtn = document.getElementById("delete-cipher-image");
+    if (imgUploadBtn) { imgUploadBtn.disabled = true; imgUploadBtn.title = "View-only"; }
+    if (imgDeleteBtn) { imgDeleteBtn.disabled = true; imgDeleteBtn.title = "View-only"; }
+
+    // Disable “insert output → doc” because it changes notes
+    const insertBtn = document.getElementById("insert-tool-output");
+    if (insertBtn) { insertBtn.disabled = true; insertBtn.title = "View-only"; }
+
+    // Disable substitution mapping inputs (they mutate cipher text)
+    const subGrid = document.getElementById("sub-grid");
+    subGrid?.querySelectorAll?.("input, button, select")?.forEach?.(el => {
+      el.disabled = true;
+      el.title = "View-only";
+    });
+    document.querySelectorAll("#sub-clear, #sub-reset").forEach(el => {
+      el.disabled = true;
+      el.title = "View-only";
+    });
+
+    // CoLab management will already be enforced by server; leave button enabled to view state.
+    setStatus("—");
+  }
+
+  applyViewOnlyUI();
+
+  // ===========================
+  // Save + Autosave
+  // ===========================
   const AUTOSAVE_DELAY_MS = 900;
   const FORCE_SAVE_MAX_MS = 9000;
 
@@ -2258,6 +2563,7 @@
   }
 
   function markDirty() {
+    if (!CAN_EDIT) return; // ✅ viewers never become "dirty"
     if (!dirty) setStatus("Unsaved changes");
     dirty = true;
 
@@ -2273,6 +2579,7 @@
   }
 
   async function triggerAutosave(reason = "auto") {
+    if (!CAN_EDIT) return; // ✅ hard stop
     if (saving) { saveQueued = true; return; }
 
     const payload = currentPayload();
@@ -2287,6 +2594,18 @@
   }
 
   async function saveWorkspace(payloadOverride = null, reason = "manual") {
+    if (!CAN_EDIT) {
+      // keep it quiet unless user explicitly tries to force save
+      if (reason === "manual" || reason === "hotkey") {
+        await infoModal({
+          title: "View-only",
+          message: "You have viewer access, so you can’t edit or save changes in this lab.",
+          okText: "OK"
+        });
+      }
+      return;
+    }
+
     const payload = payloadOverride || currentPayload();
 
     saving = true;
@@ -2305,7 +2624,16 @@
         return;
       }
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
+      // If server denies (viewer), snap UI back to view-only state
+      if (res.status === 403) {
+        await handleForbidden(res, data, "action");
+        dirty = false;
+        setStatus("—");
+        return;
+      }
+
       if (!data.ok) throw new Error(data.error || "save failed");
 
       const updatedEl = document.getElementById("updated-at");
@@ -2327,34 +2655,49 @@
 
   lastSavedPayload = currentPayload();
 
-  titleEl?.addEventListener("input", markDirty, { passive: true });
-  notesEl?.addEventListener("input", markDirty, { passive: true });
+  // ✅ Only wire edit listeners if editable
+  if (CAN_EDIT) {
+    titleEl?.addEventListener("input", markDirty, { passive: true });
+    notesEl?.addEventListener("input", markDirty, { passive: true });
 
-  cipherEl?.addEventListener("input", () => {
-    if (internalCipherUpdate) return;
-    markDirty();
-  }, { passive: true });
+    cipherEl?.addEventListener("input", () => {
+      if (internalCipherUpdate) return;
+      markDirty();
+    }, { passive: true });
 
-  [titleEl, notesEl, cipherEl].forEach(el => {
-    if (!el) return;
-    el.addEventListener("blur", () => triggerAutosave("blur"));
-    el.addEventListener("change", () => markDirty(), { passive: true });
-  });
+    [titleEl, notesEl, cipherEl].forEach(el => {
+      if (!el) return;
+      el.addEventListener("blur", () => triggerAutosave("blur"));
+      el.addEventListener("change", () => markDirty(), { passive: true });
+    });
 
-  document.addEventListener("keydown", (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        dirty = true;
+        triggerAutosave("hotkey");
+      }
+    });
+
+    window.addEventListener("beforeunload", (e) => {
+      if (!dirty) return;
+      triggerAutosave("beforeunload");
       e.preventDefault();
-      dirty = true;
-      triggerAutosave("hotkey");
-    }
-  });
-
-  window.addEventListener("beforeunload", (e) => {
-    if (!dirty) return;
-    triggerAutosave("beforeunload");
-    e.preventDefault();
-    e.returnValue = "";
-  });
+      e.returnValue = "";
+    });
+  } else {
+    // Still intercept Ctrl/Cmd+S for viewers to avoid confusion
+    document.addEventListener("keydown", async (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        await infoModal({
+          title: "View-only",
+          message: "You can’t save changes because you have viewer access.",
+          okText: "OK"
+        });
+      }
+    });
+  }
 
   // ===========================
   // Insert output → doc
@@ -2383,7 +2726,16 @@
     return { tool: toolLabel, text: out ? out.textContent : "" };
   }
 
-  insertBtn?.addEventListener("click", () => {
+  insertBtn?.addEventListener("click", async () => {
+    if (!CAN_EDIT) {
+      await infoModal({
+        title: "View-only",
+        message: "You have viewer access, so you can’t modify notes.",
+        okText: "OK"
+      });
+      return;
+    }
+
     const { tool, text } = getActiveToolOutput();
     if (!text || text.trim() === "" || text.trim() === "Run a tool to see output here.") return;
 
@@ -2398,7 +2750,7 @@
 
   document.getElementById("copy-doc")?.addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText(notesEl.value || "");
+      await navigator.clipboard.writeText(notesEl?.value || "");
       setStatus("Copied");
       setTimeout(() => setStatus("—"), 900);
     } catch {}
@@ -2414,7 +2766,7 @@
   freqBtn?.addEventListener("click", async () => {
     outMain.textContent = "Running…";
     try {
-      const text = cipherEl.value || "";
+      const text = cipherEl?.value || "";
       const out = await toolsRun("frequency", { text });
       outMain.textContent = out || "(no output)";
     } catch {
@@ -2439,11 +2791,12 @@
   const subFreqOut = document.getElementById("sub-freq-output");
 
   const mapping = {};
-  let originalCipher = (cipherEl.value || "").toUpperCase();
+  let originalCipher = (cipherEl?.value || "").toUpperCase();
 
   function renderSubGrid() {
     if (!subGrid) return;
     subGrid.innerHTML = "";
+
     alphabet.forEach(plain => {
       mapping[plain] = mapping[plain] || "";
       const box = document.createElement("div");
@@ -2451,13 +2804,14 @@
       box.innerHTML = `
         <div class="sub-top">${plain}</div>
         <div class="sub-arrow">↓</div>
-        <input class="sub-input" maxlength="1" data-plain="${plain}" placeholder="…" value="${escapeHtml(mapping[plain] || "")}">
+        <input class="sub-input" maxlength="1" data-plain="${plain}" placeholder="…" value="${escapeHtml(mapping[plain] || "")}" ${CAN_EDIT ? "" : "disabled"}>
       `;
       subGrid.appendChild(box);
     });
 
     subGrid.querySelectorAll(".sub-input").forEach(inp => {
-      inp.addEventListener("input", () => {
+      inp.addEventListener("input", async () => {
+        if (!CAN_EDIT) return;
         const plain = inp.dataset.plain;
         const c = (inp.value || "").toUpperCase().replace(/[^A-Z]/g, "");
         inp.value = c;
@@ -2468,6 +2822,8 @@
   }
 
   function applySubMapping() {
+    if (!CAN_EDIT) return;
+
     const text = originalCipher || "";
     let out = "";
 
@@ -2486,24 +2842,42 @@
     internalCipherUpdate = true;
     cipherEl.value = out;
     internalCipherUpdate = false;
+
+    markDirty();
   }
 
   cipherEl?.addEventListener("input", () => {
     if (internalCipherUpdate) return;
+    // If viewer somehow types (e.g. browser autofill), snap back immediately
+    if (!CAN_EDIT) {
+      internalCipherUpdate = true;
+      cipherEl.value = (lastSavedPayload?.cipher_text ?? originalCipher ?? "");
+      internalCipherUpdate = false;
+      return;
+    }
     originalCipher = (cipherEl.value || "").toUpperCase();
   });
 
-  document.getElementById("sub-clear")?.addEventListener("click", () => {
+  document.getElementById("sub-clear")?.addEventListener("click", async () => {
+    if (!CAN_EDIT) {
+      await infoModal({ title: "View-only", message: "Viewers can’t modify ciphertext.", okText: "OK" });
+      return;
+    }
     Object.keys(mapping).forEach(k => mapping[k] = "");
     renderSubGrid();
     applySubMapping();
   });
 
-  document.getElementById("sub-reset")?.addEventListener("click", () => {
+  document.getElementById("sub-reset")?.addEventListener("click", async () => {
+    if (!CAN_EDIT) {
+      await infoModal({ title: "View-only", message: "Viewers can’t modify ciphertext.", okText: "OK" });
+      return;
+    }
     internalCipherUpdate = true;
     cipherEl.value = originalCipher;
     internalCipherUpdate = false;
     subFreqOut.textContent = "Frequency output will appear here.";
+    markDirty();
   });
 
   subFreqBtn?.addEventListener("click", async () => {
@@ -2530,9 +2904,9 @@
     repOut.textContent = "Running…";
     try {
       const out = await toolsRun("text_replacer", {
-        text: cipherEl.value || "",
-        to_replace: repFind.value || "",
-        replacement: repWith.value || ""
+        text: cipherEl?.value || "",
+        to_replace: repFind?.value || "",
+        replacement: repWith?.value || ""
       });
       repOut.textContent = out || "(no output)";
     } catch {
@@ -2551,8 +2925,8 @@
     spacerOut.textContent = "Running…";
     try {
       const out = await toolsRun("text_spacer", {
-        text: cipherEl.value || "",
-        block_length: Number(spacerLen.value || 5)
+        text: cipherEl?.value || "",
+        block_length: Number(spacerLen?.value || 5)
       });
       spacerOut.textContent = out || "(no output)";
     } catch {
@@ -2569,7 +2943,7 @@
   rsBtn?.addEventListener("click", async () => {
     rsOut.textContent = "Running…";
     try {
-      const out = await toolsRun("remove_spaces", { text: cipherEl.value || "" });
+      const out = await toolsRun("remove_spaces", { text: cipherEl?.value || "" });
       rsOut.textContent = out || "(no output)";
     } catch {
       rsOut.textContent = "Error running remove spaces.";
@@ -2582,7 +2956,7 @@
   rpBtn?.addEventListener("click", async () => {
     rpOut.textContent = "Running…";
     try {
-      const out = await toolsRun("remove_punctuation", { text: cipherEl.value || "" });
+      const out = await toolsRun("remove_punctuation", { text: cipherEl?.value || "" });
       rpOut.textContent = out || "(no output)";
     } catch {
       rpOut.textContent = "Error running remove punctuation.";
@@ -2602,7 +2976,7 @@
     breakerOutEl.textContent = "Running…";
     try {
       const data = await breakerRunRequest({
-        text: cipherEl.value || "",
+        text: cipherEl?.value || "",
         cipher_type: breakerTypeEl?.value || "vigenere",
         known_plaintext: breakerKnownEl?.value || ""
       });
@@ -2663,6 +3037,12 @@
     `;
 
     floatMenuEl.addEventListener("click", async (e) => {
+      if (!CAN_EDIT) {
+        closeFloatMenu();
+        await infoModal({ title: "View-only", message: "You can’t edit images with viewer access.", okText: "OK" });
+        return;
+      }
+
       const item = e.target?.closest?.(".cipher-menu-item");
       if (!item) return;
 
@@ -2702,6 +3082,7 @@
   }
 
   function openFloatMenuFor(imageId, anchorEl) {
+    if (!CAN_EDIT) return;
     const menu = ensureFloatMenu();
     floatMenuForId = imageId;
 
@@ -2752,6 +3133,10 @@
   }
 
   async function deleteImageById(imageId) {
+    if (!CAN_EDIT) {
+      await infoModal({ title: "View-only", message: "You can’t delete images with viewer access.", okText: "OK" });
+      return;
+    }
     if (!imageId) return;
 
     if (imgStatus) imgStatus.textContent = "Removing…";
@@ -2764,6 +3149,10 @@
       });
       const data = await res.json().catch(() => ({}));
 
+      if (await handleForbidden(res, data, "tabs")) {
+        if (imgStatus) imgStatus.textContent = "—";
+        return;
+      }
       if (maybeHandleProGate(res, data, "tabs")) {
         if (imgStatus) imgStatus.textContent = "—";
         return;
@@ -2815,17 +3204,20 @@
       wrap.className = "cipher-tab-wrap";
       wrap.dataset.imageId = String(im.id);
 
-      // IMPORTANT: button cannot contain another button. Use div for inner layout.
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "cipher-tab" + (im.id === activeImageId ? " active" : "");
       btn.dataset.imageId = String(im.id);
 
+      const kebab = CAN_EDIT
+        ? `<span class="cipher-tab-more" role="button" tabindex="0" aria-label="Tab options" title="Options">⋮</span>`
+        : "";
+
       btn.innerHTML = `
         <span class="cipher-tab-label" title="${escapeHtml(im.label || "")}">
           ${escapeHtml(im.label || "")}
         </span>
-        <span class="cipher-tab-more" role="button" tabindex="0" aria-label="Tab options" title="Options">⋮</span>
+        ${kebab}
       `;
 
       btn.addEventListener("click", (e) => {
@@ -2837,6 +3229,7 @@
 
       const more = btn.querySelector(".cipher-tab-more");
       const openMenu = (ev) => {
+        if (!CAN_EDIT) return;
         ev.preventDefault();
         ev.stopPropagation();
 
@@ -2849,10 +3242,12 @@
 
       more?.addEventListener("click", openMenu);
       more?.addEventListener("keydown", (ev) => {
+        if (!CAN_EDIT) return;
         if (ev.key === "Enter" || ev.key === " ") openMenu(ev);
       });
 
-      btn.addEventListener("dblclick", (e) => {
+      btn.addEventListener("dblclick", async (e) => {
+        if (!CAN_EDIT) return;
         e.preventDefault();
         closeFloatMenu();
         startRenameTab(im.id);
@@ -2864,6 +3259,8 @@
   }
 
   function startRenameTab(imageId) {
+    if (!CAN_EDIT) return;
+
     const im = images.find(x => x.id === imageId);
     if (!im || !tabsEl) return;
 
@@ -2900,6 +3297,7 @@
         });
         const data = await res.json().catch(() => ({}));
 
+        if (await handleForbidden(res, data, "tabs")) return;
         if (maybeHandleProGate(res, data, "tabs")) return;
         if (!data.ok) throw new Error(data.error || "rename failed");
       } catch {
@@ -2924,6 +3322,7 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/images`);
       const data = await res.json().catch(() => ({}));
 
+      if (await handleForbidden(res, data, "tabs")) return;
       if (maybeHandleProGate(res, data, "tabs")) return;
       if (!data.ok) throw new Error("failed");
 
@@ -2950,6 +3349,12 @@
   }
 
   async function uploadSelectedImage() {
+    if (!CAN_EDIT) {
+      await infoModal({ title: "View-only", message: "You can’t upload images with viewer access.", okText: "OK" });
+      if (imgInput) imgInput.value = "";
+      return;
+    }
+
     const file = imgInput?.files?.[0];
     if (!file) return;
 
@@ -2963,6 +3368,10 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/image`, { method: "POST", body: fd });
       const data = await res.json().catch(() => ({}));
 
+      if (await handleForbidden(res, data, "tabs")) {
+        if (imgStatus) imgStatus.textContent = "—";
+        return;
+      }
       if (maybeHandleProGate(res, data, "tabs")) {
         if (imgStatus) imgStatus.textContent = "—";
         return;
@@ -2988,15 +3397,28 @@
       if (imgStatus) imgStatus.textContent = "Upload failed";
       setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
     } finally {
-      if (imgUploadBtn) imgUploadBtn.disabled = false;
+      if (imgUploadBtn) imgUploadBtn.disabled = !CAN_EDIT ? true : false;
       if (imgInput) imgInput.value = "";
     }
   }
 
-  imgUploadBtn?.addEventListener("click", () => imgInput?.click());
-  imgInput?.addEventListener("change", uploadSelectedImage);
+  if (CAN_EDIT) {
+    imgUploadBtn?.addEventListener("click", () => imgInput?.click());
+    imgInput?.addEventListener("change", uploadSelectedImage);
+  } else {
+    // viewers: clicking upload gives a friendly message
+    imgUploadBtn?.addEventListener("click", async () => {
+      await infoModal({ title: "View-only", message: "You can’t upload images with viewer access.", okText: "OK" });
+    });
+    imgInput?.addEventListener("change", () => { if (imgInput) imgInput.value = ""; });
+  }
 
   imgDeleteBtn?.addEventListener("click", async () => {
+    if (!CAN_EDIT) {
+      await infoModal({ title: "View-only", message: "You can’t delete images with viewer access.", okText: "OK" });
+      return;
+    }
+
     if (!activeImageId) {
       if (imgStatus) imgStatus.textContent = "No image selected";
       setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
@@ -3089,11 +3511,14 @@
 
       const res = await fetch(`/workspaces/{{ ws.id }}/export.pdf`, { method: "GET" });
 
-      if (res.status === 403 || res.status === 402) {
+      if (res.status === 402 || res.status === 403) {
         let data = {};
         try { data = await res.json(); } catch {}
-        maybeHandleProGate(res, data, "export");
-        return;
+
+        if (await handleForbidden(res, data, "export")) return;
+        if (maybeHandleProGate(res, data, "export")) return;
+
+        throw new Error(data.error || "export failed");
       }
 
       if (!res.ok) throw new Error("export failed");
@@ -3120,6 +3545,16 @@
   });
 
   cloneBtn?.addEventListener("click", async () => {
+    // viewers shouldn't create clones (even if they’re Pro)
+    if (!CAN_EDIT) {
+      await infoModal({
+        title: "View-only",
+        message: "You have viewer access, so you can’t clone this lab. Ask the owner to upgrade your role to editor.",
+        okText: "OK"
+      });
+      return;
+    }
+
     const can = await workspaceCanCreateCheck();
     if (can && can.can_create === false) {
       openProModal({
@@ -3144,7 +3579,9 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/clone`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
 
+      if (await handleForbidden(res, data, "clone")) return;
       if (maybeHandleProGate(res, data, "clone")) return;
+
       if (!res.ok || !data.ok || !data.ws_id) throw new Error(data.error || "clone failed");
 
       window.location.href = `/workspaces/${data.ws_id}`;
@@ -3197,6 +3634,10 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/history`);
       const data = await res.json().catch(() => ({}));
 
+      if (await handleForbidden(res, data, "history")) {
+        closeHistoryModal();
+        return;
+      }
       if (maybeHandleProGate(res, data, "history")) {
         closeHistoryModal();
         return;
@@ -3206,7 +3647,7 @@
 
       const items = Array.isArray(data.history) ? data.history : [];
       if (items.length === 0) {
-        hStatus.textContent = "No snapshots yet. (Pro snapshots are created when you save.)";
+        hStatus.textContent = "No snapshots yet.";
         return;
       }
 
@@ -3227,9 +3668,18 @@
         `;
 
         li.querySelector("[data-action='restore']")?.addEventListener("click", async () => {
+          if (!CAN_EDIT) {
+            await infoModal({
+              title: "View-only",
+              message: "You have viewer access, so you can’t restore snapshots.",
+              okText: "OK"
+            });
+            return;
+          }
+
           const ok = await confirmDeleteModal({
             title: "Restore this snapshot?",
-            message: "This will overwrite your current title/notes/ciphertext. (A restore snapshot will also be saved.)"
+            message: "This will overwrite your current title/notes/ciphertext."
           });
           if (!ok) return;
 
@@ -3238,7 +3688,9 @@
             const rres = await fetch(`/workspaces/{{ ws.id }}/history/${it.id}/restore`, { method: "POST" });
             const rdata = await rres.json().catch(() => ({}));
 
+            if (await handleForbidden(rres, rdata, "history")) return;
             if (maybeHandleProGate(rres, rdata, "history")) return;
+
             if (!rres.ok || !rdata.ok) throw new Error(rdata.error || "restore failed");
 
             window.location.reload();
@@ -3261,7 +3713,7 @@
   });
 
   // ===========================
-  // CoLab modal logic (PRO-GATED LIKE THE REST)
+  // CoLab modal logic (NOW WITH ROLE CHANGER)
   // ===========================
   const colabBtn = document.getElementById("ws-colab");
   const colabModal = document.getElementById("colab-modal");
@@ -3280,11 +3732,14 @@
   const colabList = document.getElementById("colab-list");
   const colabWarn = document.getElementById("colab-warn");
 
+  const COLAB_ROLE_ENDPOINT = `/workspaces/{{ ws.id }}/share/role`;
+
   let colabState = {
     is_shared: false,
     share_url: null,
     collaborators: [],
-    ownerOnly: false
+    ownerOnly: false,
+    owner_id: null
   };
 
   function openCoLabModal() {
@@ -3317,6 +3772,64 @@
     colabChip.textContent = on ? "Sharing: on" : "Sharing: off";
   }
 
+  function normalizeRole(r) {
+    const role = String(r || "editor").toLowerCase().trim();
+    if (role === "viewer" || role === "read" || role === "readonly") return "viewer";
+    if (role === "owner") return "owner";
+    return "editor";
+  }
+
+  async function setCollaboratorRole(userId, newRole) {
+    const role = normalizeRole(newRole);
+    if (!userId) return;
+
+    if (colabState.ownerOnly) {
+      if (colabWarn) colabWarn.classList.add("show");
+      setCoLabStatus("Only the owner can change roles.");
+      setTimeout(() => setCoLabStatus("—"), 1200);
+      return;
+    }
+
+    try {
+      setCoLabStatus("Updating role…");
+
+      const res = await fetch(COLAB_ROLE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, role })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (await handleForbidden(res, data, "colab")) {
+        colabState.ownerOnly = true;
+        if (colabWarn) colabWarn.classList.add("show");
+        applyCoLabUI();
+        return;
+      }
+
+      if (maybeHandleProGate(res, data, "colab")) {
+        closeCoLabModal();
+        return;
+      }
+
+      if (!res.ok || !data.ok) throw new Error(data.error || "role update failed");
+
+      colabState.collaborators = (colabState.collaborators || []).map(c => {
+        if (Number(c.user_id) === Number(userId)) return { ...c, role };
+        return c;
+      });
+
+      applyCoLabUI();
+      setCoLabStatus("Role updated ✓");
+      setTimeout(() => setCoLabStatus("—"), 1000);
+    } catch {
+      setCoLabStatus("Role update failed");
+      setTimeout(() => setCoLabStatus("—"), 1300);
+      await loadCoLabState();
+    }
+  }
+
   function renderCollaborators() {
     if (!colabList) return;
     colabList.innerHTML = "";
@@ -3337,23 +3850,69 @@
 
     for (const c of items) {
       const username = c.username || `User #${c.user_id}`;
-      const role = (c.role || "editor").toLowerCase();
+      const role = normalizeRole(c.role || "editor");
       const added = (c.added_at || "").replace("T"," ").slice(0,19);
+
+      const isOwner = !!c.is_owner || (colabState.owner_id && Number(c.user_id) === Number(colabState.owner_id)) || role === "owner";
 
       const li = document.createElement("li");
       li.className = "colab-item";
+
       li.innerHTML = `
         <div class="colab-who">
-          <div class="colab-name">${escapeHtml(username)}</div>
-          <div class="colab-meta">Role: ${escapeHtml(role)}${added ? " • Added: " + escapeHtml(added) : ""}</div>
+          <div class="colab-name">${escapeHtml(username)} ${isOwner ? `<span class="role-badge owner">Owner</span>` : ""}</div>
+          <div class="colab-meta">
+            Role: <strong>${escapeHtml(role)}</strong>${added ? " • Added: " + escapeHtml(added) : ""}
+          </div>
         </div>
+
         <div class="colab-item-actions">
-          <button class="run-btn secondary" data-action="remove" data-id="${c.user_id}">Remove</button>
+          ${
+            isOwner
+              ? `<span class="role-badge owner">Can’t change owner</span>`
+              : `
+                <div class="role-wrap">
+                  <span class="role-label">Role</span>
+                  <select class="role-select" data-action="role" data-id="${c.user_id}">
+                    <option value="editor" ${role === "editor" ? "selected" : ""}>editor</option>
+                    <option value="viewer" ${role === "viewer" ? "selected" : ""}>viewer</option>
+                  </select>
+                  <button class="run-btn secondary" data-action="apply-role" data-id="${c.user_id}">Apply</button>
+                </div>
+                <button class="run-btn secondary" data-action="remove" data-id="${c.user_id}">Remove</button>
+              `
+          }
         </div>
       `;
 
+      const applyBtn = li.querySelector("[data-action='apply-role']");
+      const roleSel = li.querySelector("[data-action='role']");
       const removeBtn = li.querySelector("[data-action='remove']");
+
+      if (colabState.ownerOnly) {
+        if (applyBtn) { applyBtn.disabled = true; applyBtn.title = "Only the owner can change roles"; }
+        if (roleSel)  { roleSel.disabled = true; roleSel.title = "Only the owner can change roles"; }
+        if (removeBtn){ removeBtn.disabled = true; removeBtn.title = "Only the owner can remove collaborators"; }
+      }
+
+      applyBtn?.addEventListener("click", async () => {
+        const newRole = roleSel?.value || "editor";
+        await setCollaboratorRole(c.user_id, newRole);
+      });
+
+      roleSel?.addEventListener("change", () => {
+        if (!applyBtn) return;
+        applyBtn.disabled = !!colabState.ownerOnly ? true : false;
+      });
+
       removeBtn?.addEventListener("click", async () => {
+        if (colabState.ownerOnly) {
+          if (colabWarn) colabWarn.classList.add("show");
+          setCoLabStatus("Only the owner can remove collaborators.");
+          setTimeout(() => setCoLabStatus("—"), 1200);
+          return;
+        }
+
         const ok = await confirmDeleteModal({
           title: "Remove collaborator?",
           message: `Remove ${username} from this lab? They’ll lose access immediately.`,
@@ -3371,7 +3930,13 @@
           });
           const data = await res.json().catch(() => ({}));
 
-          // ✅ PRO popup if not pro (like the rest)
+          if (await handleForbidden(res, data, "colab")) {
+            colabState.ownerOnly = true;
+            if (colabWarn) colabWarn.classList.add("show");
+            applyCoLabUI();
+            return;
+          }
+
           if (maybeHandleProGate(res, data, "colab")) {
             closeCoLabModal();
             return;
@@ -3394,12 +3959,11 @@
   function applyCoLabUI() {
     setChip(!!colabState.is_shared);
 
-    // If you still want a warning element, keep it hidden by default
-    if (colabWarn) colabWarn.classList.remove("show");
+    if (colabWarn) colabWarn.classList.toggle("show", !!colabState.ownerOnly);
 
     const isOn = !!colabState.is_shared;
-    if (colabEnableBtn) colabEnableBtn.disabled = isOn;
-    if (colabDisableBtn) colabDisableBtn.disabled = !isOn;
+    if (colabEnableBtn) colabEnableBtn.disabled = isOn || !!colabState.ownerOnly;
+    if (colabDisableBtn) colabDisableBtn.disabled = (!isOn) || !!colabState.ownerOnly;
 
     if (colabLinkbox) colabLinkbox.style.display = (isOn && colabState.share_url) ? "grid" : "none";
 
@@ -3416,7 +3980,14 @@
       const res = await fetch(`/workspaces/{{ ws.id }}/share/collaborators`, { method: "GET" });
       const data = await res.json().catch(() => ({}));
 
-      // ✅ PRO popup if not pro (like export/history/clone)
+      if (res.status === 403 && !isProError(data)) {
+        colabState.ownerOnly = true;
+        if (colabWarn) colabWarn.classList.add("show");
+        setCoLabStatus(data?.error || "Only the lab owner can manage sharing/collaborators.");
+      } else {
+        colabState.ownerOnly = !!data?.owner_only || !!data?.permission_denied || false;
+      }
+
       if (maybeHandleProGate(res, data, "colab")) {
         closeCoLabModal();
         return;
@@ -3428,13 +3999,16 @@
         return;
       }
 
-      if (!res.ok || !data.ok) throw new Error(data.error || "failed");
+      if (!res.ok || !data.ok) {
+        if (res.status !== 403) throw new Error(data.error || "failed");
+      }
 
       colabState = {
         is_shared: !!data.is_shared,
         share_url: data.share_url || null,
         collaborators: Array.isArray(data.collaborators) ? data.collaborators : [],
-        ownerOnly: false
+        ownerOnly: colabState.ownerOnly,
+        owner_id: (data.owner_id != null ? data.owner_id : colabState.owner_id)
       };
 
       setCoLabStatus("—");
@@ -3446,12 +4020,26 @@
   }
 
   async function enableSharing() {
+    if (colabState.ownerOnly) {
+      if (colabWarn) colabWarn.classList.add("show");
+      setCoLabStatus("Only the owner can enable sharing.");
+      setTimeout(() => setCoLabStatus("—"), 1200);
+      return;
+    }
+
     try {
       setCoLabStatus("Enabling…");
       colabEnableBtn.disabled = true;
 
       const res = await fetch(`/workspaces/{{ ws.id }}/share/create`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
+
+      if (await handleForbidden(res, data, "colab")) {
+        colabState.ownerOnly = true;
+        if (colabWarn) colabWarn.classList.add("show");
+        applyCoLabUI();
+        return;
+      }
 
       if (maybeHandleProGate(res, data, "colab")) {
         closeCoLabModal();
@@ -3476,6 +4064,13 @@
   }
 
   async function disableSharing() {
+    if (colabState.ownerOnly) {
+      if (colabWarn) colabWarn.classList.add("show");
+      setCoLabStatus("Only the owner can disable sharing.");
+      setTimeout(() => setCoLabStatus("—"), 1200);
+      return;
+    }
+
     const ok = await confirmDeleteModal({
       title: "Disable sharing?",
       message: "This will invalidate the link and remove all collaborators for this lab.",
@@ -3490,6 +4085,13 @@
 
       const res = await fetch(`/workspaces/{{ ws.id }}/share/disable`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
+
+      if (await handleForbidden(res, data, "colab")) {
+        colabState.ownerOnly = true;
+        if (colabWarn) colabWarn.classList.add("show");
+        applyCoLabUI();
+        return;
+      }
 
       if (maybeHandleProGate(res, data, "colab")) {
         closeCoLabModal();
@@ -3542,6 +4144,11 @@
   setStatus("—");
 </script>
 
+<!-- Image Zoom Lightbox -->
+<div id="img-modal" class="img-lightbox" aria-hidden="true">
+  <button id="img-close" class="img-lightbox-close" type="button">Close</button>
+  <img id="img-modal-img" class="img-lightbox-img" alt="Cipher image preview">
+</div>
 
 </body>
-  </html>
+</html>

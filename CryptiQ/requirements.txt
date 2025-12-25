@@ -6,5 +6,5 @@ psycopg2-binary
 psycopg2
 reportlab
 dotenv
-sendgrid
 stripe
+sendgrid
