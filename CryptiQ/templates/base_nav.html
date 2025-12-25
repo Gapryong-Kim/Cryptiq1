@@ -673,6 +673,53 @@ body { padding-top: 80px; }
     height: 15px;
   }
 }
+/* --- Mobile dropdown overflow fix --- */
+@media (max-width: 900px) {
+  /* Make sure the mobile dropdown never exceeds the sidebar width */
+  .dropdown-menu.mobile-menu {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  /* Allow the header row to wrap instead of forcing overflow */
+  .dropdown-menu.mobile-menu .dd-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  /* Critical: let meta area shrink and wrap */
+  .dropdown-menu.mobile-menu .dd-head-meta {
+    min-width: 0;
+    flex: 1 1 160px; /* can shrink */
+  }
+
+  /* Username + badges row: allow wrapping */
+  .dropdown-menu.mobile-menu .dd-name {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  /* Badges must be allowed to wrap + not force width */
+  .dropdown-menu.mobile-menu .dd-badges {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* If any badge is too wide, keep it contained */
+  .dropdown-menu.mobile-menu .dd-badges > * {
+    max-width: 100%;
+  }
+
+  /* Extra safety: prevent any long text from pushing layout */
+  .dropdown-menu.mobile-menu .dd-sub,
+  .dropdown-menu.mobile-menu .dd-username {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 
 /* Disable navbar spacing on certain pages */
 body.no-nav-padding { padding-top: 0 !important; }
