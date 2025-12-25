@@ -32,11 +32,10 @@
 
   <ul class="nav-items" id="nav-menu">
     {% if user %}
-      <!-- Mobile account panel (sleek + contained) -->
-      <li class="nav-account-mobile" id="nav-account-mobile">
+      <!-- Mobile account panel (clean + professional) -->
+      <li class="nav-account-mobile">
         <button class="mobile-account-trigger" id="mobile-account-trigger" type="button" aria-expanded="false">
           <div class="avatar">{{ user['username'][0].upper() }}</div>
-
           <div class="mobile-account-meta">
             <div class="mobile-account-name">
               <span class="mobile-username">{{ user['username'] }}</span>
@@ -47,54 +46,51 @@
             </div>
             <div class="mobile-account-sub">Signed in</div>
           </div>
-
-          <span class="chev" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </span>
+<span class="chev" aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+</span>
         </button>
 
         <div class="mobile-account-panel" id="mobile-account-panel" aria-hidden="true">
-          <div class="mobile-account-scroll">
-            <a class="account-item" href="{{ url_for('account') }}">
-              <span class="ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21a8 8 0 0 0-16 0"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </span>
-              <span>Account</span>
-            </a>
+          <a class="account-item" href="{{ url_for('account') }}">
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21a8 8 0 0 0-16 0"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span>Account</span>
+          </a>
 
-            <a class="account-item" href="{{ url_for('posts_new') }}">
-              <span class="ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9"/>
-                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-                </svg>
-              </span>
-              <span>New Post</span>
-            </a>
+          <a class="account-item" href="{{ url_for('posts_new') }}">
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+              </svg>
+            </span>
+            <span>New Post</span>
+          </a>
 
-            <div class="account-sep"></div>
+          <div class="account-sep"></div>
 
-            <a class="account-item danger" href="{{ url_for('logout') }}">
-              <span class="ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <path d="M16 17l5-5-5-5"/>
-                  <path d="M21 12H9"/>
-                </svg>
-              </span>
-              <span>Logout</span>
-            </a>
-          </div>
+          <a class="account-item danger" href="{{ url_for('logout') }}">
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <path d="M16 17l5-5-5-5"/>
+                <path d="M21 12H9"/>
+              </svg>
+            </span>
+            <span>Logout</span>
+          </a>
         </div>
       </li>
     {% endif %}
@@ -158,7 +154,7 @@
         </div>
       </div>
 
-      <!-- Desktop profile dropdown -->
+      <!-- Desktop profile dropdown (clean + professional) -->
       <div class="profile-dropdown" id="profile-dd">
         <button class="profile-btn" id="profile-btn" aria-label="Profile menu" aria-expanded="false">
           <div class="avatar">{{ user['username'][0].upper() }}</div>
@@ -417,7 +413,7 @@ body { padding-top: 80px; }
 .notif-message { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
 
 /* ============================
-   ACCOUNT MENU (DESKTOP)
+   CLEAN ACCOUNT MENU (DESKTOP)
    ============================ */
 .profile-dropdown { position: relative; }
 
@@ -425,13 +421,13 @@ body { padding-top: 80px; }
   position: absolute;
   right: 0;
   top: calc(100% + 10px);
-  width: 252px;
+  width: 280px;
   max-width: calc(100vw - 20px);
-  padding: 8px;
-  border-radius: 14px;
+  padding: 10px;
+  border-radius: 16px;
   background: color-mix(in oklab, var(--panel) 92%, transparent);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 14px 40px rgba(0,0,0,0.52);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
   backdrop-filter: blur(16px);
   z-index: 1001;
 
@@ -448,28 +444,27 @@ body { padding-top: 80px; }
 }
 
 .account-head{
-  padding: 8px;
-  border-radius: 12px;
+  padding: 10px;
+  border-radius: 14px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.06);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .account-head-left{
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
 .dd-avatar{
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   display: grid;
   place-items: center;
   font-weight: 900;
-  font-size: .95rem;
   background: rgba(0,255,213,0.10);
   border: 1px solid rgba(0,255,213,0.35);
   color: var(--accent);
@@ -480,13 +475,12 @@ body { padding-top: 80px; }
 .account-name-row{
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
 }
 .account-username{
   font-weight: 850;
-  font-size: .95rem;
   color: var(--text);
   min-width: 0;
   max-width: 100%;
@@ -502,42 +496,22 @@ body { padding-top: 80px; }
   min-width: 0;
 }
 .account-sub{
-  margin-top: 2px;
-  font-size: .78rem;
+  margin-top: 3px;
+  font-size: .85rem;
   color: var(--muted);
-  opacity: .9;
 }
 
-.account-list{
-  display: grid;
-  gap: 5px;
-  padding: 1px;
-  position: relative;
-}
-
-/* subtle vertical rail */
-.account-list::before{
-  content:"";
-  position:absolute;
-  left: 13px;
-  top: 6px;
-  bottom: 6px;
-  width: 1px;
-  background: rgba(255,255,255,0.06);
-  pointer-events:none;
-  opacity: .7;
-}
+.account-list{ display: grid; gap: 6px; padding: 2px; }
 
 .account-item{
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 8px;
-  border-radius: 11px;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
   text-decoration: none;
   color: var(--text);
   font-weight: 650;
-  font-size: .92rem;
   border: 1px solid transparent;
   background: transparent;
   transition: background .16s ease, border-color .16s ease, transform .16s ease;
@@ -545,23 +519,22 @@ body { padding-top: 80px; }
 .account-item:hover{
   background: rgba(0,255,213,0.10);
   border-color: rgba(0,255,213,0.22);
-  transform: translateY(-0.5px);
+  transform: translateY(-1px);
 }
 .account-item .ico{
-  width: 24px;
-  height: 24px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   color: var(--text);
   flex: 0 0 auto;
-  z-index: 1;
 }
 .account-item .ico svg{
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   display: block;
   opacity: .95;
 }
@@ -578,11 +551,11 @@ body { padding-top: 80px; }
 .account-sep{
   height: 1px;
   background: rgba(255,255,255,0.08);
-  margin: 4px 6px;
+  margin: 6px 6px;
 }
 
 /* ============================
-   MOBILE SIDEBAR + ACCOUNT
+   MOBILE SIDEBAR + ACCOUNT PANEL
    ============================ */
 .hamburger {
   display: none;
@@ -623,11 +596,13 @@ body { padding-top: 80px; }
     flex-direction: column;
     align-items: flex-start;
     background: var(--panel);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border-left: 1px solid rgba(255,255,255,0.06);
-    width: 260px;
+    width: 280px;
     height: calc(100vh - 60px);
-    padding: 12px;
-    gap: 10px;
+    padding: 16px;
+    gap: 14px;
     transition: right 0.35s cubic-bezier(0.25, 1, 0.3, 1);
     overflow-y: auto;
   }
@@ -641,35 +616,28 @@ body { padding-top: 80px; }
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 10px;
-    padding: 10px 10px;
-    border-radius: 13px;
+    gap: 12px;
+    padding: 12px 12px;
+    border-radius: 14px;
     border: 1px solid rgba(255,255,255,0.10);
     background: rgba(255,255,255,0.03);
     color: var(--text);
     cursor: pointer;
     text-align: left;
   }
-  .mobile-account-trigger .avatar{
-    width: 30px;
-    height: 30px;
-    font-size: .95rem;
-  }
-
   .mobile-account-meta{ min-width: 0; }
   .mobile-account-name{
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     align-items: center;
     min-width: 0;
-    line-height: 1.15;
+    line-height: 1.2;
   }
   .mobile-username{
     font-weight: 850;
-    font-size: .95rem;
     min-width: 0;
-    max-width: 150px;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -682,57 +650,164 @@ body { padding-top: 80px; }
     min-width: 0;
   }
   .mobile-account-sub{
-    margin-top: 1px;
-    font-size: .78rem;
+    margin-top: 3px;
+    font-size: .85rem;
     color: var(--muted);
-    opacity: .9;
   }
-
-  /* Chevron */
-  .chev{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: .75;
-    transition: transform .18s ease, opacity .18s ease;
+  .mobile-account-trigger .chev{
+    opacity: .85;
+    transform: translateY(-1px);
+    transition: transform .18s ease;
   }
-  .chev svg{
-    width: 14px;
-    height: 14px;
-    stroke-width: 2;
-  }
-  .nav-account-mobile.open .chev{
+  .nav-account-mobile.open .mobile-account-trigger .chev{
     transform: rotate(180deg);
-    opacity: .95;
   }
 
-  /* Mobile panel: CLIPPED + SCROLL SAFE so logout never escapes */
+  /* Mobile account panel */
   .mobile-account-panel{
     width: 100%;
-    margin-top: 8px;
-    border-radius: 13px;
-    border: 1px solid rgba(255,255,255,0.08);
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.10);
     background: rgba(255,255,255,0.02);
     display: none;
     box-sizing: border-box;
-    overflow: hidden;             /* ✅ prevents “leak” */
-    max-height: 55vh;             /* ✅ keeps it in screen */
   }
   .nav-account-mobile.open .mobile-account-panel{
-    display: block;
+    display: grid;
+    gap: 6px;
   }
 
-  .mobile-account-scroll{
+  /* Make items full-width and safe */
+  .mobile-account-panel .account-item{
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+/* ============================
+   SLEEK ACCOUNT MENU OVERRIDES
+   (paste AFTER existing nav CSS)
+   ============================ */
+
+/* Smaller overall card + less padding */
+.account-menu{
+  width: 252px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.52);
+}
+
+/* Tighter header */
+.account-head{
+  padding: 8px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+.dd-avatar{
+  width: 34px;
+  height: 34px;
+  font-size: .95rem;
+}
+.account-name-row{ gap: 6px; }
+.account-username{
+  font-size: .95rem;
+  font-weight: 850;
+}
+.account-sub{
+  font-size: .78rem;
+  margin-top: 2px;
+  opacity: .9;
+}
+
+/* List tighter */
+.account-list{ gap: 5px; padding: 1px; }
+.account-sep{ margin: 4px 6px; }
+
+/* Make rows sleeker (less “fat”) */
+.account-item{
+  padding: 8px 8px;
+  border-radius: 11px;
+  font-weight: 650;
+  font-size: .92rem;
+  gap: 9px;
+}
+.account-item:hover{
+  transform: translateY(-0.5px);
+}
+
+/* Smaller icon pill */
+.account-item .ico{
+  width: 24px;
+  height: 24px;
+  border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.account-item .ico svg{
+  width: 14px;
+  height: 14px;
+}
+
+/* Optional: add a subtle divider “rail” look */
+.account-list{
+  position: relative;
+}
+.account-list::before{
+  content:"";
+  position:absolute;
+  left: 13px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: rgba(255,255,255,0.06);
+  pointer-events:none;
+  opacity: .7;
+}
+.account-item .ico{ z-index: 1; }
+
+/* ============================
+   MOBILE ACCOUNT PANEL SLEEK
+   ============================ */
+@media (max-width: 900px){
+  .mobile-account-trigger{
+    padding: 10px 10px;
+    border-radius: 13px;
+  }
+  .mobile-account-trigger .avatar{
+    width: 30px;
+    height: 30px;
+    font-size: .95rem;
+  }
+  .mobile-username{ font-size: .95rem; }
+  .mobile-account-sub{ font-size: .78rem; }
+
+  .mobile-account-panel{
     padding: 8px;
-    display: grid;
-    gap: 5px;
-    overflow-y: auto;             /* ✅ scroll inside */
-    max-height: 55vh;
+    border-radius: 13px;
+  }
+
+  .mobile-account-panel .account-item{
+    padding: 8px 8px;
+    border-radius: 11px;
+    font-size: .92rem;
+  }
+
+  .mobile-account-panel .account-item .ico{
+    width: 24px;
+    height: 24px;
+    border-radius: 9px;
+  }
+  .mobile-account-panel .account-item .ico svg{
+    width: 14px;
+    height: 14px;
+  }
+
+  /* The rail on mobile too */
+  .mobile-account-panel{
     position: relative;
   }
-
-  /* rail in mobile too */
-  .mobile-account-scroll::before{
+  .mobile-account-panel::before{
     content:"";
     position:absolute;
     left: 21px;
@@ -743,28 +818,237 @@ body { padding-top: 80px; }
     pointer-events:none;
     opacity: .7;
   }
+  .mobile-account-panel .ico{ z-index: 1; }
+}
+/* =========================================
+   ULTRA-SLIM MOBILE ACCOUNT MENU OVERRIDES
+   paste AFTER all existing nav CSS
+   ========================================= */
+@media (max-width: 900px) {
 
-  .mobile-account-panel .account-item{
-    width: 100%;
-    box-sizing: border-box;
-    padding: 8px 8px;
+  /* Slim the whole sidebar */
+  .nav-items{
+    width: 260px;          /* was 280 */
+    padding: 12px;         /* was 20/16 */
+    gap: 10px;             /* was 14 */
+  }
+
+  /* Make the mobile account dropdown container not add extra bulk */
+  .nav-account-mobile{ width: 100%; }
+
+  /* Remove “card inside card” feeling */
+  .dropdown-menu.mobile-menu{
+    padding: 8px;          /* was 10 */
+    gap: 6px;              /* was 8 */
+    border-radius: 12px;   /* was 14 */
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* Slim header */
+  .dropdown-menu.mobile-menu .dd-head{
+    padding: 7px;          /* was 8 */
+    gap: 8px;              /* was 10 */
     border-radius: 11px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .dropdown-menu.mobile-menu .dd-avatar{
+    width: 30px;           /* was 34 */
+    height: 30px;
+    font-size: .9rem;
+  }
+
+  .dropdown-menu.mobile-menu .dd-sub{
+    font-size: .76rem;     /* smaller */
+    margin-top: 1px;
+  }
+
+  /* Make username row tighter + prevent big wrap */
+  .dropdown-menu.mobile-menu .dd-name{
+    gap: 6px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  .dropdown-menu.mobile-menu .dd-username{
+    font-size: .92rem;
+    max-width: 160px;      /* stops badges pushing layout */
+  }
+  .dropdown-menu.mobile-menu .dd-badges{
+    gap: 5px;
+  }
+
+  /* Slim menu items: this is the big one */
+  .dropdown-menu.mobile-menu .dd-item{
+    padding: 7px 8px;      /* was 9 */
+    border-radius: 10px;   /* was 11 */
+    gap: 8px;
     font-size: .92rem;
   }
-  .mobile-account-panel .account-item .ico{
-    width: 24px;
-    height: 24px;
-    border-radius: 9px;
-    z-index: 1;
+
+  /* Make icon tiles smaller + less “puffy” */
+  .dropdown-menu.mobile-menu .dd-ico{
+    width: 22px;           /* was 26 */
+    height: 22px;
+    border-radius: 8px;    /* was 9 */
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
   }
-  .mobile-account-panel .account-item .ico svg{
-    width: 14px;
-    height: 14px;
+  .dropdown-menu.mobile-menu .dd-ico svg{
+    width: 13px;           /* was 15 */
+    height: 13px;
+  }
+
+  /* Tighter separator */
+  .dropdown-menu.mobile-menu .dd-sep{
+    margin: 2px 6px;       /* was bigger */
+    opacity: .8;
+  }
+
+  /* Optional: remove hover lift on mobile (feels chunky) */
+  .dropdown-menu.mobile-menu .dd-item:hover{
+    transform: none;
   }
 }
 
 /* Disable navbar spacing on certain pages */
+/* === Clean SVG chevron === */
+.chev{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .7;
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+.chev svg{
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+/* Rotate on open */
+.nav-account-mobile.open .chev{
+  transform: rotate(180deg);
+  opacity: .95;
+}
 body.no-nav-padding { padding-top: 0 !important; }
+@media (max-width: 900px) {
+
+  /* ensure the dropdown is a real container */
+  .dropdown-menu.mobile-menu{
+    position: static;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+
+    border-radius: 14px;
+    overflow: hidden;              /* ✅ prevents “Logout” leaking outside */
+    background: rgba(20,20,20,.92);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+
+  /* make the inside scroll if it ever gets too tall */
+  .dropdown-menu.mobile-menu{
+    max-height: 60vh;              /* ✅ keeps it inside the screen */
+  }
+
+  /* keep header fixed + tight */
+  .dropdown-menu.mobile-menu .dd-head{
+    margin: 0;
+    border-radius: 0;
+  }
+
+  /* items area becomes scrollable if needed */
+  .dropdown-menu.mobile-menu .dd-section{
+    padding: 8px;
+    overflow-y: auto;              /* ✅ contains logout inside */
+    max-height: calc(60vh - 70px); /* header height allowance */
+  }
+
+  .dropdown-menu.mobile-menu .dd-sep{
+    margin: 0 8px;
+  }
+
+  /* make logout look like a normal row (no weird hanging) */
+  .dropdown-menu.mobile-menu .dd-item{
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+/* ===== Fix mobile account trigger misalignment (tall + thin screens) ===== */
+@media (max-width: 900px) {
+
+  /* Make the trigger grid stable and vertically centered */
+  .mobile-account-trigger{
+    grid-template-columns: 34px 1fr 16px; /* avatar | text | chevron */
+    align-items: center;
+    column-gap: 10px;
+  }
+
+  /* Ensure avatar doesn't stretch / shift baseline */
+  .mobile-account-trigger .avatar{
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+  }
+
+  /* Make the meta block a proper 2-line stack, centered */
+  .mobile-account-meta{
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  /* Keep username + badges on ONE line, with ellipsis */
+  .mobile-account-name{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;         /* <-- key */
+    min-width: 0;
+    line-height: 1.15;
+  }
+
+  .mobile-username{
+    flex: 1 1 auto;            /* allows ellipsis */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-badges{
+    flex: 0 0 auto;            /* never steal width from username */
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  /* Subline stays tight and doesn't “float” */
+  .mobile-account-sub{
+    margin: 0;
+    line-height: 1.1;
+  }
+
+  /* Chevron centered nicely */
+  .mobile-account-trigger .chev{
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+  }
+  .mobile-account-trigger .chev svg{
+    width: 14px;
+    height: 14px;
+    display: block;
+  }
+}
+
 </style>
 
 <!-- === SCRIPT === -->
@@ -816,34 +1100,18 @@ body.no-nav-padding { padding-top: 0 !important; }
   });
 
   // ===== Burger sidebar =====
-  const mobileAccWrap = document.getElementById("nav-account-mobile");
-  const mobileAccBtn = document.getElementById("mobile-account-trigger");
-  const mobileAccPanel = document.getElementById("mobile-account-panel");
-
-  function closeMobileAccount() {
-    if (!mobileAccWrap) return;
-    mobileAccWrap.classList.remove("open");
-    mobileAccBtn?.setAttribute("aria-expanded", "false");
-    mobileAccPanel?.setAttribute("aria-hidden", "true");
-  }
-
-  if (mobileAccBtn && mobileAccWrap && mobileAccPanel) {
-    mobileAccBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const open = !mobileAccWrap.classList.contains("open");
-      mobileAccWrap.classList.toggle("open", open);
-      mobileAccBtn.setAttribute("aria-expanded", open ? "true" : "false");
-      mobileAccPanel.setAttribute("aria-hidden", open ? "false" : "true");
-    });
-  }
-
   if (burger && menu) {
     burger.addEventListener("click", () => {
       const open = !menu.classList.contains("open");
       menu.classList.toggle("open", open);
       burger.classList.toggle("open", open);
       burger.setAttribute("aria-expanded", open ? "true" : "false");
-      if (!open) closeMobileAccount();
+
+      // close mobile account panel whenever sidebar opens/closes
+      const mobAcc = document.querySelector(".nav-account-mobile");
+      mobAcc?.classList.remove("open");
+      document.getElementById("mobile-account-trigger")?.setAttribute("aria-expanded", "false");
+      document.getElementById("mobile-account-panel")?.setAttribute("aria-hidden", "true");
     });
 
     document.addEventListener("click", e => {
@@ -851,7 +1119,11 @@ body.no-nav-padding { padding-top: 0 !important; }
         menu.classList.remove("open");
         burger.classList.remove("open");
         burger.setAttribute("aria-expanded", "false");
-        closeMobileAccount();
+
+        const mobAcc = document.querySelector(".nav-account-mobile");
+        mobAcc?.classList.remove("open");
+        document.getElementById("mobile-account-trigger")?.setAttribute("aria-expanded", "false");
+        document.getElementById("mobile-account-panel")?.setAttribute("aria-hidden", "true");
       }
     });
   }
@@ -901,10 +1173,10 @@ body.no-nav-padding { padding-top: 0 !important; }
           notifList.innerHTML = '<p class="notif-empty">No notifications yet.</p>';
         } else {
           items.forEach(n => {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "notif-item";
-            if (n.is_read == 0) btn.style.fontWeight = "700";
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "notif-item";
+            if (n.is_read == 0) b.style.fontWeight = "700";
 
             const title = document.createElement("div");
             title.className = "notif-title";
@@ -914,14 +1186,14 @@ body.no-nav-padding { padding-top: 0 !important; }
             msg.className = "notif-message";
             msg.textContent = `${n.message} • ${humanTime(n.created_at)}`;
 
-            btn.appendChild(title);
-            btn.appendChild(msg);
+            b.appendChild(title);
+            b.appendChild(msg);
 
-            btn.addEventListener("click", () => {
+            b.addEventListener("click", () => {
               window.location.href = n.url;
             });
 
-            notifList.appendChild(btn);
+            notifList.appendChild(b);
           });
         }
 
@@ -963,11 +1235,10 @@ body.no-nav-padding { padding-top: 0 !important; }
   const profileBtn = document.getElementById("profile-btn");
   const profileMenu = document.getElementById("profile-menu");
 
-  function closeDesktopProfile() {
-    if (!profileDD) return;
-    profileDD.classList.remove("open");
-    profileBtn?.setAttribute("aria-expanded", "false");
-    profileMenu?.setAttribute("aria-hidden", "true");
+  function closeProfile() {
+    profileDD?.classList.remove("open");
+    profileBtn?.setAttribute("aria-expanded","false");
+    profileMenu?.setAttribute("aria-hidden","true");
   }
 
   if (profileDD && profileBtn && profileMenu) {
@@ -979,7 +1250,43 @@ body.no-nav-padding { padding-top: 0 !important; }
       profileMenu.setAttribute("aria-hidden", open ? "false" : "true");
     });
 
-    document.addEventListener("click", () => closeDesktopProfile());
+    document.addEventListener("click", (e) => {
+      if (!profileDD.contains(e.target)) closeProfile();
+    });
   }
+
+  // ===== Mobile account panel toggle =====
+  const mobAcc = document.querySelector(".nav-account-mobile");
+  const mobTrig = document.getElementById("mobile-account-trigger");
+  const mobPanel = document.getElementById("mobile-account-panel");
+
+  function closeMobileAccount() {
+    mobAcc?.classList.remove("open");
+    mobTrig?.setAttribute("aria-expanded","false");
+    mobPanel?.setAttribute("aria-hidden","true");
+  }
+
+  if (mobAcc && mobTrig && mobPanel) {
+    mobTrig.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const open = !mobAcc.classList.contains("open");
+      mobAcc.classList.toggle("open", open);
+      mobTrig.setAttribute("aria-expanded", open ? "true" : "false");
+      mobPanel.setAttribute("aria-hidden", open ? "false" : "true");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!mobAcc.contains(e.target)) closeMobileAccount();
+    });
+  }
+
+  // ESC closes both
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeProfile();
+      closeMobileAccount();
+      notifDropdown?.classList.remove("open");
+    }
+  });
 })();
-  </script>
+</script>
