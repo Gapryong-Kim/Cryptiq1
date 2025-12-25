@@ -518,6 +518,32 @@
       color: var(--muted);
       margin: 0;
     }
+    /* ===== Pro modal close (center the X) ===== */
+.promodal-x{
+  width: 36px;
+  height: 36px;
+  padding: 0;                 /* important */
+  display: inline-flex;        /* important */
+  align-items: center;         /* important */
+  justify-content: center;     /* important */
+
+  border: 1px solid var(--line-2, #343434);
+  background: transparent;
+  color: var(--text, #f0f0f0);
+
+  border-radius: 12px;
+  cursor: pointer;
+
+  font-size: 18px;             /* tweak if you want bigger/smaller */
+  line-height: 1;              /* important */
+}
+
+.promodal-x:hover{
+  background: var(--input-hover, rgba(255,255,255,0.06));
+  border-color: var(--accent, #00ffd5);
+  box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+}
+
   </style>
 </head>
 
