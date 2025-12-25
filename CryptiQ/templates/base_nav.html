@@ -32,66 +32,65 @@
 
   <ul class="nav-items" id="nav-menu">
     {% if user %}
+      <!-- Mobile account panel (clean + professional) -->
       <li class="nav-account-mobile">
-        <div class="profile-dropdown mobile">
-          <button class="profile-btn" id="profile-btn-mobile" aria-label="Profile menu" aria-expanded="false">
-            <div class="avatar">{{ user['username'][0].upper() }}</div>
-          </button>
-
-          <!-- Mobile dropdown -->
-          <div class="dropdown-menu mobile-menu" id="profile-menu-mobile" aria-hidden="true">
-            <div class="dd-head">
-              <div class="dd-avatar">{{ user['username'][0].upper() }}</div>
-              <div class="dd-head-meta">
-                <div class="dd-name">
-                  <span class="dd-username">{{ user['username'] }}</span>
-                  <span class="dd-badges">
-                    {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
-                    {% if user.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
-                  </span>
-                </div>
-                <div class="dd-sub">Signed in</div>
-              </div>
-            </div>
-
-            <div class="dd-section">
-              <a class="dd-item" href="{{ url_for('account') }}">
-                <span class="dd-ico" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                       stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21a8 8 0 0 0-16 0"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                </span>
-                <span>Account</span>
-              </a>
-
-              <a class="dd-item" href="{{ url_for('posts_new') }}">
-                <span class="dd-ico" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                       stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"/>
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-                  </svg>
-                </span>
-                <span>New Post</span>
-              </a>
-            </div>
-
-            <div class="dd-sep"></div>
-
-            <a class="dd-item danger" href="{{ url_for('logout') }}">
-              <span class="dd-ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <path d="M16 17l5-5-5-5"/>
-                  <path d="M21 12H9"/>
-                </svg>
+        <button class="mobile-account-trigger" id="mobile-account-trigger" type="button" aria-expanded="false">
+          <div class="avatar">{{ user['username'][0].upper() }}</div>
+          <div class="mobile-account-meta">
+            <div class="mobile-account-name">
+              <span class="mobile-username">{{ user['username'] }}</span>
+              <span class="mobile-badges">
+                {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+                {% if user.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
               </span>
-              <span>Logout</span>
-            </a>
+            </div>
+            <div class="mobile-account-sub">Signed in</div>
           </div>
+<span class="chev" aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+</span>
+        </button>
+
+        <div class="mobile-account-panel" id="mobile-account-panel" aria-hidden="true">
+          <a class="account-item" href="{{ url_for('account') }}">
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21a8 8 0 0 0-16 0"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span>Account</span>
+          </a>
+
+          <a class="account-item" href="{{ url_for('posts_new') }}">
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+              </svg>
+            </span>
+            <span>New Post</span>
+          </a>
+
+          <div class="account-sep"></div>
+
+          <a class="account-item danger" href="{{ url_for('logout') }}">
+            <span class="ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <path d="M16 17l5-5-5-5"/>
+                <path d="M21 12H9"/>
+              </svg>
+            </span>
+            <span>Logout</span>
+          </a>
         </div>
       </li>
     {% endif %}
@@ -155,30 +154,32 @@
         </div>
       </div>
 
-      <!-- Desktop profile dropdown -->
-      <div class="profile-dropdown">
-        <button class="profile-btn" id="profile-btn" aria-label="Profile menu">
+      <!-- Desktop profile dropdown (clean + professional) -->
+      <div class="profile-dropdown" id="profile-dd">
+        <button class="profile-btn" id="profile-btn" aria-label="Profile menu" aria-expanded="false">
           <div class="avatar">{{ user['username'][0].upper() }}</div>
         </button>
 
-        <div class="dropdown-menu" id="profile-menu">
-          <div class="dd-head">
-            <div class="dd-avatar">{{ user['username'][0].upper() }}</div>
-            <div class="dd-head-meta">
-              <div class="dd-name">
-                <span class="dd-username">{{ user['username'] }}</span>
-                <span class="dd-badges">
-                  {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
-                  {% if user.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
-                </span>
+        <div class="account-menu" id="profile-menu" aria-hidden="true">
+          <div class="account-head">
+            <div class="account-head-left">
+              <div class="dd-avatar">{{ user['username'][0].upper() }}</div>
+              <div class="account-head-meta">
+                <div class="account-name-row">
+                  <span class="account-username">{{ user['username'] }}</span>
+                  <span class="account-badges">
+                    {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+                    {% if user.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
+                  </span>
+                </div>
+                <div class="account-sub">Signed in</div>
               </div>
-              <div class="dd-sub">Signed in</div>
             </div>
           </div>
 
-          <div class="dd-section">
-            <a class="dd-item" href="{{ url_for('account') }}">
-              <span class="dd-ico" aria-hidden="true">
+          <div class="account-list">
+            <a class="account-item" href="{{ url_for('account') }}">
+              <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20 21a8 8 0 0 0-16 0"/>
@@ -188,8 +189,8 @@
               <span>Account</span>
             </a>
 
-            <a class="dd-item" href="{{ url_for('posts_new') }}">
-              <span class="dd-ico" aria-hidden="true">
+            <a class="account-item" href="{{ url_for('posts_new') }}">
+              <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 20h9"/>
@@ -198,21 +199,21 @@
               </span>
               <span>New Post</span>
             </a>
+
+            <div class="account-sep"></div>
+
+            <a class="account-item danger" href="{{ url_for('logout') }}">
+              <span class="ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <path d="M16 17l5-5-5-5"/>
+                  <path d="M21 12H9"/>
+                </svg>
+              </span>
+              <span>Logout</span>
+            </a>
           </div>
-
-          <div class="dd-sep"></div>
-
-          <a class="dd-item danger" href="{{ url_for('logout') }}">
-            <span class="dd-ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <path d="M16 17l5-5-5-5"/>
-                <path d="M21 12H9"/>
-              </svg>
-            </span>
-            <span>Logout</span>
-          </a>
         </div>
       </div>
     {% endif %}
@@ -296,7 +297,7 @@ body { padding-top: 80px; }
   border-color: rgba(0,255,213,0.4);
 }
 
-/* Avatar (nav icon) */
+/* Avatar */
 .profile-btn {
   all: unset;
   display: flex;
@@ -332,158 +333,8 @@ body { padding-top: 80px; }
   transform: scale(1.03);
 }
 
-/* ===== Badge styles + wrap safety ===== */
-.dd-name{
-  display: flex;
-  flex-wrap: wrap;           /* ✅ allows badges to wrap */
-  align-items: center;
-  gap: 8px;
-  font-weight: 850;
-  color: var(--text);
-  line-height: 1.2;
-  min-width: 0;
-}
-.dd-username{
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dd-badges{
-  display: inline-flex;
-  flex-wrap: wrap;           /* ✅ badges wrap instead of overflowing */
-  gap: 6px;
-  align-items: center;
-}
-
-
-
-/* ===== Profile dropdown ===== */
-.profile-dropdown { position: relative; }
-
-.dropdown-menu{
-  position: absolute;
-  right: 0;
-  top: calc(100% + 10px);
-  min-width: 260px;
-  padding: 10px;
-  border-radius: 16px;
-  background: color-mix(in oklab, var(--panel) 92%, transparent);
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
-  backdrop-filter: blur(16px);
-  z-index: 1001;
-
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  opacity: 0;
-  transform: translateY(-6px) scale(0.98);
-  pointer-events: none;
-  transition: opacity .18s ease, transform .18s ease;
-}
-
-.profile-dropdown.open .dropdown-menu{
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: all;
-}
-
-/* Header */
-.dd-head{
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 10px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-}
-
-.dd-avatar{
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
-  background: rgba(0,255,213,0.10);
-  border: 1px solid rgba(0,255,213,0.35);
-  color: var(--accent);
-  flex: 0 0 auto;
-}
-
-.dd-head-meta{ min-width: 0; }
-.dd-sub{
-  margin-top: 3px;
-  font-size: .85rem;
-  color: var(--muted);
-}
-
-/* Items */
-.dd-section{ display: grid; gap: 6px; }
-
-.dd-item{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 10px;
-  border-radius: 12px;
-  text-decoration: none;
-  color: var(--text);
-  font-weight: 650;
-  border: 1px solid transparent;
-  background: transparent;
-  transition: background .16s ease, border-color .16s ease, transform .16s ease;
-}
-
-.dd-ico{
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: var(--text);
-  flex: 0 0 auto;
-}
-.dd-ico svg{
-  width: 16px;
-  height: 16px;
-  display: block;
-  opacity: .95;
-}
-
-.dd-item:hover{
-  background: rgba(0,255,213,0.10);
-  border-color: rgba(0,255,213,0.22);
-  transform: translateY(-1px);
-}
-
-.dd-sep{
-  height: 1px;
-  background: rgba(255,255,255,0.08);
-  margin: 0 6px;
-}
-
-/* Danger row */
-.dd-item.danger{ color: #ff6b6b; }
-.dd-item.danger .dd-ico{
-  color: #ff6b6b;
-  border-color: rgba(255,90,90,0.18);
-  background: rgba(255,90,90,0.06);
-}
-.dd-item.danger:hover{
-  background: rgba(255,90,90,0.12);
-  border-color: rgba(255,90,90,0.22);
-}
-
 /* ===== Notifications ===== */
 .notif-wrapper { position: relative; }
-
 .notif-btn {
   position: relative;
   display: inline-flex;
@@ -501,7 +352,6 @@ body { padding-top: 80px; }
   background: rgba(0,255,213,0.12);
   border-color: rgba(0,255,213,0.4);
 }
-
 .notif-badge {
   position: absolute;
   top: -4px;
@@ -518,7 +368,6 @@ body { padding-top: 80px; }
   justify-content: center;
   line-height: 1;
 }
-
 .notif-dropdown {
   position: absolute;
   right: 0;
@@ -549,7 +398,6 @@ body { padding-top: 80px; }
 }
 .notif-list { max-height: 260px; overflow-y: auto; }
 .notif-empty { padding: 10px 12px; font-size: 0.9rem; color: var(--muted); margin: 0; }
-
 .notif-item {
   width: 100%;
   border: none;
@@ -564,7 +412,151 @@ body { padding-top: 80px; }
 .notif-title { font-weight: 600; font-size: 0.9rem; color: var(--text); }
 .notif-message { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
 
-/* Mobile */
+/* ============================
+   CLEAN ACCOUNT MENU (DESKTOP)
+   ============================ */
+.profile-dropdown { position: relative; }
+
+.account-menu{
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 280px;
+  max-width: calc(100vw - 20px);
+  padding: 10px;
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+  backdrop-filter: blur(16px);
+  z-index: 1001;
+
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.profile-dropdown.open .account-menu{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+.account-head{
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 8px;
+}
+
+.account-head-left{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dd-avatar{
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  background: rgba(0,255,213,0.10);
+  border: 1px solid rgba(0,255,213,0.35);
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.account-head-meta{ min-width: 0; flex: 1; }
+.account-name-row{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.account-username{
+  font-weight: 850;
+  color: var(--text);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-badges{
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+.account-sub{
+  margin-top: 3px;
+  font-size: .85rem;
+  color: var(--muted);
+}
+
+.account-list{ display: grid; gap: 6px; padding: 2px; }
+
+.account-item{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 650;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.account-item:hover{
+  background: rgba(0,255,213,0.10);
+  border-color: rgba(0,255,213,0.22);
+  transform: translateY(-1px);
+}
+.account-item .ico{
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text);
+  flex: 0 0 auto;
+}
+.account-item .ico svg{
+  width: 16px;
+  height: 16px;
+  display: block;
+  opacity: .95;
+}
+.account-item.danger{ color: #ff6b6b; }
+.account-item.danger .ico{
+  color: #ff6b6b;
+  border-color: rgba(255,90,90,0.18);
+  background: rgba(255,90,90,0.06);
+}
+.account-item.danger:hover{
+  background: rgba(255,90,90,0.12);
+  border-color: rgba(255,90,90,0.22);
+}
+.account-sep{
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 6px 6px;
+}
+
+/* ============================
+   MOBILE SIDEBAR + ACCOUNT PANEL
+   ============================ */
 .hamburger {
   display: none;
   position: absolute;
@@ -609,7 +601,7 @@ body { padding-top: 80px; }
     border-left: 1px solid rgba(255,255,255,0.06);
     width: 280px;
     height: calc(100vh - 60px);
-    padding: 20px;
+    padding: 16px;
     gap: 14px;
     transition: right 0.35s cubic-bezier(0.25, 1, 0.3, 1);
     overflow-y: auto;
@@ -618,114 +610,331 @@ body { padding-top: 80px; }
   .nav-account-mobile { display: block; width: 100%; }
   .nav-extra-mobile { display: block; width: 100%; }
 
-  /* Collapsible mobile profile dropdown */
-  #profile-menu-mobile{
-    display: none;
+  /* Mobile account trigger */
+  .mobile-account-trigger{
     width: 100%;
-    margin-top: 10px;
-  }
-  .profile-dropdown.mobile.open #profile-menu-mobile{
-    display: flex;
-  }
-
-  .dropdown-menu.mobile-menu{
-    position: static;
-    transform: none;
-    opacity: 1;
-    pointer-events: all;
-    box-shadow: none;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 12px;
     border-radius: 14px;
-    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.03);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+  }
+  .mobile-account-meta{ min-width: 0; }
+  .mobile-account-name{
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
+    align-items: center;
     min-width: 0;
-    max-width: 100%;
+    line-height: 1.2;
   }
-
-  .dropdown-menu.mobile-menu .dd-head{
-    padding: 8px;
-    gap: 10px;
-    border-radius: 12px;
-  }
-
-  .dropdown-menu.mobile-menu .dd-avatar{
-    width: 34px;
-    height: 34px;
-    font-size: .95rem;
-  }
-
-  .dropdown-menu.mobile-menu .dd-sub{
-    font-size: .8rem;
-  }
-
-  .dropdown-menu.mobile-menu .dd-item{
-    padding: 9px 9px;
-    border-radius: 11px;
-    font-size: .95rem;
-  }
-
-  .dropdown-menu.mobile-menu .dd-ico{
-    width: 26px;
-    height: 26px;
-    border-radius: 9px;
-  }
-  .dropdown-menu.mobile-menu .dd-ico svg{
-    width: 15px;
-    height: 15px;
-  }
-}
-/* --- Mobile dropdown overflow fix --- */
-@media (max-width: 900px) {
-  /* Make sure the mobile dropdown never exceeds the sidebar width */
-  .dropdown-menu.mobile-menu {
-    width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-
-  /* Allow the header row to wrap instead of forcing overflow */
-  .dropdown-menu.mobile-menu .dd-head {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-
-  /* Critical: let meta area shrink and wrap */
-  .dropdown-menu.mobile-menu .dd-head-meta {
+  .mobile-username{
+    font-weight: 850;
     min-width: 0;
-    flex: 1 1 160px; /* can shrink */
-  }
-
-  /* Username + badges row: allow wrapping */
-  .dropdown-menu.mobile-menu .dd-name {
-    min-width: 0;
-    flex-wrap: wrap;
-  }
-
-  /* Badges must be allowed to wrap + not force width */
-  .dropdown-menu.mobile-menu .dd-badges {
-    flex-wrap: wrap;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  /* If any badge is too wide, keep it contained */
-  .dropdown-menu.mobile-menu .dd-badges > * {
-    max-width: 100%;
-  }
-
-  /* Extra safety: prevent any long text from pushing layout */
-  .dropdown-menu.mobile-menu .dd-sub,
-  .dropdown-menu.mobile-menu .dd-username {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mobile-badges{
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    min-width: 0;
+  }
+  .mobile-account-sub{
+    margin-top: 3px;
+    font-size: .85rem;
+    color: var(--muted);
+  }
+  .mobile-account-trigger .chev{
+    opacity: .85;
+    transform: translateY(-1px);
+    transition: transform .18s ease;
+  }
+  .nav-account-mobile.open .mobile-account-trigger .chev{
+    transform: rotate(180deg);
+  }
+
+  /* Mobile account panel */
+  .mobile-account-panel{
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.02);
+    display: none;
+    box-sizing: border-box;
+  }
+  .nav-account-mobile.open .mobile-account-panel{
+    display: grid;
+    gap: 6px;
+  }
+
+  /* Make items full-width and safe */
+  .mobile-account-panel .account-item{
+    width: 100%;
+    box-sizing: border-box;
   }
 }
+/* ============================
+   SLEEK ACCOUNT MENU OVERRIDES
+   (paste AFTER existing nav CSS)
+   ============================ */
+
+/* Smaller overall card + less padding */
+.account-menu{
+  width: 252px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.52);
+}
+
+/* Tighter header */
+.account-head{
+  padding: 8px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+.dd-avatar{
+  width: 34px;
+  height: 34px;
+  font-size: .95rem;
+}
+.account-name-row{ gap: 6px; }
+.account-username{
+  font-size: .95rem;
+  font-weight: 850;
+}
+.account-sub{
+  font-size: .78rem;
+  margin-top: 2px;
+  opacity: .9;
+}
+
+/* List tighter */
+.account-list{ gap: 5px; padding: 1px; }
+.account-sep{ margin: 4px 6px; }
+
+/* Make rows sleeker (less “fat”) */
+.account-item{
+  padding: 8px 8px;
+  border-radius: 11px;
+  font-weight: 650;
+  font-size: .92rem;
+  gap: 9px;
+}
+.account-item:hover{
+  transform: translateY(-0.5px);
+}
+
+/* Smaller icon pill */
+.account-item .ico{
+  width: 24px;
+  height: 24px;
+  border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.account-item .ico svg{
+  width: 14px;
+  height: 14px;
+}
+
+/* Optional: add a subtle divider “rail” look */
+.account-list{
+  position: relative;
+}
+.account-list::before{
+  content:"";
+  position:absolute;
+  left: 13px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: rgba(255,255,255,0.06);
+  pointer-events:none;
+  opacity: .7;
+}
+.account-item .ico{ z-index: 1; }
+
+/* ============================
+   MOBILE ACCOUNT PANEL SLEEK
+   ============================ */
 @media (max-width: 900px){
-  .nav-items{ padding: 16px; } /* instead of 20px */
+  .mobile-account-trigger{
+    padding: 10px 10px;
+    border-radius: 13px;
+  }
+  .mobile-account-trigger .avatar{
+    width: 30px;
+    height: 30px;
+    font-size: .95rem;
+  }
+  .mobile-username{ font-size: .95rem; }
+  .mobile-account-sub{ font-size: .78rem; }
+
+  .mobile-account-panel{
+    padding: 8px;
+    border-radius: 13px;
+  }
+
+  .mobile-account-panel .account-item{
+    padding: 8px 8px;
+    border-radius: 11px;
+    font-size: .92rem;
+  }
+
+  .mobile-account-panel .account-item .ico{
+    width: 24px;
+    height: 24px;
+    border-radius: 9px;
+  }
+  .mobile-account-panel .account-item .ico svg{
+    width: 14px;
+    height: 14px;
+  }
+
+  /* The rail on mobile too */
+  .mobile-account-panel{
+    position: relative;
+  }
+  .mobile-account-panel::before{
+    content:"";
+    position:absolute;
+    left: 21px;
+    top: 10px;
+    bottom: 10px;
+    width: 1px;
+    background: rgba(255,255,255,0.06);
+    pointer-events:none;
+    opacity: .7;
+  }
+  .mobile-account-panel .ico{ z-index: 1; }
+}
+/* =========================================
+   ULTRA-SLIM MOBILE ACCOUNT MENU OVERRIDES
+   paste AFTER all existing nav CSS
+   ========================================= */
+@media (max-width: 900px) {
+
+  /* Slim the whole sidebar */
+  .nav-items{
+    width: 260px;          /* was 280 */
+    padding: 12px;         /* was 20/16 */
+    gap: 10px;             /* was 14 */
+  }
+
+  /* Make the mobile account dropdown container not add extra bulk */
+  .nav-account-mobile{ width: 100%; }
+
+  /* Remove “card inside card” feeling */
+  .dropdown-menu.mobile-menu{
+    padding: 8px;          /* was 10 */
+    gap: 6px;              /* was 8 */
+    border-radius: 12px;   /* was 14 */
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* Slim header */
+  .dropdown-menu.mobile-menu .dd-head{
+    padding: 7px;          /* was 8 */
+    gap: 8px;              /* was 10 */
+    border-radius: 11px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .dropdown-menu.mobile-menu .dd-avatar{
+    width: 30px;           /* was 34 */
+    height: 30px;
+    font-size: .9rem;
+  }
+
+  .dropdown-menu.mobile-menu .dd-sub{
+    font-size: .76rem;     /* smaller */
+    margin-top: 1px;
+  }
+
+  /* Make username row tighter + prevent big wrap */
+  .dropdown-menu.mobile-menu .dd-name{
+    gap: 6px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  .dropdown-menu.mobile-menu .dd-username{
+    font-size: .92rem;
+    max-width: 160px;      /* stops badges pushing layout */
+  }
+  .dropdown-menu.mobile-menu .dd-badges{
+    gap: 5px;
+  }
+
+  /* Slim menu items: this is the big one */
+  .dropdown-menu.mobile-menu .dd-item{
+    padding: 7px 8px;      /* was 9 */
+    border-radius: 10px;   /* was 11 */
+    gap: 8px;
+    font-size: .92rem;
+  }
+
+  /* Make icon tiles smaller + less “puffy” */
+  .dropdown-menu.mobile-menu .dd-ico{
+    width: 22px;           /* was 26 */
+    height: 22px;
+    border-radius: 8px;    /* was 9 */
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .dropdown-menu.mobile-menu .dd-ico svg{
+    width: 13px;           /* was 15 */
+    height: 13px;
+  }
+
+  /* Tighter separator */
+  .dropdown-menu.mobile-menu .dd-sep{
+    margin: 2px 6px;       /* was bigger */
+    opacity: .8;
+  }
+
+  /* Optional: remove hover lift on mobile (feels chunky) */
+  .dropdown-menu.mobile-menu .dd-item:hover{
+    transform: none;
+  }
 }
 
 /* Disable navbar spacing on certain pages */
+/* === Clean SVG chevron === */
+.chev{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .7;
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+.chev svg{
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+/* Rotate on open */
+.nav-account-mobile.open .chev{
+  transform: rotate(180deg);
+  opacity: .95;
+}
 body.no-nav-padding { padding-top: 0 !important; }
+
 </style>
 
 <!-- === SCRIPT === -->
@@ -784,13 +993,11 @@ body.no-nav-padding { padding-top: 0 !important; }
       burger.classList.toggle("open", open);
       burger.setAttribute("aria-expanded", open ? "true" : "false");
 
-      // close mobile profile dropdown whenever the sidebar opens/closes
-      const mobDD = document.querySelector(".profile-dropdown.mobile");
-      mobDD?.classList.remove("open");
-      const mobBtn = document.getElementById("profile-btn-mobile");
-      mobBtn?.setAttribute("aria-expanded", "false");
-      const mobMenu = document.getElementById("profile-menu-mobile");
-      mobMenu?.setAttribute("aria-hidden", "true");
+      // close mobile account panel whenever sidebar opens/closes
+      const mobAcc = document.querySelector(".nav-account-mobile");
+      mobAcc?.classList.remove("open");
+      document.getElementById("mobile-account-trigger")?.setAttribute("aria-expanded", "false");
+      document.getElementById("mobile-account-panel")?.setAttribute("aria-hidden", "true");
     });
 
     document.addEventListener("click", e => {
@@ -799,12 +1006,10 @@ body.no-nav-padding { padding-top: 0 !important; }
         burger.classList.remove("open");
         burger.setAttribute("aria-expanded", "false");
 
-        const mobDD = document.querySelector(".profile-dropdown.mobile");
-        mobDD?.classList.remove("open");
-        const mobBtn = document.getElementById("profile-btn-mobile");
-        mobBtn?.setAttribute("aria-expanded", "false");
-        const mobMenu = document.getElementById("profile-menu-mobile");
-        mobMenu?.setAttribute("aria-hidden", "true");
+        const mobAcc = document.querySelector(".nav-account-mobile");
+        mobAcc?.classList.remove("open");
+        document.getElementById("mobile-account-trigger")?.setAttribute("aria-expanded", "false");
+        document.getElementById("mobile-account-panel")?.setAttribute("aria-hidden", "true");
       }
     });
   }
@@ -854,10 +1059,10 @@ body.no-nav-padding { padding-top: 0 !important; }
           notifList.innerHTML = '<p class="notif-empty">No notifications yet.</p>';
         } else {
           items.forEach(n => {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "notif-item";
-            if (n.is_read == 0) btn.style.fontWeight = "700";
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "notif-item";
+            if (n.is_read == 0) b.style.fontWeight = "700";
 
             const title = document.createElement("div");
             title.className = "notif-title";
@@ -867,14 +1072,14 @@ body.no-nav-padding { padding-top: 0 !important; }
             msg.className = "notif-message";
             msg.textContent = `${n.message} • ${humanTime(n.created_at)}`;
 
-            btn.appendChild(title);
-            btn.appendChild(msg);
+            b.appendChild(title);
+            b.appendChild(msg);
 
-            btn.addEventListener("click", () => {
+            b.addEventListener("click", () => {
               window.location.href = n.url;
             });
 
-            notifList.appendChild(btn);
+            notifList.appendChild(b);
           });
         }
 
@@ -911,33 +1116,63 @@ body.no-nav-padding { padding-top: 0 !important; }
     setInterval(() => refreshNotifications(false), 45000);
   }
 
-  // ===== Profile dropdown (desktop + mobile) =====
-  const dropdowns = Array.from(document.querySelectorAll(".profile-dropdown"));
-  dropdowns.forEach(dd => {
-    const b = dd.querySelector(".profile-btn");
-    if (!b) return;
-    b.addEventListener("click", e => {
+  // ===== Desktop profile dropdown =====
+  const profileDD = document.getElementById("profile-dd");
+  const profileBtn = document.getElementById("profile-btn");
+  const profileMenu = document.getElementById("profile-menu");
+
+  function closeProfile() {
+    profileDD?.classList.remove("open");
+    profileBtn?.setAttribute("aria-expanded","false");
+    profileMenu?.setAttribute("aria-hidden","true");
+  }
+
+  if (profileDD && profileBtn && profileMenu) {
+    profileBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      dropdowns.forEach(x => x !== dd && x.classList.remove("open"));
-      dd.classList.toggle("open");
-
-      // ARIA only for the mobile one
-      if (dd.classList.contains("mobile")) {
-        const open = dd.classList.contains("open");
-        const mobBtn = document.getElementById("profile-btn-mobile");
-        const mobMenu = document.getElementById("profile-menu-mobile");
-        mobBtn?.setAttribute("aria-expanded", open ? "true" : "false");
-        mobMenu?.setAttribute("aria-hidden", open ? "false" : "true");
-      }
+      const open = !profileDD.classList.contains("open");
+      profileDD.classList.toggle("open", open);
+      profileBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      profileMenu.setAttribute("aria-hidden", open ? "false" : "true");
     });
-  });
 
-  document.addEventListener("click", () => {
-    dropdowns.forEach(dd => dd.classList.remove("open"));
-    const mobBtn = document.getElementById("profile-btn-mobile");
-    const mobMenu = document.getElementById("profile-menu-mobile");
-    mobBtn?.setAttribute("aria-expanded", "false");
-    mobMenu?.setAttribute("aria-hidden", "true");
+    document.addEventListener("click", (e) => {
+      if (!profileDD.contains(e.target)) closeProfile();
+    });
+  }
+
+  // ===== Mobile account panel toggle =====
+  const mobAcc = document.querySelector(".nav-account-mobile");
+  const mobTrig = document.getElementById("mobile-account-trigger");
+  const mobPanel = document.getElementById("mobile-account-panel");
+
+  function closeMobileAccount() {
+    mobAcc?.classList.remove("open");
+    mobTrig?.setAttribute("aria-expanded","false");
+    mobPanel?.setAttribute("aria-hidden","true");
+  }
+
+  if (mobAcc && mobTrig && mobPanel) {
+    mobTrig.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const open = !mobAcc.classList.contains("open");
+      mobAcc.classList.toggle("open", open);
+      mobTrig.setAttribute("aria-expanded", open ? "true" : "false");
+      mobPanel.setAttribute("aria-hidden", open ? "false" : "true");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!mobAcc.contains(e.target)) closeMobileAccount();
+    });
+  }
+
+  // ESC closes both
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeProfile();
+      closeMobileAccount();
+      notifDropdown?.classList.remove("open");
+    }
   });
 })();
 </script>
