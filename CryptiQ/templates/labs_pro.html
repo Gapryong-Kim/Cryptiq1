@@ -313,6 +313,139 @@
         flex-wrap: wrap;
       }
     }
+  /* ===== FAQ / "Read more" calm styling ===== */
+.faq{ display:grid; gap: 10px; }
+
+details{
+  background: color-mix(in oklab, var(--panel) 92%, black);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: none;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .12s ease;
+}
+
+summary{
+  cursor: pointer;
+  font-weight: 900;
+  color: var(--text);
+  list-style: none; /* removes default marker in some browsers */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+summary::-webkit-details-marker{ display:none; }
+
+/* subtle chevron (not neon) */
+summary::after{
+  content: "▾";
+  color: var(--muted);
+  font-weight: 900;
+  opacity: .85;
+  transform: rotate(0deg);
+  transition: transform .15s ease;
+}
+
+details[open] summary::after{
+  transform: rotate(180deg);
+}
+
+/* calm hover/focus: no glow, just a soft ring */
+details:hover{
+  border-color: color-mix(in oklab, var(--line) 60%, var(--accent) 40%);
+  background: color-mix(in oklab, var(--panel) 96%, black);
+}
+
+details:focus-within{
+  border-color: color-mix(in oklab, var(--line) 55%, var(--accent) 45%);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.0), 0 0 0 3px rgba(255,255,255,0.02);
+}
+
+details p{
+  margin: 10px 0 0;
+  color: var(--text-dim);
+  line-height: 1.55;
+  font-size: .96rem;
+}
+
+/* optional: reduce brightness if your accent is super hot */
+details[open]{
+  border-color: color-mix(in oklab, var(--line) 70%, var(--accent) 30%);
+}
+/* ===============================
+   READ MORE — CALM INNER CONTENT
+   =============================== */
+
+/* Main expanded content container */
+details .readmore-inner,
+details .readmore-content,
+details[open] > div{
+  background: color-mix(in oklab, var(--panel) 96%, black);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+/* Kill any neon inset glow */
+details *{
+  box-shadow: none !important;
+}
+
+/* Inner cards / split panels */
+details .card,
+details .subpanel,
+details .visual,
+details .example{
+  background: color-mix(in oklab, var(--panel) 97%, black);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* Code / mapping blocks (these were very neon) */
+details pre,
+details code,
+details .mono,
+details .mapping,
+details .example-box{
+  background: #0f1211; /* neutral dark, no accent */
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+/* Remove accent borders inside */
+details [style*="accent"],
+details .accent,
+details .highlight{
+  border-color: var(--line) !important;
+  background: transparent !important;
+}
+
+/* Buttons inside read-more (Open Tools / Try Breaker) */
+details .btn,
+details .run-btn{
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+details .btn.primary,
+details .run-btn.primary{
+  background: color-mix(in oklab, var(--panel) 85%, var(--accent) 15%);
+  color: var(--text);
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+/* Subtle hover only */
+details .btn:hover,
+details .run-btn:hover{
+  background: rgba(255,255,255,0.04);
+  box-shadow: none;
+}
+
   </style>
 </head>
 
@@ -349,8 +482,12 @@
               {% endif %}
             {% else %}
               <span class="dot free"></span>
-              You’re browsing as a guest. Log in to upgrade.
-            {% endif %}
+You’re browsing as a guest.
+<a href="{{ url_for('login') }}" style="color: var(--accent); text-decoration: none; font-weight: 700;">
+  Log in
+</a>
+to upgrade.
+{% endif %}
           </div>
         </div>
 
