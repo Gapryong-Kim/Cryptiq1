@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Cipher Lab — Cipher Info & Guides</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
   <style>
-    body {
+    body{
       background-color: var(--bg);
       color: var(--text);
       font-family: 'Inter','Segoe UI',Tahoma,Verdana,sans-serif;
       margin: 0; padding: 0;
     }
-    .sidebar {
+
+    .sidebar{
       position: fixed; top:65px; left:0;
       width:260px; height:calc(100% - 65px);
       background:var(--panel-2);
@@ -21,57 +23,315 @@
       box-sizing:border-box; z-index:900;
       transition:transform .25s ease;
     }
-    .sidebar h3{color:var(--accent);margin-bottom:10px;font-size:.95rem;text-transform:uppercase;letter-spacing:1px;}
-    .sidebar a{display:block;color:var(--text-dim);text-decoration:none;margin:6px 0;padding:8px 10px;border-radius:8px;transition:.2s;}
-    .sidebar a:hover{background:var(--accent);color:#0f0f0f;box-shadow:0 0 12px var(--accent-soft-2);}
-    #sidebar-overlay{position:fixed;inset:65px 0 0 0;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:850;opacity:0;display:none;transition:opacity .25s;}
-    .content{margin-left:280px;padding:110px 60px 60px;max-width:900px;}
+    .sidebar h3{
+      color:var(--accent);
+      margin-bottom:10px;
+      font-size:.95rem;
+      text-transform:uppercase;
+      letter-spacing:1px;
+    }
+    .sidebar a{
+      display:block;
+      color:var(--text-dim);
+      text-decoration:none;
+      margin:6px 0;
+      padding:8px 10px;
+      border-radius:8px;
+      transition:.2s;
+    }
+    .sidebar a:hover{
+      background:var(--accent);
+      color:#0f0f0f;
+      box-shadow:0 0 12px var(--accent-soft-2);
+    }
+
+    #sidebar-overlay{
+      position:fixed;
+      inset:65px 0 0 0;
+      background:rgba(0,0,0,0.45);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      z-index:850;
+      opacity:0;
+      display:none;
+      transition:opacity .25s;
+    }
+
+    .content{
+      margin-left:280px;
+      padding:110px 60px 60px;
+      max-width:920px;
+    }
+
     .content h1{color:var(--accent);font-size:2rem;margin-bottom:12px;}
-    .content h2{color:var(--accent);margin-top:44px;margin-bottom:12px;border-bottom:1px solid var(--accent);padding-bottom:6px;}
-    .content h3{color:var(--accent);margin-top:20px;font-size:1.05rem;}
-    .content p,.content li{line-height:1.65;color:var(--text);}
+    .content h2{
+      color:var(--accent);
+      margin-top:46px;
+      margin-bottom:12px;
+      border-bottom:1px solid var(--accent);
+      padding-bottom:6px;
+    }
+    .content h3{
+      color:var(--accent);
+      margin-top:18px;
+      font-size:1.05rem;
+    }
+    .content p,.content li{
+      line-height:1.68;
+      color:var(--text);
+    }
+
+    a.inline-link{
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:650;
+    }
+    a.inline-link:hover{ text-decoration:underline; }
+
     .example-box,.tip,.note{border-radius:10px;transition:.25s;}
-    .example-box:hover,.tip:hover,.note:hover{box-shadow:0 0 18px var(--accent-soft-2);}
-    .example-box{background:var(--panel-2);border:1px solid var(--line-2);padding:12px 14px;margin:10px 0 18px;font-family:ui-monospace,monospace;color:var(--accent);white-space:pre-wrap;}
-    .tip{background:var(--panel);border-left:4px solid var(--accent);padding:10px 14px;margin:12px 0 18px;color:var(--text-dim);}
-    .note{background:linear-gradient(180deg,rgba(255,215,0,0.06),transparent);border:1px dashed rgba(255,215,0,0.35);padding:10px 14px;margin:12px 0 18px;}
-    a.inline-link{color:var(--accent);text-decoration:none;font-weight:500;}
-    a.inline-link:hover{text-decoration:underline;}
-    @media(max-width:980px){.content{margin-left:0;padding:110px 20px 60px;}.sidebar{transform:translateX(-110%);width:84%;max-width:340px;box-shadow:6px 0 24px rgba(0,0,0,0.35);} .sidebar.open{transform:translateX(0);} }
-    html{scroll-behavior:smooth;}
-    /* keep accent halo for example/tip */
-.example-box:hover,
-.tip:hover {
-  box-shadow: 0 0 18px var(--accent-soft-2);
-}
+    .example-box:hover,.tip:hover{ box-shadow:0 0 18px var(--accent-soft-2); }
 
-/* yellow note styling */
-:root {
-  /* tweak these if you want it subtler/stronger */
-  --note-glow: rgba(255, 215, 0, 0.28);  /* outer halo */
-  --note-ring: rgba(255, 215, 0, 0.35);  /* thin ring */
-}
+    .example-box{
+      background:var(--panel-2);
+      border:1px solid var(--line-2);
+      padding:12px 14px;
+      margin:10px 0 18px;
+      font-family:ui-monospace,monospace;
+      color:var(--accent);
+      white-space:pre-wrap;
+    }
+    .tip{
+      background:var(--panel);
+      border-left:4px solid var(--accent);
+      padding:10px 14px;
+      margin:12px 0 18px;
+      color:var(--text-dim);
+    }
 
-.note {
-  background: linear-gradient(180deg, rgba(255,215,0,0.06), transparent);
-  border: 1px dashed rgba(255,215,0,0.35);
-  /* reset any inherited shadow so hover stands out */
-  box-shadow: none;
-  /* ...existing note styles... */
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.10);
-}
+    /* yellow note styling */
+    :root{
+      --note-glow: rgba(255, 215, 0, 0.28);
+      --note-ring: rgba(255, 215, 0, 0.35);
+    }
+    .note{
+      background:linear-gradient(180deg,rgba(255,215,0,0.06),transparent);
+      border:1px dashed rgba(255,215,0,0.35);
+      padding:10px 14px;
+      margin:12px 0 18px;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.10);
+      color: var(--text);
+    }
+    .note:hover{
+      box-shadow:
+        0 0 0 2px var(--note-ring),
+        0 0 24px var(--note-glow);
+    }
 
-.note:hover {
-  /* soft gold ring + halo, not blue */
-  box-shadow:
-    0 0 0 2px var(--note-ring),
-    0 0 24px var(--note-glow);
-}
+    html{ scroll-behavior:smooth; }
 
+    /* ===============================
+       WhatsApp-style “Read more”
+       (no big cards; just a neat
+       expandable block inside section)
+       =============================== */
 
+    details.more{
+      margin: 10px 0 22px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+    details.more > summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      user-select:none;
+      outline:none;
+    }
+    details.more > summary::-webkit-details-marker{ display:none; }
 
+    .more-left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap: wrap;
+    }
+    .more-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line-2);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      font-weight: 900;
+      font-size: .88rem;
+      white-space: nowrap;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    details.more:hover .more-chip{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft, rgba(0,255,213,0.18));
+    }
+
+    .more-meta{
+      color: var(--muted, #a0a0a0);
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    .chev{
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--line-2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color: var(--text);
+      background: rgba(255,255,255,0.02);
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+      flex: 0 0 auto;
+    }
+    details.more[open] .chev{
+      transform: rotate(180deg);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft, rgba(0,255,213,0.18));
+    }
+
+    .more-body{
+      padding: 12px 14px 14px;
+      border-top: 1px solid var(--line-2);
+      display: grid;
+      gap: 12px;
+    }
+
+    .more-grid{
+      display:grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .more-panel{
+      background: rgba(0,0,0,0.16);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 12px;
+    }
+    .more-panel h4{
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: .95rem;
+      letter-spacing: .2px;
+    }
+    .more-panel p, .more-panel li{
+      margin: 0;
+      color: var(--text-dim);
+      line-height: 1.62;
+      font-size: .95rem;
+    }
+    .more-panel ul{ margin: 8px 0 0; padding-left: 18px; }
+
+    .more-illus{
+      border-radius: 12px;
+      border: 1px dashed var(--line-2);
+      background:
+        radial-gradient(60% 60% at 20% 20%, rgba(0,198,165,.12), transparent 55%),
+        radial-gradient(70% 70% at 80% 30%, rgba(0,198,165,.09), transparent 55%),
+        rgba(0,0,0,0.14);
+      padding: 12px;
+      display:grid;
+      gap: 8px;
+      min-height: 170px;
+    }
+    .illus-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      color: var(--text);
+      font-weight: 950;
+      font-size: .9rem;
+    }
+    .illus-sub{
+      color: var(--muted, #a0a0a0);
+      font-size: .86rem;
+      line-height: 1.45;
+    }
+    .mini-code{
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.22);
+      border-radius: 12px;
+      padding: 10px 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      color: var(--accent);
+      white-space: pre-wrap;
+      font-size: .9rem;
+      line-height: 1.5;
+    }
+
+    .more-cta-row{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content:flex-start;
+      margin-top: 2px;
+    }
+    .more-cta{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      text-decoration:none;
+      font-weight: 900;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+    }
+    .more-cta:hover{
+      background: rgba(255,255,255,0.06);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft, rgba(0,255,213,0.18));
+    }
+    .more-cta:active{ transform: translateY(1px); }
+    .more-cta.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .more-cta.primary:hover{
+      background: var(--accent-strong, #00e6c0);
+      border-color: var(--accent-strong, #00e6c0);
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+    }
+
+    /* Mobile */
+    @media(max-width:980px){
+      .content{margin-left:0;padding:110px 20px 60px;}
+      .sidebar{
+        transform:translateX(-110%);
+        width:84%;
+        max-width:340px;
+        box-shadow:6px 0 24px rgba(0,0,0,0.35);
+      }
+      .sidebar.open{transform:translateX(0);}
+      .more-grid{ grid-template-columns: 1fr; }
+    }
   </style>
 </head>
+
 <body>
   {% include 'base_nav.html' %}
 
@@ -105,260 +365,660 @@
       </ul>
       <p>
         This page explains the most well-known ciphers in plain language and shows you how to break them yourself
-        using CryptiQ’s interactive <a class="inline-link" href="{{ url_for('tools_page') }}">Tools</a> and <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a>.
+        using The Cipher Lab’s interactive <a class="inline-link" href="{{ url_for('tools_page') }}">Tools</a> and
+        <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a>.
       </p>
       <div class="tip">
         💡 <strong>Tip:</strong> To start analysing any cipher, run your text through the
         <a class="inline-link" href="{{ url_for('tools_page') }}">Frequency Analyzer</a> — it highlights the most common letters, which often exposes the key.
       </div>
+      <div class="note">
+        Each cipher below has a compact explanation, plus a <strong>Read more</strong> dropdown with a deeper “how it works / how to break / quick visual”.
+      </div>
     </section>
 
+    <!-- ========================= SUBSTITUTION ========================= -->
     <section id="substitution">
       <h2>Substitution Cipher</h2>
       <p>
-        A substitution cipher replaces every letter in the alphabet with another. For instance, A could become M,
-        B could become X, and so on. The pattern of swaps is the “key.”
+        A substitution cipher replaces every letter in the alphabet with another. The mapping stays the same for the entire message —
+        that consistency is exactly what you exploit to break it.
       </p>
-      <div class="example-box">
-Plaintext:  HELLO WORLD  
-Ciphertext: QEBBY TBOBD
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">Plaintext:  HELLO WORLD
+Ciphertext: QEBBY TBOBD</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        Imagine two alphabets — the normal one and a scrambled one. Each letter from the plaintext
-        is replaced by the letter directly opposite it in the scrambled version. To decrypt, reverse the mapping.
+        Use frequency + word patterns. In English, E/T/A/O/I are common. If spaces are kept, word lengths and repeats give huge clues.
       </p>
-      <h3>How to Break It</h3>
-      <p>
-        Because each letter always turns into the same symbol, patterns appear. Using The Cipher Lab’s 
-        <a class="inline-link" href="{{ url_for('tools_page') }}">Frequency Analyzer</a> or 
-        <a class="inline-link" href="{{ url_for('tools_page') }}">Substitution Cipher Analyzer</a>, 
-        you can compare how often each letter appears and start guessing which ones match E, T, or A — the most common in English.
-      </p>
-      <div class="tip">
-        Once you identify small words like “the” or “of”, you can fill in other letters quickly and refine your guesses.
-      </div>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">how it works • what leaks • best workflow</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>What leaks (weakness)</h4>
+              <ul>
+                <li><strong>Letter frequency:</strong> ciphertext inherits English distribution.</li>
+                <li><strong>Repeats:</strong> double letters (LL, EE) and repeated short words.</li>
+                <li><strong>Word shapes:</strong> patterns like <code>_H_</code> can hint “THE”.</li>
+              </ul>
+
+              <h4 style="margin-top:12px;">Practical breaking steps</h4>
+              <ul>
+                <li>Run frequency: guess E/T/A/O/I candidates.</li>
+                <li>Find “THE”, “AND”, “OF”, “TO” using patterns.</li>
+                <li>Lock confirmed letters, then iterate (it snowballs).</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Visual mapping idea</span>
+                <span style="opacity:.7;">(example)</span>
+              </div>
+              <div class="illus-sub">A fixed alphabet swap for the whole message.</div>
+              <div class="mini-code">Plain:  ABCDEFGHIJKLMNOPQRSTUVWXYZ
+Cipher: QWERTYUIOPASDFGHJKLZXCVBNM</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('tools_page') }}">Open Tools</a>
+                <a class="more-cta" href="{{ url_for('index') }}">Try Breaker</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="tip">
+            If you get even 6–10 letters right, the rest becomes much easier. Keep a running mapping and don’t “un-guess” without a reason.
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= CAESAR ========================= -->
     <section id="caesar">
       <h2>Caesar Cipher</h2>
       <p>
-        The Caesar cipher shifts every letter by the same number of positions in the alphabet. 
-        It’s one of the simplest ciphers in history and gets its name from Julius Caesar, who reportedly used it in wartime messages.
+        The Caesar cipher shifts every letter by the same number of positions in the alphabet. After Z, it wraps back to A.
       </p>
-      <div class="example-box">
-Shift: 3  
-Plaintext: HELLO → Ciphertext: KHOOR
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">Shift: 3
+Plaintext: HELLO → Ciphertext: KHOOR</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        Take the alphabet and shift it by a fixed number. A shift of 3 means A becomes D, B becomes E, and so on.
-        After Z, it wraps back around to A.
+        There are only 25 possible shifts. Brute force them and pick the one that produces readable English.
       </p>
-      <h3>How to Break It</h3>
-      <p>
-        There are only 25 possible shifts, so you can test them all instantly using the
-        <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a>. 
-        The correct shift will produce readable English.
-      </p>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">formula • wrap-around • quick checks</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>How it works (math)</h4>
+              <p>
+                Convert letters to numbers A=0..Z=25. Encrypt: <strong>(x + s) mod 26</strong>. Decrypt: <strong>(x − s) mod 26</strong>.
+              </p>
+
+              <h4 style="margin-top:12px;">Fast sanity checks</h4>
+              <ul>
+                <li>Common hits: “THE”, “AND”, “ING”.</li>
+                <li>ROT13 is special: shift 13 decrypts itself.</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Shift wheel</span>
+                <span style="opacity:.7;">(+3)</span>
+              </div>
+              <div class="illus-sub">Just a rotated alphabet.</div>
+              <div class="mini-code">Plain:  ABCDEFGHIJKLMNOPQRSTUVWXYZ
+Shift+3: DEFGHIJKLMNOPQRSTUVWXYZABC</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('tools_page') }}">Frequency Tool</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= VIGENERE ========================= -->
     <section id="vigenere">
       <h2>Vigenère Cipher</h2>
       <p>
-        The Vigenère cipher uses a word as a key to apply multiple Caesar shifts, 
-        changing the pattern throughout the message and making it far more secure than a simple shift.
+        Vigenère uses a keyword to apply multiple Caesar shifts. The shift changes through the message based on the key letters.
       </p>
-      <div class="example-box">
-Key: KEY  
-Plaintext: ATTACKATDAWN  
-Ciphertext: KXRKGIKXREQF
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">Key: KEY
+Plaintext: ATTACKATDAWN
+Ciphertext: KXRKGIKXREQF</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        Write your key word repeatedly above your message. Each letter of the key tells you how far to shift that letter.
-        For example, K shifts by 10, E by 4, and Y by 24.
+        Find the <strong>key length</strong> first (Kasiski / IOC), then solve each column as a Caesar cipher.
       </p>
-      <h3>How to Break It</h3>
-      <p>
-        Start by finding the key length — repeated patterns in the ciphertext give it away. 
-        You can use the <a class="inline-link" href="{{ url_for('tools_page') }}">Frequency Analyzer</a> 
-        to check how regular the spacing is or the <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a> 
-        to automatically test possible keys.
-      </p>
-      <div class="note">
-        Once you know the key length, the cipher becomes several smaller Caesar ciphers — 
-        one for each letter of the key.
-      </div>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">Kasiski • IOC • per-column frequency</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>Key length tools</h4>
+              <ul>
+                <li><strong>Kasiski:</strong> repeated ciphertext chunks → distances share factors ≈ key length.</li>
+                <li><strong>IOC:</strong> split into k columns; the correct k makes columns look “English-like”.</li>
+              </ul>
+
+              <h4 style="margin-top:12px;">Then solve</h4>
+              <ul>
+                <li>For each column, run frequency like Caesar.</li>
+                <li>Combine shifts → keyword.</li>
+                <li>Decrypt and refine (errors stand out quickly).</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Column split idea</span>
+                <span style="opacity:.7;">k=3</span>
+              </div>
+              <div class="illus-sub">Every 3rd character goes into the same bucket.</div>
+              <div class="mini-code">Cipher:  K X R K G I K X R E Q F
+Col 1:  K   K   K   E
+Col 2:    X   G   X   Q
+Col 3:      R   I   R   F</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('tools_page') }}">Tools (freq)</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="note">
+            Once you know the key length, Vigenère becomes several smaller Caesar ciphers — one for each key position.
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= AFFINE ========================= -->
     <section id="affine">
       <h2>Affine Cipher</h2>
       <p>
-        The Affine cipher combines multiplication and addition to turn each letter into another. 
-        It was designed to make simple shifts more complex.
+        Affine encrypts letters using multiplication and addition mod 26. It’s stronger than Caesar, but still small enough to brute force.
       </p>
-      <div class="example-box">
-Key: (a=5, b=8)  
-Plaintext: AFFINE → Ciphertext: IHHWVCS
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">Key: (a=5, b=8)
+Plaintext: AFFINE → Ciphertext: IHHWVCS</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        Each letter is first turned into a number (A=0, B=1, etc). Then it’s multiplied by one number (a)
-        and increased by another (b). The result determines the new letter.
+        Brute force all valid (a,b) pairs and score the outputs for English.
       </p>
-      <h3>How to Break It</h3>
-      <p>
-        You can try all possible (a,b) combinations and check which one forms readable text. 
-        CryptiQ’s <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a> 
-        can automatically test them for you.
-      </p>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">formula • valid a values • decryption</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>Formula</h4>
+              <p>
+                With A=0..Z=25: <strong>E(x)=(a·x+b) mod 26</strong>.
+                Decrypt: <strong>D(y)=a⁻¹·(y−b) mod 26</strong>.
+              </p>
+
+              <h4 style="margin-top:12px;">Valid keys</h4>
+              <p>
+                You need gcd(a,26)=1 so an inverse exists. Valid a values:
+                1,3,5,7,9,11,15,17,19,21,23,25. b can be 0–25.
+              </p>
+
+              <h4 style="margin-top:12px;">Breaking</h4>
+              <ul>
+                <li>Try all valid a and all b.</li>
+                <li>Pick the best-looking plaintext.</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Affine intuition</span>
+                <span style="opacity:.7;">linear</span>
+              </div>
+              <div class="illus-sub">Multiply stretches the alphabet; add shifts it.</div>
+              <div class="mini-code">E(x)=(a·x+b) mod 26
+a=5,b=8:
+A(0)->I(8)
+B(1)->N(13)
+C(2)->S(18)</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= PLAYFAIR ========================= -->
     <section id="playfair">
       <h2>Playfair Cipher</h2>
       <p>
-        The Playfair cipher encrypts pairs of letters using a 5×5 grid built from a keyword.
-        It was the first cipher to hide single-letter frequencies.
+        Playfair encrypts <strong>pairs</strong> of letters using a 5×5 key square (I/J combined). It hides single-letter frequencies — but digraph patterns leak.
       </p>
-      <div class="example-box">
-Key: MONARCHY  
-HELLO → GYIYQ
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">Key: MONARCHY
+HELLO → GYIYQ</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        Build a 5×5 grid with your keyword, skipping repeated letters, then filling in the rest of the alphabet (combining I/J).
-        Split your message into pairs and apply three simple rules:
+        Use digraph frequency + cribs. For serious cracking, heuristic search (hill-climbing) is common.
       </p>
-      <ul>
-        <li>Same row → take the letters to their right.</li>
-        <li>Same column → take the letters below.</li>
-        <li>Different row & column → form a rectangle and swap corners.</li>
-      </ul>
-      <h3>How to Break It</h3>
-      <p>
-        It’s harder than substitution, but you can still look for patterns of repeated pairs.
-        Start with guesses and test them with the <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a>.
-      </p>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">key square • rules • breaking strategy</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>Rules</h4>
+              <ul>
+                <li><strong>Same row:</strong> take letters to the right (wrap).</li>
+                <li><strong>Same column:</strong> take letters below (wrap).</li>
+                <li><strong>Rectangle:</strong> swap corners (same row, other column).</li>
+              </ul>
+
+              <h4 style="margin-top:12px;">Plaintext prep</h4>
+              <ul>
+                <li>Split into pairs.</li>
+                <li>If a pair repeats (LL), insert filler (often X): HE LX LO.</li>
+              </ul>
+
+              <h4 style="margin-top:12px;">Breaking</h4>
+              <ul>
+                <li>Look at digraphs like TH/HE/IN/ER.</li>
+                <li>Try cribs and test quickly with tools.</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Example 5×5 square</span>
+                <span style="opacity:.7;">(I/J)</span>
+              </div>
+              <div class="illus-sub">Built from keyword, then remaining letters.</div>
+              <div class="mini-code">M O N A R
+C H Y B D
+E F G I K
+L P Q S T
+U V W X Z</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= HILL ========================= -->
     <section id="hill">
       <h2>Hill Cipher</h2>
       <p>
-        The Hill cipher encrypts blocks of letters using matrix multiplication. It’s one of the first to use mathematics directly in encryption.
+        The Hill cipher encrypts blocks of letters using matrix multiplication mod 26. It’s a classical cipher that directly uses linear algebra.
       </p>
-      <div class="example-box">
-Key Matrix: [[3,3],[2,5]]  
-Plaintext (HI) → Ciphertext (RC)
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">Key Matrix: [[3,3],[2,5]]
+Plaintext (HI) → Ciphertext (RC)</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        Each letter becomes a number. Letters are grouped (for example, 2 at a time),
-        multiplied by the key matrix, and converted back to letters.
+        If you know matching plaintext/ciphertext blocks, you can solve for the matrix. Otherwise, brute force only works for tiny keys.
       </p>
-      <h3>How to Break It</h3>
-      <p>
-        If you know some plaintext and the corresponding ciphertext, you can calculate the key.
-        Otherwise, automated matrix testing (like in the 
-        <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a>) can recover it through trial and error.
-      </p>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">invertibility • block size • key recovery</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>How it works</h4>
+              <ul>
+                <li>Choose block size n (e.g. 2).</li>
+                <li>Convert letters to numbers.</li>
+                <li>Compute <strong>C = K·P mod 26</strong>.</li>
+              </ul>
+
+              <h4 style="margin-top:12px;">Key requirement</h4>
+              <p>
+                K must be invertible mod 26 (det(K) must have an inverse mod 26).
+              </p>
+
+              <h4 style="margin-top:12px;">Breaking</h4>
+              <ul>
+                <li><strong>Known plaintext:</strong> enough pairs → solve for K.</li>
+                <li><strong>Otherwise:</strong> use automated search with strong scoring.</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Block math</span>
+                <span style="opacity:.7;">n=2</span>
+              </div>
+              <div class="illus-sub">Two letters become a vector, multiplied by the matrix.</div>
+              <div class="mini-code">P=[H,I]=[7,8]
+K=[[3,3],[2,5]]
+C=K·P mod 26</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= AUTOKEY ========================= -->
     <section id="autokey">
       <h2>Autokey Cipher</h2>
       <p>
-        The Autokey cipher is a variant of the Vigenère that extends the key using the plaintext itself,
-        reducing repetition and making patterns harder to spot.
+        Autokey is a Vigenère variant where the key extends using the plaintext itself, reducing repetition and hiding key-length patterns.
       </p>
-      <div class="example-box">
-Key: KEY → Extended Key: KEYATTACK  
-Plaintext: ATTACKATDAWN  
-Ciphertext: KXRKGIQXREQF
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">Key: KEY → Extended Key: KEYATTACK
+Plaintext: ATTACKATDAWN
+Ciphertext: KXRKGIQXREQF</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        After encrypting with your chosen key, the cipher begins adding letters from the plaintext 
-        itself to the end of the key.
+        Use cribs (“DEAR”, “ATTACK”, known headers). Once a chunk of plaintext is guessed, the key stream can unravel.
       </p>
-      <h3>How to Break It</h3>
-      <p>
-        If part of the plaintext can be guessed (like “Dear” or “Attack”), 
-        the key can be reconstructed. CryptiQ’s 
-        <a class="inline-link" href="{{ url_for('tools_page') }}">Frequency Analyzer</a> 
-        can help reveal where the original key ends and the extended key begins.
-      </p>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">why harder • where it leaks • breaking</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>What changes vs Vigenère</h4>
+              <p>
+                After the initial keyword, the key becomes the plaintext stream. That kills repeating-key repeats.
+              </p>
+
+              <h4 style="margin-top:12px;">Breaking</h4>
+              <ul>
+                <li>Guess a plausible plaintext fragment (crib).</li>
+                <li>Use it to derive key letters for that region.</li>
+                <li>Because the key becomes plaintext, recovering plaintext grows the key too.</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Key grows</span>
+                <span style="opacity:.7;">concept</span>
+              </div>
+              <div class="illus-sub">Key stream after the seed keyword is plaintext.</div>
+              <div class="mini-code">Key:      K E Y A T T A C K ...
+Plaintext: A T T A C K A T D A W N</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= TRANSPOSITION ========================= -->
     <section id="transposition">
       <h2>Transposition Ciphers</h2>
       <p>
-        Transposition ciphers rearrange letters instead of replacing them. 
-        They keep the same letters but shuffle their order.
+        Transposition ciphers rearrange letters instead of replacing them. Letter frequency stays roughly English, but words are scrambled.
       </p>
-      <div class="example-box">
-Key: ZEBRAS  
-Plaintext: WEAREDISCOVEREDRUN  
-Ciphertext: EVLNEACDTKESEAQROFO
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">Key: ZEBRAS
+Plaintext: WEAREDISCOVEREDRUN
+Ciphertext: EVLNEACDTKESEAQROFO</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        Write your message in rows beneath a keyword, then read off the columns in the order of the letters in that keyword.
+        Try likely widths (column counts), look for word fragments, and use cribs if you suspect certain words appear.
       </p>
-      <h3>How to Break It</h3>
-      <p>
-        Since letter frequencies remain the same, use 
-        <a class="inline-link" href="{{ url_for('tools_page') }}">Frequency Analyzer</a> 
-        to confirm it’s a transposition. Then, experiment with possible grid widths 
-        using the <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a>.
-      </p>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">spotting it • width testing • cribs</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>How to spot</h4>
+              <ul>
+                <li>Frequency looks “normal” but nothing decodes like substitution.</li>
+                <li>Vowels appear at normal rates.</li>
+              </ul>
+
+              <h4 style="margin-top:12px;">Breaking workflow</h4>
+              <ul>
+                <li>Test widths (2..20 etc) and score outputs for English.</li>
+                <li>For columnar: test short keys or use heuristic search for longer keys.</li>
+                <li>Cribs: try placing a suspected word into a grid.</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Grid concept</span>
+                <span style="opacity:.7;">idea</span>
+              </div>
+              <div class="illus-sub">Fill row-wise, read column-wise (often by key order).</div>
+              <div class="mini-code">WEARE
+DISCO
+VERED
+RUNXX  (padding)</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= BACON ========================= -->
     <section id="bacon">
       <h2>Bacon Cipher</h2>
       <p>
-        Francis Bacon’s cipher hides each letter as a pattern of As and Bs — 
-        often disguised by alternating fonts, colours, or cases.
+        Bacon’s cipher hides letters as patterns of As and Bs — often disguised using two text styles (case, font, bold/normal).
       </p>
-      <div class="example-box">
-AABAA AABAB ABBAB → HELLO
-      </div>
-      <h3>How It Works</h3>
+
+      <div class="example-box">AABAA AABAB ABBAB → HELLO</div>
+
+      <h3>How to Break It (fast)</h3>
       <p>
-        Each letter of the alphabet becomes a five-character sequence of As and Bs.
-        These sequences can be hidden in text appearance, like switching between uppercase and lowercase.
+        Identify the two styles, map them to A/B, group into 5s, and decode.
       </p>
-      <h3>How to Break It</h3>
-      <p>
-        Identify the two symbol styles (e.g., font or case) and convert them to As and Bs.
-        Then decode in groups of five using CryptiQ’s 
-        <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a>.
-      </p>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">carrier text • two styles • decode steps</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>Decoding steps</h4>
+              <ul>
+                <li>Pick a rule: Style 1 = A, Style 2 = B.</li>
+                <li>Read off the A/B stream.</li>
+                <li>Group into chunks of 5.</li>
+                <li>Convert each chunk into a letter (variant-dependent).</li>
+              </ul>
+
+              <h4 style="margin-top:12px;">Common gotcha</h4>
+              <p>
+                Copy/paste often destroys formatting. If styles disappear, use screenshots or inspect the HTML.
+              </p>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Two-style idea</span>
+                <span style="opacity:.7;">A/B</span>
+              </div>
+              <div class="illus-sub">Upper/lower (or bold/normal) becomes bits.</div>
+              <div class="mini-code">a A b a a  -> A B A A A
+Group by 5 -> decode</div>
+              <div class="more-cta-row">
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
+    <!-- ========================= MORSE & ENIGMA ========================= -->
     <section id="morse">
       <h2>Morse & Enigma</h2>
       <p>
-        Morse code represents letters using dots and dashes. 
-        It’s one of the earliest forms of digital communication.
+        Morse is an <strong>encoding</strong> (no secret key), while Enigma is a rotor-based cipher that changes substitution with every key press.
       </p>
-      <div class="example-box">
-HELLO → •••• · ·−·· ·−·· −−−
-      </div>
-      <h3>Enigma Overview</h3>
-      <p>
-        The Enigma machine, used in World War II, used rotating disks and a plugboard 
-        to change the substitution with every key press — creating millions of possible combinations.
-      </p>
-      <h3>How to Break It</h3>
-      <p>
-        Allied codebreakers used repeated phrases (“cribs”), logic, and early computers to test 
-        settings until messages made sense — a process that laid the groundwork for modern computing.
-        Learn more in our <a class="inline-link" href="{{ url_for('posts_list') }}">Community Posts</a>.
-      </p>
-    </section>
-{% include "base_footer.html" %}
 
+      <div class="example-box">HELLO → •••• · ·−·· ·−·· −−−</div>
+
+      <details class="more">
+        <summary>
+          <div class="more-left">
+            <span class="more-chip">Read more</span>
+            <span class="more-meta">morse basics • enigma concept • breaking</span>
+          </div>
+          <span class="chev">⌄</span>
+        </summary>
+
+        <div class="more-body">
+          <div class="more-grid">
+            <div class="more-panel">
+              <h4>Morse basics</h4>
+              <ul>
+                <li>Not a cipher: it’s reversible without a secret.</li>
+                <li>Spacing matters: letter gaps vs word gaps.</li>
+              </ul>
+
+              <h4 style="margin-top:12px;">Enigma overview</h4>
+              <p>
+                Enigma uses rotors + plugboard. The “key” is rotor order, ring settings, start positions, and plugboard pairs.
+              </p>
+
+              <h4 style="margin-top:12px;">How it was broken (high level)</h4>
+              <ul>
+                <li><strong>Cribs</strong> (guessed plaintext fragments).</li>
+                <li><strong>Constraints</strong> + <strong>automation</strong> (bombes).</li>
+              </ul>
+            </div>
+
+            <div class="more-illus">
+              <div class="illus-title">
+                <span>Encoding vs cipher</span>
+                <span style="opacity:.7;">key?</span>
+              </div>
+              <div class="illus-sub">Quick way to tell what kind of “mystery text” you have.</div>
+              <div class="mini-code">Encoding: reversible without secret
+Cipher:    reversible only with key</div>
+              <div class="more-cta-row">
+                <a class="more-cta" href="{{ url_for('posts_list') }}">Community Posts</a>
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="note">
+            If someone says “Morse cipher”, they usually mean “Morse encoding” — there’s no key to crack, just decoding.
+          </div>
+        </div>
+      </details>
+    </section>
+
+    {% include "base_footer.html" %}
   </main>
-  
+
+  <script>
+    // Optional: only one “Read more” open at a time
+    document.addEventListener("DOMContentLoaded", () => {
+      const all = Array.from(document.querySelectorAll("details.more"));
+      all.forEach(d => {
+        d.addEventListener("toggle", () => {
+          if (!d.open) return;
+          all.forEach(other => { if (other !== d) other.open = false; });
+        });
+      });
+    });
+  </script>
 </body>
 </html>
