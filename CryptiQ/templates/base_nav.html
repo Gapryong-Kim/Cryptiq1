@@ -1048,6 +1048,51 @@ body.no-nav-padding { padding-top: 0 !important; }
     display: block;
   }
 }
+/* ===== FIX: mobile account panel item misalignment (icon vs text) ===== */
+@media (max-width: 640px){
+
+  /* Force the rows to behave like real flex rows */
+  .mobile-account-panel a.account-item{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start;
+    gap: 10px;
+
+    /* stop tall weird rows */
+    padding: 10px 10px !important;
+    min-height: 44px;
+    line-height: 1.1;
+  }
+
+  /* Icon pill centered and not “floating” */
+  .mobile-account-panel a.account-item .ico{
+    display: grid !important;
+    place-items: center !important;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    margin: 0 !important;
+  }
+
+  /* SVG shouldn’t affect baseline */
+  .mobile-account-panel a.account-item .ico svg{
+    display: block;
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Text stays vertically centered */
+  .mobile-account-panel a.account-item span:last-child{
+    display: block;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Optional: remove the “rail” inside the mobile panel if it visually fights alignment */
+  .mobile-account-panel::before{
+    display: none !important;
+  }
+}
 
 </style>
 
