@@ -838,6 +838,15 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
   text-transform: uppercase;
   box-shadow: 0 0 0 1px rgba(255,183,3,0.4);
 }
+
+@media (max-width: 640px) {
+  .pro-badge{
+    font-size: 0.5rem;
+    padding: 1px 3 px;
+  }
+
+}
+
 .pro-badge{
   position: relative;
   overflow: hidden;

@@ -1747,6 +1747,35 @@
   padding: 8px 12px;
 }
 
+  /* ===== CoLab toggle button states ===== */
+
+/* ENABLE sharing → blue / accent */
+.run-btn.secondary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0f0f0f;
+}
+
+.run-btn.secondary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+/* DISABLE sharing → dark / neutral */
+.run-btn.danger {
+  background: transparent;
+    
+  
+  border-color: var(--line-2);
+  color: var(--text);
+ 
+}
+
+.run-btn.danger:hover {
+  border-color: rgba(255,255,255,0.25);
+    
+}
+
   </style>
 </head>
 
@@ -2085,7 +2114,6 @@
   </div>
 
   <!-- CoLab Modal (sharing + collaborators) -->
-  <!-- CoLab Modal (sharing + collaborators) -->
 <div id="colab-modal" class="colab" aria-hidden="true">
   <div class="colab-backdrop" data-colab-close="1"></div>
 
@@ -2129,7 +2157,7 @@
 
         <div class="colab-linkrow">
           <input class="colab-link" id="colab-link" readonly value="" />
-          <button class="run-btn secondary" id="colab-copy" type="button">Copy</button>
+          <button  class="run-btn danger" id="colab-copy" type="button" style="text-decoration:solid;">Copy</button>
           <a class="run-btn" id="colab-open" href="#" target="_blank" rel="noopener">Open</a>
         </div>
 

@@ -11,20 +11,12 @@
        INDEX PAGE OVERRIDES (your global style.css centers body)
        ========================================================= */
     body{
-      /* override global:
-         body { display:flex; justify-content:center; align-items:flex-start; }
-         which can create “shunted left / big band” on full-width pages */
       display: block;
       justify-content: initial;
       align-items: initial;
       min-height: 100vh;
     }
 
-    /* You already have this rule in nav CSS:
-       body.no-nav-padding { padding-top: 0 !important; }
-       so we put class on body, not main. */
-
-    /* Optional: keep a nice consistent page background */
     .page{
       width: 100%;
       background: var(--bg);
@@ -51,7 +43,7 @@
 
     .hero-text {
       flex: 1;
-      max-width: 540px;
+      max-width: 560px;
       opacity: 0;
       animation: slideInLeft 1.4s ease forwards;
     }
@@ -60,7 +52,7 @@
       font-size: 3.2rem;
       font-weight: 800;
       line-height: 1.15;
-      margin: 0 0 22px;
+      margin: 0 0 18px;
       color: var(--text);
     }
 
@@ -70,23 +62,68 @@
       font-size: 1.1rem;
       color: var(--muted, var(--text-dim));
       line-height: 1.6;
-      margin-bottom: 36px;
+      margin: 0 0 18px;
     }
 
-    .cta {
+    .hero-hint{
+      color: var(--muted, var(--text-dim));
+      font-size: .95rem;
+      line-height: 1.55;
+      margin: 0 0 14px;
+      opacity: .95;
+    }
+    .hero-hint strong{
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    /* ===== START-HERE BUTTON STRIP ===== */
+    .quick-actions{
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .quick-btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line, rgba(255,255,255,0.10));
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 900;
+      font-size: .95rem;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease, box-shadow .12s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .quick-btn:hover{
+      transform: translateY(-1px);
+      border-color: color-mix(in oklab, var(--accent) 55%, var(--line));
+      box-shadow: 0 0 0 2px var(--accent-soft, rgba(0,255,213,0.20));
+      background: rgba(255,255,255,0.05);
+    }
+    .quick-btn.primary{
       background: var(--accent);
       color: #0f0f0f;
-      border: 1px solid var(--accent);
-      border-radius: 10px;
-      padding: 14px 34px;
-      font-size: 1rem;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .12s ease, filter .12s ease;
-      font-family: inherit;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft, rgba(0,255,213,0.20));
     }
-    .cta:hover { filter: brightness(1.05); transform: translateY(-1px); }
-    .cta:active { transform: translateY(0); }
+    .quick-btn.primary:hover{ filter: brightness(1.05); }
+
+    .quick-sub{
+      margin-top: 12px;
+      color: var(--muted, var(--text-dim));
+      font-size: .95rem;
+      line-height: 1.55;
+    }
+    .quick-sub strong{ color: var(--text); font-weight: 900; }
 
     /* ===== CIPHER BOX ===== */
     .hero-code {
@@ -121,7 +158,7 @@
     /* ===== FIRST TIME SECTION ===== */
     .first-time {
       width: 100%;
-      padding: 120px 0 130px;
+      padding: 110px 0 95px;
       background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
       display: flex;
       justify-content: center;
@@ -135,57 +172,228 @@
     .ft-heading {
       font-size: 2.3rem;
       font-weight: 900;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       color: var(--text);
     }
 
     .ft-subheading {
       color: var(--muted, var(--text-dim));
       font-size: 1rem;
-      max-width: 580px;
-      margin: 0 auto 55px;
+      max-width: 760px;
+      margin: 0 auto 14px;
       line-height: 1.65;
     }
 
-    .ft-cards {
+    /* ===== Featured + 2×2 + Strip layout ===== */
+    .ft-feature{
+      margin: 26px auto 18px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 28px;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 18px;
+      text-decoration: none;
+      color: inherit;
+
+      background: var(--panel);
+      border: 1px solid var(--line, rgba(255,255,255,0.08));
+      border-radius: 16px;
+      padding: 26px 26px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.30);
+      transition: transform .18s ease, border-color .18s ease;
+      text-align: left;
+    }
+    .ft-feature:hover{
+      border-color: var(--accent);
+      transform: translateY(-4px);
+    }
+    .ft-feature-kicker{
+      display: inline-block;
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: .9;
+      margin-bottom: 10px;
+    }
+    .ft-feature h3{ margin: 0 0 10px; font-weight: 900; }
+    .ft-feature p{
+      margin: 0;
+      color: var(--muted, var(--text-dim));
+      line-height: 1.6;
+    }
+    .ft-feature-actions{
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ft-chip{
+      display: inline-flex;
+      align-items:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line, rgba(255,255,255,0.10));
+      background: rgba(255,255,255,0.03);
+      font-weight: 900;
+      font-size: .82rem;
+      color: var(--text);
+    }
+
+    /* right-side mini box */
+    .ft-mini{
+      height: 100%;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line, rgba(255,255,255,0.08));
+      border-radius: 14px;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      text-align: left;
+    }
+    .ft-mini-title{
+      font-weight: 900;
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .ft-mini-title .tag{
+      font-size: .78rem;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line, rgba(255,255,255,0.10));
+      background: rgba(255,255,255,0.03);
+      color: var(--muted, var(--text-dim));
+      white-space: nowrap;
+    }
+    .ft-mini-text{
+      color: var(--muted, var(--text-dim));
+      line-height: 1.6;
+      font-size: .95rem;
+      margin: 0;
+    }
+    .ft-mini-bullets{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted, var(--text-dim));
+      line-height: 1.65;
+      font-size: .92rem;
+    }
+    .ft-mini-cta{
+      margin-top: 6px;
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line, rgba(255,255,255,0.10));
+      background: rgba(255,255,255,0.03);
+      font-weight: 900;
+      text-decoration:none;
+      color: var(--text);
+      width: fit-content;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease, box-shadow .12s ease;
+    }
+    .ft-mini-cta:hover{
+      transform: translateY(-1px);
+      border-color: color-mix(in oklab, var(--accent) 55%, var(--line));
+      box-shadow: 0 0 0 2px var(--accent-soft, rgba(0,255,213,0.20));
+      background: rgba(255,255,255,0.05);
+    }
+
+    .ft-grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 14px;
+      text-align: left;
     }
 
     .ft-card {
       background: var(--panel);
       border: 1px solid var(--line, rgba(255,255,255,0.08));
       border-radius: 14px;
-      padding: 30px 26px;
-      text-align: left;
+      padding: 28px 24px;
       box-shadow: 0 0 20px rgba(0,0,0,0.30);
       transition: transform .18s ease, border-color .18s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      display: grid;
+      gap: 12px;
       text-decoration: none;
       color: inherit;
       min-width: 0;
+      height: 100%;
     }
     .ft-card:hover {
       border-color: var(--accent);
       transform: translateY(-6px);
     }
 
-    .ft-card h3 { color: var(--text); margin: 0; font-weight: 900; }
+    /* NEW: icon header row */
+    .ft-card-top{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .ft-icon{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line, rgba(255,255,255,0.08));
+      flex: 0 0 auto;
+    }
+    .ft-icon svg{
+      width: 20px;
+      height: 20px;
+      stroke: var(--accent);
+      stroke-width: 2;
+      fill: none;
+      opacity: .95;
+    }
+
+    .ft-card h3 { color: var(--text); margin: 0; font-weight: 900; font-size: 1.08rem; }
     .ft-card p  { color: var(--muted, var(--text-dim)); margin: 0; line-height: 1.55; }
 
-    /* ===== FOOTER (simple, clean) ===== */
-    .footer-text {
-      width: 100%;
-      text-align: center;
-      background: color-mix(in oklab, var(--panel) 75%, #000);
-      color: var(--muted, var(--text-dim));
-      padding: 28px 18px;
-      font-size: 0.95rem;
-      border-top: 1px solid var(--line, rgba(255,255,255,0.08));
+    /* posts strip */
+    .ft-strip{
+      margin-top: 18px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 16px;
+      text-decoration:none;
+      color: inherit;
+
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line, rgba(255,255,255,0.08));
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+      text-align:left;
     }
+    .ft-strip strong{ font-weight: 900; }
+    .ft-strip span{
+      color: var(--muted, var(--text-dim));
+      line-height: 1.4;
+    }
+    .ft-strip-arrow{
+      color: var(--accent);
+      font-weight: 900;
+    }
+    .ft-strip:hover{
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* reveal */
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
 
     /* ===== MOBILE ===== */
     @media (max-width: 900px) {
@@ -201,9 +409,15 @@
       .hero-code { width: 100%; justify-content: center; animation: none; opacity: 1; }
 
       .hero-text h1 { font-size: 2.3rem; }
-      .hero-text p  { font-size: 1rem; margin-bottom: 24px; }
+      .hero-text p  { font-size: 1rem; }
 
       .cipher-box { padding: 24px; }
+
+      .quick-actions{ justify-content: center; }
+
+      .ft-feature{ grid-template-columns: 1fr; }
+      .ft-grid{ grid-template-columns: 1fr; }
+      .ft-strip{ flex-direction: column; align-items:flex-start; }
     }
 
     /* ===== ANIMATIONS ===== */
@@ -211,19 +425,15 @@
     @keyframes slideInLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
     @keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 
-    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
     @keyframes pulseGlow {
       0%   { box-shadow: 0 0 28px rgba(0,255,213,0.14), 0 0 12px rgba(0,255,213,0.08); }
       50%  { box-shadow: 0 0 44px rgba(0,255,213,0.22), 0 0 26px rgba(0,255,213,0.12); }
       100% { box-shadow: 0 0 28px rgba(0,255,213,0.14), 0 0 12px rgba(0,255,213,0.08); }
     }
-    
   </style>
 </head>
 
-<body >
+<body>
   {% include 'base_nav.html' %}
 
   <div class="page">
@@ -237,9 +447,20 @@
           analysing cryptographic patterns, and sharing ideas through interactive tools and community posts.
         </p>
 
-        <a href="{{ url_for('breaker') }}">
-          <button class="cta" type="button">Explore Tools</button>
-        </a>
+        <div class="hero-hint">
+          <strong>Not sure where to start?</strong> Pick one:
+        </div>
+
+        <div class="quick-actions">
+          <a class="quick-btn primary" href="{{ url_for('breaker') }}">Break a cipher</a>
+          <a class="quick-btn" href="{{ url_for('encode_decode') }}">Encode / Decode</a>
+          <a class="quick-btn" href="{{ url_for('info') }}">Learn About ciphers</a>
+        </div>
+
+        <div class="quick-sub">
+          If you don’t have a key, use <strong>Break a cipher</strong>. If you do have a key, use <strong>Encode / Decode</strong>.
+          When you want to work properly, save your progress in <strong>Labs</strong>.
+        </div>
       </div>
 
       <div class="hero-code">
@@ -267,49 +488,123 @@
     <section class="first-time">
       <div class="ft-container">
         <h2 class="ft-heading">New here? Start exploring.</h2>
-        <p class="ft-subheading">Begin your cryptography journey with these essential tools and challenges.</p>
+        <p class="ft-subheading">
+          Paste ciphertext → try tools → test ciphers → save your progress in Labs.
+        </p>
 
-        <div class="ft-cards">
-          <a href="{{ url_for('breaker') }}" class="ft-card reveal">
-            <div class="ft-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                <circle cx="11" cy="11" r="7"></circle>
-                <line x1="16" y1="16" x2="22" y2="22"></line>
-              </svg>
+        <!-- ✅ Featured is Labs -->
+        <a href="{{ url_for('workspace_list') }}" class="ft-feature reveal">
+          <div class="ft-feature-left">
+            <div class="ft-feature-kicker">Your workspace</div>
+            <h3>Labs (Integrated Solving Environment)</h3>
+            <p>
+              Your solving desk for longer problems. Save attempts, keep notes, and run tools without losing your place.
+            </p>
+
+            <div class="ft-feature-actions">
+              <span class="ft-chip">Saved sessions</span>
+              <span class="ft-chip">Notes + ciphertext</span>
+              <span class="ft-chip">Come back later</span>
             </div>
-            <h3>Break a Cipher</h3>
-            <p>Automatically detect and crack classical ciphers with one click.</p>
+          </div>
+
+          <div class="ft-feature-right">
+            <div class="ft-mini">
+              <div class="ft-mini-title">
+                Best for
+                <span class="tag">real solves</span>
+              </div>
+
+              <p class="ft-mini-text">
+                Use Labs when you’re working on something that takes more than a few minutes.
+              </p>
+
+              <ul class="ft-mini-bullets">
+                <li>Track multiple ideas (keys, mappings, shifts)</li>
+                <li>Save outputs as you try different tools</li>
+                <li>Pick up exactly where you left off</li>
+              </ul>
+
+              <span class="ft-mini-cta">Open Labs →</span>
+            </div>
+          </div>
+        </a>
+
+        <!-- 2×2 grid (with icons) -->
+        <div class="ft-grid reveal">
+          <a href="{{ url_for('breaker') }}" class="ft-card">
+            <div class="ft-card-top">
+              <div class="ft-icon" aria-hidden="true">
+                <!-- magnifier -->
+                <svg viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <line x1="16" y1="16" x2="21" y2="21"></line>
+                </svg>
+              </div>
+              <h3>Break a Cipher</h3>
+            </div>
+            <p>Best when you don’t know the cipher or key. Paste “mystery text” and get instant leads.</p>
           </a>
 
-          <a href="{{ url_for('tools_page') }}" class="ft-card reveal">
-            <div class="ft-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                <rect x="3" y="7" width="18" height="13"></rect>
-                <path d="M8 7V5h8v2"></path>
-              </svg>
+          <a href="{{ url_for('encode_decode') }}" class="ft-card">
+            <div class="ft-card-top">
+              <div class="ft-icon" aria-hidden="true">
+                <!-- left-right arrows -->
+                <svg viewBox="0 0 24 24">
+                  <path d="M7 7H21"></path>
+                  <path d="M17 3l4 4-4 4"></path>
+                  <path d="M17 17H3"></path>
+                  <path d="M7 21l-4-4 4-4"></path>
+                </svg>
+              </div>
+              <h3>Encode / Decode</h3>
             </div>
-            <h3>Explore Tools</h3>
-            <p>Use encoders, decoders, analysers and helper utilities.</p>
+            <p>Got a key? Use the fast encoder/decoder for clean conversions and testing.</p>
           </a>
 
-          <a href="{{ url_for('weekly_page') }}" class="ft-card reveal">
-            <div class="ft-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                <path d="M8 21h8"></path>
-                <path d="M12 17v4"></path>
-                <path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
-                <path d="M4 4h3v2a3 3 0 0 1-3 3"></path>
-                <path d="M20 4h-3v2a3 3 0 0 0 3 3"></path>
-              </svg>
+          <a href="{{ url_for('tools_page') }}" class="ft-card">
+            <div class="ft-card-top">
+              <div class="ft-icon" aria-hidden="true">
+                <!-- toolbox -->
+                <svg viewBox="0 0 24 24">
+                  <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <rect x="3" y="7" width="18" height="14" rx="2"></rect>
+                  <path d="M3 12h18"></path>
+                </svg>
+              </div>
+              <h3>Explore Tools</h3>
             </div>
-            <h3>Weekly Cipher Challenge</h3>
-            <p>Compete globally and climb the leaderboard.</p>
+            <p>Frequency analysis, helpers, and utilities — everything in one place.</p>
+          </a>
+
+          <a href="{{ url_for('weekly_page') }}" class="ft-card">
+            <div class="ft-card-top">
+              <div class="ft-icon" aria-hidden="true">
+                <!-- trophy -->
+                <svg viewBox="0 0 24 24">
+                  <path d="M8 21h8"></path>
+                  <path d="M12 17v4"></path>
+                  <path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
+                  <path d="M4 4h3v2a3 3 0 0 1-3 3"></path>
+                  <path d="M20 4h-3v2a3 3 0 0 0 3 3"></path>
+                </svg>
+              </div>
+              <h3>Weekly Cipher Challenge</h3>
+            </div>
+            <p>Compete globally, solve the weekly cipher, and climb the leaderboard.</p>
           </a>
         </div>
+
+        <!-- Posts strip -->
+        <a href="{{ url_for('posts_list') }}" class="ft-strip reveal">
+          <strong>Community Posts</strong>
+          <span>Share ciphers, walkthroughs, and strategies — learn from other solvers.</span>
+          <span class="ft-strip-arrow">→</span>
+        </a>
       </div>
     </section>
 
-{% include "base_footer.html" %}
+    {% include "base_footer.html" %}
   </div>
 
   <script>

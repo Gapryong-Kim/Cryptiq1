@@ -744,9 +744,7 @@ def posts_new():
         flash("You are banned from posting or commenting.", "error")
         return redirect(url_for("posts_list"))
 
-    if contains_profanity(title) or contains_profanity(body):
-        flash("Your post contains inappropriate language.", "error")
-        return redirect(url_for("posts_new"))
+    
 
     user_id = user["id"]   # <-- REQUIRED FIX
 
@@ -760,6 +758,10 @@ def posts_new():
 
         if not title or not body:
             flash("Title and body are required.", "error")
+            return redirect(url_for("posts_new"))
+        
+        if contains_profanity(title) or contains_profanity(body):
+            flash("Your post contains inappropriate language.", "error")
             return redirect(url_for("posts_new"))
 
         # Image handling
