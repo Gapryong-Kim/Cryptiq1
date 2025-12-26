@@ -839,13 +839,8 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
   box-shadow: 0 0 0 1px rgba(255,183,3,0.4);
 }
 
-@media (max-width: 640px) {
-  .pro-badge{
-    font-size: 0.5rem;
-    padding: 1px 3 px;
-  }
 
-}
+
 
 .pro-badge{
   position: relative;
@@ -877,6 +872,32 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 .pro-badge > *{
   position: relative;
   z-index: 1;
+}
+
+
+/* ===== PRO badge: prevent mobile stretch ===== */
+@media (max-width: 640px){
+
+.pro-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;          /* <- don't stretch in flex rows */
+  align-self: center;      /* <- don't stretch vertically */
+  white-space: nowrap;
+
+  line-height: 1;          /* <- stops tall pill */
+  height: auto;
+  vertical-align: middle;
+}
+
+/* Mobile sizing */
+  .pro-badge{
+    font-size: 0.6rem;
+    padding: 1px 4px;      /* <- FIXED (no "3 px") */
+    border-radius: 6px;
+  }
 }
 
 @keyframes proShine{

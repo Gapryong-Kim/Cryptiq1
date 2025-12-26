@@ -386,4 +386,3 @@ def baconian_decode(cipher):
         decoded += inv.get(chunk, "")
     return decoded
     
-print(railfence_encode("WEAREDISCOVEREDFLEEATONCE", 4))
