@@ -838,10 +838,6 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
   text-transform: uppercase;
   box-shadow: 0 0 0 1px rgba(255,183,3,0.4);
 }
-
-
-
-
 .pro-badge{
   position: relative;
   overflow: hidden;
@@ -873,8 +869,6 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
   position: relative;
   z-index: 1;
 }
-
-
 /* ===== PRO badge: prevent mobile stretch ===== */
 @media (max-width: 640px){
 
@@ -896,9 +890,12 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
   .pro-badge{
     font-size: 0.6rem;
     padding: 2px 6px;      /* <- FIXED (no "3 px") */
-    border-radius: 6px;
+    border-radius: 0px;
   }
 }
+
+
+  
 
 @keyframes proShine{
   0%   { transform: translateX(-140%) rotate(8deg); opacity: 0; }
@@ -1078,9 +1075,10 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
   border-color: var(--accent, #00ffd5);
   color: #0f0f0f;
 }
-.promodal-btn.primary:hover{
+.promodal-btn.prima1ry:hover{
   background: var(--accent-strong, #00e6c0);
   border-color: var(--accent-strong, #00e6c0);
   box-shadow: 0 10px 22px rgba(0,0,0,.35);
 }
+
 

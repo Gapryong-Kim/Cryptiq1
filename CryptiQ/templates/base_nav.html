@@ -163,10 +163,13 @@
         </span>
       </button>
       <div class="nav-dd-menu" role="menu" aria-hidden="true">
-        <a role="menuitem" href="{{ url_for('encode_decode') }}">Encode/Decode</a>
-        <a role="menuitem" href="{{ url_for('breaker') }}">Cipher Breaker</a>
-        <a role="menuitem" href="{{ url_for('tools_page') }}">All Tools</a>
-      </div>
+  <div class="nav-dd-inner">
+    <a role="menuitem" href="{{ url_for('encode_decode') }}">Encode/Decode</a>
+    <a role="menuitem" href="{{ url_for('breaker') }}">Cipher Breaker</a>
+    <a role="menuitem" href="{{ url_for('tools_page') }}">All Tools</a>
+  </div>
+</div>
+
     </li>
 
     <li class="d-only"><a class="nav-link" href="{{ url_for('info_page') }}">Info</a></li>
@@ -258,10 +261,8 @@
               <div class="account-head-meta">
                 <div class="account-name-row">
                   <span class="account-username">{{ user['username'] }}</span>
-                  <span class="account-badges">
                     {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
                     {% if user.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
-                  </span>
                 </div>
                 <div class="account-sub">Signed in</div>
               </div>
@@ -447,50 +448,17 @@ body { padding-top: 80px; }
   transform: scale(1.03);
 }
 
-/* PRO badge */
-.pro-badge{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  white-space: nowrap;
-  flex: 0 0 auto;
 
-  background: linear-gradient(135deg, #ffd36a, #ffb703);
-  color: #0f0f0f;
-  font-size: 0.72rem;
-  padding: 2px 6px;
-  border-radius: 7px;
-  font-weight: 900;
-  text-transform: uppercase;
-  box-shadow: 0 0 0 1px rgba(255,183,3,0.4);
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-.pro-badge::after{
-  content: "";
-  position: absolute;
-  inset: -40% -60%;
-  background: linear-gradient(
-    120deg,
-    rgba(255,255,255,0) 40%,
-    rgba(255,255,255,0.65) 50%,
-    rgba(255,255,255,0) 60%
-  );
-  transform: translateX(-120%) rotate(8deg);
-  animation: proShine 2.8s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
-}
+
+
 @keyframes proShine{
   0%, 55% { transform: translateX(-120%) rotate(8deg); }
   100%    { transform: translateX(120%) rotate(8deg); }
 }
 @media (max-width: 640px) {
   .pro-badge{
-    font-size: 0.56rem;
-    padding: 1px 4px;
+    font-size: 0.65rem;
+    padding: 2px 6px;
     border-radius: 6px;
   }
 }
@@ -1113,6 +1081,227 @@ body { padding-top: 80px; }
   .m-dd-caret{
     margin-left: 10px;
     flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 900px){
+
+  /* smoother animation: use grid row animation instead of max-height */
+  .m-dd-panel{
+    display: grid !important;
+    grid-template-rows: 0fr;          /* closed */
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: grid-template-rows .22s ease, opacity .18s ease, transform .18s ease;
+
+    /* stop click-through */
+    pointer-events: none;
+
+    /* keep your look but avoid layout thrash */
+    overflow: hidden;
+  }
+
+  /* inner wrapper to contain content height */
+  .m-dd-panel > *{
+    overflow: hidden;
+  }
+
+  .m-dd.open .m-dd-panel{
+    grid-template-rows: 1fr;          /* open */
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* IMPORTANT: don't turn on scrolling during the animation */
+  .m-dd.open .m-dd-panel{
+    overflow-y: hidden !important;
+  }
+
+  /* If you need scrolling, only allow it AFTER it opens */
+  .m-dd.open .m-dd-panel{
+    max-height: none !important;
+  }
+}
+
+/* Smooth dropdown reveal (no “first item then the rest”) */
+.nav-dd-menu{
+  display: grid;               /* override the old block/flex */
+  grid-template-rows: 0fr;     /* closed */
+  padding: 0 !important;       /* padding moves to inner */
+  overflow: hidden;            /* important for 0fr */
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  pointer-events: none;
+  transform-origin: top;
+
+  transition:
+    grid-template-rows 220ms cubic-bezier(.2,.8,.2,1),
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.nav-dd.open .nav-dd-menu{
+  grid-template-rows: 1fr;     /* open */
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* Inner keeps the real “card” styling stable */
+.nav-dd-inner{
+  overflow: hidden;
+  padding: 8px;               /* was on .nav-dd-menu */
+  border-radius: 14px;        /* match your menu radius */
+}
+
+/* keep links the same */
+.nav-dd-inner a{
+  display: flex;
+  align-items: center;
+}
+/* =========================
+   DESKTOP DROPDOWN — HOVER
+   ========================= */
+
+@media (min-width: 901px){
+
+  .nav-dd{
+    position: relative;
+  }
+
+  /* menu base */
+  .nav-dd-menu{
+    position: absolute;
+    left: 0;
+    top: calc(100% + 10px);
+    min-width: 220px;
+
+    padding: 8px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--panel) 92%, transparent);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+    backdrop-filter: blur(16px);
+    z-index: 2000;
+
+    /* animation */
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    pointer-events: none;
+
+    transition:
+      opacity 180ms ease,
+      transform 220ms cubic-bezier(.2,.8,.2,1);
+  }
+
+  /* show on hover OR keyboard focus */
+  .nav-dd:hover .nav-dd-menu,
+  .nav-dd:focus-within .nav-dd-menu{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  /* caret animation */
+  .nav-dd:hover .nav-dd-caret,
+  .nav-dd:focus-within .nav-dd-caret{
+    transform: rotate(180deg);
+    opacity: .95;
+  }
+
+  /* menu items */
+  .nav-dd-menu a{
+    display: flex;
+    align-items: center;
+    padding: 9px 10px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 650;
+    line-height: 1.1;
+
+    transition: background .16s ease, color .16s ease;
+  }
+
+  .nav-dd-menu a:hover{
+    background: rgba(255,255,255,0.06);
+    color: var(--accent);
+  }
+}
+@media (min-width: 901px){
+
+  /* reduce the gap so it's easier to reach */
+  .nav-dd-menu{
+    top: calc(100% + 6px) !important;
+    display: block; /* ensure it isn't collapsing */
+  }
+
+  /* invisible hover bridge so moving mouse doesn't cancel hover */
+  .nav-dd-menu::before{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -10px;      /* covers the gap above the menu */
+    height: 10px;    /* must be >= the gap */
+    background: transparent;
+    pointer-events: auto;
+  }
+
+  /* make sure it stays open while hovering the menu itself */
+  .nav-dd:hover .nav-dd-menu,
+  .nav-dd:focus-within .nav-dd-menu{
+    pointer-events: auto;
+  }
+
+  /* optional: make the dropdown feel more solid */
+  .nav-dd-menu a{
+    color: var(--text) !important;
+  }
+}
+/* ===== DESKTOP: dropdown opens on hover (no click) ===== */
+@media (min-width: 901px){
+
+  .nav-dd{ position: relative; }
+
+  /* Put menu directly under the trigger (no gap) */
+  .nav-dd-menu{
+    top: 100% !important;        /* was calc(100% + 10px) */
+    left: 0;
+    margin-top: 6px;             /* small spacing, but controlled */
+    display: block;              /* ensure it can animate */
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 2000;
+  }
+
+  /* THIS is the trick: extend hover area below the trigger */
+  .nav-dd::after{
+    content:"";
+    position:absolute;
+    left: -12px;                 /* widen to avoid “sweet spot” */
+    right: -12px;
+    top: 100%;
+    height: 10px;                /* matches margin-top-ish */
+    background: transparent;
+  }
+
+  /* Open when hovering trigger OR menu */
+  .nav-dd:hover .nav-dd-menu,
+  .nav-dd:focus-within .nav-dd-menu{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  /* Optional: keep it open while hovering the menu itself */
+  .nav-dd-menu:hover{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
   }
 }
 
