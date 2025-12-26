@@ -895,7 +895,7 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 /* Mobile sizing */
   .pro-badge{
     font-size: 0.6rem;
-    padding: 1px 4px;      /* <- FIXED (no "3 px") */
+    padding: 2px 5px;      /* <- FIXED (no "3 px") */
     border-radius: 6px;
   }
 }
