@@ -84,6 +84,36 @@ def get_current_season():
 
 
 
+import re
+
+# keep this small + explicit
+BANNED_WORDS = {
+    "fuck", "shit", "bitch", "cunt", "nigger", "faggot",
+    "retard", "rape", "porn", "sex", "nazi",
+}
+
+NORMALIZE = str.maketrans({
+    "0": "o",
+    "1": "i",
+    "3": "e",
+    "4": "a",
+    "5": "s",
+    "7": "t",
+    "@": "a",
+    "$": "s"
+})
+
+def normalize(text):
+    return text.lower().translate(NORMALIZE)
+
+def contains_profanity(text):
+    clean = normalize(text)
+    return any(
+        re.search(rf"\b{re.escape(word)}\b", clean)
+        for word in BANNED_WORDS
+    )
+
+
 
 # ----- Configuration -----
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -181,6 +211,58 @@ def migrate_weekly_tables():
     conn.commit()
     conn.close()
 
+
+import time
+from collections import defaultdict, deque
+from flask import request, jsonify
+
+# ip -> endpoint -> deque[timestamps]
+_RATE = defaultdict(lambda: defaultdict(deque))
+
+def rate_limit(key: str, limit: int, window_s: int):
+    """
+    key: e.g. "api_cipher" or "ws_create"
+    limit: requests allowed
+    window_s: sliding window in seconds
+    """
+    # best-effort IP (works behind some proxies if you set ProxyFix; otherwise remote_addr)
+    ip = request.headers.get("CF-Connecting-IP") or request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or request.remote_addr or "unknown"
+    now = time.time()
+
+    q = _RATE[ip][key]
+    # drop old
+    while q and q[0] <= now - window_s:
+        q.popleft()
+
+    if len(q) >= limit:
+        return False, ip
+
+    q.append(now)
+    return True, ip
+
+
+@app.after_request
+def add_security_headers(resp):
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "DENY"
+    resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # CSP is powerful but easy to break; start basic:
+    resp.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    return resp
+
+from functools import wraps
+from flask import abort
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user:
+            return redirect(url_for("login"))
+        if not user.get("is_admin"):
+            abort(403)
+        return fn(*args, **kwargs)
+    return wrapper
 
 
 def migrate_shared_labs():
@@ -661,6 +743,10 @@ def posts_new():
     if user.get("banned"):
         flash("You are banned from posting or commenting.", "error")
         return redirect(url_for("posts_list"))
+
+    if contains_profanity(title) or contains_profanity(body):
+        flash("Your post contains inappropriate language.", "error")
+        return redirect(url_for("posts_new"))
 
     user_id = user["id"]   # <-- REQUIRED FIX
 
@@ -1880,6 +1966,7 @@ def weekly_submit():
 
 
 @app.route("/admin/weekly", methods=["GET", "POST"])
+@admin_required
 def admin_weekly():
     user = current_user()
     if not is_admin(user):
@@ -2041,6 +2128,9 @@ from cipher_tools import encoders  # must resolve to your encoders.py
 
 @app.route("/api/encode", methods=["POST"])
 def api_encode():
+    ok, _ip = rate_limit("api_cipher", limit=60, window_s=60)  # 60/min
+    if not ok:
+        return jsonify({"error": "Rate limit exceeded. Try again shortly."}), 429
     data = request.get_json(force=True) or {}
     text = data.get("text", "")
     cipher = (data.get("cipher") or "").strip().lower()
@@ -2056,6 +2146,9 @@ def api_encode():
 
 @app.route("/api/decode", methods=["POST"])
 def api_decode():
+    ok, _ip = rate_limit("api_cipher", limit=60, window_s=60)  # 60/min
+    if not ok:
+        return jsonify({"error": "Rate limit exceeded. Try again shortly."}), 429
     data = request.get_json(force=True) or {}
     text = data.get("text", "")
     cipher = (data.get("cipher") or "").strip().lower()
@@ -2125,9 +2218,23 @@ def perform_cipher(cipher, text, key, mode="encode"):
             return func(text, a, b)
 
         # Rail Fence: default 3 rails
+                # Rail Fence: expects "rails,offset" — default (3,0)
         if cipher == "railfence":
-            rails = to_int(3)
-            return func(text, rails)
+            rails, offset = 3, 0
+            if key:
+                if "," in key:
+                    p1, p2 = [p.strip() for p in key.split(",", 1)]
+                    try: rails = int(p1)
+                    except: pass
+                    try: offset = int(p2)
+                    except: pass
+                else:
+                    # if only one number provided, treat it as rails
+                    try: rails = int(key)
+                    except: pass
+
+            return func(text, rails, offset)
+
 
                 # Keyed ciphers that truly need a key
         if cipher in ("vigenere", "columnar", "permutation", "amsco"):
@@ -2148,6 +2255,7 @@ def perform_cipher(cipher, text, key, mode="encode"):
 
 
 @app.route("/admin/ban_user", methods=["POST"])
+@admin_required
 def admin_ban_user():
     user = current_user()
     if not user or not is_admin(user):
@@ -2189,6 +2297,7 @@ def admin_ban_user():
 
 
 @app.route("/admin")
+@admin_required
 def admin_dashboard():
     user = current_user()
 
@@ -2330,9 +2439,17 @@ def workspace_list():
 @app.route("/workspaces/new", methods=["GET", "POST"], endpoint="workspace_new")
 def workspace_new():
     user = current_user()
+
     if not user:
         flash("Please log in.", "warning")
         return redirect(url_for("login"))
+
+
+    if request.method == "POST":
+        ok, _ip = rate_limit("ws_create", limit=10, window_s=3600)  # 10/hour
+        if not ok:
+            flash("Too many labs created recently. Try again later.", "error")
+            return redirect(url_for("workspace_list"))
 
     if request.method == "GET":
         return render_template("workspace_new.html", user=user)
@@ -2435,6 +2552,10 @@ def workspace_save(ws_id):
     user = current_user()
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
+
+    if contains_profanity(title) or contains_profanity(body):
+        flash("Your post contains inappropriate language.", "error")
+        return redirect(url_for("posts_new"))
 
     title = (request.form.get("title") or "").strip() or "Untitled Workspace"
     notes = request.form.get("notes") or ""

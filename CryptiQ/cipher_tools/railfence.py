@@ -7,42 +7,60 @@ common_words = [
     "new","want","because","any","these","give","day","most","us",
 ]
 
-def _railfence_decrypt(ct_letters: str, rails: int) -> str:
-    """Decrypt letters-only rail-fence with a known rail count."""
-    n = len(ct_letters)
-    if rails <= 1 or rails >= n:
-        return ct_letters
 
-    # Build the zig-zag pattern of row indices for positions 0..n-1
+
+def railfence_decode(cipher, rails=3, offset=0):
+    if rails <= 1 or rails >= len(cipher):
+        return cipher
+
+    n = len(cipher)
+    cycle = 2 * rails - 2
+    offset = int(offset) % cycle if cycle else 0
+
+    # Step 1: build the zig-zag pattern (row index for each char)
     pattern = []
     row = 0
-    direction = 1  # 1 = down, -1 = up
+    direction = 1
+
+    # advance zig-zag by offset (no chars placed yet)
+    for _ in range(offset):
+        if row == 0:
+            direction = 1
+        elif row == rails - 1:
+            direction = -1
+        row += direction
+
     for _ in range(n):
         pattern.append(row)
+
+        if row == 0:
+            direction = 1
+        elif row == rails - 1:
+            direction = -1
         row += direction
-        if row == rails - 1 or row == 0:
-            direction *= -1
 
-    # Count how many chars go to each row
-    row_counts = [0] * rails
+    # Step 2: determine how many characters go in each rail
+    rail_counts = [0] * rails
     for r in pattern:
-        row_counts[r] += 1
+        rail_counts[r] += 1
 
-    # Slice ciphertext into rows according to the counts
-    rows = []
+    # Step 3: split ciphertext into rails
+    rails_content = []
     idx = 0
-    for count in row_counts:
-        rows.append(list(ct_letters[idx:idx + count]))
+    for count in rail_counts:
+        rails_content.append(list(cipher[idx:idx + count]))
         idx += count
 
-    # Read off rows following the same zig-zag
-    row_ptrs = [0] * rails
-    out_chars = []
-    for r in pattern:
-        out_chars.append(rows[r][row_ptrs[r]])
-        row_ptrs[r] += 1
+    # Step 4: rebuild plaintext following the pattern
+    rail_pos = [0] * rails
+    result = []
 
-    return "".join(out_chars)
+    for r in pattern:
+        result.append(rails_content[r][rail_pos[r]])
+        rail_pos[r] += 1
+
+    return ''.join(result)
+
 
 def _score_english(s: str) -> int:
     """Very light score: sum of occurrences of common words."""
@@ -50,39 +68,19 @@ def _score_english(s: str) -> int:
     return sum(s.count(w) for w in common_words)
 
 def railfence_break(message: str):
-    """
-    Auto-detect rails (2..min(10, len_letters)) and return (key, restored_plaintext)
-    Restores the original spacing/punctuation and case from 'message'.
-    """
-    # Extract letters only (preserve for reinsertion later)
-    letters_only = [ch for ch in message if ch.isalpha()]
-    n_letters = len(letters_only)
-    if n_letters == 0:
-        return "2 rails", message  # nothing to do
+   current_probability=0
 
-    ct_letters = "".join(ch.lower() for ch in letters_only)
+   current_decode=''
+   current_key=''
+   for rails in range(30):
+       for offset in range(30):
+           decoded=railfence_decode(message,rails,offset)
+           if _score_english(decoded)>current_probability:
+               current_probability=_score_english(decoded)
+               current_decode=decoded
+               current_key=f'rails: {rails} offset: {offset}'
+   return current_key,current_decode
 
-    best = None  # tuple(score, plaintext_letters, rails)
-    max_rails = max(2, min(20, n_letters))  # don’t try more rails than letters
 
-    for rails in range(2, max_rails + 1):
-        pt_letters = _railfence_decrypt(ct_letters, rails)
-        score = _score_english(pt_letters)
-        cand = (score, pt_letters, rails)
-        if best is None or cand > best:
-            best = cand
 
-    _, best_letters, best_rails = best
-
-    # Re-insert non-letters and preserve original case
-    restored = []
-    li = 0
-    for ch in message:
-        if ch.isalpha():
-            dec_ch = best_letters[li]
-            restored.append(dec_ch.upper() if ch.isupper() else dec_ch)
-            li += 1
-        else:
-            restored.append(ch)
-
-    return f"{best_rails} rails", "".join(restored)
+           

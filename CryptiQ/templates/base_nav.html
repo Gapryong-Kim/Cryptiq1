@@ -103,7 +103,7 @@
     <li><a href="{{ url_for('weekly_page') }}">Weekly Cipher</a></li>
     <li><a href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
     <li><a href="{{ url_for('workspace_list') }}">My Labs</a></li>
-    <li><a href="{{ url_for('labs_pro_page') }}">Labs Pro</a></li>
+    <li><a href="{{ url_for('labs_pro_page') }}">Labs <span class="pro-badge">PRO</span></a></li>
 
     {% if user and user.is_admin %}
       <li><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
@@ -1092,6 +1092,12 @@ body.no-nav-padding { padding-top: 0 !important; }
   .mobile-account-panel::before{
     display: none !important;
   }
+}
+
+
+.nav-item:hover .pro-badge{
+  background: rgba(255, 215, 0, 0.22);
+  border-color: rgba(255, 215, 0, 0.45);
 }
 
 </style>

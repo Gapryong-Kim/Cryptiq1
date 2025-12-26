@@ -101,37 +101,87 @@ def atbash_decode(text):
 # ==============================
 #  RAIL FENCE
 # ==============================
-def railfence_encode(text, rails=3):
-    if rails <= 1:
+def railfence_encode(text, rails, offset=0):
+    if rails <= 1 or rails >= len(text):
         return text
+
+    # normalize offset to cycle length
+    cycle = 2 * rails - 2
+    offset = int(offset) % cycle if cycle else 0
+
     rail = [''] * rails
-    direction = 1
     row = 0
+    direction = 1  # 1 down, -1 up
+
+    # advance the zig-zag state by `offset` steps (without placing chars)
+    for _ in range(offset):
+        if row == 0:
+            direction = 1
+        elif row == rails - 1:
+            direction = -1
+        row += direction
+
     for ch in text:
         rail[row] += ch
+
+        if row == 0:
+            direction = 1
+        elif row == rails - 1:
+            direction = -1
         row += direction
-        if row == 0 or row == rails - 1:
-            direction *= -1
+
     return ''.join(rail)
 
-def railfence_decode(cipher, rails=3):
-    if rails <= 1:
+def railfence_decode(cipher, rails=3, offset=0):
+    if rails <= 1 or rails >= len(cipher):
         return cipher
-    pattern = [0] * len(cipher)
-    direction = 1
+
+    n = len(cipher)
+    cycle = 2 * rails - 2
+    offset = int(offset) % cycle if cycle else 0
+
+    # Step 1: build the zig-zag pattern (row index for each char)
+    pattern = []
     row = 0
-    for i in range(len(cipher)):
-        pattern[i] = row
+    direction = 1
+
+    # advance zig-zag by offset (no chars placed yet)
+    for _ in range(offset):
+        if row == 0:
+            direction = 1
+        elif row == rails - 1:
+            direction = -1
         row += direction
-        if row == 0 or row == rails - 1:
-            direction *= -1
-    result = [''] * len(cipher)
-    index = 0
-    for r in range(rails):
-        for i in range(len(cipher)):
-            if pattern[i] == r:
-                result[i] = cipher[index]
-                index += 1
+
+    for _ in range(n):
+        pattern.append(row)
+
+        if row == 0:
+            direction = 1
+        elif row == rails - 1:
+            direction = -1
+        row += direction
+
+    # Step 2: determine how many characters go in each rail
+    rail_counts = [0] * rails
+    for r in pattern:
+        rail_counts[r] += 1
+
+    # Step 3: split ciphertext into rails
+    rails_content = []
+    idx = 0
+    for count in rail_counts:
+        rails_content.append(list(cipher[idx:idx + count]))
+        idx += count
+
+    # Step 4: rebuild plaintext following the pattern
+    rail_pos = [0] * rails
+    result = []
+
+    for r in pattern:
+        result.append(rails_content[r][rail_pos[r]])
+        rail_pos[r] += 1
+
     return ''.join(result)
 
 
@@ -336,3 +386,4 @@ def baconian_decode(cipher):
         decoded += inv.get(chunk, "")
     return decoded
     
+print(railfence_encode("WEAREDISCOVEREDFLEEATONCE", 4))
