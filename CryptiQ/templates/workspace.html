@@ -1776,7 +1776,7 @@
     
 }
 
-  <style>
+  
   .tour-overlay{
     position: fixed;
     inset: 0;
@@ -1865,7 +1865,7 @@
   @media (prefers-reduced-motion: reduce){
     .tour-highlight{ transition: none; }
   }
-  <style>
+
   .tour-overlay{
     position: fixed;
     inset: 0;
@@ -1956,6 +1956,21 @@
   @media (prefers-reduced-motion: reduce){
     .tour-highlight{ transition:none; }
   }
+  .tour-highlight{
+  transition:
+    left .16s ease,
+    top .16s ease,
+    width .16s ease,
+    height .16s ease,
+    border-radius .16s ease;
+  will-change: left, top, width, height;
+}
+
+.tour-card{
+  transition: left .16s ease, top .16s ease;
+  will-change: left, top;
+}
+
 </style>
 
 </style>
