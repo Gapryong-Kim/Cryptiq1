@@ -1082,3 +1082,18 @@ pre:hover { box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 }
 
 
+@font-face{
+  font-family: "Inter";
+  src: url("/static/fonts/Inter-VariableFont_slnt,wght.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: oblique 0deg 10deg;
+  font-display: swap;
+}
+
+@font-face{
+  font-family: "Fira Code";
+  src: url("/static/fonts/FiraCode-VariableFont_wght.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
