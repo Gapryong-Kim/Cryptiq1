@@ -317,6 +317,10 @@ def migrate_labs_pro_fields():
     if "pro_cancel_at_period_end" not in cols:
         cur.execute("ALTER TABLE users ADD COLUMN pro_cancel_at_period_end INTEGER NOT NULL DEFAULT 0")
 
+    if "labs_tour_seen" not in cols:
+        cur.execute("ALTER TABLE users ADD COLUMN labs_tour_seen INTEGER NOT NULL DEFAULT 0")
+
+
     conn.commit()
     conn.close()
 
@@ -2540,6 +2544,7 @@ def workspace_view(ws_id):
         user=fresh_user,
         ws=ws,
         is_owner=is_owner,
+        show_tour = (not fresh_user.get("labs_tour_seen")),
         viewer_role=("owner" if is_owner else (role or "viewer")),
         viewer_can_edit=viewer_can_edit,
         viewer_is_pro=is_pro(fresh_user),
@@ -3654,6 +3659,23 @@ def workspace_export_pdf(ws_id):
     buf.seek(0)
     filename = f"cipherlab_lab_{ws_id}.pdf"
     return send_file(buf, mimetype="application/pdf", as_attachment=True, download_name=filename)
+
+
+
+@app.route("/prefs/labs-tour-seen", methods=["POST"])
+def prefs_labs_tour_seen():
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "login required"}), 401
+
+    conn = get_db()
+    conn.execute("UPDATE users SET labs_tour_seen = 1 WHERE id = ?", (user["id"],))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
 
 
 # app.py — add this route + template render

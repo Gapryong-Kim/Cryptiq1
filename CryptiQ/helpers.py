@@ -20,4 +20,4 @@ def current_user():
         row = cur.fetchone()
         conn.close()
         return dict(row) if row else None
-    return None
+    return None 

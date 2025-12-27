@@ -1776,7 +1776,192 @@
     
 }
 
+  <style>
+  .tour-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    z-index: 9000;
+  }
+  .tour-overlay.open{ display: block; }
+
+  .tour-highlight{
+    position: fixed;
+    border-radius: 14px;
+    box-shadow:
+      0 0 0 3px rgba(0,255,209,0.20),
+      0 0 0 9999px rgba(0,0,0,0.55);
+    border: 1px solid rgba(0,255,209,0.35);
+    pointer-events: none;
+    z-index: 9001;
+    transition: all 0.15s ease;
+  }
+
+  .tour-card{
+    position: fixed;
+    width: min(360px, calc(100vw - 24px));
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+    padding: 14px 14px 12px;
+    z-index: 9002;
+  }
+
+  .tour-title{
+    font-weight: 1000;
+    color: var(--accent);
+    margin: 0 0 6px;
+    font-size: 1.02rem;
+  }
+  .tour-body{
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+  .tour-actions{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tour-actions .left, .tour-actions .right{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tour-btn{
+    padding: 9px 11px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-weight: 950;
+    cursor: pointer;
+  }
+  .tour-btn:hover{
+    background: var(--input-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .tour-btn.primary{
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 0 3px var(--accent-soft);
+  }
+  .tour-btn.primary:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+
+  .tour-step{
+    color: var(--muted);
+    font-weight: 900;
+    font-size: .85rem;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .tour-highlight{ transition: none; }
+  }
+  <style>
+  .tour-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    z-index: 9000;
+  }
+  .tour-overlay.open{ display:block; }
+
+  /* highlight hugs the element (no fake padding) */
+  .tour-highlight{
+    position: fixed;
+    pointer-events: none;
+    z-index: 9001;
+
+    /* the “hole” effect */
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+    border: 2px solid rgba(0,255,209,0.28);
+    outline: 1px solid rgba(0,255,209,0.14);
+
+    transition: left .12s ease, top .12s ease, width .12s ease, height .12s ease;
+  }
+
+  .tour-card{
+    position: fixed;
+    width: min(360px, calc(100vw - 24px));
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+    padding: 14px 14px 12px;
+    z-index: 9002;
+  }
+
+  .tour-title{
+    font-weight: 1000;
+    color: var(--accent);
+    margin: 0 0 6px;
+    font-size: 1.02rem;
+  }
+  .tour-body{
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+
+  .tour-actions{
+    display:flex;
+    justify-content: space-between;
+    gap:10px;
+    flex-wrap: wrap;
+    align-items:center;
+  }
+  .tour-actions .left, .tour-actions .right{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+
+  .tour-btn{
+    padding: 9px 11px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-weight: 950;
+    cursor: pointer;
+  }
+  .tour-btn:hover{
+    background: var(--input-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .tour-btn.primary{
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 0 3px var(--accent-soft);
+  }
+
+  .tour-step{
+    color: var(--muted);
+    font-weight: 900;
+    font-size: .85rem;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .tour-highlight{ transition:none; }
+  }
+</style>
+
+</style>
+
   </style>
+  
 </head>
 
 <body>
@@ -1886,7 +2071,7 @@
                 </div>
                 <div class="result" id="tool-output">Run a tool to see output here.</div>
                 <div class="hint">
-                  Uses your existing <code>/tools/run</code> API (<code>tool_type=frequency</code>).
+                  Use this to get an idea of what kind of cipher you're working with.
                 </div>
               </div>
 
@@ -1922,7 +2107,7 @@
                     <input id="rep-with" type="text" placeholder="e.g. TH" />
                   </div>
                   <button class="run-btn" id="run-replace" type="button">Run</button>
-                </div>
+                </div>  
 
                 <div class="result" id="tool-output-replace">Output will appear here.</div>
                 <div class="hint">Calls <code>/tools/run</code> with <code>tool_type=text_replacer</code>.</div>
@@ -2157,7 +2342,7 @@
 
         <div class="colab-linkrow">
           <input class="colab-link" id="colab-link" readonly value="" />
-          <button  class="run-btn danger" id="colab-copy" type="button" style="text-decoration:solid;">Copy</button>
+          <button  class="run-btn danger" id="colab-copy" type="button" style="text-decoration:solid;"x>Copy</button>
           <a class="run-btn" id="colab-open" href="#" target="_blank" rel="noopener">Open</a>
         </div>
 
@@ -2180,6 +2365,24 @@
     <button id="img-close" class="img-lightbox-close" type="button">Close</button>
     <img id="img-modal-img" class="img-lightbox-img" alt="Cipher image preview">
   </div>
+<div class="tour-overlay" id="tour-overlay" aria-hidden="true"></div>
+<div class="tour-highlight" id="tour-highlight" style="display:none;"></div>
+
+<div class="tour-card" id="tour-card" style="display:none;" role="dialog" aria-modal="true">
+  <div class="tour-title" id="tour-title">—</div>
+  <p class="tour-body" id="tour-body">—</p>
+
+  <div class="tour-actions">
+    <div class="left">
+      <button class="tour-btn" id="tour-skip" type="button">Skip</button>
+      <span class="tour-step" id="tour-step">1/1</span>
+    </div>
+    <div class="right">
+      <button class="tour-btn" id="tour-back" type="button">Back</button>
+      <button class="tour-btn primary" id="tour-next" type="button">Next</button>
+    </div>
+  </div>
+</div>
 
   <script>
     // ===========================
@@ -4190,6 +4393,288 @@ colabBtn?.addEventListener("click", async () => {
     showTool("frequency");
     setStatus("—");
   </script>
+
+<script>
+(function(){
+  // Server decides if we should show it (first time)
+  const SHOULD_TOUR = {{ 1 if show_tour else 0 }};
+  if (!SHOULD_TOUR) return;
+
+  // Optional: don’t show tour to view-only collaborators
+  // (since they can’t do actions the tour suggests)
+  if (typeof CAN_EDIT !== "undefined" && !CAN_EDIT) return;
+
+  const overlay  = document.getElementById("tour-overlay");
+  const highlight= document.getElementById("tour-highlight");
+  const card     = document.getElementById("tour-card");
+  const titleEl  = document.getElementById("tour-title");
+  const bodyEl   = document.getElementById("tour-body");
+  const stepEl   = document.getElementById("tour-step");
+  const btnSkip  = document.getElementById("tour-skip");
+  const btnBack  = document.getElementById("tour-back");
+  const btnNext  = document.getElementById("tour-next");
+
+  if (!overlay || !highlight || !card || !titleEl || !bodyEl || !stepEl || !btnSkip || !btnBack || !btnNext) return;
+
+  // ✅ includes the "Run Frequency" step, forcing a stable location
+  const steps = [
+    {
+      sel: "#ws-title-input",
+      title: "Lab title",
+      body: "Name the puzzle you’re working on. Keeping titles specific makes search + organisation way easier later."
+    },
+    {
+      sel: "#cipher-text",
+      title: "Ciphertext",
+      body: "Paste the ciphertext here. This is what most tools read from."
+    },
+    {
+      sel: "#ws-notes",
+      title: "Notes",
+      body: "Dump cribs, hypotheses, partial plaintext, and anything you don’t want to lose. Autosave keeps it safe."
+    },
+    {
+      sel: ".tb-btn[data-tool='frequency']",
+      title: "Tools toolbar",
+      body: "Pick a tool here. Frequency is usually a great first step to identify what you’re dealing with."
+    },
+    {
+      // Force Frequency tool so the "Run" button is in a predictable place
+      before: () => { if (typeof showTool === "function") showTool("frequency"); },
+      sel: "#run-frequency",
+      title: "Run Frequency",
+      body: "Hit Run to generate frequency analysis. This is one of the fastest ways to identify what cipher you’re dealing with."
+    },
+    {
+      sel: "#insert-tool-output",
+      title: "Insert output",
+      body: "Quickly drop tool results into your notes so your working stays in one place."
+    }
+  ];
+
+  let i = 0;
+  let scrollParents = [];
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+  function findTarget(step){ return document.querySelector(step.sel) || null; }
+
+  // Find nearest scrollable ancestors (your workspace has nested scroll panes)
+  function getScrollParents(el){
+    const parents = [];
+    let p = el ? el.parentElement : null;
+
+    while (p && p !== document.body) {
+      const s = getComputedStyle(p);
+      const oy = s.overflowY;
+      const ox = s.overflowX;
+      if (/(auto|scroll|overlay)/.test(oy) || /(auto|scroll|overlay)/.test(ox)) {
+        parents.push(p);
+      }
+      p = p.parentElement;
+    }
+    parents.push(window);
+    return parents;
+  }
+
+  function unbindScrollTracking(){
+    scrollParents.forEach(p => {
+      if (p === window) {
+        window.removeEventListener("scroll", onReflow, true);
+      } else {
+        try { p.removeEventListener("scroll", onReflow); } catch(_e){}
+      }
+    });
+    scrollParents = [];
+  }
+
+  function bindScrollTracking(target){
+    unbindScrollTracking();
+    scrollParents = getScrollParents(target);
+
+    scrollParents.forEach(p => {
+      if (p === window) {
+        window.addEventListener("scroll", onReflow, true);
+      } else {
+        p.addEventListener("scroll", onReflow, { passive: true });
+      }
+    });
+  }
+
+  function place(el){
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+
+    // --- compute a tight-fit highlight box ---
+    const bwL = parseFloat(cs.borderLeftWidth) || 0;
+    const bwR = parseFloat(cs.borderRightWidth) || 0;
+    const bwT = parseFloat(cs.borderTopWidth) || 0;
+    const bwB = parseFloat(cs.borderBottomWidth) || 0;
+
+    // Keep your current behaviour
+    const glowInset = 0;
+
+    const insetL = bwL - glowInset;
+    const insetR = bwR - glowInset;
+    const insetT = bwT - glowInset;
+    const insetB = bwB - glowInset;
+
+    // Highlight hugs the visible field nicely
+    highlight.style.display = "block";
+    highlight.style.left   = (r.left + insetL - 9) + "px";
+    highlight.style.top    = (r.top  + insetT) + "px";
+    highlight.style.width  = Math.max(0, r.width  - insetL - insetR) + "px";
+    highlight.style.height = Math.max(0, r.height - insetT - insetB) + "px";
+    highlight.style.borderRadius = cs.borderRadius || "12px";
+
+    // --- card placement (unchanged logic) ---
+    card.style.display = "block";
+    const cr = card.getBoundingClientRect();
+
+    const gap = 12;
+    const pad = 10;
+
+    const space = {
+      top: r.top,
+      bottom: window.innerHeight - r.bottom,
+      left: r.left,
+      right: window.innerWidth - r.right
+    };
+
+    const candidates = [
+      {
+        name: "below",
+        top: r.bottom + gap,
+        left: clamp(r.left, pad, window.innerWidth - cr.width - pad),
+        fits: space.bottom >= cr.height + gap,
+        score: space.bottom
+      },
+      {
+        name: "above",
+        top: r.top - gap - cr.height,
+        left: clamp(r.left, pad, window.innerWidth - cr.width - pad),
+        fits: space.top >= cr.height + gap,
+        score: space.top
+      },
+      {
+        name: "right",
+        top: clamp(r.top, pad, window.innerHeight - cr.height - pad),
+        left: r.right + gap,
+        fits: space.right >= cr.width + gap,
+        score: space.right
+      },
+      {
+        name: "left",
+        top: clamp(r.top, pad, window.innerHeight - cr.height - pad),
+        left: r.left - gap - cr.width,
+        fits: space.left >= cr.width + gap,
+        score: space.left
+      }
+    ];
+
+    let pick = candidates.find(c => c.fits);
+    if (!pick) pick = candidates.sort((a,b)=>b.score-a.score)[0];
+
+    const top  = clamp(pick.top,  pad, window.innerHeight - cr.height - pad);
+    const left = clamp(pick.left, pad, window.innerWidth  - cr.width  - pad);
+
+    card.style.top  = top + "px";
+    card.style.left = left + "px";
+  }
+
+  function render(){
+    // run any step setup (e.g., force frequency tool)
+    if (typeof steps[i]?.before === "function") steps[i].before();
+
+    // skip missing targets gracefully
+    let tries = 0;
+    let target = findTarget(steps[i]);
+    while (!target && tries < steps.length){
+      i = (i + 1) % steps.length;
+      if (typeof steps[i]?.before === "function") steps[i].before();
+      target = findTarget(steps[i]);
+      tries++;
+    }
+    if (!target) return finish(true);
+
+    titleEl.textContent = steps[i].title;
+    bodyEl.textContent  = steps[i].body;
+    stepEl.textContent  = `${i+1}/${steps.length}`;
+
+    btnBack.disabled = (i === 0);
+    btnNext.textContent = (i === steps.length - 1) ? "Finish" : "Next";
+
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+
+    bindScrollTracking(target);
+
+    // scroll into view (important for nested scroll panes)
+    target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+
+    // wait for scroll/layout to settle
+    setTimeout(() => place(target), 180);
+  }
+
+  function onReflow(){
+    const target = findTarget(steps[i]);
+    if (target) place(target);
+  }
+
+  async function persistSeen(){
+    try{
+      await fetch("/prefs/labs-tour-seen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seen: true })
+      });
+    }catch(_e){}
+  }
+
+  function closeUI(){
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+    highlight.style.display = "none";
+    card.style.display = "none";
+
+    unbindScrollTracking();
+
+    document.body.style.overflow = "";
+    window.removeEventListener("resize", onReflow);
+    document.removeEventListener("keydown", onKey);
+  }
+
+  async function finish(markSeen){
+    closeUI();
+    if (markSeen) await persistSeen();
+  }
+
+  function onKey(e){
+    if (e.key === "Escape") return finish(true);
+    if (e.key === "ArrowRight") btnNext.click();
+    if (e.key === "ArrowLeft")  btnBack.click();
+  }
+
+  btnSkip.addEventListener("click", () => finish(true));
+  btnBack.addEventListener("click", () => { if (i > 0) { i--; render(); } });
+  btnNext.addEventListener("click", () => {
+    if (i >= steps.length - 1) return finish(true);
+    i++;
+    render();
+  });
+
+  overlay.addEventListener("click", () => finish(true));
+
+  // lock scrolling behind tour
+  document.body.style.overflow = "hidden";
+  window.addEventListener("resize", onReflow);
+  document.addEventListener("keydown", onKey);
+
+  // start
+  setTimeout(render, 250);
+})();
+</script>
+
+
 </body>
 
 

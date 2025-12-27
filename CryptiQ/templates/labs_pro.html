@@ -40,7 +40,6 @@
         radial-gradient(55% 50% at 85% 10%, rgba(0,255,213,.10) 0%, rgba(0,255,213,0) 55%),
         radial-gradient(40% 40% at 70% 85%, rgba(0,255,213,.08) 0%, rgba(0,255,213,0) 55%);
       pointer-events:none;
-      filter: blur(0px);
       opacity: 1;
     }
 
@@ -80,7 +79,6 @@
       overflow: hidden;
     }
 
-    /* ✅ add a subtle shine like your modal */
     .pro-pill::after{
       content:"";
       position:absolute;
@@ -221,51 +219,12 @@
       box-shadow: none;
     }
 
-    /* ===== Features grid (re-ordered) ===== */
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
     .card{
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 16px;
       padding: 18px 18px;
       box-shadow: 0 10px 22px rgba(0,0,0,0.25);
-    }
-
-    .card h3{
-      margin: 0 0 8px;
-      color: var(--text);
-      font-size: 1.05rem;
-      font-weight: 900;
-    }
-    .card p{
-      margin: 0;
-      color: var(--text-dim);
-      line-height: 1.55;
-      font-size: .96rem;
-    }
-
-    .feat{
-      display:flex;
-      gap: 12px;
-      align-items:flex-start;
-    }
-
-    .feat .icon{
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      display:grid;
-      place-items:center;
-      background: rgba(0,255,213,0.10);
-      border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
-      color: var(--accent);
-      font-weight: 900;
-      flex: 0 0 auto;
     }
 
     .section-title{
@@ -275,18 +234,213 @@
       color: var(--accent);
     }
 
+    /* ===========================
+       PLAN COMPARISON TABLE
+       =========================== */
+    .compare-wrap{
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: color-mix(in oklab, var(--panel) 96%, black);
+    }
+
+    .compare-top{
+      display:flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .compare-top .left{
+      display:grid;
+      gap: 6px;
+    }
+
+    .compare-kicker{
+      color: var(--muted);
+      font-weight: 900;
+      letter-spacing: .02em;
+      font-size: .9rem;
+    }
+
+    .compare-desc{
+      color: var(--text-dim);
+      line-height: 1.55;
+      margin: 0;
+      max-width: 80ch;
+    }
+
+    .compare-hint{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .86rem;
+      white-space: nowrap;
+      height: fit-content;
+    }
+
+    .compare-table{
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .compare-table th,
+    .compare-table td{
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .compare-table thead th{
+      color: var(--text);
+      font-weight: 1000;
+      letter-spacing: .01em;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .compare-table th:first-child,
+    .compare-table td:first-child{
+      width: 46%;
+    }
+    .compare-table th:nth-child(2),
+    .compare-table td:nth-child(2){
+      width: 27%;
+    }
+    .compare-table th:nth-child(3),
+    .compare-table td:nth-child(3){
+      width: 27%;
+    }
+
+    .feat-name{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .feat-title{
+      font-weight: 950;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.25;
+    }
+
+    .feat-note{
+      margin-top: 4px;
+      color: var(--text-dim);
+      line-height: 1.45;
+      font-size: .92rem;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-weight: 950;
+      letter-spacing: .02em;
+      font-size: .82rem;
+      white-space: nowrap;
+      background: rgba(255,255,255,0.02);
+      color: var(--muted);
+    }
+
+    .pill.good{
+      border-color: color-mix(in oklab, var(--accent) 50%, var(--line));
+      color: var(--text);
+      background: color-mix(in oklab, var(--panel) 85%, var(--accent) 15%);
+    }
+
+    .pill.bad{
+      border-color: rgba(255,255,255,0.14);
+      color: var(--muted);
+    }
+
+    .pill.emph{
+      border-color: color-mix(in oklab, var(--accent) 70%, var(--line));
+      background: color-mix(in oklab, var(--accent) 18%, var(--panel));
+      color: var(--text);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .row-compact td{
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .compare-footer{
+      padding: 12px 16px 16px;
+      color: var(--text-dim);
+      line-height: 1.55;
+      font-size: .92rem;
+      display: grid;
+      gap: 8px;
+    }
+
+    .muted-link{
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 900;
+    }
+    .muted-link:hover{ text-decoration: underline; }
+
+    /* ===== FAQ / "Read more" calm styling ===== */
     .faq{ display:grid; gap: 10px; }
+
     details{
-      background: var(--panel);
+      background: color-mix(in oklab, var(--panel) 92%, black);
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 12px 14px;
+      box-shadow: none;
+      transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .12s ease;
     }
+
     summary{
-      cursor:pointer;
+      cursor: pointer;
       font-weight: 900;
       color: var(--text);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
+
+    summary::-webkit-details-marker{ display:none; }
+
+    summary::after{
+      content: "▾";
+      color: var(--muted);
+      font-weight: 900;
+      opacity: .85;
+      transform: rotate(0deg);
+      transition: transform .15s ease;
+    }
+
+    details[open] summary::after{ transform: rotate(180deg); }
+
+    details:hover{
+      border-color: color-mix(in oklab, var(--line) 60%, var(--accent) 40%);
+      background: color-mix(in oklab, var(--panel) 96%, black);
+    }
+
+    details:focus-within{
+      border-color: color-mix(in oklab, var(--line) 55%, var(--accent) 45%);
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.0), 0 0 0 3px rgba(255,255,255,0.02);
+    }
+
     details p{
       margin: 10px 0 0;
       color: var(--text-dim);
@@ -294,11 +448,34 @@
       font-size: .96rem;
     }
 
+    details[open]{
+      border-color: color-mix(in oklab, var(--line) 70%, var(--accent) 30%);
+    }
+
+    /* responsive */
     @media (max-width: 900px){
       .hero-inner{ grid-template-columns: 1fr; }
-      .grid{ grid-template-columns: 1fr; }
       .pro-wrap{ margin: 95px auto 70px; }
     }
+
+    @media (max-width: 760px){
+      .compare-top{
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .compare-hint{ width: 100%; justify-content: center; }
+      .compare-table th:first-child,
+      .compare-table td:first-child{
+        width: auto;
+      }
+      .compare-table{
+        table-layout: auto;
+      }
+      .compare-table th, .compare-table td{
+        padding: 10px 10px;
+      }
+    }
+
     @media (max-width: 420px) {
       .kicker {
         flex-direction: column;
@@ -313,146 +490,13 @@
         flex-wrap: wrap;
       }
     }
-  /* ===== FAQ / "Read more" calm styling ===== */
-.faq{ display:grid; gap: 10px; }
-
-details{
-  background: color-mix(in oklab, var(--panel) 92%, black);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 12px 14px;
-  box-shadow: none;
-  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .12s ease;
-}
-
-summary{
-  cursor: pointer;
-  font-weight: 900;
-  color: var(--text);
-  list-style: none; /* removes default marker in some browsers */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-summary::-webkit-details-marker{ display:none; }
-
-/* subtle chevron (not neon) */
-summary::after{
-  content: "▾";
-  color: var(--muted);
-  font-weight: 900;
-  opacity: .85;
-  transform: rotate(0deg);
-  transition: transform .15s ease;
-}
-
-details[open] summary::after{
-  transform: rotate(180deg);
-}
-
-/* calm hover/focus: no glow, just a soft ring */
-details:hover{
-  border-color: color-mix(in oklab, var(--line) 60%, var(--accent) 40%);
-  background: color-mix(in oklab, var(--panel) 96%, black);
-}
-
-details:focus-within{
-  border-color: color-mix(in oklab, var(--line) 55%, var(--accent) 45%);
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.0), 0 0 0 3px rgba(255,255,255,0.02);
-}
-
-details p{
-  margin: 10px 0 0;
-  color: var(--text-dim);
-  line-height: 1.55;
-  font-size: .96rem;
-}
-
-/* optional: reduce brightness if your accent is super hot */
-details[open]{
-  border-color: color-mix(in oklab, var(--line) 70%, var(--accent) 30%);
-}
-/* ===============================
-   READ MORE — CALM INNER CONTENT
-   =============================== */
-
-/* Main expanded content container */
-details .readmore-inner,
-details .readmore-content,
-details[open] > div{
-  background: color-mix(in oklab, var(--panel) 96%, black);
-  border: 1px solid var(--line);
-  box-shadow: none;
-}
-
-/* Kill any neon inset glow */
-details *{
-  box-shadow: none !important;
-}
-
-/* Inner cards / split panels */
-details .card,
-details .subpanel,
-details .visual,
-details .example{
-  background: color-mix(in oklab, var(--panel) 97%, black);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-}
-
-/* Code / mapping blocks (these were very neon) */
-details pre,
-details code,
-details .mono,
-details .mapping,
-details .example-box{
-  background: #0f1211; /* neutral dark, no accent */
-  color: var(--text);
-  border: 1px solid var(--line);
-  box-shadow: none;
-}
-
-/* Remove accent borders inside */
-details [style*="accent"],
-details .accent,
-details .highlight{
-  border-color: var(--line) !important;
-  background: transparent !important;
-}
-
-/* Buttons inside read-more (Open Tools / Try Breaker) */
-details .btn,
-details .run-btn{
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--line);
-  box-shadow: none;
-}
-
-details .btn.primary,
-details .run-btn.primary{
-  background: color-mix(in oklab, var(--panel) 85%, var(--accent) 15%);
-  color: var(--text);
-  border-color: var(--line);
-  box-shadow: none;
-}
-
-/* Subtle hover only */
-details .btn:hover,
-details .run-btn:hover{
-  background: rgba(255,255,255,0.04);
-  box-shadow: none;
-}
-
   </style>
 </head>
 
 <body>
   {% include 'base_nav.html' %}
 
-  <main class="pro-wrap ">
+  <main class="pro-wrap">
 
     <section class="hero">
       <div class="hero-inner">
@@ -470,7 +514,6 @@ details .run-btn:hover{
             comments, and leaderboards. (More perks coming.)
           </p>
 
-          <!-- ✅ FIXED STATUS BLOCK -->
           <div class="status">
             {% if user %}
               {% if viewer_is_pro %}
@@ -482,12 +525,12 @@ details .run-btn:hover{
               {% endif %}
             {% else %}
               <span class="dot free"></span>
-You’re browsing as a guest.
-<a href="{{ url_for('login') }}" style="color: var(--accent); text-decoration: none; font-weight: 700;">
-  Log in
-</a>
-to upgrade.
-{% endif %}
+              You’re browsing as a guest.
+              <a href="{{ url_for('login') }}" style="color: var(--accent); text-decoration: none; font-weight: 700;">
+                Log in
+              </a>
+              to upgrade.
+            {% endif %}
           </div>
         </div>
 
@@ -534,66 +577,114 @@ to upgrade.
       </div>
     </section>
 
-    <!-- FEATURES -->
-    <div class="grid">
-
-      <section class="card feat">
-        <div class="icon">∞</div>
-        <div>
-          <h3>Unlimited Labs</h3>
-          <p>Create as many labs as you want. Keep separate workspaces for each cipher, puzzle, or idea.</p>
+    <!-- ✅ NEW: Comparison table -->
+    <section class="card" style="padding:0;">
+      <div class="compare-wrap">
+        <div class="compare-top">
+          <div class="left">
+            <div class="compare-kicker">Plan comparison</div>
+            <p class="compare-desc">
+              Free is great for quick solves. Pro is for serious sessions: more labs, more image tabs, and premium features.
+            </p>
+          </div>
+          <div class="compare-hint">Tip: Pro is monthly + cancel anytime</div>
         </div>
-      </section>
 
-      <section class="card feat">
-        <div class="icon">🗂️</div>
-        <div>
-          <h3>Unlimited Tabs</h3>
-          <p>Add unlimited image tabs inside a lab—screenshots, scans, notes, anything.</p>
+        <table class="compare-table" aria-label="Labs Pro plan comparison">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Free</th>
+              <th>Labs Pro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="feat-name">
+                  <div>
+                    <div class="feat-title">Labs (workspaces)</div>
+                    <div class="feat-note">Separate labs per cipher/puzzle so you don’t lose progress.</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="pill emph">Up to 3</span></td>
+              <td><span class="pill good">Unlimited</span></td>
+            </tr>
+
+            <tr class="row-compact">
+              <td>
+                <div class="feat-title">Image tabs (per lab)</div>
+                <div class="feat-note">Upload scans/screenshots and flip between them while solving.</div>
+              </td>
+              <td><span class="pill emph">Up to 5</span></td>
+              <td><span class="pill good">Unlimited</span></td>
+            </tr>
+
+            <tr class="row-compact">
+              <td>
+                <div class="feat-title">CoLab sharing</div>
+                <div class="feat-note">Share a link, collaborate, and manage roles.</div>
+              </td>
+              <td><span class="pill bad">—</span></td>
+              <td><span class="pill good">Included</span></td>
+            </tr>
+
+            <tr class="row-compact">
+              <td>
+                <div class="feat-title">Lab history snapshots</div>
+                <div class="feat-note">Save/restore earlier versions when you want to backtrack.</div>
+              </td>
+              <td><span class="pill bad">—</span></td>
+              <td><span class="pill good">Included</span></td>
+            </tr>
+
+            <tr class="row-compact">
+              <td>
+                <div class="feat-title">Export as PDF</div>
+                <div class="feat-note">One-click export for writeups and sharing.</div>
+              </td>
+              <td><span class="pill bad">—</span></td>
+              <td><span class="pill good">Included</span></td>
+            </tr>
+
+            <tr class="row-compact">
+              <td>
+                <div class="feat-title">Clone labs</div>
+                <div class="feat-note">Branch your work: try a new approach without losing the old one.</div>
+              </td>
+              <td><span class="pill bad">—</span></td>
+              <td><span class="pill good">Included</span></td>
+            </tr>
+
+            <tr class="row-compact">
+              <td>
+                <div class="feat-title">Pro badge</div>
+                <div class="feat-note">A cosmetic badge next to your name across the site.</div>
+              </td>
+              <td><span class="pill bad">—</span></td>
+              <td><span class="pill good">Included</span></td>
+            </tr>
+
+            <tr class="row-compact">
+              <td>
+                <div class="feat-title">Support the project</div>
+                <div class="feat-note">Helps fund hosting + future cipher tools for The Cipher Lab.</div>
+              </td>
+              <td><span class="pill bad">Optional</span></td>
+              <td><span class="pill good">Yes</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="compare-footer">
+          
+          <div>
+            More perks coming: templates, pinned tools, team labs, and more solver utilities.
+          </div>
         </div>
-      </section>
-
-      <section class="card feat">
-        <div class="icon">🤝</div>
-        <div>
-          <h3>CoLab Sharing</h3>
-          <p>Enable sharing links, collaborate with others, and manage access from inside the lab.</p>
-        </div>
-      </section>
-
-      <section class="card feat">
-        <div class="icon">⏱</div>
-        <div>
-          <h3>Lab History</h3>
-          <p>Snapshots on save with restore support. Roll back fearlessly.</p>
-        </div>
-      </section>
-
-      <section class="card feat">
-        <div class="icon">📄</div>
-        <div>
-          <h3>Export as PDF</h3>
-          <p>One-click export of notes, ciphertext, and images.</p>
-        </div>
-      </section>
-
-      <section class="card feat">
-        <div class="icon">⎘</div>
-        <div>
-          <h3>Clone Labs</h3>
-          <p>Duplicate any lab instantly to branch ideas safely.</p>
-        </div>
-      </section>
-
-      <section class="card feat">
-        <div class="icon">✨</div>
-        <div>
-          <h3>Pro Badge</h3>
-          <p>Show your support with a Pro badge across the site.</p>
-        </div>
-      </section>
-
-    </div>
+      </div>
+    </section>
 
     <section class="card">
       <div class="section-title">What’s coming next</div>
@@ -624,5 +715,4 @@ to upgrade.
     {% include "base_footer.html" %}
   </main>
 </body>
-
 </html>
