@@ -727,6 +727,34 @@
   @media (prefers-reduced-motion: reduce){
     .pro-chip::after{ animation: none; }
   }
+  .wl-title{
+  position: relative;
+  padding-bottom: 3px;  
+}
+
+.wl-title::after{
+  content:"";
+  position:absolute;
+  left: 0;
+  bottom: -6px;
+  width: 42px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 14px var(--accent-soft);
+  opacity: .85;
+}
+.wl-title{
+  margin: 0;
+  font-size: 1.22rem;
+  font-weight: 950;
+  letter-spacing: .15px;
+  color: var(--text);
+
+  /* subtle depth, not glow */
+  text-shadow: 0 1px 0 rgba(255,255,255,0.02);
+}
+
 </style>
 
 </head>
