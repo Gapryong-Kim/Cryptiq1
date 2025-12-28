@@ -2560,15 +2560,15 @@ def workspace_save(ws_id):
     if not user:
         return jsonify({"ok": False, "error": "login required"}), 401
 
-    if contains_profanity(title) or contains_profanity(body):
-        flash("Your post contains inappropriate language.", "error")
-        return redirect(url_for("posts_new"))
+    
 
     title = (request.form.get("title") or "").strip() or "Untitled Workspace"
     notes = request.form.get("notes") or ""
     cipher_text = request.form.get("cipher_text") or ""
     now = datetime.utcnow().isoformat()
-
+    if contains_profanity(title) or contains_profanity(notes):
+        flash("Your post contains inappropriate language.", "error")
+        return redirect(url_for("posts_new"))
     conn = get_db()
 
     # ✅ Editors can save
