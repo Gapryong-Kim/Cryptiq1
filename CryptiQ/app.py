@@ -3722,6 +3722,10 @@ app.register_blueprint(billing)
 
 # --- Dedicated cipher pages (SEO + higher intent) ---
 
+
+
+
+
 @app.route("/tools/caesar")
 def tool_caesar():
     user = current_user()
