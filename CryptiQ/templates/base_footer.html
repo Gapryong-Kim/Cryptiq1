@@ -1,9 +1,7 @@
 <!-- templates/base_footer.html -->
 <footer class="site-footer">
   <div class="footer-inner">
-    <div class="footer-left">
-      <div class="footer-brand">© {{ now_year or 2025 }} The Cipher Lab</div>
-    </div>
+    <div class="footer-brand">© {{ now_year or 2025 }} The Cipher Lab</div>
 
     <nav class="footer-right" aria-label="Footer">
       <a href="{{ url_for('faqs_page') }}">FAQs</a>
@@ -12,28 +10,30 @@
       <a href="{{ url_for('posts_list') }}">Posts</a>
     </nav>
   </div>
+
+  <!-- Popular ciphers (compact, no “second footer” vibe) -->
+  <div class="footer-inner footer-popular-row">
+    <div class="footer-section-title">Popular ciphers</div>
+
+    <nav class="footer-popular" aria-label="Popular cipher tools">
+      <a href="{{ url_for('tool_caesar') }}">Caesar</a>
+      <a href="{{ url_for('tool_vigenere') }}">Vigenère</a>
+      <a href="{{ url_for('tool_affine') }}">Affine</a>
+      <a href="{{ url_for('tool_rail_fence') }}">Rail Fence</a>
+      <a href="{{ url_for('tool_columnar') }}">Columnar</a>
+      <a href="{{ url_for('breaker') }}">Cipher Breaker</a>
+    </nav>
+  </div>
 </footer>
 
 <style>
-  /* Clean, Mosh-style footer */
   .site-footer{
     width: 100%;
     border-top: 1px solid var(--line);
-    background:  linear-gradient(
-    to bottom,
-    var(--panel) 0%,
-    color-mix(in oklab, var(--panel) 55%, #000) 55%,
-    #000 100%
-  );
-    padding: 22px 0;
+    padding: 18px 0;          /* slightly tighter */
     margin-top: 3vh;
+    background: transparent;
   }
-  .site-footer {
-  background: transparent;   /* IMPORTANT */
-  border-top: 1px solid var(--line);
-}
-
-
 
   .footer-inner{
     width: min(1100px, 92%);
@@ -41,7 +41,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 14px;
   }
 
   .footer-brand{
@@ -70,11 +70,48 @@
     transform: translateY(-1px);
   }
 
+  /* ===== Popular ciphers: compact second line ===== */
+  .footer-popular-row{
+    margin-top: 10px;         /* small spacing, not a “new footer” */
+    padding-top: 0;           /* remove the heavy row padding */
+    border-top: none;         /* remove the extra divider that makes it look stacked */
+    align-items: baseline;
+  }
+
+  .footer-section-title{
+    color: var(--muted);
+    font-weight: 900;
+    letter-spacing: .2px;
+    font-size: .88rem;
+    white-space: nowrap;
+    opacity: .9;
+  }
+
+  .footer-popular{
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .footer-popular a{
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 850;
+    font-size: .90rem;
+    transition: color .15s ease, transform .15s ease;
+  }
+  .footer-popular a:hover{
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
   @media (max-width: 640px){
     .footer-inner{
       flex-direction: column;
       align-items: flex-start;
     }
     .footer-right{ gap: 14px; }
+    .footer-popular-row{ margin-top: 12px; }
   }
 </style>

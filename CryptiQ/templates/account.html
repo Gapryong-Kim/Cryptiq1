@@ -458,7 +458,28 @@
       .setting-card{ grid-template-columns: 1fr; }
       .confirm-actions .btn{ width: 100%; }
     }
-  </style>
+  
+    /* ===== Pagination (My Posts) ===== */
+    .pagination{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 0 0;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .page-btn{
+      text-decoration:none;
+      border:1px solid var(--line);
+      padding:8px 12px;
+      border-radius:999px;
+      color: var(--text);
+      background: var(--panel);
+      transition: transform .12s, border-color .12s;
+    }
+    .page-btn:hover{ border-color: var(--accent); transform: translateY(-1px); }
+</style>
 </head>
 
 <body class="no-nav-padding">
@@ -548,7 +569,7 @@
         {% if posts %}
         <div class="post-grid">
           {% for post in posts %}
-          <a href="{{ url_for('posts_list') }}#post-{{ post['id'] }}" class="post-link">
+          <a href="{{ url_for('posts_list', page=post['list_page']) }}#post-{{ post['id'] }}" class="post-link">
             <article class="post">
               <h4>{{ post['title'] }}</h4>
               <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
@@ -557,6 +578,24 @@
           </a>
           {% endfor %}
         </div>
+{# --- Posts pagination --- #}
+        {% if posts_total_pages and posts_total_pages > 1 %}
+        <div class="pagination" style="margin-top:14px;">
+          {#
+            IMPORTANT:
+            Build the query string explicitly so it *always* stays on /account
+            (some setups end up generating a wrong endpoint when passing kwargs).
+          #}
+          {% if posts_page > 1 %}
+            <a href="{{ url_for('account') }}?posts_page={{ posts_page-1 }}#posts" class="page-btn">‹ Prev</a>
+          {% endif %}
+          <span>Page {{ posts_page }} of {{ posts_total_pages }}</span>
+          {% if posts_page < posts_total_pages %}
+            <a href="{{ url_for('account') }}?posts_page={{ posts_page+1 }}#posts" class="page-btn">Next ›</a>
+          {% endif %}
+        </div>
+        {% endif %}
+
         {% else %}
         <p>You haven’t created any posts yet.</p>
         {% endif %}

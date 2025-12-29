@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>{{ page_title }}</title>
+
+  <!-- SEO essentials -->
+  <meta name="description" content="{{ meta_description }}">
+  <link rel="canonical" href="{{ canonical_url }}">
+
+  <!-- Social sharing (nice for Reddit/Discord) -->
+  <meta property="og:title" content="{{ page_title }}">
+  <meta property="og:description" content="{{ meta_description }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ canonical_url }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg, #0a0a0a);
+      color: var(--text, #f0f0f0);
+      font-family: "Inter", "Segoe UI", sans-serif;
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    main{
+      min-height: 100dvh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      padding: 40px 16px 40px;
+      width: 100%;
+      gap: 16px;
+    }
+
+    .ed-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 95vw;
+      max-width: 1500px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line, #2a2a2a);
+      flex-wrap: wrap;
+    }
+
+    .ed-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent, #00ffd5);
+      box-shadow: 0 0 10px var(--accent-soft, #00ffd57c);
+    }
+
+    .ed-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .ed-sub {
+      width: 95vw;
+      max-width: 1500px;
+      color: var(--muted, #a0a0a0);
+      margin: 10px 0 0;
+      line-height: 1.5;
+      font-size: .95rem;
+    }
+
+    .ed-header-actions{
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .lab-btn{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+      font-size: .9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lab-btn:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .lab-btn:active{ transform: translateY(1px); }
+    .lab-btn.primary{
+      background: var(--accent, #00ffd5);
+      border-color: var(--accent, #00ffd5);
+      color: #0f0f0f;
+    }
+    .lab-btn.primary:hover{
+      background: var(--accent-strong, #00e6c0);
+      border-color: var(--accent-strong, #00e6c0);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .lab-btn:disabled{
+      opacity: .55;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    .ed-body {
+      display: grid;
+      grid-template-columns: 1fr 0.5fr 1fr;
+      gap: 18px;
+      width: 95vw;
+      max-width: 1500px;
+      padding: 18px 0 10px;
+      box-sizing: border-box;
+      transition: all 0.4s ease;
+    }
+
+    .decode-mode { grid-template-columns: 1fr 0.5fr 1fr; direction: rtl; }
+    .decode-mode .ed-panel, .decode-mode .ed-controls { direction: ltr; }
+
+    .ed-panel {
+      background: var(--panel-2, #151515);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      height: 60vh;
+      min-height: 360px;
+    }
+
+    .ed-panel h3 {
+      background: var(--panel, #1d1d1d);
+      color: var(--accent, #00ffd5);
+      font-size: 0.95rem;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line, #2a2a2a);
+      margin: 0;
+      font-weight: 650;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--input-bg, #0e0e0e);
+      color: var(--text, #f0f0f0);
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      font-size: 15px;
+      line-height: 1.55;
+      border-radius: 0 0 10px 10px;
+    }
+
+    .ed-controls {
+      background: var(--panel-2, #151515);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 12px;
+      transition: transform 0.4s ease;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 10px 0;
+      border: 1px solid var(--line, #2a2a2a);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--accent, #00ffd5);
+      color: #0f0f0f;
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 8px var(--accent-soft, #00ffd57c);
+    }
+
+    select, input {
+      width: 100%;
+      background: var(--input-bg, #0e0e0e);
+      border: 1px solid var(--input-border, #343434);
+      border-radius: 8px;
+      color: var(--text, #f0f0f0);
+      padding: 10px 12px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    .shift-display {
+      text-align: center;
+      color: var(--accent, #00ffd5);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      padding: 6px;
+      background: var(--input-bg, #0e0e0e);
+      border-radius: 6px;
+      min-height: 1.8em;
+    }
+
+    /* vigenere */
+    .vigenere-row{ display: none; gap: 6px; }
+    .vigenere-row.show{ display: grid; }
+    .vigenere-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 800;
+      font-size: .88rem;
+    }
+    .vigenere-help{
+      margin-top: 2px;
+      color: var(--muted, #a0a0a0);
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
+    /* affine */
+    .affine-row{
+      display: none;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .affine-row.show{ display: grid; }
+    .affine-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 800;
+      font-size: .88rem;
+    }
+
+    /* rail fence */
+    .rail-row{
+      display: none;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .rail-row.show{ display: grid; }
+    .rail-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 800;
+      font-size: .88rem;
+    }
+    .rail-help{
+      margin-top: 2px;
+      color: var(--muted, #a0a0a0);
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 980px) {
+      .ed-body { grid-template-columns: 1fr; }
+      .ed-panel { height: 40vh; }
+      .ed-controls { order: -1; }
+      main { padding: 60px 10px 20px; }
+    }
+
+    /* MOBILE MODE SWAP FIX */
+    @media (max-width: 980px) {
+      #leftPanel  { order: 2; }
+      .ed-controls { order: 1; }
+      #rightPanel { order: 3; }
+      .decode-mode #leftPanel  { order: 3; }
+      .decode-mode #rightPanel { order: 2; }
+    }
+
+    /* Dedicated-page: lock cipher select */
+    .cipher-lock-note{
+      margin-top: 6px;
+      font-size: .86rem;
+      color: var(--muted, #a0a0a0);
+    }
+    select[disabled]{
+      opacity: .85;
+      cursor: not-allowed;
+    }
+
+    /* Bottom stack */
+    .bottom-stack{
+      width:95vw;
+      max-width:1500px;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      padding-top: 10px;
+      margin-top: 6px;
+    }
+
+    /* Full-width explanation box */
+    .explain-wide{
+      width: 100%;
+      background: var(--panel-2, #151515);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      padding: 16px 16px;
+    }
+
+    .explain-head{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    .explain-head h2{
+      margin: 0;
+      color: var(--text, #f0f0f0);
+      font-size: 1.05rem;
+      letter-spacing: .2px;
+    }
+
+    .chip-row{
+      display:flex;
+      gap: 8px;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      border: 1px solid var(--line, #2a2a2a);
+      background: rgba(255,255,255,0.03);
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 800;
+      font-size: .86rem;
+      white-space: nowrap;
+    }
+
+    .explain-grid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 14px;
+      align-items:start;
+    }
+
+    .explain-p{
+      margin: 0;
+      color: var(--muted, #a0a0a0);
+      line-height: 1.65;
+      font-size: .95rem;
+    }
+
+    .explain-list{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted, #a0a0a0);
+      line-height: 1.65;
+      font-size: .95rem;
+    }
+    .explain-list li{ margin: 4px 0; }
+
+    .mini-card{
+      background: rgba(0,0,0,0.18);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      padding: 12px 12px;
+    }
+    .mini-card h3{
+      margin: 0 0 6px;
+      font-size: .95rem;
+      color: var(--text, #f0f0f0);
+      letter-spacing: .2px;
+    }
+    .mini-card p{
+      margin: 0;
+      color: var(--muted, #a0a0a0);
+      font-size: .92rem;
+      line-height: 1.55;
+    }
+
+    /* Breaker CTA */
+    .breaker-cta{
+      width: 100%;
+      background: var(--panel-2, #151515);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--muted, #a0a0a0);
+      font-size: .92rem;
+    }
+    .breaker-cta a{
+      color: var(--accent, #00ffd5);
+      text-decoration: none;
+      font-weight: 800;
+    }
+    .breaker-cta a:hover{ text-decoration: underline; }
+
+    @media (max-width: 980px){
+      .explain-grid{ grid-template-columns: 1fr; }
+    }
+
+    /* =========================
+       Labs Pro Modal (nice)
+       ========================= */
+    .promodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9000;
+    }
+    .promodal.open{ display: flex; }
+
+    .promodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .promodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel, #1d1d1d);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      animation: lmodalPop .12s ease-out;
+    }
+
+    @keyframes lmodalPop{
+      from{ transform: translateY(6px) scale(.98); opacity: .6; }
+      to{ transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .promodal-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 4px 4px 0;
+    }
+
+    .promodal-title{
+      color: var(--text, #f0f0f0);
+      font-weight: 900;
+      font-size: .98rem;
+    }
+
+    .promodal-x{
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .promodal-x:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+
+    .promodal-body{
+      color: var(--muted, #a0a0a0);
+      line-height: 1.45;
+      padding: 0 4px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .promodal-msg{ color: var(--muted, #a0a0a0); }
+
+    .promodal-list{
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .promodal-list li{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: var(--text, #f0f0f0);
+      font-weight: 700;
+      font-size: .92rem;
+    }
+
+    .promodal-list .tick{
+      display:inline-flex;
+      width: 18px;
+      height: 18px;
+      align-items:center;
+      justify-content:center;
+      border-radius: 999px;
+      background: rgba(0,255,213,0.12);
+      border: 1px solid rgba(0,255,213,0.35);
+      color: var(--accent, #00ffd5);
+      font-weight: 900;
+    }
+
+    .promodal-note{
+      font-size: .85rem;
+      color: var(--muted, #a0a0a0);
+      opacity: .9;
+    }
+
+    .promodal-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      padding: 6px 4px 2px;
+      flex-wrap: wrap;
+    }
+
+    .promodal-btn{
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .promodal-btn:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .promodal-btn.primary{
+      background: var(--accent, #00ffd5);
+      border-color: var(--accent, #00ffd5);
+      color: #0f0f0f;
+    }
+    .promodal-btn.primary:hover{
+      background: var(--accent-strong, #00e6c0);
+      border-color: var(--accent-strong, #00e6c0);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .promodal-btn.ghost{
+      opacity: .9;
+    }
+  </style>
+</head>
+
+<body data-preset-cipher="{{ preset_cipher }}">
+  {% include 'base_nav.html' %}
+
+  <main>
+    <div class="ed-header">
+      <span class="ed-dot"></span>
+      <h1 class="ed-title">{{ page_h1 }}</h1>
+
+      <div class="ed-header-actions">
+        <a class="lab-btn" href="{{ url_for('encode_decode') }}">All ciphers</a>
+
+        {% if user %}
+          <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
+          <a class="lab-btn" id="open-labs" href="{{ url_for('workspace_list') }}">My Labs</a>
+        {% else %}
+          <a class="lab-btn primary" id="save-to-lab-loggedout"
+             href="{{ url_for('login') }}?next={{ request.path }}">Login to save</a>
+          <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if page_blurb %}
+      <p class="ed-sub">{{ page_blurb }}</p>
+    {% endif %}
+
+    <div id="bodyWrap" class="ed-body">
+      <div class="ed-panel" id="leftPanel">
+        <h3>Plaintext</h3>
+        <textarea id="leftBox" placeholder="Enter plaintext..."></textarea>
+      </div>
+
+      <div class="ed-controls">
+        <div class="mode-toggle">
+          <button id="encodeMode" class="mode-btn active" type="button">Encode</button>
+          <button id="decodeMode" class="mode-btn" type="button">Decode</button>
+        </div>
+
+        <div>
+          <label for="cipher-select">Cipher</label>
+          <select id="cipher-select">
+            <option value="caesar">Caesar Cipher</option>
+            <option value="vigenere">Vigenère Cipher</option>
+            <option value="affine">Affine Cipher</option>
+            <option value="railfence">Rail Fence</option>
+            <option value="columnar">Columnar Transposition</option>
+            <option value="polybius">Polybius Square</option>
+            <option value="base64">Base64</option>
+            <option value="hex">Hexadecimal</option>
+            <option value="binary">Binary</option>
+            <option value="permutation">Permutation</option>
+            <option value="amsco">Amsco Cipher</option>
+            <option value="baconian">Baconian</option>
+            <option value="atbash">Atbash</option>
+          </select>
+          <div class="cipher-lock-note">This page is dedicated to {{ page_h1 }}.</div>
+        </div>
+
+        <!-- Default key input -->
+        <div id="key-group">
+          <label for="cipher-key">Key</label>
+          <input id="cipher-key" type="text" value="{{ default_key }}" placeholder="Enter key" />
+        </div>
+
+        <!-- Vigenere custom key input -->
+        <div class="vigenere-row" id="vigenere-row">
+          <div>
+            <label for="vigenere-key">Vigenère keyword</label>
+            <input id="vigenere-key" type="text" value="{{ default_keyword }}" placeholder="e.g. LEMON" autocomplete="off" />
+            <div class="vigenere-help">Letters only.</div>
+          </div>
+        </div>
+
+        <!-- Affine custom key inputs -->
+        <div class="affine-row" id="affine-row">
+          <div>
+            <label for="affine-a">Affine a</label>
+            <input id="affine-a" type="number" value="{{ default_affine_a }}" min="0" step="1" placeholder="e.g. 5" />
+          </div>
+          <div>
+            <label for="affine-b">Affine b</label>
+            <input id="affine-b" type="number" value="{{ default_affine_b }}" min="0" step="1" placeholder="e.g. 8" />
+          </div>
+        </div>
+
+        <!-- Rail Fence custom inputs (rails + offset) -->
+        <div class="rail-row" id="rail-row">
+          <div>
+            <label for="rail-rails">Rails</label>
+            <input id="rail-rails" type="number" value="{{ default_rail_rails }}" min="2" step="1" placeholder="e.g. 3" />
+          </div>
+          <div>
+            <label for="rail-offset">Offset</label>
+            <input id="rail-offset" type="number" value="{{ default_rail_offset }}" min="0" step="1" placeholder="e.g. 0" />
+          </div>
+          <div class="rail-help" style="grid-column:1 / -1;">
+            Offset shifts the starting zig-zag position before placing the first character.
+          </div>
+        </div>
+
+        <div class="shift-display" id="shift-display"></div>
+      </div>
+
+      <div class="ed-panel" id="rightPanel">
+        <h3>Ciphertext</h3>
+        <textarea id="rightBox" placeholder="Enter ciphertext..."></textarea>
+      </div>
+    </div>
+
+    <div class="bottom-stack">
+      <section class="explain-wide" aria-label="Cipher explanation">
+        <div class="explain-head">
+          <h2>{{ page_h1 }} — explanation, history & tips</h2>
+          <div class="chip-row">
+            {% if cipher_family %}<span class="chip">Family: {{ cipher_family }}</span>{% endif %}
+            {% if cipher_era %}<span class="chip">Era: {{ cipher_era }}</span>{% endif %}
+            {% if cipher_strength %}<span class="chip">Strength: {{ cipher_strength }}</span>{% endif %}
+          </div>
+        </div>
+
+        <div class="explain-grid">
+          <div>
+            {% if seo_paragraph %}
+              <p class="explain-p">{{ seo_paragraph }}</p>
+            {% endif %}
+
+            {% if seo_steps %}
+              <ul class="explain-list">
+                {% for step in seo_steps %}
+                  <li>{{ step }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          <div class="mini-card">
+            <h3>History (quick)</h3>
+            <p>
+              {% if cipher_history %}
+                {{ cipher_history }}
+              {% else %}
+                Add <code>cipher_history</code> in the route to show a short origin story and where this cipher appears (puzzles, wartime comms, classics, etc.).
+              {% endif %}
+            </p>
+          </div>
+        </div>
+
+        {% if seo_faq %}
+          <div style="margin-top:14px;">
+            <div class="mini-card">
+              <h3>Quick FAQs</h3>
+              <div class="seo-faq">
+                {% for item in seo_faq %}
+                  <details>
+                    <summary>{{ item.q }}</summary>
+                    <div class="seo-a">{{ item.a }}</div>
+                  </details>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+      <div class="breaker-cta">
+        Want to decode with no key? <a href="/breaker">Try our Cipher Breaker →</a>
+      </div>
+    </div>
+
+    {% include "base_footer.html" %}
+  </main>
+
+  <!-- ===== Labs Pro Limit Modal (nice) ===== -->
+  <div id="pro-modal" class="promodal" aria-hidden="true">
+    <div class="promodal-backdrop" data-close="1"></div>
+
+    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Upgrade required">
+      <div class="promodal-top">
+        <div class="promodal-title" id="pro-title">Free plan limit reached</div>
+        <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="promodal-body">
+        <div class="promodal-msg" id="pro-body">
+          You’ve hit the free limit. Upgrade to Labs Pro to keep going.
+        </div>
+
+        <ul class="promodal-list">
+          <li><span class="tick">✓</span> Export lab as PDF</li>
+          <li><span class="tick">✓</span> Clone any lab instantly</li>
+          <li><span class="tick">✓</span> Lab history (snapshots)</li>
+          <li><span class="tick">✓</span> Unlimited Labs</li>
+          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+          <li><span class="tick">✓</span> Pro badge across the site</li>
+        </ul>
+
+        <div class="promodal-note" id="pro-note">
+          Your draft is safe — you won’t lose your text.
+        </div>
+      </div>
+
+      <div class="promodal-actions">
+        <button class="promodal-btn ghost" id="pro-cancel" type="button">Not now</button>
+        <a class="promodal-btn primary" id="pro-cta" href="{{ url_for('labs_pro_page') }}">Upgrade to Pro</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const leftBox = document.getElementById("leftBox");
+    const rightBox = document.getElementById("rightBox");
+    const cipherSelect = document.getElementById("cipher-select");
+    const cipherKey = document.getElementById("cipher-key");
+    const shiftDisplay = document.getElementById("shift-display");
+    const encodeBtn = document.getElementById("encodeMode");
+    const decodeBtn = document.getElementById("decodeMode");
+    const bodyWrap = document.getElementById("bodyWrap");
+    const keyGroup = document.getElementById("key-group");
+
+    // vigenere
+    const vigenereRow = document.getElementById("vigenere-row");
+    const vigenereKey = document.getElementById("vigenere-key");
+
+    // affine
+    const affineRow = document.getElementById("affine-row");
+    const affineA = document.getElementById("affine-a");
+    const affineB = document.getElementById("affine-b");
+
+    // railfence
+    const railRow = document.getElementById("rail-row");
+    const railRails = document.getElementById("rail-rails");
+    const railOffset = document.getElementById("rail-offset");
+
+    let debounce;
+
+    async function callAPI(endpoint, text, cipher, key) {
+      const res = await fetch(`/api/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, cipher, key })
+      });
+      const data = await res.json();
+      return data.result || "";
+    }
+
+    function schedule(fn) {
+      clearTimeout(debounce);
+      debounce = setTimeout(fn, 70);
+    }
+
+    function sanitizeLettersOnly(s) {
+      return String(s || "").replace(/[^a-zA-Z]/g, "");
+    }
+
+    function getCurrentKey() {
+      const cipher = cipherSelect.value;
+
+      if (cipher === "vigenere") {
+        return sanitizeLettersOnly(vigenereKey?.value || "").trim();
+      }
+
+      if (cipher === "railfence") {
+        const r = String(railRails?.value ?? "3").trim() || "3";
+        const off = String(railOffset?.value ?? "0").trim() || "0";
+        return `${r},${off}`;
+      }
+
+      if (cipher === "affine") {
+        const a = String(affineA?.value ?? "").trim();
+        const b = String(affineB?.value ?? "").trim();
+        return `${a},${b}`;
+      }
+
+      return cipherKey.value;
+    }
+
+    async function encodeLeftToRight() {
+      const key = getCurrentKey();
+      const result = await callAPI("encode", leftBox.value, cipherSelect.value, key);
+      rightBox.value = result;
+    }
+
+    async function decodeRightToLeft() {
+      const key = getCurrentKey();
+      const result = await callAPI("decode", rightBox.value, cipherSelect.value, key);
+      leftBox.value = result;
+    }
+
+    leftBox.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+    }));
+
+    rightBox.addEventListener("input", () => schedule(() => {
+      if (decodeBtn.classList.contains("active")) decodeRightToLeft();
+    }));
+
+    cipherSelect.addEventListener("change", () => {
+      updateKeyInput();
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    });
+
+    cipherKey.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+
+    vigenereKey?.addEventListener("input", () => {
+      const clean = sanitizeLettersOnly(vigenereKey.value);
+      if (vigenereKey.value !== clean) vigenereKey.value = clean;
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    });
+
+    railRails?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+    railOffset?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+
+    affineA?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+    affineB?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+
+    function setMode(newMode) {
+      const isDecode = newMode === "decode";
+      encodeBtn.classList.toggle("active", !isDecode);
+      decodeBtn.classList.toggle("active", isDecode);
+      bodyWrap.classList.toggle("decode-mode", isDecode);
+
+      schedule(() => {
+        if (isDecode) decodeRightToLeft();
+        else encodeLeftToRight();
+      });
+    }
+
+    encodeBtn.onclick = () => setMode("encode");
+    decodeBtn.onclick = () => setMode("decode");
+
+    function updateShiftPreview() {
+      if (cipherSelect.value !== "caesar") return shiftDisplay.textContent = "";
+      const keyVal = parseInt(cipherKey.value);
+      if (!isNaN(keyVal)) {
+        const shift = ((keyVal % 26) + 26) % 26;
+        shiftDisplay.textContent = `a → ${String.fromCharCode(97 + shift)}`;
+      } else shiftDisplay.textContent = "";
+    }
+
+    function updateKeyInput() {
+      const cipher = cipherSelect.value;
+
+      // defaults
+      keyGroup.style.display = "block";
+      affineRow?.classList.remove("show");
+      vigenereRow?.classList.remove("show");
+      railRow?.classList.remove("show");
+
+      if (cipher === "affine") {
+        affineRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (cipher === "vigenere") {
+        vigenereRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (cipher === "railfence") {
+        railRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (["base64", "hex", "binary", "atbash", "baconian"].includes(cipher)) {
+        keyGroup.style.display = "none";
+      }
+
+      if (cipher === "caesar") {
+        cipherKey.type = "number";
+        cipherKey.placeholder = "Enter shift";
+        shiftDisplay.style.display = "block";
+        updateShiftPreview();
+      } else {
+        shiftDisplay.textContent = "";
+      }
+    }
+
+    // Boot + preset locking
+    window.addEventListener("DOMContentLoaded", () => {
+      const preset = document.body.getAttribute("data-preset-cipher") || "";
+      if (preset) {
+        cipherSelect.value = preset;
+        cipherSelect.disabled = true; // dedicated page feel
+      }
+
+      updateKeyInput();
+      updateShiftPreview();
+
+      if (!leftBox.value.trim()) leftBox.value = "HELLO WORLD";
+
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    });
+
+    cipherKey.addEventListener("input", updateShiftPreview);
+    cipherSelect.addEventListener("change", updateShiftPreview);
+  </script>
+
+  <script>
+    // ===== Pro modal wiring =====
+    const proModal = document.getElementById("pro-modal");
+    const proX = document.getElementById("pro-x");
+    const proCancel = document.getElementById("pro-cancel");
+    const proTitle = document.getElementById("pro-title");
+    const proBody = document.getElementById("pro-body");
+    const proCta = document.getElementById("pro-cta");
+
+    function openProModal({ title, message, upgrade_url } = {}) {
+      if (proTitle) proTitle.textContent = title || "Free plan limit reached";
+      if (proBody) proBody.textContent = message || "Upgrade to Labs Pro for unlimited labs.";
+      if (proCta && upgrade_url) proCta.href = upgrade_url;
+
+      proModal?.classList.add("open");
+      proModal?.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setTimeout(() => proCta?.focus?.(), 0);
+    }
+
+    function closeProModal() {
+      proModal?.classList.remove("open");
+      proModal?.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    proX?.addEventListener("click", closeProModal);
+    proCancel?.addEventListener("click", closeProModal);
+    proModal?.addEventListener("click", (e) => {
+      const closeEl = e.target?.closest?.("[data-close='1']");
+      if (closeEl) closeProModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && proModal?.classList.contains("open")) closeProModal();
+    });
+
+    // --- Save to Lab ---
+    const saveBtn = document.getElementById("save-to-lab");
+
+    async function saveToLab() {
+      if (!saveBtn) return;
+
+      const cipher = cipherSelect?.value || "";
+      const key = (typeof getCurrentKey === "function") ? (getCurrentKey() || "") : "";
+      const mode = decodeBtn?.classList.contains("active") ? "decode" : "encode";
+
+      const plain = (leftBox?.value || "").trim();
+      const ciph  = (rightBox?.value || "").trim();
+
+      const pageTitle = (document.querySelector(".ed-title")?.textContent || "Cipher Tool").trim();
+      const title = `${pageTitle} — Lab`;
+
+      const notes =
+`[Saved from Cipher Tool]
+Cipher: ${cipher}
+Mode: ${mode}
+Key: ${key}
+
+Plaintext:
+${plain}
+`;
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+
+      try {
+        const res = await fetch("/tools/save_to_lab", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            notes,
+            cipher_text: ciph
+          })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.status === 401 && data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
+
+        // ✅ Free limit -> show Pro modal instead of alert()
+        if (res.status === 402) {
+          openProModal({
+            title: "Free plan limit reached",
+            message: data.error || "Upgrade to Labs Pro for unlimited labs.",
+            upgrade_url: data.upgrade_url || "{{ url_for('labs_pro_page') }}"
+          });
+          return;
+        }
+
+        if (!res.ok || !data.ok) {
+          alert(data.error || "Failed to save lab.");
+          return;
+        }
+
+        window.location.href = data.redirect;
+      } catch (e) {
+        alert("Network error saving lab.");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save to Lab";
+      }
+    }
+
+    saveBtn?.addEventListener("click", saveToLab);
+  </script>
+
+</body>
+</html>

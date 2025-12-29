@@ -2413,10 +2413,23 @@ def workspace_list():
     user = current_user()
 
     if not user:
-        # your old guest behavior
-        return render_template("workspace_list.html", user=user, viewer_is_pro=is_pro(user))
+        # guest view
+        return render_template(
+            "workspace_list.html",
+            user=user,
+            viewer_is_pro=False,
+            free_max_labs=FREE_MAX_LABS,
+            workspaces=[],
+        )
 
+    # Refresh user so Pro state is accurate for gating/UI.
     conn = get_db()
+    fresh_user = conn.execute(
+        "SELECT * FROM users WHERE id=? LIMIT 1",
+        (user["id"],)
+    ).fetchone()
+    viewer_is_pro = is_pro(fresh_user) if fresh_user else is_pro(user)
+
     rows = conn.execute("""
         SELECT
             w.id, w.title, w.cipher_text, w.notes, w.cipher_image_filename,
@@ -2435,7 +2448,9 @@ def workspace_list():
     return render_template(
         "workspace_list.html",
         user=user,
-        workspaces=[dict(r) for r in rows]
+        workspaces=[dict(r) for r in rows],
+        viewer_is_pro=viewer_is_pro,
+        free_max_labs=FREE_MAX_LABS,
     )
 # ----------------------
 # Create workspace
@@ -3702,6 +3717,266 @@ from flask import Flask
 from billing import billing
 
 app.register_blueprint(billing)
+
+
+
+# --- Dedicated cipher pages (SEO + higher intent) ---
+
+@app.route("/tools/caesar")
+def tool_caesar():
+    user = current_user()
+    return render_template(
+        "cipher_tool.html",
+        user=user,
+        preset_cipher="caesar",
+        page_title="Caesar Cipher Decoder — The Cipher Lab",
+        meta_description="Free Caesar cipher decoder and encoder. Enter text, choose a shift, and convert plaintext ↔ ciphertext instantly.",
+        canonical_url=request.base_url,
+        page_h1="Caesar Cipher Decoder",
+        page_blurb="Encode and decode Caesar ciphers instantly. Set a shift and watch plaintext ↔ ciphertext update live.",
+        seo_paragraph="The Caesar cipher shifts each letter by a fixed number of positions in the alphabet. Choose a shift (for example 3), and this tool will encode plaintext into ciphertext or decode ciphertext back to readable text in real time.",
+
+        cipher_family="Substitution",
+        cipher_era="Ancient Rome",
+        cipher_strength="Very weak",
+        cipher_history="Traditionally attributed to Julius Caesar for military messages. It’s the classic “shift” cipher and a common first example in cryptography and puzzle hunts—easy to break today with frequency analysis or brute force.",
+
+        seo_steps=[
+            "Pick Encode or Decode.",
+            "Enter your text on the left (encode) or right (decode).",
+            "Set the shift value (0–25).",
+            "Copy the result instantly—no submit button."
+        ],
+        seo_faq=[
+            {"q": "What shift did Caesar actually use?", "a": "The famous historical association is a shift of 3, but in puzzles you’ll see any shift from 0–25."},
+            {"q": "How do you break a Caesar cipher?", "a": "Try all 26 shifts (brute force) or use letter frequency—common in English is E, T, A, O."},
+            {"q": "Does it keep punctuation and spaces?", "a": "Typically yes—only letters are shifted; other characters are left unchanged."},
+        ],
+
+        default_key="7",
+        default_keyword="LEMON",
+        default_affine_a=5,
+        default_affine_b=8,
+        default_rail_rails=3,
+        default_rail_offset=0,
+    )
+
+
+@app.route("/tools/vigenere")
+def tool_vigenere():
+    user = current_user()
+    return render_template(
+        "cipher_tool.html",
+        user=user,
+        preset_cipher="vigenere",
+        page_title="Vigenère Cipher Decoder — The Cipher Lab",
+        meta_description="Free Vigenère cipher decoder and encoder. Use a keyword to encrypt or decrypt text instantly.",
+        canonical_url=request.base_url,
+        page_h1="Vigenère Cipher Decoder",
+        page_blurb="Encode and decode Vigenère ciphers with a keyword. Great for classical cipher puzzles and CTFs.",
+        seo_paragraph="The Vigenère cipher uses a repeating keyword to apply a different Caesar shift to each letter. Enter your keyword and this tool will encode or decode instantly, which is especially useful when you’re testing multiple keywords while solving puzzles.",
+
+        cipher_family="Polyalphabetic substitution",
+        cipher_era="1500s–1800s",
+        cipher_strength="Weak (by modern standards)",
+        cipher_history="Popularised in Renaissance Europe and long nicknamed “le chiffre indéchiffrable” (“the indecipherable cipher”). It’s stronger than Caesar because the shifts change each letter, but it can be broken with techniques like Kasiski examination and index of coincidence.",
+
+        seo_steps=[
+            "Pick Encode or Decode.",
+            "Enter text (left for encode, right for decode).",
+            "Type a keyword (letters only).",
+            "The output updates instantly as you edit."
+        ],
+        seo_faq=[
+            {"q": "Do I repeat the keyword?", "a": "Yes—Vigenère repeats the keyword to match the message length."},
+            {"q": "How do you break Vigenère without the key?", "a": "Estimate key length (Kasiski / index of coincidence), then solve each Caesar-like column with frequency analysis."},
+            {"q": "Are spaces/punctuation encrypted?", "a": "Most implementations leave non-letters unchanged; the keyword typically advances only on letters."},
+        ],
+
+        default_key="7",
+        default_keyword="LEMON",
+        default_affine_a=5,
+        default_affine_b=8,
+        default_rail_rails=3,
+        default_rail_offset=0,
+    )
+
+
+@app.route("/tools/affine")
+def tool_affine():
+    user = current_user()
+    return render_template(
+        "cipher_tool.html",
+        user=user,
+        preset_cipher="affine",
+        page_title="Affine Cipher Decoder — The Cipher Lab",
+        meta_description="Free Affine cipher decoder and encoder. Set parameters a and b and convert plaintext ↔ ciphertext instantly.",
+        canonical_url=request.base_url,
+        page_h1="Affine Cipher Decoder",
+        page_blurb="Encode and decode Affine ciphers using a and b parameters. Useful when Caesar isn’t enough.",
+        seo_paragraph="The Affine cipher is a substitution cipher defined by two numbers, a and b, applied to letter indices modulo 26. Enter a and b and this tool will encode or decode immediately, making it easy to experiment with parameters and verify solutions.",
+
+        cipher_family="Substitution (mathematical)",
+        cipher_era="Classical / early modern",
+        cipher_strength="Weak",
+        cipher_history="An affine cipher generalises Caesar by multiplying and shifting letter indices: E(x)=ax+b (mod 26). It’s still a monoalphabetic substitution, so frequency analysis applies, but the math angle makes it common in classrooms and puzzle sets.",
+
+        seo_steps=[
+            "Pick Encode or Decode.",
+            "Enter your text.",
+            "Set a and b (mod 26).",
+            "If decoding fails, your a likely isn’t invertible mod 26."
+        ],
+        seo_faq=[
+            {"q": "What values of a are valid?", "a": "a must be coprime with 26 (e.g., 1,3,5,7,9,11,15,17,19,21,23,25) so an inverse exists."},
+            {"q": "Why does decoding sometimes not work?", "a": "If a shares a factor with 26, it has no modular inverse, so decoding isn’t well-defined."},
+            {"q": "Is Affine stronger than Caesar?", "a": "Slightly, but still monoalphabetic—frequency analysis breaks it quickly."},
+        ],
+
+        default_key="7",
+        default_keyword="LEMON",
+        default_affine_a=5,
+        default_affine_b=8,
+        default_rail_rails=3,
+        default_rail_offset=0,
+    )
+
+
+@app.route("/tools/rail-fence")
+def tool_rail_fence():
+    user = current_user()
+    return render_template(
+        "cipher_tool.html",
+        user=user,
+        preset_cipher="railfence",
+        page_title="Rail Fence Cipher Decoder — The Cipher Lab",
+        meta_description="Free Rail Fence cipher decoder and encoder. Choose the number of rails (and optional offset) and convert text instantly.",
+        canonical_url=request.base_url,
+        page_h1="Rail Fence Cipher Decoder",
+        page_blurb="Encode and decode Rail Fence ciphers with rails and optional offset.",
+        seo_paragraph="The Rail Fence cipher writes text in a zig-zag pattern across a chosen number of rails, then reads it row by row. Set the number of rails (and optional offset) and this tool will encode or decode instantly so you can test rail counts quickly.",
+
+        cipher_family="Transposition",
+        cipher_era="1800s+ (popular puzzles)",
+        cipher_strength="Weak",
+        cipher_history="A classic transposition cipher: it scrambles order rather than substituting letters. It’s widely used in puzzle books and beginner CTFs because you can often guess the rail count by trying small values and looking for readable output.",
+
+        seo_steps=[
+            "Pick Encode or Decode.",
+            "Set the number of rails (try 2–6 first).",
+            "Optional: set offset if you suspect a shifted start.",
+            "Watch the output; readable text often appears quickly."
+        ],
+        seo_faq=[
+            {"q": "What’s a good first guess for rails?", "a": "Try 2–5. Many puzzle rail fences use small rail counts."},
+            {"q": "What does offset do?", "a": "It shifts the starting zig-zag position before placing the first character—useful for variants seen in puzzles."},
+            {"q": "How do you break it without rails?", "a": "Brute-force small rail counts and check for crib words/patterns; transposition keeps letter frequencies intact."},
+        ],
+
+        default_key="7",
+        default_keyword="LEMON",
+        default_affine_a=5,
+        default_affine_b=8,
+        default_rail_rails=3,
+        default_rail_offset=0,
+    )
+
+
+@app.route("/tools/columnar")
+def tool_columnar():
+    user = current_user()
+    return render_template(
+        "cipher_tool.html",
+        user=user,
+        preset_cipher="columnar",
+        page_title="Columnar Transposition Decoder — The Cipher Lab",
+        meta_description="Free columnar transposition encoder and decoder. Enter a key to transpose text and recover plaintext instantly.",
+        canonical_url=request.base_url,
+        page_h1="Columnar Transposition Decoder",
+        page_blurb="Encode and decode columnar transposition with a key. Ideal for many classic puzzle ciphers.",
+        seo_paragraph="Columnar transposition rearranges text by writing it into columns and reading columns in an order determined by a key. Enter your key and this tool will encode or decode immediately, which helps when you’re verifying a suspected transposition key.",
+
+        cipher_family="Transposition",
+        cipher_era="1800s–WWII era (variants)",
+        cipher_strength="Weak–medium (variant dependent)",
+        cipher_history="Columnar transposition has been used in many historical systems and countless puzzle variants. The key determines column order; with enough ciphertext, patterns and probable words can help recover the key length and ordering.",
+
+        seo_steps=[
+            "Pick Encode or Decode.",
+            "Enter a keyword (e.g. ZEBRAS).",
+            "The key sets the column order (alphabetical ranking).",
+            "If it looks close-but-wrong, you may have padding/spacing differences."
+        ],
+        seo_faq=[
+            {"q": "How is the key applied?", "a": "Typically columns are numbered by sorting the key’s letters; ties are handled by position order. Implementations vary."},
+            {"q": "Why do I get slightly different results from other tools?", "a": "Padding rules, tie-breaking, and whether spaces are removed can differ between implementations."},
+            {"q": "How do you break columnar transposition?", "a": "Guess key length, use cribs, try common keywords, or use automated scoring/hill-climbing for longer texts."},
+        ],
+
+        default_key="ZEBRAS",
+        default_keyword="LEMON",
+        default_affine_a=5,
+        default_affine_b=8,
+        default_rail_rails=3,
+        default_rail_offset=0,
+    )
+
+
+
+
+@app.route("/tools/save_to_lab", methods=["POST"])
+def tools_save_to_lab():
+    user = current_user()
+    if not user:
+        return jsonify({
+            "ok": False,
+            "error": "login required",
+            "redirect": url_for("login", next=request.path)
+        }), 401
+
+    data = request.get_json(silent=True) or {}
+
+    title = (data.get("title") or "").strip() or "Untitled Lab"
+    notes = data.get("notes") or ""
+    cipher_text = data.get("cipher_text") or ""
+
+    # Optional: basic profanity check like your workspace_save()
+    if contains_profanity(title) or contains_profanity(notes):
+        return jsonify({"ok": False, "error": "inappropriate content"}), 400
+
+    conn = get_db()
+
+    # Enforce free lab limit (same logic as /workspaces/new)
+    lab_count = conn.execute(
+        "SELECT COUNT(*) AS c FROM workspaces WHERE owner_id=?",
+        (user["id"],)
+    ).fetchone()["c"] or 0
+
+    if (not is_pro(user)) and lab_count >= FREE_MAX_LABS:
+        conn.close()
+        return jsonify({
+            "ok": False,
+            "error": f"Free plan limit: {FREE_MAX_LABS} Labs. Upgrade to Labs Pro for unlimited labs.",
+            "upgrade_url": url_for("labs_pro_page")
+        }), 402
+
+    now = datetime.utcnow().isoformat()
+
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO workspaces (owner_id, title, cipher_text, notes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (user["id"], title, cipher_text, notes, now, now))
+
+    ws_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "ws_id": ws_id,
+        "redirect": url_for("workspace_view", ws_id=ws_id)
+    })
 
 
 # ------------------- Run -------------------
