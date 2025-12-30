@@ -3,8 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Cipher Lab — Encoder / Decoder</title>
+
+  <!-- Primary SEO -->
+  <title>Encoder & Decoder for Classic Ciphers — The Cipher Lab</title>
+  <meta name="description" content="Free online cipher encoder & decoder. Instantly encode or decode Caesar, Vigenère, Affine, Rail Fence, Columnar Transposition, Polybius Square, Base64, Hex, Binary, Atbash, Baconian and more." />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+
+  <!-- Canonical (prefer your real domain when you have it) -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (Discord/Reddit previews) -->
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Encoder & Decoder for Classic Ciphers — The Cipher Lab" />
+  <meta property="og:description" content="Free online cipher encoder & decoder. Instantly encode or decode Caesar, Vigenère, Affine, Rail Fence, Columnar, Polybius, Base64, Hex, Binary and more." />
+  <meta property="og:url" content="{{ request.url }}" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Encoder & Decoder for Classic Ciphers — The Cipher Lab" />
+  <meta name="twitter:description" content="Free online cipher encoder & decoder for Caesar, Vigenère, Affine, Rail Fence, Columnar, Polybius, Base64, Hex, Binary and more." />
+
+  <!-- Optional but nice -->
+  <meta name="theme-color" content="#00ffd5" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "The Cipher Lab — Encoder / Decoder",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web",
+    "url": "{{ request.url }}",
+    "description": "Free online cipher encoder & decoder for classic ciphers including Caesar, Vigenère, Affine, Rail Fence, Columnar Transposition, Polybius Square, Base64, Hex, Binary, Atbash, and Baconian."
+  }
+  </script>
+
   <style>
     html, body {
       margin: 0;
@@ -464,6 +502,7 @@ main > #site-footer{
 
   </style>
 </head>
+
 
 <body>
   {% include 'base_nav.html' %}

@@ -1,24 +1,36 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- Primary SEO -->
   <title>{{ page_title }}</title>
-
-  <!-- SEO essentials -->
   <meta name="description" content="{{ meta_description }}">
   <link rel="canonical" href="{{ canonical_url }}">
 
-  <!-- Social sharing (nice for Reddit/Discord) -->
+  <!-- Indexing -->
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph (Discord / Reddit / Facebook) -->
+  <meta property="og:site_name" content="The Cipher Lab">
   <meta property="og:title" content="{{ page_title }}">
   <meta property="og:description" content="{{ meta_description }}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ canonical_url }}">
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{{ page_title }}">
+  <meta name="twitter:description" content="{{ meta_description }}">
 
-  <style>
+  <!-- Theme -->
+  <meta name="theme-color" content="#00ffd5">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
     html, body {
       margin: 0;
       padding: 0;
@@ -589,6 +601,7 @@
     }
   </style>
 </head>
+
 
 <body data-preset-cipher="{{ preset_cipher }}">
   {% include 'base_nav.html' %}

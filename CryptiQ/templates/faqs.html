@@ -3,11 +3,68 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>FAQ — The Cipher Lab</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Primary SEO -->
+  <title>FAQ — The Cipher Lab</title>
+  <meta name="description" content="Frequently asked questions about The Cipher Lab. Learn how Labs work, what Pro unlocks, how Weekly Cipher and leaderboards function, privacy, notifications, and more." />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (Discord / Reddit / Facebook) -->
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="FAQ — The Cipher Lab" />
+  <meta property="og:description" content="Answers to common questions about Labs, Pro features, Weekly Cipher, leaderboards, privacy, and notifications." />
+  <meta property="og:url" content="{{ request.url }}" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="FAQ — The Cipher Lab" />
+  <meta name="twitter:description" content="Learn how Labs, Pro, Weekly Cipher, and leaderboards work on The Cipher Lab." />
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#00ffd5" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-  <style>
+  <!-- FAQ Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What are Labs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Labs are private workspaces where you can store notes, plaintext, ciphertext, images, and tool outputs. They autosave as you work."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What does Labs Pro unlock?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Labs Pro unlocks unlimited Labs, unlimited image tabs, and premium features like PDF export, cloning, and history snapshots."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Pro affect Weekly Cipher or leaderboards?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Weekly Cipher scoring and leaderboards are fair for everyone. Pro only affects Labs capacity and quality-of-life features."
+        }
+      }
+    ]
+  }
+  </script>
+    <style>
     .faq-wrap{
       width: min(980px, 94%);
       margin: 110px auto 90px;
@@ -198,6 +255,7 @@
     }
   </style>
 </head>
+
 
 <body>
   {% include 'base_nav.html' %}

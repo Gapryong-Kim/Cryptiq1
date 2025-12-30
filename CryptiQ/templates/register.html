@@ -2,10 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Register — CryptiQ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Create Account — CryptiQ</title>
+
+  <!-- SEO: auth pages should not be indexed -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Description (mainly for social previews, not ranking) -->
+  <meta name="description" content="Create a free CryptiQ account to save cipher labs, analyze puzzles, and access advanced cryptography tools.">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ request.url }}">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Create Account — CryptiQ">
+  <meta property="og:description" content="Join CryptiQ to save labs, analyze ciphers, and unlock advanced cryptography tools.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.url }}">
+
+  <!-- Optional: Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Create Account — CryptiQ">
+  <meta name="twitter:description" content="Create a free CryptiQ account and start solving ciphers.">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <style>
+ <style>
     /* ===== Auth Layout (dark/light aware) ===== */
     .auth-viewport {
       min-height: 100dvh;
@@ -235,6 +258,7 @@
 }
   </style>
 </head>
+
 <body>
   {% include 'base_nav.html' %}
 

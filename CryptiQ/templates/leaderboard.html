@@ -2,10 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Leaderboard — The Cipher Lab</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Primary SEO -->
+  <title>Leaderboard — Weekly, Seasonal & All-Time | The Cipher Lab</title>
+  <meta name="description" content="View the Cipher Lab leaderboard. Compare weekly fastest solvers, seasonal rankings, and all-time scores for the Weekly Cipher challenge." />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (Discord / Reddit / social previews) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:title" content="Leaderboard — The Cipher Lab" />
+  <meta property="og:description" content="See who tops the Cipher Lab leaderboards: fastest weekly solvers, seasonal rankings, and all-time champions." />
+  <meta property="og:url" content="{{ request.url }}" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Cipher Lab Leaderboard" />
+  <meta name="twitter:description" content="Weekly, seasonal, and all-time rankings for the Cipher Lab Weekly Cipher challenge." />
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#00ffd5" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <style>
+   <style>
     body {
       background: var(--bg);
       color: var(--text);
@@ -231,6 +255,7 @@ body{
   </style>
 </head>
 
+ 
 <body>
   {% include 'base_nav.html' %}
   <div class="page">

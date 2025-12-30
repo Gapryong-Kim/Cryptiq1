@@ -3,10 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Community Posts — The Cipher Lab</title>
+
+  <!-- Primary SEO -->
+  <title>Community Cipher Posts & Discussions | The Cipher Lab</title>
+  <meta name="description"
+        content="Explore community-created cipher puzzles, cryptography discussions, solver tips, and decoding challenges. Join The Cipher Lab community to share and solve ciphers." />
+  <link rel="canonical" href="https://thecipherlab.com/posts" />
+
+  <!-- Search Engine Meta -->
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="The Cipher Lab" />
+
+  <!-- Open Graph (Discord, Reddit, Facebook, etc.) -->
+  <meta property="og:title" content="Community Cipher Posts & Discussions" />
+  <meta property="og:description"
+        content="Browse and share cipher puzzles, cryptography insights, and decoding techniques with the Cipher Lab community." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://thecipherlab.com/posts" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Community Cipher Posts | The Cipher Lab" />
+  <meta name="twitter:description"
+        content="Community-driven cipher puzzles, cryptography tips, and decoding challenges. Join the discussion on The Cipher Lab." />
+
+  <!-- Performance / Styling -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-  <style>
+  <!-- Optional: theme color for mobile browsers -->
+  <meta name="theme-color" content="#00ffd5" />
+   <style>
     body {
       background: var(--bg);
       color: var(--text);
@@ -920,6 +947,7 @@
 
   </style>
 </head>
+
 
 <body>
   {% include 'base_nav.html' %}

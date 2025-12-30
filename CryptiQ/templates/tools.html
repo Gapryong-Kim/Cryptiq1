@@ -3,7 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Cipher Lab — Tools</title>
+
+  <!-- Primary SEO -->
+  <title>Cipher Analysis Tools & Utilities | The Cipher Lab</title>
+  <meta name="description"
+        content="Free cipher analysis tools including frequency analysis, substitution helpers, Polybius tools, text spacers, and cryptography utilities. Built for puzzle solvers and codebreakers." />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (Reddit / Discord / social previews) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:title" content="Cipher Analysis Tools | The Cipher Lab" />
+  <meta property="og:description"
+        content="Explore free cryptography tools: frequency analyzers, substitution helpers, Polybius utilities, and more. Designed for serious cipher solvers." />
+  <meta property="og:url" content="{{ request.url }}" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cipher Analysis Tools | The Cipher Lab" />
+  <meta name="twitter:description"
+        content="A powerful collection of cipher analysis and cryptography tools for solving puzzles and challenges." />
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#00ffd5" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }

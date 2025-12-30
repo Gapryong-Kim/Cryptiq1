@@ -2003,7 +2003,6 @@ def weekly_submit():
 
 
 @app.route("/admin/weekly", methods=["GET", "POST"])
-@admin_required
 def admin_weekly():
     user = current_user()
     if not is_admin(user):
@@ -2018,7 +2017,7 @@ def admin_weekly():
         title = (request.form.get("title") or "").strip() or f"Week #{week_number}"
         description = (request.form.get("description") or "").strip()
         ciphertext = (request.form.get("ciphertext") or "").strip()
-        solution = (request.form.get("solution") or "").strip()
+        solution = (request.form.get("solution") or "").strip() 
         hint = (request.form.get("hint") or "").strip()
 
         if not ciphertext or not solution:
@@ -2067,6 +2066,7 @@ def admin_weekly():
 
 
 
+
 from flask import render_template, session
 from datetime import datetime
 
@@ -2083,63 +2083,67 @@ def get_current_season():
 def leaderboard():
     user = current_user()
     username = user["username"] if user else None
-    current_season = get_current_season()
 
     conn = get_db()
 
-    # === 1️⃣ All-Time Leaderboard ===
+    # Current season + current week number
+    current_season = get_current_season()
+    wc = get_current_weekly()
+    current_week = int(wc["week_number"]) if wc and wc.get("week_number") is not None else 1
+
+    # === 1) All-Time (correct solves only) ===
     all_time = conn.execute("""
         SELECT
-            cs.username,
-            SUM(cs.score) AS total_score,
-            COUNT(DISTINCT cs.cipher_week) AS weeks_played,
-            COALESCE(MAX(u.is_pro), 0)  AS is_pro,
-            COALESCE(MAX(u.is_admin), 0) AS is_admin
-        FROM cipher_submissions cs
-        LEFT JOIN users u
-          ON LOWER(u.username) = LOWER(cs.username)
-        WHERE cs.username IS NOT NULL
-        GROUP BY cs.username
+            COALESCE(u.username, s.username) AS username,
+            MAX(COALESCE(u.is_admin, 0)) AS is_admin,
+            MAX(COALESCE(u.is_pro, 0))   AS is_pro,
+            SUM(s.score) AS total_score,
+            COUNT(DISTINCT s.cipher_week) AS weeks_played
+        FROM cipher_submissions s
+        LEFT JOIN users u ON u.id = s.user_id
+        WHERE s.username IS NOT NULL
+          AND s.is_correct = 1
+        GROUP BY COALESCE(u.username, s.username)
         ORDER BY total_score DESC
         LIMIT 50
     """).fetchall()
 
-    # === 2️⃣ Current Season Leaderboard ===
+    # === 2) Seasonal (correct solves only, this season) ===
     seasonal = conn.execute("""
         SELECT
-            cs.username,
-            SUM(cs.score) AS total_score,
-            COUNT(DISTINCT cs.cipher_week) AS weeks_played,
-            COALESCE(MAX(u.is_pro), 0)  AS is_pro,
-            COALESCE(MAX(u.is_admin), 0) AS is_admin
-        FROM cipher_submissions cs
-        LEFT JOIN users u
-          ON LOWER(u.username) = LOWER(cs.username)
-        WHERE cs.username IS NOT NULL
-          AND cs.season = ?
-        GROUP BY cs.username
+            COALESCE(u.username, s.username) AS username,
+            MAX(COALESCE(u.is_admin, 0)) AS is_admin,
+            MAX(COALESCE(u.is_pro, 0))   AS is_pro,
+            SUM(s.score) AS total_score,
+            COUNT(DISTINCT s.cipher_week) AS weeks_played
+        FROM cipher_submissions s
+        LEFT JOIN users u ON u.id = s.user_id
+        WHERE s.username IS NOT NULL
+          AND s.is_correct = 1
+          AND s.season = ?
+        GROUP BY COALESCE(u.username, s.username)
         ORDER BY total_score DESC
         LIMIT 50
     """, (current_season,)).fetchall()
 
-    # === 3️⃣ Weekly Fastest Solvers ===
+    # === 3) Weekly Fastest Solvers (ONLY current week; resets when week_number changes) ===
     weekly = conn.execute("""
         SELECT
-            cs.username,
-            MIN(cs.solve_time_seconds) AS best_time,
-            MAX(cs.score) AS score,
-            COALESCE(MAX(u.is_pro), 0)  AS is_pro,
-            COALESCE(MAX(u.is_admin), 0) AS is_admin
-        FROM cipher_submissions cs
-        LEFT JOIN users u
-          ON LOWER(u.username) = LOWER(cs.username)
-        WHERE cs.username IS NOT NULL
-          AND DATE(cs.created_at) >= DATE('now', '-7 days')
-          AND cs.solve_time_seconds IS NOT NULL
-        GROUP BY cs.username
+            COALESCE(u.username, s.username) AS username,
+            MAX(COALESCE(u.is_admin, 0)) AS is_admin,
+            MAX(COALESCE(u.is_pro, 0))   AS is_pro,
+            MIN(s.solve_time_seconds) AS best_time,
+            MAX(s.score) AS score
+        FROM cipher_submissions s
+        LEFT JOIN users u ON u.id = s.user_id
+        WHERE s.username IS NOT NULL
+          AND s.is_correct = 1
+          AND s.cipher_week = ?
+          AND s.solve_time_seconds IS NOT NULL
+        GROUP BY COALESCE(u.username, s.username)
         ORDER BY best_time ASC
         LIMIT 50
-    """).fetchall()
+    """, (current_week,)).fetchall()
 
     conn.close()
 

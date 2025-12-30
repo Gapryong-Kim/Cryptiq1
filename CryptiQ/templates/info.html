@@ -3,9 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Cipher Lab — Cipher Info & Guides</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
+  <!-- Primary SEO -->
+  <title>Classical Cipher Guide & Cryptography Explained | The Cipher Lab</title>
+  <meta name="description" content="Learn how classical ciphers work, including Caesar, Vigenère, Affine, Playfair, Hill, Bacon and transposition ciphers. Plain-English explanations with examples and tools." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (Reddit / Discord / social previews) -->
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:title" content="Classical Cipher Guide & Cryptography Explained" />
+  <meta property="og:description" content="A complete guide to classical cryptography: how ciphers work, how to break them, and when they were used." />
+  <meta property="og:url" content="{{ request.url }}" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Classical Cipher Guide & Cryptography Explained" />
+  <meta name="twitter:description" content="Understand classical ciphers like Caesar, Vigenère and Playfair with clear explanations and examples." />
+
+  <!-- Performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     body{
       background-color: var(--bg);
@@ -331,6 +353,7 @@
     }
   </style>
 </head>
+
 
 <body>
   {% include 'base_nav.html' %}

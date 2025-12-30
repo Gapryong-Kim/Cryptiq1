@@ -2,10 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Login — CryptiQ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Title (brand + clarity, not keyword-stuffed) -->
+  <title>Log In — The Cipher Lab</title>
+
+  <!-- Prevent indexing (auth page) -->
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Canonical (safe, but ignored by robots due to noindex) -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (only for clean previews if shared internally) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:title" content="Log In — The Cipher Lab" />
+  <meta property="og:description" content="Log in to The Cipher Lab to access your saved workspaces, tools, and cipher challenges." />
+  <meta property="og:url" content="{{ request.url }}" />
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#00ffd5" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <style>
+   <style>
     
     /* ===== Auth Layout ===== */
     .auth-viewport {
@@ -242,6 +262,7 @@
   </style>
 </head>
 
+ 
 <body>
   {% include 'base_nav.html' %}
 

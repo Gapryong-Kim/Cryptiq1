@@ -2,11 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>The Cipher Lab — Tools, Posts & Codebreaking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-  <style>
+  <!-- Primary SEO -->
+  <title>The Cipher Lab — Decode, Break & Explore Classical Ciphers</title>
+  <meta name="description" content="The Cipher Lab is an interactive cryptography platform to decode, break, and explore classical ciphers. Solve puzzles, analyse patterns, and save your work in Labs." />
+  <meta name="keywords" content="cipher decoder, cryptography tools, caesar cipher, vigenere cipher, cipher breaker, classical ciphers, codebreaking, cryptography puzzles" />
+  <meta name="author" content="The Cipher Lab" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ request.url_root.rstrip('/') }}" />
+
+  <!-- Open Graph (Discord, Reddit, Facebook) -->
+  <meta property="og:title" content="The Cipher Lab — Decode, Break & Explore Classical Ciphers" />
+  <meta property="og:description" content="Decode and break classical ciphers with interactive tools. Save progress, explore cryptography concepts, and compete in weekly challenges." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ request.url_root.rstrip('/') }}" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="The Cipher Lab — Decode & Break Classical Ciphers" />
+  <meta name="twitter:description" content="An interactive cryptography lab for decoding, breaking, and exploring classical ciphers." />
+
+  <!-- Performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+   <style>
     /* =========================================================
        INDEX PAGE OVERRIDES (your global style.css centers body)
        ========================================================= */
@@ -435,6 +461,7 @@
   </style>
 </head>
 
+ 
 <body>
   {% include 'base_nav.html' %}
 

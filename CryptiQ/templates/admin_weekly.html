@@ -3,7 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <title>Admin — Weekly Cipher</title>
+
+  <!-- ADMIN PAGE: DO NOT INDEX -->
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+
+  <!-- Admin-only description (not for SEO, just hygiene) -->
+  <meta name="description" content="Admin interface for editing the Weekly Cipher puzzle. Restricted access.">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
   <style>
     .admin-wrap {
       width: min(880px, 94%);
@@ -155,7 +166,7 @@
         width: 100%;
       }
     }
-  </style>
+  </style>  
 </head>
 <body>
   {% include 'base_nav.html' %}
@@ -203,14 +214,11 @@
       </div>
     </form>
 
-    <!-- Quick Hint Update Section -->
     <section class="quick-hint-section">
       <div class="quick-hint-title">Quick Hint Update</div>
       <div class="quick-hint-desc">
         Instantly change the current hint without affecting submissions or ciphertext.
       </div>
-
-
 
       <div id="hint-update-feedback"></div>
     </section>

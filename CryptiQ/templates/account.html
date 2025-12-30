@@ -2,8 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+
+  <!-- Primary title -->
   <title>Account — The Cipher Lab</title>
+
+  <!-- Viewport -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ✅ SEO / Privacy: account pages should NOT be indexed -->
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet">
+
+  <!-- Optional: prevent referrer leakage to external sites (safe) -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Optional: consistent dark UI on mobile browser chrome (safe, no layout change) -->
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251110">
 
   <style>
@@ -122,8 +140,6 @@
       font-size: .95rem;
       text-align: center;
     }
-
-
 
     /* ===== Tabs / Links ===== */
     .account-links {
@@ -458,7 +474,7 @@
       .setting-card{ grid-template-columns: 1fr; }
       .confirm-actions .btn{ width: 100%; }
     }
-  
+
     /* ===== Pagination (My Posts) ===== */
     .pagination{
       display:flex;
@@ -728,4 +744,3 @@
   </script>
 </body>
 </html>
-  

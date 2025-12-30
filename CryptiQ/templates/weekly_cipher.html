@@ -2,8 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Weekly Cipher — The Cipher Lab</title>
+  <title>{{ wc.title }} — Weekly Cipher Challenge | The Cipher Lab</title>
+
+  <!-- Core SEO -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+        content="Solve this week’s cryptography challenge on The Cipher Lab. A new classical cipher puzzle every week — earn points, climb the leaderboard, and test your codebreaking skills." />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (Discord / Reddit / Facebook) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title"
+        content="{{ wc.title }} — Weekly Cipher Challenge" />
+  <meta property="og:description"
+        content="A rotating weekly cryptography puzzle on The Cipher Lab. Can you decrypt it faster than everyone else?" />
+  <meta property="og:url" content="{{ request.url }}" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title"
+        content="{{ wc.title }} — Weekly Cipher" />
+  <meta name="twitter:description"
+        content="A new weekly cipher challenge. Decode it, submit your answer, and earn points." />
+
+  <!-- Indexing control (important) -->
+  <meta name="robots" content="index, follow" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     body {

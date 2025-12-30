@@ -2,10 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Labs Pro — The Cipher Lab</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- Primary SEO -->
+  <title>Labs Pro — Unlimited Cipher Workspaces | The Cipher Lab</title>
+  <meta name="description" content="Upgrade to Labs Pro on The Cipher Lab. Unlock unlimited cipher workspaces, unlimited image tabs, PDF export, cloning, and history snapshots for serious codebreaking." />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (Discord / Reddit / social previews) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:title" content="Labs Pro — Unlimited Cipher Workspaces" />
+  <meta property="og:description" content="Go unlimited. Labs Pro unlocks unlimited Labs, image tabs, PDF export, cloning, and more on The Cipher Lab." />
+  <meta property="og:url" content="{{ request.url }}" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Labs Pro — Unlimited Cipher Workspaces" />
+  <meta name="twitter:description" content="Upgrade to Labs Pro and work like a real cryptanalyst with unlimited cipher workspaces." />
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#00ffd5" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     body{
       background: var(--bg);
@@ -492,6 +515,7 @@
     }
   </style>
 </head>
+
 
 <body>
   {% include 'base_nav.html' %}

@@ -1,11 +1,27 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Cipher Lab — Cipher Breaker</title>
+
+  <title>Cipher Breaker — Automatically Decode Classical Ciphers | The Cipher Lab</title>
+
+  <!-- SEO -->
+  <meta name="description"
+        content="Break classical ciphers automatically. Decode Caesar, Vigenère, Affine, Rail Fence, Columnar Transposition and more using The Cipher Lab’s cipher breaker.">
+  <link rel="canonical" href="{{ request.url }}">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:title" content="Cipher Breaker — The Cipher Lab">
+  <meta property="og:description"
+        content="Automatically break classical ciphers including Caesar, Vigenère, Affine, Rail Fence and more. Paste ciphertext and decode instantly.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.url }}">
+
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <style>
+
+    <style>
     html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }
 
     .cb-shell {

@@ -3,8 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Cipher Lab — My Labs</title>
+
+  <title>My Labs — The Cipher Lab</title>
+
+  <!-- 🚫 Do NOT index private pages -->
+  <meta name="robots" content="noindex, nofollow, noarchive">
+
+  <!-- Prevent duplicate URL issues -->
+  <link rel="canonical" href="{{ url_for('workspace_list', _external=True) }}">
+
+  <!-- App styling -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- Accessibility / performance -->
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0a0a0a">
 
 <style>
   html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }

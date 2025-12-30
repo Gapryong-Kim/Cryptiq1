@@ -2,10 +2,27 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Cipher Lab — Workspace</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <title>Workspace — The Cipher Lab</title>
+
+  <!-- 🚫 Do NOT index private pages -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Optional: safety canonical (not required, but clean) -->
+  <link rel="canonical" href="{{ request.url }}">
+
+  <!-- App metadata -->
+  <meta name="application-name" content="The Cipher Lab">
+  <meta name="theme-color" content="#00ffd5">
+
+  <!-- Open Graph (won't be indexed but prevents ugly previews) -->
+  <meta property="og:title" content="Cipher Workspace — The Cipher Lab">
+  <meta property="og:description" content="Private cipher-solving workspace.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.url }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }
 
@@ -1958,9 +1975,7 @@
   }
 </style>
 
-</style>
 
-  </style>
   
 </head>
 
