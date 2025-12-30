@@ -513,6 +513,29 @@
         flex-wrap: wrap;
       }
     }
+  .old-price{
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-decoration: line-through;
+  margin-right: 8px;
+}
+
+.new-price{
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+}
+
+.founder-note{
+  margin-top: 6px;
+  font-size: .88rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: .02em;
+}
+
   </style>
 </head>
 
@@ -562,13 +585,23 @@
           <div style="font-weight:900;color:var(--text);">Labs Pro</div>
 
           <div class="price">
-            <div class="amount">£2.99</div>
-            <div class="per">/ month</div>
-          </div>
+  <div class="amount">
+    <span class="old-price">£4.99</span>
+    <span class="new-price">£2.99</span>
+  </div>
+  <div class="per">/ month</div>
+</div>
 
-          <div class="fine">
-            Cancel anytime. Secure checkout powered by Stripe.
-          </div>
+<div class="founder-note">
+  Founding member price · Limited time
+</div>
+
+<div class="fine">
+  Cancel anytime. Secure checkout powered by Stripe.
+</div>
+
+
+         
 
           <div class="btn-row">
             {% if not user %}

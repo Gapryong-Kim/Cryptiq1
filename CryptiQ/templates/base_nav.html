@@ -144,6 +144,7 @@
 
     {% if user and user.is_admin %}
       <li class="m-only"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+    
     {% endif %}
 
     {% if not user %}
@@ -201,6 +202,8 @@
 
     {% if user and user.is_admin %}
       <li class="d-only"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+      <li class="d-only"><a class="nav-link" href="{{ url_for('admin_labs_analytics') }}">Labs Analytics</a></li>
+
     {% endif %}
 
     {% if not user %}

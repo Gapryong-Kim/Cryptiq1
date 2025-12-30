@@ -4021,6 +4021,177 @@ def tools_save_to_lab():
     })
 
 
+from datetime import datetime, timedelta
+from flask import render_template
+
+@app.route("/admin/labs-analytics")
+@admin_required
+def admin_labs_analytics():
+    user = current_user()
+    conn = get_db()
+
+    # ---- KPIs (best-effort: some tables may not exist depending on migrations) ----
+    def q1(sql, params=()):
+        return conn.execute(sql, params).fetchone()
+
+    def qall(sql, params=()):
+        return conn.execute(sql, params).fetchall()
+
+    # Workspaces (Labs)
+    total_labs = q1("SELECT COUNT(*) AS c FROM workspaces").fetchone()["c"] if False else q1(
+        "SELECT COUNT(*) AS c FROM workspaces"
+    )["c"]
+
+    labs_last_7d = q1("""
+        SELECT COUNT(*) AS c
+        FROM workspaces
+        WHERE datetime(updated_at) >= datetime('now','-7 days')
+    """)["c"]
+
+    labs_last_30d = q1("""
+        SELECT COUNT(*) AS c
+        FROM workspaces
+        WHERE datetime(updated_at) >= datetime('now','-30 days')
+    """)["c"]
+
+    # Unique owners + avg labs per owner
+    owners = q1("SELECT COUNT(DISTINCT owner_id) AS c FROM workspaces")["c"] or 0
+    avg_labs_per_owner = (total_labs / owners) if owners else 0
+
+    # Tabs (workspace_images)
+    try:
+        total_tabs = q1("SELECT COUNT(*) AS c FROM workspace_images")["c"]
+        avg_tabs_per_lab = (total_tabs / total_labs) if total_labs else 0
+    except Exception:
+        total_tabs = None
+        avg_tabs_per_lab = None
+
+    # Shared labs + collaborators
+    try:
+        shared_labs = q1("SELECT COUNT(*) AS c FROM workspaces WHERE is_shared=1")["c"]
+    except Exception:
+        shared_labs = None
+
+    try:
+        total_collab_rows = q1("SELECT COUNT(*) AS c FROM workspace_collaborators")["c"]
+        distinct_collaborators = q1("SELECT COUNT(DISTINCT user_id) AS c FROM workspace_collaborators")["c"]
+    except Exception:
+        total_collab_rows = None
+        distinct_collaborators = None
+
+    # History snapshots (Pro feature)
+    try:
+        total_snapshots = q1("SELECT COUNT(*) AS c FROM workspace_history")["c"]
+        snapshots_last_30d = q1("""
+            SELECT COUNT(*) AS c
+            FROM workspace_history
+            WHERE datetime(created_at) >= datetime('now','-30 days')
+        """)["c"]
+    except Exception:
+        total_snapshots = None
+        snapshots_last_30d = None
+
+    # Pro users
+    try:
+        pro_users = q1("SELECT COUNT(*) AS c FROM users WHERE is_pro=1")["c"]
+        total_users = q1("SELECT COUNT(*) AS c FROM users")["c"]
+        pro_rate = (pro_users / total_users) * 100 if total_users else 0
+    except Exception:
+        pro_users = None
+        total_users = None
+        pro_rate = None
+
+    # ---- Leaderboards / drilldowns ----
+    top_lab_creators = qall("""
+        SELECT u.username, u.email, COUNT(*) AS labs
+        FROM workspaces w
+        JOIN users u ON u.id = w.owner_id
+        GROUP BY w.owner_id
+        ORDER BY labs DESC
+        LIMIT 15
+    """)
+
+    most_active_labs = qall("""
+        SELECT w.id, w.title, u.username AS owner, w.updated_at
+        FROM workspaces w
+        JOIN users u ON u.id = w.owner_id
+        ORDER BY datetime(w.updated_at) DESC
+        LIMIT 20
+    """)
+
+    biggest_labs = []
+    if total_tabs is not None:
+        biggest_labs = qall("""
+            SELECT w.id, w.title, u.username AS owner, COUNT(i.id) AS tabs
+            FROM workspaces w
+            JOIN users u ON u.id = w.owner_id
+            LEFT JOIN workspace_images i ON i.workspace_id = w.id
+            GROUP BY w.id
+            ORDER BY tabs DESC
+            LIMIT 20
+        """)
+
+    shared_labs_list = []
+    if shared_labs is not None:
+        shared_labs_list = qall("""
+            SELECT w.id, w.title, u.username AS owner, w.updated_at
+            FROM workspaces w
+            JOIN users u ON u.id = w.owner_id
+            WHERE w.is_shared=1
+            ORDER BY datetime(w.updated_at) DESC
+            LIMIT 20
+        """)
+
+    collab_heavy = []
+    if total_collab_rows is not None:
+        collab_heavy = qall("""
+            SELECT w.id, w.title, u.username AS owner, COUNT(wc.id) AS collaborators
+            FROM workspaces w
+            JOIN users u ON u.id = w.owner_id
+            LEFT JOIN workspace_collaborators wc ON wc.workspace_id = w.id
+            GROUP BY w.id
+            ORDER BY collaborators DESC
+            LIMIT 20
+        """)
+
+    conn.close()
+
+    return render_template(
+        "admin_labs_analytics.html",
+        user=user,
+
+        # KPIs
+        total_labs=total_labs,
+        labs_last_7d=labs_last_7d,
+        labs_last_30d=labs_last_30d,
+        owners=owners,
+        avg_labs_per_owner=avg_labs_per_owner,
+
+        total_tabs=total_tabs,
+        avg_tabs_per_lab=avg_tabs_per_lab,
+
+        shared_labs=shared_labs,
+        total_collab_rows=total_collab_rows,
+        distinct_collaborators=distinct_collaborators,
+
+        total_snapshots=total_snapshots,
+        snapshots_last_30d=snapshots_last_30d,
+
+        pro_users=pro_users,
+        total_users=total_users,
+        pro_rate=pro_rate,
+
+        # Tables
+        top_lab_creators=top_lab_creators,
+        most_active_labs=most_active_labs,
+        biggest_labs=biggest_labs,
+        shared_labs_list=shared_labs_list,
+        collab_heavy=collab_heavy,
+    )
+
+
+
+
 # ------------------- Run -------------------
 if __name__ == "__main__":
     app.run(debug=True)

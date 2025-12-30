@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Labs Analytics — Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .wrap { width: min(1100px, 94vw); margin: 90px auto 60px; }
+    .h { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    .h h1 { margin:0; font-size: 22px; }
+    .muted { opacity:.75; font-size: 13px; }
+
+    .kpis { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin: 14px 0 22px; }
+    @media (max-width: 980px){ .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 520px){ .kpis { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.18);
+    }
+    .k { font-size: 12px; opacity:.8; margin-bottom: 6px; }
+    .v { font-size: 22px; font-weight: 800; line-height: 1.1; }
+    .s { font-size: 12px; opacity:.75; margin-top: 6px; }
+
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 980px){ .grid2 { grid-template-columns: 1fr; } }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { font-size: 12px; opacity: .8; font-weight: 700; }
+    .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; opacity:.9; }
+    a { color: inherit; text-decoration: underline; }
+  </style>
+</head>
+
+<body>
+  {% include "base_nav.html" %}
+
+  <div class="wrap">
+    <div class="h">
+      <h1>Labs Analytics</h1>
+      <div class="muted">Admin-only • Overview of Labs usage & growth</div>
+    </div>
+
+    <div class="kpis">
+      <div class="card">
+        <div class="k">Total Labs</div>
+        <div class="v">{{ total_labs }}</div>
+        <div class="s">{{ labs_last_7d }} updated in last 7d • {{ labs_last_30d }} in last 30d</div>
+      </div>
+
+      <div class="card">
+        <div class="k">Lab Owners</div>
+        <div class="v">{{ owners }}</div>
+        <div class="s">Avg labs per owner: {{ '%.2f'|format(avg_labs_per_owner) }}</div>
+      </div>
+
+      <div class="card">
+        <div class="k">Total Tabs</div>
+        <div class="v">{{ total_tabs if total_tabs is not none else "—" }}</div>
+        <div class="s">Avg tabs per lab: {{ '%.2f'|format(avg_tabs_per_lab) if avg_tabs_per_lab is not none else "—" }}</div>
+      </div>
+
+      <div class="card">
+        <div class="k">Pro Adoption</div>
+        <div class="v">
+          {% if pro_users is not none %}{{ pro_users }}{% else %}—{% endif %}
+        </div>
+        <div class="s">
+          {% if pro_rate is not none %}
+            {{ '%.1f'|format(pro_rate) }}% of {{ total_users }} users
+          {% else %}
+            —
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="k">Shared Labs</div>
+        <div class="v">{{ shared_labs if shared_labs is not none else "—" }}</div>
+        <div class="s">is_shared=1 labs</div>
+      </div>
+
+      <div class="card">
+        <div class="k">Collaborators</div>
+        <div class="v">{{ total_collab_rows if total_collab_rows is not none else "—" }}</div>
+        <div class="s">Distinct collaborators: {{ distinct_collaborators if distinct_collaborators is not none else "—" }}</div>
+      </div>
+
+      <div class="card">
+        <div class="k">History Snapshots</div>
+        <div class="v">{{ total_snapshots if total_snapshots is not none else "—" }}</div>
+        <div class="s">Last 30d: {{ snapshots_last_30d if snapshots_last_30d is not none else "—" }}</div>
+      </div>
+
+      <div class="card">
+        <div class="k">Quick Links</div>
+        <div class="v" style="font-size:14px; font-weight:700;">
+          <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+          &nbsp;•&nbsp;
+          <a href="{{ url_for('workspace_list') }}">Labs</a>
+          &nbsp;•&nbsp;
+          <a href="{{ url_for('labs_pro_page') }}">Labs Pro</a>
+        </div>
+        <div class="s">Navigate without leaving admin view</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div style="font-weight:800;">Top lab creators</div>
+          <span class="pill">Top 15</span>
+        </div>
+        <div style="height:10px"></div>
+        <table>
+          <thead>
+            <tr><th>User</th><th>Email</th><th>Labs</th></tr>
+          </thead>
+          <tbody>
+            {% for r in top_lab_creators %}
+              <tr>
+                <td>{{ r["username"] }}</td>
+                <td>{{ r["email"] or "—" }}</td>
+                <td>{{ r["labs"] }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="3">No data yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div style="font-weight:800;">Most recently updated labs</div>
+          <span class="pill">Latest 20</span>
+        </div>
+        <div style="height:10px"></div>
+        <table>
+          <thead>
+            <tr><th>Lab</th><th>Owner</th><th>Updated</th></tr>
+          </thead>
+          <tbody>
+            {% for w in most_active_labs %}
+              <tr>
+                <td><a href="{{ url_for('workspace_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
+                <td>{{ w["owner"] }}</td>
+                <td>{{ w["updated_at"] }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="3">No labs yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div style="font-weight:800;">Biggest labs by tabs</div>
+          <span class="pill">Top 20</span>
+        </div>
+        <div style="height:10px"></div>
+        {% if biggest_labs and biggest_labs|length %}
+          <table>
+            <thead>
+              <tr><th>Lab</th><th>Owner</th><th>Tabs</th></tr>
+            </thead>
+            <tbody>
+              {% for w in biggest_labs %}
+                <tr>
+                  <td><a href="{{ url_for('workspace_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
+                  <td>{{ w["owner"] }}</td>
+                  <td>{{ w["tabs"] }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="muted">workspace_images table not found or no images yet.</div>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div style="font-weight:800;">Collab-heavy labs</div>
+          <span class="pill">Top 20</span>
+        </div>
+        <div style="height:10px"></div>
+        {% if collab_heavy and collab_heavy|length %}
+          <table>
+            <thead>
+              <tr><th>Lab</th><th>Owner</th><th>Collaborators</th></tr>
+            </thead>
+            <tbody>
+              {% for w in collab_heavy %}
+                <tr>
+                  <td><a href="{{ url_for('workspace_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
+                  <td>{{ w["owner"] }}</td>
+                  <td>{{ w["collaborators"] }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="muted">workspace_collaborators table not found or no collabs yet.</div>
+        {% endif %}
+
+        <div style="height:14px"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div style="font-weight:800;">Shared labs</div>
+          <span class="pill">Latest 20</span>
+        </div>
+        <div style="height:10px"></div>
+        {% if shared_labs_list and shared_labs_list|length %}
+          <table>
+            <thead>
+              <tr><th>Lab</th><th>Owner</th><th>Updated</th></tr>
+            </thead>
+            <tbody>
+              {% for w in shared_labs_list %}
+                <tr>
+                  <td><a href="{{ url_for('workspace_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
+                  <td>{{ w["owner"] }}</td>
+                  <td>{{ w["updated_at"] }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="muted">No shared labs yet (or is_shared column not present).</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>
