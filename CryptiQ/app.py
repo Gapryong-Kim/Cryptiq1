@@ -2444,10 +2444,23 @@ def workspace_list():
     user = current_user()
 
     if not user:
-        # your old guest behavior
-        return render_template("workspace_list.html", user=user, viewer_is_pro=is_pro(user))
+        # guest view
+        return render_template(
+            "workspace_list.html",
+            user=user,
+            viewer_is_pro=False,
+            free_max_labs=FREE_MAX_LABS,
+            workspaces=[],
+        )
 
+    # Refresh user so Pro state is accurate for gating/UI.
     conn = get_db()
+    fresh_user = conn.execute(
+        "SELECT * FROM users WHERE id=? LIMIT 1",
+        (user["id"],)
+    ).fetchone()
+    viewer_is_pro = is_pro(fresh_user) if fresh_user else is_pro(user)
+
     rows = conn.execute("""
         SELECT
             w.id, w.title, w.cipher_text, w.notes, w.cipher_image_filename,
@@ -2466,7 +2479,9 @@ def workspace_list():
     return render_template(
         "workspace_list.html",
         user=user,
-        workspaces=[dict(r) for r in rows]
+        workspaces=[dict(r) for r in rows],
+        viewer_is_pro=viewer_is_pro,
+        free_max_labs=FREE_MAX_LABS,
     )
 # ----------------------
 # Create workspace
@@ -3735,6 +3750,8 @@ from billing import billing
 app.register_blueprint(billing)
 
 
+
+ 
 
 
 # --- Dedicated cipher pages (SEO + higher intent) ---
