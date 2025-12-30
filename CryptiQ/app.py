@@ -1697,13 +1697,44 @@ def account():
     cur = conn.execute("SELECT username, email, created_at FROM users WHERE id=?", (user["id"],))
     user_info = cur.fetchone()
 
+    # --- My Posts pagination (same style as /posts) ---
+    posts_per_page = 9
+    try:
+        posts_page = int(request.args.get("posts_page") or request.args.get("page") or 1)
+    except ValueError:
+        posts_page = 1
+    if posts_page < 1:
+        posts_page = 1
+
+    total_posts_row = conn.execute(
+        "SELECT COUNT(*) AS c FROM posts WHERE user_id=?",
+        (user["id"],)
+    ).fetchone()
+    total_posts = (total_posts_row["c"] if total_posts_row else 0) or 0
+
+    posts_total_pages = (total_posts + posts_per_page - 1) // posts_per_page if total_posts else 0
+    if posts_total_pages and posts_page > posts_total_pages:
+        posts_page = posts_total_pages
+
+    posts_offset = (posts_page - 1) * posts_per_page
+
     cur = conn.execute("""
         SELECT id, title, body, image_filename, created_at
         FROM posts
         WHERE user_id=?
         ORDER BY datetime(created_at) DESC
-    """, (user["id"],))
-    posts = cur.fetchall()
+        LIMIT ? OFFSET ?
+    """, (user["id"], posts_per_page, posts_offset))
+    posts = [dict(r) for r in cur.fetchall()]
+
+    # For each post, compute which /posts page it appears on (so links work beyond page 1)
+    # Uses the same ordering as /posts (pinned desc, newest first).
+    for p in posts:
+        try:
+            p["list_page"] = get_post_page(p["id"])
+        except Exception:
+            p["list_page"] = 1
+
 
     # Leaderboard data
     lb_data = conn.execute("""
@@ -1727,7 +1758,7 @@ def account():
             break
 
     conn.close()
-    return render_template("account.html", user=user, user_info=user_info, posts=posts, leaderboard_data=leaderboard_data)
+    return render_template("account.html", user=user, user_info=user_info, posts=posts, leaderboard_data=leaderboard_data, posts_page=posts_page, posts_total_pages=posts_total_pages)
 
 
 @app.route("/delete_account")
@@ -2413,23 +2444,10 @@ def workspace_list():
     user = current_user()
 
     if not user:
-        # guest view
-        return render_template(
-            "workspace_list.html",
-            user=user,
-            viewer_is_pro=False,
-            free_max_labs=FREE_MAX_LABS,
-            workspaces=[],
-        )
+        # your old guest behavior
+        return render_template("workspace_list.html", user=user, viewer_is_pro=is_pro(user))
 
-    # Refresh user so Pro state is accurate for gating/UI.
     conn = get_db()
-    fresh_user = conn.execute(
-        "SELECT * FROM users WHERE id=? LIMIT 1",
-        (user["id"],)
-    ).fetchone()
-    viewer_is_pro = is_pro(fresh_user) if fresh_user else is_pro(user)
-
     rows = conn.execute("""
         SELECT
             w.id, w.title, w.cipher_text, w.notes, w.cipher_image_filename,
@@ -2448,9 +2466,7 @@ def workspace_list():
     return render_template(
         "workspace_list.html",
         user=user,
-        workspaces=[dict(r) for r in rows],
-        viewer_is_pro=viewer_is_pro,
-        free_max_labs=FREE_MAX_LABS,
+        workspaces=[dict(r) for r in rows]
     )
 # ----------------------
 # Create workspace
@@ -3717,6 +3733,7 @@ from flask import Flask
 from billing import billing
 
 app.register_blueprint(billing)
+
 
 
 
