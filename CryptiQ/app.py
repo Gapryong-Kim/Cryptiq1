@@ -2637,14 +2637,34 @@ def workspace_save(ws_id):
     # ✅ Pro snapshot: only if is_pro(user) AND we can read ws
     try:
         if changed and is_pro(user):
-            ws_row = conn.execute("""
-                SELECT id, owner_id, title, notes, cipher_text
-                FROM workspaces
-                WHERE id=?
+            # Only snapshot if last snapshot was long enough ago
+            last = conn.execute("""
+                SELECT created_at
+                FROM workspace_history
+                WHERE workspace_id=?
+                ORDER BY datetime(created_at) DESC
                 LIMIT 1
             """, (ws_id,)).fetchone()
-            if ws_row:
-                _history_add_snapshot(conn, dict(ws_row), reason="save")
+
+            should_snapshot = True
+
+            if last:
+                last_time = datetime.fromisoformat(last["created_at"])
+                delta = (datetime.utcnow() - last_time).total_seconds()
+
+                # ⏱ throttle: 1 snapshot every 120 seconds
+                if delta < 120:
+                    should_snapshot = False
+
+            if should_snapshot:
+                ws_row = conn.execute("""
+                    SELECT id, owner_id, title, notes, cipher_text
+                    FROM workspaces
+                    WHERE id=? LIMIT 1
+                """, (ws_id,)).fetchone()
+                if ws_row:
+                    _history_add_snapshot(conn, dict(ws_row), reason="save")
+
     except Exception as e:
         app.logger.exception("history snapshot failed: %s", e)
 
