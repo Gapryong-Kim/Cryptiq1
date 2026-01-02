@@ -4614,22 +4614,11 @@ from flask import Response
 
 DOMAIN = "https://thecipherlab.org"
 
+from flask import send_from_directory
+
 @app.route("/robots.txt")
 def robots_txt():
-    content = f"""User-agent: *
-Allow: /
-
-Disallow: /admin
-Disallow: /login
-Disallow: /register
-Disallow: /forgot_password
-Disallow: /reset_password
-Disallow: /new_post
-Disallow: /edit_post
-
-Sitemap: {DOMAIN}/sitemap.xml
-"""
-    return Response(content, mimetype="text/plain")
+    return send_from_directory(app.static_folder, "robots.txt", mimetype="text/plain")
 
 
 @app.route("/sitemap.xml")
