@@ -21,8 +21,10 @@
 
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <style>
-    html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }
+  <style>
+    html { overflow-y: scroll; scrollbar-gutter: means stable both-edges; }
+    /* NOTE: "means" was a typo in older drafts; correct value is "stable". */
+    html { scrollbar-gutter: stable both-edges; }
 
     .cb-shell {
       min-height: calc(100dvh - 80px);
@@ -66,7 +68,7 @@
       font-weight: 700;
     }
 
-    /* ===== Labs integration header actions ===== */
+    /* ===== Top bar actions ===== */
     .cb-header-actions{
       margin-left: auto;
       display: flex;
@@ -89,6 +91,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
     }
     .lab-btn:hover{
       background: var(--input-hover);
@@ -392,7 +395,7 @@
     }
 
     /* ===============================
-       Pro Modal (nice one)
+       Pro Upsell Modal
        =============================== */
     .promodal{
       position: fixed;
@@ -463,20 +466,27 @@
     .promodal-x{
       width: 36px;
       height: 36px;
-      border-radius: 12px;
-      border: 1px solid var(--line-2);
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      border: 1px solid var(--line-2, #343434);
       background: transparent;
-      color: var(--text);
-      font-weight: 900;
+      color: var(--text, #f0f0f0);
+
+      border-radius: 12px;
       cursor: pointer;
-      display:grid;
-      place-items:center;
+
+      font-size: 18px;
+      line-height: 1;
       transition: background .15s ease, border-color .15s ease, box-shadow .18s ease, transform .06s ease;
     }
+
     .promodal-x:hover{
-      background: var(--input-hover);
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-soft);
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
     }
     .promodal-x:active{ transform: translateY(1px); }
 
@@ -534,30 +544,142 @@
       color: var(--muted);
       margin: 0;
     }
-    /* ===== Pro modal close (center the X) ===== */
-.promodal-x{
-  width: 36px;
-  height: 36px;
-  padding: 0;                 /* important */
-  display: inline-flex;        /* important */
-  align-items: center;         /* important */
-  justify-content: center;     /* important */
 
-  border: 1px solid var(--line-2, #343434);
-  background: transparent;
-  color: var(--text, #f0f0f0);
+    /* ===============================
+       Pro Analysis Modal
+       =============================== */
+    .pmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9600;
+      padding: 16px;
+    }
+    .pmodal.open{ display:flex; animation: proFade .18s ease; }
 
-  border-radius: 12px;
-  cursor: pointer;
+    .pmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.66);
+      backdrop-filter: blur(6px);
+    }
 
-  font-size: 18px;             /* tweak if you want bigger/smaller */
-  line-height: 1;              /* important */
-}
+    .pmodal-box{
+      position: relative;
+      width: min(760px, 94vw);
+      max-height: min(82vh, 760px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      animation: proPop .14s ease-out;
+      outline: none;
+    }
 
-.promodal-x:hover{
-  background: var(--input-hover, rgba(255,255,255,0.06));
-  border-color: var(--accent, #00ffd5);
-  box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    .pmodal-top{
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    }
+    .pmodal-titlewrap{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .pmodal-title{
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pmodal-body{
+      padding: 14px 16px 0;
+      overflow: auto;
+    }
+
+    .pmodal-grid{
+      display: grid;
+      gap: 12px;
+      padding-bottom: 14px;
+    }
+    @media (min-width: 860px){
+      .pmodal-grid{
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .pbox{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .pbox h4{
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: .95rem;
+      letter-spacing: .2px;
+    }
+    .pmeta{
+      margin: 0;
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.45;
+    }
+    .pmono{
+      margin: 10px 0 0;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      font-size: .92rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .pmodal-actions{
+      padding: 12px 16px 14px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04), transparent);
+      align-items: center;
+    }
+
+    .pmodal-actions .left{
+      color: var(--muted);
+      font-size: .86rem;
+      font-weight: 700;
+    }
+    .lmodal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9700; /* was 9000 — must be > .pmodal (9600) */
 }
 
   </style>
@@ -566,6 +688,8 @@
 <body>
   {% include 'base_nav.html' %}
 
+  {% set USER_IS_PRO = (user and (user['is_pro']|default(0))) %}
+
   <main class="cb-shell">
     <section class="cb-card cb--square" aria-label="Cipher Breaker">
       <header class="cb-header">
@@ -573,6 +697,12 @@
         <h1 class="cb-title">Cipher Breaker</h1>
 
         <div class="cb-header-actions">
+          <!-- Pro Analysis button in top bar, immediate left of Save to Lab -->
+          <button class="lab-btn" id="open-pro-analysis" type="button">
+            <span class="pro-badge">PRO</span>
+            Analysis
+          </button>
+
           {% if user %}
             <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
             <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
@@ -659,9 +789,55 @@
         </div>
       </div>
     </section>
-          {% include "base_footer.html" %}
 
+    {% include "base_footer.html" %}
   </main>
+
+  <!-- ===== Pro Analysis Modal ===== -->
+  <div id="pro-analysis-modal" class="pmodal" aria-hidden="true">
+    <div class="pmodal-backdrop" data-pclose="1"></div>
+
+    <div class="pmodal-box" role="dialog" aria-modal="true" aria-label="Pro Analysis" tabindex="-1">
+      <div class="pmodal-top">
+        <div class="pmodal-titlewrap">
+          <span class="promodal-dot" aria-hidden="true"></span>
+          <h3 class="pmodal-title">Pro Analysis</h3>
+        </div>
+        <button class="promodal-x" id="pro-analysis-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="pmodal-body">
+        <div class="pmodal-grid">
+          <div class="pbox">
+            <h4>Summary</h4>
+            <p class="pmeta" id="pa-summary">Paste text to unlock a full crypto-style breakdown.</p>
+            <div class="pmono" id="pa-summary-mono" style="display:none;"></div>
+          </div>
+
+          <div class="pbox">
+            <h4>Frequencies</h4>
+            <p class="pmeta" id="pa-freq">Letter and n-gram frequency highlights.</p>
+            <div class="pmono" id="pa-freq-mono" style="display:none;"></div>
+          </div>
+
+          <div class="pbox" style="grid-column: 1 / -1;">
+            <h4>Notes</h4>
+            <p class="pmeta" id="pa-notes">Heuristics are best-effort. Longer ciphertext = better signal.</p>
+            <div class="pmono" id="pa-notes-mono" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pmodal-actions">
+        <div class="left" id="pa-status">Ready.</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="lab-btn" id="pa-copy" type="button">Copy report</button>
+          <button class="lab-btn" id="pa-save" type="button">Save to Lab</button>
+          <button class="lab-btn primary" id="pa-refresh" type="button">Refresh</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== Labs Modal ===== -->
   <div id="labs-modal" class="lmodal" aria-hidden="true">
@@ -699,11 +875,11 @@
     </div>
   </div>
 
-  <!-- ===== Pro Modal (limit reached) ===== -->
+  <!-- ===== Pro Modal (re-used for limits + pro analysis upsell) ===== -->
   <div id="pro-modal" class="promodal" aria-hidden="true">
     <div class="promodal-backdrop" data-pro-close="1"></div>
 
-    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Upgrade to Labs Pro" tabindex="-1">
+    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Upgrade" tabindex="-1">
       <div class="promodal-top">
         <div class="promodal-titlewrap">
           <span class="promodal-dot" aria-hidden="true"></span>
@@ -745,6 +921,9 @@
   const textarea = document.getElementById("ciphertext");
   const cipherTypeSelect = document.getElementById("cipher_type");
 
+  const USER_LOGGED_IN = {{ 1 if user else 0 }};
+  const USER_IS_PRO = {{ 1 if (user and (user['is_pro']|default(0))) else 0 }};
+
   // ===========================
   // Pro modal helpers
   // ===========================
@@ -763,7 +942,7 @@
     proOpener = document.activeElement;
 
     if (proTitle) proTitle.textContent = title || "Labs Pro";
-    if (proBody) proBody.textContent = message || "You’ve hit the free limit. Upgrade to Labs Pro to keep going.";
+    if (proBody) proBody.textContent = message || "Upgrade to unlock Pro features.";
     if (proUpgrade && upgrade_url) proUpgrade.href = upgrade_url;
 
     if (proNote) {
@@ -864,7 +1043,7 @@
   cipherTypeSelect?.addEventListener("change", () => stashBreakerState(), { passive: true });
 
   // ===========================
-  // Fun placeholder samples
+  // Placeholder samples
   // ===========================
   const funSamples = [
     "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
@@ -967,7 +1146,7 @@
       copyBtn.style.display = data.text ? "inline-flex" : "none";
       if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
 
-      stashBreakerState(); // keep outputs across login bounce too
+      stashBreakerState();
     } catch (err) {
       showError("Unable to reach the server. Please try again.");
     } finally {
@@ -987,11 +1166,254 @@
   });
 
   // ===========================
-  // Labs integration
-  // HARD STOP if capped:
-  // - gate before opening labs modal
-  // - gate before creating
-  // - also handle 403 from create/save
+  // Pro Analysis modal logic
+  // ===========================
+  const openProAnalysisBtn = document.getElementById("open-pro-analysis");
+
+  const paModal = document.getElementById("pro-analysis-modal");
+  const paBox = paModal?.querySelector(".pmodal-box");
+  const paX = document.getElementById("pro-analysis-x");
+  const paRefresh = document.getElementById("pa-refresh");
+  const paCopy = document.getElementById("pa-copy");
+  const paSave = document.getElementById("pa-save");
+  const paStatus = document.getElementById("pa-status");
+
+  const paSummary = document.getElementById("pa-summary");
+  const paSummaryMono = document.getElementById("pa-summary-mono");
+  const paFreq = document.getElementById("pa-freq");
+  const paFreqMono = document.getElementById("pa-freq-mono");
+  const paNotes = document.getElementById("pa-notes");
+  const paNotesMono = document.getElementById("pa-notes-mono");
+
+  let paOpener = null;
+  let lastPaReport = "";
+
+  function openPaModal(){
+    if (!paModal) return;
+    paOpener = document.activeElement;
+    paModal.classList.add("open");
+    paModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => paBox?.focus?.(), 0);
+  }
+
+  function closePaModal(){
+    if (!paModal) return;
+    paModal.classList.remove("open");
+    paModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    paOpener?.focus?.();
+    paOpener = null;
+  }
+
+  function setPaLoading(on, msg){
+    if (paStatus) paStatus.textContent = msg || (on ? "Analyzing…" : "Ready.");
+    if (paRefresh) paRefresh.disabled = !!on;
+    if (paCopy) paCopy.disabled = !!on || !lastPaReport;
+    if (paSave) paSave.disabled = !!on || !lastPaReport;
+  }
+
+  function formatPairs(pairs, max=12){
+    if (!Array.isArray(pairs)) return "—";
+    const take = pairs.slice(0, max);
+    return take.map(([k,v]) => `${k}: ${v}`).join(", ") || "—";
+  }
+
+  function buildReport(data){
+    const len = data?.length ?? 0;
+    const alpha = data?.alpha_len ?? 0;
+    const digits = data?.digit_len ?? 0;
+    const white = data?.whitespace_len ?? 0;
+    const punct = data?.punct_len ?? 0;
+
+    const ioc = data?.ioc ?? 0;
+    const chi = data?.chi_square_english ?? 0;
+    const ent = data?.entropy_bits_per_char ?? 0;
+    const vr = data?.vowel_ratio ?? 0;
+
+    const enc = data?.encoding_hints || {};
+    const fried = data?.friedman_keylen ?? null;
+
+    const topLetters = formatPairs(data?.top_letters, 18);
+    const topBigrams = formatPairs(data?.top_bigrams, 12);
+    const topTrigrams = formatPairs(data?.top_trigrams, 10);
+
+    const ranking = Array.isArray(data?.ranking) ? data.ranking : [];
+    const rankLines = ranking.slice(0, 6).map((r, idx) => {
+      const reasons = Array.isArray(r.reasons) ? r.reasons.slice(0, 3).join(" · ") : "";
+      return `${idx+1}. ${r.name} (${r.score}/100)${reasons ? " — " + reasons : ""}`;
+    }).join("\n") || "—";
+
+    const autoc = Array.isArray(data?.autocorr_top) ? data.autocorr_top : [];
+    const autocLines = autoc.slice(0, 6).map(a => `shift ${a.shift}: rate ${a.rate} (${a.matches} matches)`).join("\n") || "—";
+
+    const kas = data?.kasiski || {};
+    const kasRepeats = Array.isArray(kas?.repeats) ? kas.repeats : [];
+    const kasRepeatLines = kasRepeats.slice(0, 6).map(r => {
+      const d = Array.isArray(r.distances) ? r.distances.slice(0, 6).join(",") : "";
+      return `${r.ngram} (len ${r.len}) ×${r.count} | dists: ${d}`;
+    }).join("\n") || "—";
+
+    const kasFactors = Array.isArray(kas?.factor_counts) ? kas.factor_counts : [];
+    const kasFactorLine = kasFactors.slice(0, 8).map(f => `${f.factor}:${f.count}`).join(", ") || "—";
+
+    const steps = Array.isArray(data?.next_steps) ? data.next_steps : [];
+    const stepsText = steps.length ? steps.map(s => `- ${s}`).join("\n") : "—";
+
+    const encHints = [
+      enc.looks_base64 ? "Base64-ish" : null,
+      enc.looks_hex ? "Hex-ish" : null,
+      enc.looks_binary ? "Binary-ish" : null
+    ].filter(Boolean).join(" · ") || "None";
+
+    const summaryMono =
+`Length: ${len} chars
+Alphabetic: ${alpha} | Digits: ${digits} | Punct: ${punct} | Whitespace: ${white}
+IoC: ${ioc}
+Chi-square vs English: ${chi}
+Entropy (no-whitespace): ${ent} bits/char
+Vowel ratio (A/E/I/O/U/Y): ${vr}
+Encoding hints: ${encHints}
+
+Key length hints
+- Friedman estimate: ${fried ?? "—"}
+- Autocorr peaks:
+${autocLines}
+
+Cipher ranking
+${rankLines}`;
+
+    const freqMono =
+`Top letters:
+${topLetters}
+
+Top bigrams (alpha-only):
+${topBigrams}
+
+Top trigrams (alpha-only):
+${topTrigrams}
+
+Repeat stats:
+- repeated bigram types: ${data?.repeated_bigrams ?? 0}
+- repeated trigram types: ${data?.repeated_trigrams ?? 0}`;
+
+    const notesMono =
+`Kasiski examination (repeated n-grams)
+Top repeats:
+${kasRepeatLines}
+
+Factor counts (2–20):
+${kasFactorLine}
+
+Next steps:
+${stepsText}`;
+
+    if (paSummary) paSummary.textContent = "Core stats + scoring-based classification.";
+    if (paSummaryMono) { paSummaryMono.style.display = "block"; paSummaryMono.textContent = summaryMono; }
+
+    if (paFreq) paFreq.textContent = "Frequencies + repeat behavior (what your cipher is doing).";
+    if (paFreqMono) { paFreqMono.style.display = "block"; paFreqMono.textContent = freqMono; }
+
+    if (paNotes) paNotes.textContent = "Kasiski + actionable next steps.";
+    if (paNotesMono) { paNotesMono.style.display = "block"; paNotesMono.textContent = notesMono; }
+
+    lastPaReport =
+`[Pro Analysis]
+${summaryMono}
+
+${freqMono}
+
+${notesMono}`;
+
+    if (paCopy) paCopy.disabled = !lastPaReport;
+    if (paSave) paSave.disabled = !lastPaReport;
+  }
+
+  async function runProAnalysis(){
+    const text = (textarea?.value || "").trim();
+    if (!text){
+      setPaLoading(false, "Paste some ciphertext first.");
+      return;
+    }
+
+    if (!USER_LOGGED_IN){
+      redirectToLoginPreservingState();
+      return;
+    }
+    if (!USER_IS_PRO){
+      closePaModal();
+      openProModal({
+        title: "Unlock Pro Analysis",
+        message: "Get a full cipher breakdown: frequency tables, IoC, and a best-guess cipher classification.",
+        upgrade_url: `{{ url_for('labs_pro_page') }}`,
+        note: "Your breaker text stays right here."
+      });
+      return;
+    }
+
+    setPaLoading(true, "Running Pro Analysis…");
+    try{
+      const res = await fetch("/api/pro-analysis", {
+        method: "POST",
+        headers: { "Content-Type":"application/json", "Accept":"application/json" },
+        body: JSON.stringify({ text })
+      });
+
+      if (res.status === 401){
+        redirectToLoginPreservingState();
+        return;
+      }
+      if (res.status === 402 || res.status === 403){
+        const j = await res.json().catch(()=>null);
+        closePaModal();
+        openProModal({
+          title: "Unlock Pro Analysis",
+          message: j?.error || "Pro required to use Pro Analysis.",
+          upgrade_url: j?.upgrade_url || `{{ url_for('labs_pro_page') }}`,
+          note: "Your breaker text stays right here."
+        });
+        return;
+      }
+
+      if (!res.ok) throw new Error("bad response");
+      const data = await res.json();
+
+      buildReport(data);
+      setPaLoading(false, "Done.");
+    }catch(e){
+      setPaLoading(false, "Couldn’t analyze right now.");
+      if (paSummaryMono) { paSummaryMono.style.display = "block"; paSummaryMono.textContent = "Error: server unreachable."; }
+    }
+  }
+
+  openProAnalysisBtn?.addEventListener("click", () => {
+    stashBreakerState();
+    openPaModal();
+    runProAnalysis();
+  });
+
+  paX?.addEventListener("click", closePaModal);
+  paModal?.addEventListener("click", (e) => {
+    if (e.target?.closest?.("[data-pclose='1']")) closePaModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && paModal?.classList.contains("open")) closePaModal();
+  });
+
+  paRefresh?.addEventListener("click", () => runProAnalysis());
+
+  paCopy?.addEventListener("click", async () => {
+    try{
+      if (!lastPaReport) return;
+      await navigator.clipboard.writeText(lastPaReport);
+      const old = paCopy.textContent;
+      paCopy.textContent = "Copied!";
+      setTimeout(() => (paCopy.textContent = old), 1200);
+    }catch{}
+  });
+
+  // ===========================
+  // Labs integration (includes saving Pro report)
   // ===========================
   const labsModal = document.getElementById("labs-modal");
   const labsX = document.getElementById("labs-x");
@@ -1014,10 +1436,6 @@
       }
 
       const gate = await gateRes.json().catch(() => null);
-
-      // support typical shapes:
-      // { ok: true } OR { can_create: true }
-      // { ok: false, error: "...", upgrade_url: "/labs-pro" } OR { can_create: false, reason: "..." }
       const canCreate = (gate?.can_create ?? gate?.canCreate ?? gate?.ok);
 
       if (canCreate === false) {
@@ -1030,10 +1448,8 @@
         return false;
       }
 
-      // if the route returns something unexpected, assume allowed (fail-open)
       return true;
     } catch {
-      // fail-open if gate is temporarily unreachable
       return true;
     }
   }
@@ -1091,13 +1507,67 @@ ${(resultText.textContent || "").trim() || "(empty)"}
   labsTitle?.addEventListener("input", () => stashBreakerState({ labs_title: labsTitle.value || "" }), { passive: true });
   labsNotes?.addEventListener("input", () => stashBreakerState({ labs_notes: labsNotes.value || "" }), { passive: true });
 
-  // Gate BEFORE opening the labs modal
   saveToLabBtn?.addEventListener("click", async () => {
     stashBreakerState();
     const ok = await gateCanCreateOrShowPro();
-    if (!ok) return; // 🚫 HARD STOP
+    if (!ok) return;
     openLabsModal();
   });
+
+  // Save Pro Analysis report into Labs (uses same Labs modal)
+  paSave?.addEventListener("click", async () => {
+  if (!lastPaReport) return;
+
+  if (!USER_LOGGED_IN){
+    redirectToLoginPreservingState();
+    return;
+  }
+
+  stashBreakerState();
+  const ok = await gateCanCreateOrShowPro({ note: "Save your Pro Analysis report to a Lab." });
+  if (!ok) return;
+
+  const cipherType = (cipherTypeSelect?.value || "auto");
+  const nice = cipherType.charAt(0).toUpperCase() + cipherType.slice(1);
+
+  const ct = (textarea.value || "").trim();
+  const pt = (resultText.textContent || "").trim();
+  const keyLine = (resultKey && resultKey.style.display !== "none" && resultKey.textContent)
+    ? resultKey.textContent.replace(/^Key:\s*/i, "").trim()
+    : "";
+
+  // ✅ Close Pro Analysis first so we don't stack awkwardly
+  closePaModal();
+
+  // ✅ Open labs AFTER the close has applied
+  requestAnimationFrame(() => {
+    openLabsModal();
+
+    if (labsTitle) labsTitle.value = `Pro Analysis — ${nice}`;
+
+    if (labsNotes) {
+      labsNotes.value =
+`[Pro Analysis]
+Cipher type (breaker selection): ${cipherType}
+
+Ciphertext:
+${ct || "(empty)"}
+
+--- Pro Report ---
+${lastPaReport}
+
+--- Breaker Output (optional) ---
+Key:
+${keyLine || "—"}
+
+Plaintext:
+${pt || "—"}
+`;
+    }
+
+    stashBreakerState({ labs_title: labsTitle?.value || "", labs_notes: labsNotes?.value || "" });
+  });
+});
 
   async function createWorkspacePOST(title) {
     const fd = new FormData();
@@ -1109,13 +1579,11 @@ ${(resultText.textContent || "").trim() || "(empty)"}
       redirect: "follow"
     });
 
-    // login bounce
     if (res.url && res.url.includes("/login")) {
       redirectToLoginPreservingState();
       return { ok:false, code:401 };
     }
 
-    // if backend returns a hard 403 (limit), show pro
     if (res.status === 403) {
       return { ok:false, code:403 };
     }
@@ -1150,9 +1618,8 @@ ${(resultText.textContent || "").trim() || "(empty)"}
   }
 
   labsConfirm?.addEventListener("click", async () => {
-    // Gate BEFORE creating (second lock)
     const allowed = await gateCanCreateOrShowPro();
-    if (!allowed) return; // 🚫 HARD STOP
+    if (!allowed) return;
 
     const title = (labsTitle.value || "").trim() || "Untitled Lab";
     const cipher_text = (textarea.value || "").trim();
@@ -1204,17 +1671,11 @@ ${(resultText.textContent || "").trim() || "(empty)"}
       labsConfirm.disabled = false;
       labsConfirm.textContent = oldText;
       alert("Could not create lab. Are you logged in?");
-    } finally {
-      if (!labsConfirm.disabled) {
-        // nothing
-      } else {
-        // if we didn't early-return above, keep disabled until navigation happens
-      }
     }
   });
 
   // ===========================
-  // Restore state when returning from login
+  // Restore state on load
   // ===========================
   window.addEventListener("DOMContentLoaded", () => {
     const restored = restoreBreakerStateIfAny();

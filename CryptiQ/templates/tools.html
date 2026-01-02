@@ -106,6 +106,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
     }
     .lab-btn:hover{
       background: var(--input-hover, rgba(255,255,255,0.06));
@@ -299,7 +300,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 8000;
+      z-index: 9700; /* ensure above Pro Analysis modal */
     }
     .lmodal.open{ display: flex; }
 
@@ -396,6 +397,271 @@
       background: var(--input-focus, #161616);
       box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
     }
+
+    /* ===============================
+       Pro Analysis Modal (tools page)
+       =============================== */
+    .pmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9600;
+      padding: 16px;
+    }
+    .pmodal.open{ display:flex; }
+
+    .pmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.66);
+      backdrop-filter: blur(6px);
+    }
+
+    .pmodal-box{
+      position: relative;
+      width: min(760px, 94vw);
+      max-height: min(82vh, 760px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      outline: none;
+    }
+
+    .pmodal-top{
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    }
+    .pmodal-titlewrap{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .pmodal-title{
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .promodal-dot{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-soft);
+      flex: 0 0 auto;
+    }
+
+    .promodal-x{
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .promodal-x:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+
+    .pmodal-body{
+      padding: 14px 16px 0;
+      overflow: auto;
+    }
+
+    .pmodal-grid{
+      display: grid;
+      gap: 12px;
+      padding-bottom: 14px;
+    }
+    @media (min-width: 860px){
+      .pmodal-grid{
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .pbox{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .pbox h4{
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: .95rem;
+      letter-spacing: .2px;
+    }
+    .pmeta{
+      margin: 0;
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.45;
+    }
+    .pmono{
+      margin: 10px 0 0;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      font-size: .92rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .pmodal-actions{
+      padding: 12px 16px 14px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04), transparent);
+      align-items: center;
+    }
+
+    .pmodal-actions .left{
+      color: var(--muted);
+      font-size: .86rem;
+      font-weight: 700;
+    }
+
+    /* ===============================
+       Pro Upsell Modal (reuse simple version)
+       =============================== */
+    .promodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9800;
+      padding: 16px;
+    }
+    .promodal.open{ display:flex; }
+
+    .promodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.66);
+      backdrop-filter: blur(6px);
+    }
+
+    .promodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      overflow: hidden;
+      outline: none;
+    }
+
+    .promodal-top{
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    }
+    .promodal-titlewrap{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .promodal-title{
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .promodal-body{
+      padding: 16px;
+      color: var(--text-dim);
+      line-height: 1.55;
+      display: grid;
+      gap: 12px;
+    }
+    .promodal-actions{
+      padding: 14px 16px 16px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04), transparent);
+    }
+    .promodal-list{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+    .promodal-list li{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-weight: 800;
+    }
+    .tick{
+      width: 22px; height: 22px;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      background: rgba(0,255,213,0.10);
+      border: 1px solid rgba(0,255,213,0.22);
+      color: var(--accent);
+      flex: 0 0 auto;
+      box-shadow: 0 0 10px var(--accent-soft);
+      font-weight: 950;
+    }
+    .pro-note{
+      font-size: .88rem;
+      color: var(--muted);
+      margin: 0;
+    }
   </style>
 </head>
 
@@ -409,6 +675,12 @@
         <h1 class="cb-title">Cipher Tools</h1>
 
         <div class="cb-header-actions">
+          <!-- ✅ Pro Analysis button (left of Save to Lab) -->
+          <button class="lab-btn" id="open-pro-analysis" type="button">
+            <span class="pro-badge">PRO</span>
+            Analysis
+          </button>
+
           {% if user %}
             <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
             <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
@@ -437,9 +709,54 @@
         <div id="tool-container" class="cb-panel" style="display:none;"></div>
       </div>
     </section>
-              {% include "base_footer.html" %}
-
+    {% include "base_footer.html" %}
   </main>
+
+  <!-- ===== Pro Analysis Modal ===== -->
+  <div id="pro-analysis-modal" class="pmodal" aria-hidden="true">
+    <div class="pmodal-backdrop" data-pclose="1"></div>
+
+    <div class="pmodal-box" role="dialog" aria-modal="true" aria-label="Pro Analysis" tabindex="-1">
+      <div class="pmodal-top">
+        <div class="pmodal-titlewrap">
+          <span class="promodal-dot" aria-hidden="true"></span>
+          <h3 class="pmodal-title">Pro Analysis</h3>
+        </div>
+        <button class="promodal-x" id="pro-analysis-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="pmodal-body">
+        <div class="pmodal-grid">
+          <div class="pbox">
+            <h4>Summary</h4>
+            <p class="pmeta" id="pa-summary">Paste text to unlock a full crypto-style breakdown.</p>
+            <div class="pmono" id="pa-summary-mono" style="display:none;"></div>
+          </div>
+
+          <div class="pbox">
+            <h4>Frequencies</h4>
+            <p class="pmeta" id="pa-freq">Letter and n-gram frequency highlights.</p>
+            <div class="pmono" id="pa-freq-mono" style="display:none;"></div>
+          </div>
+
+          <div class="pbox" style="grid-column: 1 / -1;">
+            <h4>Notes</h4>
+            <p class="pmeta" id="pa-notes">Heuristics are best-effort. Longer input = better signal.</p>
+            <div class="pmono" id="pa-notes-mono" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pmodal-actions">
+        <div class="left" id="pa-status">Ready.</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="lab-btn" id="pa-copy" type="button">Copy report</button>
+          <button class="lab-btn" id="pa-save" type="button">Save to Lab</button>
+          <button class="lab-btn primary" id="pa-refresh" type="button">Refresh</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== Labs Modal ===== -->
   <div id="labs-modal" class="lmodal" aria-hidden="true">
@@ -477,11 +794,305 @@
     </div>
   </div>
 
+  <!-- ===== Pro Upsell Modal ===== -->
+  <div id="pro-modal" class="promodal" aria-hidden="true">
+    <div class="promodal-backdrop" data-pro-close="1"></div>
+
+    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Upgrade" tabindex="-1">
+      <div class="promodal-top">
+        <div class="promodal-titlewrap">
+          <span class="promodal-dot" aria-hidden="true"></span>
+          <h3 class="promodal-title" id="pro-title">Labs Pro</h3>
+        </div>
+        <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="promodal-body">
+        <div id="pro-body">
+          Upgrade to unlock Pro Analysis.
+        </div>
+
+        <ul class="promodal-list">
+          <li><span class="tick">✓</span> Pro Analysis on every tool</li>
+          <li><span class="tick">✓</span> Unlimited Labs</li>
+          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+        </ul>
+
+        <p class="pro-note" id="pro-note" style="display:none;"></p>
+      </div>
+
+      <div class="promodal-actions">
+        <a class="lab-btn" id="pro-not-now" href="#" role="button">Not now</a>
+        <a class="lab-btn primary" id="pro-upgrade" href="{{ url_for('labs_pro_page') }}">Upgrade</a>
+      </div>
+    </div>
+  </div>
+
   <script>
   (function () {
     const toolSelect = document.getElementById("tool-select");
     const toolContainer = document.getElementById("tool-container");
     const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+
+    const USER_LOGGED_IN = {{ 1 if user else 0 }};
+    const USER_IS_PRO = {{ 1 if (user and (user['is_pro']|default(0))) else 0 }};
+
+    // ===== Top bar Pro Analysis =====
+    const openProAnalysisBtn = document.getElementById("open-pro-analysis");
+
+    // ===== Pro Analysis modal =====
+    const paModal = document.getElementById("pro-analysis-modal");
+    const paBox = paModal?.querySelector(".pmodal-box");
+    const paX = document.getElementById("pro-analysis-x");
+    const paRefresh = document.getElementById("pa-refresh");
+    const paCopy = document.getElementById("pa-copy");
+    const paSave = document.getElementById("pa-save");
+    const paStatus = document.getElementById("pa-status");
+
+    const paSummary = document.getElementById("pa-summary");
+    const paSummaryMono = document.getElementById("pa-summary-mono");
+    const paFreq = document.getElementById("pa-freq");
+    const paFreqMono = document.getElementById("pa-freq-mono");
+    const paNotes = document.getElementById("pa-notes");
+    const paNotesMono = document.getElementById("pa-notes-mono");
+
+    let paOpener = null;
+    let lastPaReport = "";
+
+    function openPaModal(){
+      if (!paModal) return;
+      paOpener = document.activeElement;
+      paModal.classList.add("open");
+      paModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setTimeout(() => paBox?.focus?.(), 0);
+    }
+    function closePaModal(){
+      if (!paModal) return;
+      paModal.classList.remove("open");
+      paModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      paOpener?.focus?.();
+      paOpener = null;
+    }
+    paX?.addEventListener("click", closePaModal);
+    paModal?.addEventListener("click", (e) => {
+      if (e.target?.closest?.("[data-pclose='1']")) closePaModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && paModal?.classList.contains("open")) closePaModal();
+    });
+
+    function setPaLoading(on, msg){
+      if (paStatus) paStatus.textContent = msg || (on ? "Analyzing…" : "Ready.");
+      if (paRefresh) paRefresh.disabled = !!on;
+      if (paCopy) paCopy.disabled = !!on || !lastPaReport;
+      if (paSave) paSave.disabled = !!on || !lastPaReport;
+    }
+
+    function formatPairs(pairs, max=12){
+      if (!Array.isArray(pairs)) return "—";
+      const take = pairs.slice(0, max);
+      return take.map(([k,v]) => `${k}: ${v}`).join(", ") || "—";
+    }
+
+    function buildReport(data){
+      const len = data?.length ?? 0;
+      const alpha = data?.alpha_len ?? 0;
+      const digits = data?.digit_len ?? 0;
+      const white = data?.whitespace_len ?? 0;
+      const punct = data?.punct_len ?? 0;
+
+      const ioc = data?.ioc ?? 0;
+      const chi = data?.chi_square_english ?? 0;
+      const ent = data?.entropy_bits_per_char ?? 0;
+      const vr = data?.vowel_ratio ?? 0;
+
+      const enc = data?.encoding_hints || {};
+      const fried = data?.friedman_keylen ?? null;
+
+      const topLetters = formatPairs(data?.top_letters, 18);
+      const topBigrams = formatPairs(data?.top_bigrams, 12);
+      const topTrigrams = formatPairs(data?.top_trigrams, 10);
+
+      const ranking = Array.isArray(data?.ranking) ? data.ranking : [];
+      const rankLines = ranking.slice(0, 6).map((r, idx) => {
+        const reasons = Array.isArray(r.reasons) ? r.reasons.slice(0, 3).join(" · ") : "";
+        return `${idx+1}. ${r.name} (${r.score}/100)${reasons ? " — " + reasons : ""}`;
+      }).join("\n") || "—";
+
+      const autoc = Array.isArray(data?.autocorr_top) ? data.autocorr_top : [];
+      const autocLines = autoc.slice(0, 6).map(a => `shift ${a.shift}: rate ${a.rate} (${a.matches} matches)`).join("\n") || "—";
+
+      const kas = data?.kasiski || {};
+      const kasRepeats = Array.isArray(kas?.repeats) ? kas.repeats : [];
+      const kasRepeatLines = kasRepeats.slice(0, 6).map(r => {
+        const d = Array.isArray(r.distances) ? r.distances.slice(0, 6).join(",") : "";
+        return `${r.ngram} (len ${r.len}) ×${r.count} | dists: ${d}`;
+      }).join("\n") || "—";
+
+      const kasFactors = Array.isArray(kas?.factor_counts) ? kas.factor_counts : [];
+      const kasFactorLine = kasFactors.slice(0, 8).map(f => `${f.factor}:${f.count}`).join(", ") || "—";
+
+      const steps = Array.isArray(data?.next_steps) ? data.next_steps : [];
+      const stepsText = steps.length ? steps.map(s => `- ${s}`).join("\n") : "—";
+
+      const encHints = [
+        enc.looks_base64 ? "Base64-ish" : null,
+        enc.looks_hex ? "Hex-ish" : null,
+        enc.looks_binary ? "Binary-ish" : null
+      ].filter(Boolean).join(" · ") || "None";
+
+      const summaryMono =
+`Length: ${len} chars
+Alphabetic: ${alpha} | Digits: ${digits} | Punct: ${punct} | Whitespace: ${white}
+IoC: ${ioc}
+Chi-square vs English: ${chi}
+Entropy (no-whitespace): ${ent} bits/char
+Vowel ratio (A/E/I/O/U/Y): ${vr}
+Encoding hints: ${encHints}
+
+Key length hints
+- Friedman estimate: ${fried ?? "—"}
+- Autocorr peaks:
+${autocLines}
+
+Cipher ranking
+${rankLines}`;
+
+      const freqMono =
+`Top letters:
+${topLetters}
+
+Top bigrams (alpha-only):
+${topBigrams}
+
+Top trigrams (alpha-only):
+${topTrigrams}
+
+Repeat stats:
+- repeated bigram types: ${data?.repeated_bigrams ?? 0}
+- repeated trigram types: ${data?.repeated_trigrams ?? 0}`;
+
+      const notesMono =
+`Kasiski examination (repeated n-grams)
+Top repeats:
+${kasRepeatLines}
+
+Factor counts (2–20):
+${kasFactorLine}
+
+Next steps:
+${stepsText}`;
+
+      if (paSummary) paSummary.textContent = "Core stats + scoring-based classification.";
+      if (paSummaryMono) { paSummaryMono.style.display = "block"; paSummaryMono.textContent = summaryMono; }
+
+      if (paFreq) paFreq.textContent = "Frequencies + repeat behavior (what your cipher is doing).";
+      if (paFreqMono) { paFreqMono.style.display = "block"; paFreqMono.textContent = freqMono; }
+
+      if (paNotes) paNotes.textContent = "Kasiski + actionable next steps.";
+      if (paNotesMono) { paNotesMono.style.display = "block"; paNotesMono.textContent = notesMono; }
+
+      lastPaReport =
+`[Pro Analysis]
+${summaryMono}
+
+${freqMono}
+
+${notesMono}`;
+
+      if (paCopy) paCopy.disabled = !lastPaReport;
+      if (paSave) paSave.disabled = !lastPaReport;
+    }
+
+    function getActiveInputAndOutput() {
+      const inputText =
+        (document.getElementById("tool-text")?.value ?? "") ||
+        (document.getElementById("ciphertext")?.value ?? "") ||
+        (document.getElementById("replace-text")?.value ?? "") ||
+        "";
+
+      const outputText =
+        (document.getElementById("tool-result")?.innerText ?? "") ||
+        (document.getElementById("frequency-output")?.innerText ?? "") ||
+        (document.getElementById("replace-result")?.innerText ?? "") ||
+        "";
+
+      return { inputText: (inputText || "").trim(), outputText: (outputText || "").trim() };
+    }
+
+    async function runProAnalysis(){
+      const { inputText } = getActiveInputAndOutput();
+      if (!inputText){
+        setPaLoading(false, "Paste some text first.");
+        return;
+      }
+
+      if (!USER_LOGGED_IN){
+        window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
+        return;
+      }
+      if (!USER_IS_PRO){
+        closePaModal();
+        openProModal({
+          title: "Unlock Pro Analysis",
+          message: "Get a full cipher breakdown: frequency tables, IoC, and best-guess cipher classification.",
+          upgrade_url: `{{ url_for('labs_pro_page') }}`,
+          note: "Your tool text stays right here."
+        });
+        return;
+      }
+
+      setPaLoading(true, "Running Pro Analysis…");
+      try{
+        const res = await fetch("/api/pro-analysis", {
+          method: "POST",
+          headers: { "Content-Type":"application/json", "Accept":"application/json" },
+          body: JSON.stringify({ text: inputText })
+        });
+
+        if (res.status === 401){
+          window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
+          return;
+        }
+        if (res.status === 402 || res.status === 403){
+          const j = await res.json().catch(()=>null);
+          closePaModal();
+          openProModal({
+            title: "Unlock Pro Analysis",
+            message: j?.error || "Pro required to use Pro Analysis.",
+            upgrade_url: j?.upgrade_url || `{{ url_for('labs_pro_page') }}`,
+            note: "Your tool text stays right here."
+          });
+          return;
+        }
+
+        if (!res.ok) throw new Error("bad response");
+        const data = await res.json();
+
+        buildReport(data);
+        setPaLoading(false, "Done.");
+      }catch(e){
+        setPaLoading(false, "Couldn’t analyze right now.");
+        if (paSummaryMono) { paSummaryMono.style.display = "block"; paSummaryMono.textContent = "Error: server unreachable."; }
+      }
+    }
+
+    openProAnalysisBtn?.addEventListener("click", () => {
+      openPaModal();
+      runProAnalysis();
+    });
+    paRefresh?.addEventListener("click", () => runProAnalysis());
+    paCopy?.addEventListener("click", async () => {
+      try{
+        if (!lastPaReport) return;
+        await navigator.clipboard.writeText(lastPaReport);
+        const old = paCopy.textContent;
+        paCopy.textContent = "Copied!";
+        setTimeout(() => (paCopy.textContent = old), 1200);
+      }catch{}
+    });
 
     // ===== Labs integration =====
     const saveToLabBtn = document.getElementById("save-to-lab");
@@ -520,20 +1131,15 @@
       return {
         ts: Date.now(),
         tool: toolSelect.value,
-        // common ids (present depending on tool)
         tool_text: safeGetVal("tool-text"),
         tool_result: safeGetText("tool-result"),
         block_length: safeGetVal("block-length"),
-
-        // substitution ids
         sub_ciphertext: safeGetVal("ciphertext"),
         sub_output: safeGetText("frequency-output"),
         sub_mapping: Array.from(document.querySelectorAll(".sub-input")).map(inp => ({
           plain: inp.dataset.plain,
           v: inp.value || ""
         })),
-
-        // replacer ids
         rep_text: safeGetVal("replace-text"),
         rep_find: safeGetVal("replace-find"),
         rep_with: safeGetVal("replace-with"),
@@ -783,7 +1389,6 @@
       toolSelect.value = tool;
       renderTool(tool);
 
-      // wait a tick because renderTool builds DOM
       setTimeout(() => {
         if (tool === "text_replacer") {
           const a = document.getElementById("replace-text"); if (a) a.value = d.rep_text || "";
@@ -869,6 +1474,35 @@ ${outputText || "(empty)"}
       openLabsModal();
     });
 
+    // ✅ Save Pro report via Labs modal (close Pro first, then open Labs)
+    paSave?.addEventListener("click", () => {
+      if (!lastPaReport) return;
+
+      const tool = toolSelect.value;
+      const niceTool = (toolSelect.options[toolSelect.selectedIndex]?.textContent || tool).trim();
+
+      const { inputText, outputText } = getActiveInputAndOutput();
+
+      closePaModal();
+      requestAnimationFrame(() => {
+        openLabsModal();
+        labsTitle.value = `Pro Analysis — ${niceTool}`;
+        labsNotes.value =
+`[Pro Analysis]
+Tool: ${tool}
+
+Input:
+${inputText || "(empty)"}
+
+--- Pro Report ---
+${lastPaReport}
+
+--- Tool Output (optional) ---
+${outputText || "—"}
+`;
+      });
+    });
+
     async function createWorkspacePOST(title) {
       const fd = new FormData();
       fd.append("title", title || "Untitled Lab");
@@ -912,7 +1546,6 @@ ${outputText || "(empty)"}
     labsConfirm?.addEventListener("click", async () => {
       const title = (labsTitle.value || "").trim() || "Untitled Lab";
 
-      // Store "output" in cipher_text; store full details in notes.
       const outputText =
         safeGetText("tool-result") ||
         safeGetText("frequency-output") ||
@@ -949,10 +1582,51 @@ ${outputText || "(empty)"}
     });
 
     document.addEventListener("DOMContentLoaded", () => {
-      // restore if coming back from login
       const d = loadDraft();
       if (d) applyDraft(d);
       else renderTool(toolSelect.value);
+    });
+
+    // ===== Pro upsell modal helpers (simple) =====
+    const proModal = document.getElementById("pro-modal");
+    const proX = document.getElementById("pro-x");
+    const proNotNow = document.getElementById("pro-not-now");
+    const proUpgrade = document.getElementById("pro-upgrade");
+    const proTitle = document.getElementById("pro-title");
+    const proBody = document.getElementById("pro-body");
+    const proNote = document.getElementById("pro-note");
+    let proOpener = null;
+
+    function openProModal({ title, message, upgrade_url, note } = {}) {
+      if (!proModal) return;
+      proOpener = document.activeElement;
+      if (proTitle) proTitle.textContent = title || "Labs Pro";
+      if (proBody) proBody.textContent = message || "Upgrade to unlock Pro features.";
+      if (proUpgrade && upgrade_url) proUpgrade.href = upgrade_url;
+      if (proNote) {
+        if (note) { proNote.style.display = "block"; proNote.textContent = note; }
+        else { proNote.style.display = "none"; proNote.textContent = ""; }
+      }
+      proModal.classList.add("open");
+      proModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+    }
+    function closeProModal() {
+      if (!proModal) return;
+      proModal.classList.remove("open");
+      proModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      proOpener?.focus?.();
+      proOpener = null;
+    }
+
+    proX?.addEventListener("click", closeProModal);
+    proNotNow?.addEventListener("click", (e) => { e.preventDefault(); closeProModal(); });
+    proModal?.addEventListener("click", (e) => {
+      if (e.target?.closest?.("[data-pro-close='1']")) closeProModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && proModal?.classList.contains("open")) closeProModal();
     });
 
   })();
@@ -980,7 +1654,6 @@ ${outputText || "(empty)"}
     "The key was under the doormat the whole time."
   ];
 
-  // IMPORTANT: toolContainer is created dynamically, so this just seeds any initial textareas
   document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("textarea").forEach(area => {
       if (!area.value.trim()) area.value = funSamples[Math.floor(Math.random()*funSamples.length)];
