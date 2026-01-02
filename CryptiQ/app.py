@@ -4607,6 +4607,62 @@ print("GBP price:", os.environ.get("STRIPE_PRICE_PRO_GBP"))
 print("EUR price:", os.environ.get("STRIPE_PRICE_PRO_EUR"))
 print("USD price:", os.environ.get("STRIPE_PRICE_PRO_USD"))
 print("old price:", os.environ.get("STRIPE_PRICE_ID_PRO_MONTHLY"))
+
+
+
+from flask import Response
+
+DOMAIN = "https://thecipherlab.org"
+
+@app.route("/robots.txt")
+def robots_txt():
+    content = f"""User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /forgot_password
+Disallow: /reset_password
+Disallow: /new_post
+Disallow: /edit_post
+
+Sitemap: {DOMAIN}/sitemap.xml
+"""
+    return Response(content, mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    # Public pages only
+    urls = [
+        f"{DOMAIN}/",
+        f"{DOMAIN}/tools",
+        f"{DOMAIN}/breaker",
+        f"{DOMAIN}/posts",
+        f"{DOMAIN}/leaderboard",
+        f"{DOMAIN}/faqs",
+        f"{DOMAIN}/info",
+        f"{DOMAIN}/labs-pro",
+        f"{DOMAIN}/weekly-cipher",
+    ]
+
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+
+    for u in urls:
+        xml.append(f"  <url><loc>{u}</loc></url>")
+
+    xml.append("</urlset>")
+    return Response("\n".join(xml), mimetype="application/xml")
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
     

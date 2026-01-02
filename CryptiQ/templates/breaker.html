@@ -804,18 +804,20 @@
 
         <div class="cb-header-actions">
           <!-- Pro Analysis button in top bar, immediate left of Save to Lab -->
-          <button class="lab-btn" id="open-pro-analysis" type="button">
+          <button class="lab-btn primary" id="open-pro-analysis" type="button">
             <span class="pro-badge">PRO</span>
             Analysis
           </button>
 
           {% if user %}
-            <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
-            <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+                      <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+  
+          <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
           {% else %}
-            <a class="lab-btn primary" id="login-to-save"
-               href="{{ url_for('login') }}?next={{ request.full_path }}">Login to save</a>
             <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+  
+          <a class="lab-btn primary" id="login-to-save"
+               href="{{ url_for('login') }}?next={{ request.full_path }}">Login to save</a>
           {% endif %}
         </div>
       </header>
@@ -915,7 +917,8 @@
       <div class="pmodal-top">
         <div class="pmodal-titlewrap">
           <span class="promodal-dot" aria-hidden="true"></span>
-          <h3 class="pmodal-title">Pro Analysis</h3>
+          <h3 class="pmodal-title">            <span class="pro-badge">PRO</span>
+ Analysis</h3>
         </div>
         <button class="promodal-x" id="pro-analysis-x" type="button" aria-label="Close">✕</button>
       </div>
@@ -945,7 +948,7 @@
       <!-- Non‑Pro preview overlay (content beneath is blurred) -->
       <div class="pa-frost-overlay" id="pa-frost-overlay" aria-hidden="true">
         <div class="pa-frost-card">
-          <p class="pa-frost-title">Preview (blurred)</p>
+          <p class="pa-frost-title">Preview</p>
           <p class="pa-frost-sub">Upgrade to reveal the full breakdown, copy the report, and save it to your Labs.</p>
           <div class="pa-frost-actions">
             <a class="lab-btn primary" id="pa-upgrade" href="{{ url_for('labs_pro_page') }}">Upgrade</a>
@@ -1062,13 +1065,11 @@
     return (textarea?.value || "").trim();
   }
 
-  function setProBtnState(){
-    if (!proAnalysisBtn) return;
-    const t = getCiphertextForAnalysis();
-    const usable = t.length >= 20;
-    proAnalysisBtn.disabled = !usable;
-    proAnalysisBtn.title = usable ? "Run a full statistical breakdown" : "Add more text (20+ chars) for meaningful analysis";
-  }
+ function setProBtnState(){
+  if (!proAnalysisBtn) return;
+  proAnalysisBtn.disabled = false;
+  proAnalysisBtn.title = "Run a full statistical breakdown";
+}
 
   function showLockedSnapshot(){
     if (!analysisSnapshot) return;
@@ -1101,25 +1102,27 @@
   }
 
   async function refreshInlineSnapshot(){
-    const t = getCiphertextForAnalysis();
-    if (!analysisSnapshot) return;
+  const t = getCiphertextForAnalysis();
+  if (!analysisSnapshot) return;
 
-    if (t.length < 20){
-      analysisSnapshot.style.display = "none";
-      return;
-    }
+  // Always show the snapshot area (no length gating)
+  analysisSnapshot.style.display = "";
 
-    // Free users: always show a locked teaser
-        if (!USER_IS_PRO){
-      // Show the analysis UI as a teaser, but blur results for non‑Pro users.
-      setPaFrost(true);
-      setPaLoading(true, "Generating preview…");
-      try{
-        const reportObj = teaserAnalysis(text);
-        buildReport(reportObj);
+  // If empty, just show a locked/empty state and bail
+  if (!t.trim()){
+    showLockedSnapshot(); // or showEmptySnapshot() if you have one
+    return;
+  }
 
-        // Keep a plaintext version for later (revealed after upgrade).
-        lastPaReport =
+  // Free users: always show a locked teaser (blurred)
+  if (!USER_IS_PRO){
+    setPaFrost(true);
+    setPaLoading(true, "Generating preview…");
+    try{
+      const reportObj = teaserAnalysis(t); // ✅ use t, not undefined 'text'
+      buildReport(reportObj);
+
+      lastPaReport =
 `[Pro Analysis — Preview]
 (Upgrade to reveal)
 
@@ -1131,35 +1134,43 @@ Entropy (no-whitespace): ${reportObj.entropy_bits_per_char} bits/char
 Vowel ratio (A/E/I/O/U/Y): ${reportObj.vowel_ratio}
 `;
 
-        // Disable copy/save while frosted.
-        if (paCopy) paCopy.disabled = true;
-        if (paSave) paSave.disabled = true;
+      if (paCopy) paCopy.disabled = true;
+      if (paSave) paSave.disabled = true;
 
-        setPaLoading(false, "Preview generated");
-      } catch(e){
-        setPaLoading(false, "Could not generate preview.");
-      }
-      return;
+      setPaLoading(false, "Preview generated");
+    } catch (e){
+      setPaLoading(false, "Could not generate preview.");
     }
-
-    setPaFrost(false);
-
-    // Pro users: fetch once per "break" to avoid spam
-    try{
-      const res = await fetch("/api/pro-analysis", {
-        method: "POST",
-        headers: { "Content-Type":"application/json", "Accept":"application/json" },
-        body: JSON.stringify({ text: t })
-      });
-      if (!res.ok) throw new Error("bad");
-      const data = await res.json();
-      lastProInline = data;
-      showInlineSnapshotFromData(data);
-    }catch{
-      // fallback if API fails
-      showLockedSnapshot();
-    }
+    return;
   }
+
+  // Pro users: real results (no frost)
+  setPaFrost(false);
+
+  try{
+    const res = await fetch("/api/pro-analysis", {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "Accept":"application/json" },
+      body: JSON.stringify({ text: t })
+    });
+    if (!res.ok) throw new Error("bad");
+
+    const data = await res.json();
+    lastProInline = data;
+
+    // ✅ Show real snapshot, not locked
+    showInlineSnapshotFromData(data);
+
+    // enable actions for Pro
+    if (paCopy) paCopy.disabled = false;
+    if (paSave) paSave.disabled = false;
+
+  } catch {
+    // If API fails for Pro users, show something non-locked but informative
+    // If you don't have a dedicated error snapshot, keep locked:
+    showLockedSnapshot();
+  }
+}
 
   function pulseProOnce(){
     if (!proAnalysisBtn) return;
