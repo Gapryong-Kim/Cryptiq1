@@ -2,13 +2,11 @@ import os
 import stripe
 from flask import Blueprint, request, jsonify, redirect, url_for
 from datetime import datetime
-from helpers import get_db, current_user
-
+from helpers import get_db, current_user, get_labs_pro_price_id, get_currency
 billing = Blueprint("billing", __name__)
 
 stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
 
-PRICE_ID = os.environ["STRIPE_PRICE_ID_PRO_MONTHLY"]
 BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:5000")
 
 
@@ -35,7 +33,7 @@ def billing_checkout():
     if not stripe_customer_id:
         customer = stripe.Customer.create(
             email=email,
-            metadata={"user_id": str(user_id)}
+            metadata={"user_id": str(user_id), "currency": get_currency()}
         )
         stripe_customer_id = customer["id"]
         cur.execute(
@@ -46,17 +44,17 @@ def billing_checkout():
 
     conn.close()
 
-    session = stripe.checkout.Session.create(
+    checkout_session = stripe.checkout.Session.create(
         mode="subscription",
         customer=stripe_customer_id,
-        line_items=[{"price": PRICE_ID, "quantity": 1}],
+        line_items=[{"price": get_labs_pro_price_id(), "quantity": 1}],
         allow_promotion_codes=True,
         success_url=f"{BASE_URL}{url_for('billing.billing_success')}?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{BASE_URL}{url_for('labs_pro_page')}",
-        metadata={"user_id": str(user_id)},
+        metadata={"user_id": str(user_id), "currency": get_currency()},
     )
 
-    return redirect(session.url, code=303)
+    return redirect(checkout_session.url, code=303)
 
 
 @billing.get("/billing/success")
@@ -175,7 +173,7 @@ def portal():
     if not stripe_customer_id:
         customer = stripe.Customer.create(
             email=email,
-            metadata={"user_id": str(user_id)}
+            metadata={"user_id": str(user_id), "currency": get_currency()}
         )
         stripe_customer_id = customer["id"]
         cur.execute(

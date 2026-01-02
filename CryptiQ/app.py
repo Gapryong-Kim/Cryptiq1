@@ -1,3 +1,7 @@
+import os, re, secrets
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from cipher_tools.breakers import (
     atbash_break,
     base64_break,
@@ -46,7 +50,7 @@ from cipher_tools.auto_break import auto_break  #  new auto detector
 from cipher_tools.random_tools import nospace
 from cipher_tools.random_tools import remove_punc
 # from cipher_tools.playfair import make_score_fn, playfair_break
-from helpers import get_db, current_user
+from helpers import get_db, current_user, set_currency, get_currency, get_currency_symbol
 
 # PLAYFAIR_SCORE_FN, PLAYFAIR_USING_FILE = make_score_fn("english_tetragrams.txt")
 
@@ -71,7 +75,6 @@ def migrate_weekly_tables():
     conn.close()
 
 
-
 from datetime import datetime, timezone
 
 def get_current_season():
@@ -81,7 +84,6 @@ def get_current_season():
 
     months_since = (now.year - start.year) * 12 + (now.month - start.month)
     return max(1, (months_since // 2) + 1)
-
 
 
 import re
@@ -112,7 +114,6 @@ def contains_profanity(text):
         re.search(rf"\b{re.escape(word)}\b", clean)
         for word in BANNED_WORDS
     )
-
 
 
 # ----- Configuration -----
@@ -333,14 +334,8 @@ def ensure_admin_flag():
     conn.commit()
     conn.close()
 
-init_db()
-migrate_db()
-ensure_admin_flag()
-migrate_shared_labs()
-migrate_labs_pro_fields()
-# ----- Utility -----
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# (Social login removed)
 
 
 def is_admin(user):
@@ -1125,7 +1120,6 @@ def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 
-
 @app.route("/notifications/unread", methods=["GET"])
 def notifications_unread():
     """Return notifications for the user (read + unread), and count unread separately."""
@@ -1418,6 +1412,8 @@ def is_safe_url(target: str) -> bool:
         test_url.scheme in ("http", "https") and
         ref_url.netloc == test_url.netloc
     )
+
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -2067,10 +2063,6 @@ def admin_weekly():
     return render_template("admin_weekly.html", user=user, wc=wc)
 
 
-
-
-
-
 from flask import render_template, session
 from datetime import datetime
 
@@ -2402,7 +2394,6 @@ def _history_add_snapshot(conn, ws_row, reason="save", max_keep=200):
           LIMIT -1 OFFSET ?
         )
     """, (ws_row["id"], max_keep))
-
 
 
 def init_workspaces():
@@ -3200,7 +3191,6 @@ def shared_lab_join(token):
     return redirect(url_for("workspace_view", ws_id=ws["id"]))
 
 
-
 @app.get("/workspaces/<int:ws_id>/share/collaborators")
 def workspace_share_collaborators(ws_id):
     user = current_user()
@@ -3267,7 +3257,6 @@ def workspace_share_collaborators(ws_id):
 
         "collaborators": [dict(r) for r in rows]
     })
-
 
 
 @app.post("/workspaces/<int:ws_id>/share/remove")
@@ -3339,9 +3328,6 @@ def workspace_can_create():
         "ok": True,
         "can_create": True
     })
-
-
-
 
 
 @app.route("/workspaces/<int:ws_id>/history", methods=["GET"])
@@ -3735,7 +3721,6 @@ def workspace_export_pdf(ws_id):
     return send_file(buf, mimetype="application/pdf", as_attachment=True, download_name=filename)
 
 
-
 @app.route("/prefs/labs-tour-seen", methods=["POST"])
 def prefs_labs_tour_seen():
     user = current_user()
@@ -3748,8 +3733,6 @@ def prefs_labs_tour_seen():
     conn.close()
 
     return jsonify({"ok": True})
-
-
 
 
 # app.py — add this route + template render
@@ -3766,7 +3749,6 @@ def inject_now_year():
     return {"now_year": datetime.utcnow().year}
 
 
-
 # --- helpers you should already have ---
 # current_user() -> dict or None
 # get_db() -> sqlite connection
@@ -3778,14 +3760,10 @@ from billing import billing
 app.register_blueprint(billing)
 
 
-
  
 
 
 # --- Dedicated cipher pages (SEO + higher intent) ---
-
-
-
 
 
 @app.route("/tools/caesar")
@@ -3986,8 +3964,6 @@ def tool_columnar():
         default_rail_rails=3,
         default_rail_offset=0,
     )
-
-
 
 
 @app.route("/tools/save_to_lab", methods=["POST"])
@@ -4214,9 +4190,6 @@ def admin_labs_analytics():
     )
 
 from cipher_tools.pro_analysis import *
-
-
-
 
 
 import math
@@ -4472,7 +4445,6 @@ def _rank_cipher_types(features: dict):
 def api_pro_analysis():
     user = current_user()
     if not user:
-        flash('Please log in before using pro features')
         return jsonify({
             "ok": False,
             "error": "login required",
@@ -4597,6 +4569,27 @@ def api_pro_analysis():
     })
 
 # ------------------- Run -------------------
+
+
+# ======================================================
+# Currency preference (Hybrid Pricing)
+# ======================================================
+@app.route("/set-currency", methods=["POST"])
+def set_currency_route():
+    code = request.form.get("currency", "").upper().strip()
+    nxt = (request.form.get("next") or request.referrer or url_for("labs_pro_page"))
+    set_currency(code)
+    return redirect(nxt)
+
+@app.route("/set-currency/<code>")
+def set_currency_route_get(code):
+    nxt = (request.args.get("next") or request.referrer or url_for("labs_pro_page"))
+    set_currency((code or "").upper().strip())
+    return redirect(nxt)
+print("GBP price:", os.environ.get("STRIPE_PRICE_PRO_GBP"))
+print("EUR price:", os.environ.get("STRIPE_PRICE_PRO_EUR"))
+print("USD price:", os.environ.get("STRIPE_PRICE_PRO_USD"))
+print("old price:", os.environ.get("STRIPE_PRICE_ID_PRO_MONTHLY"))
 if __name__ == "__main__":
     app.run(debug=True)
- 
+    
