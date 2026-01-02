@@ -1973,6 +1973,38 @@
   @media (prefers-reduced-motion: reduce){
     .tour-highlight{ transition:none; }
   }
+
+/* ============================
+   DESKTOP: keep toolbar one line
+   ============================ */
+@media (min-width: 641px){
+  .ws-topbar{
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ws-tools{
+    flex-wrap: nowrap !important;     /* <-- this is the main culprit */
+    overflow: visible !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* buttons never wrap or shrink */
+  .ws-tools .tb-btn{
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+
+  /* title cluster shouldn't force wrapping */
+  .ws-titlewrap{
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+  }
+}
+
 </style>
 
 
@@ -2000,6 +2032,8 @@
           <button class="tb-btn" data-tool="remove_spaces" type="button">No spaces</button>
           <button class="tb-btn" data-tool="remove_punctuation" type="button">No punct</button>
           <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
+
+          <button class="tb-btn pro" data-tool="pro_analysis" id="ws-pro-analysis" type="button" title="Pro Analysis (stats + likely cipher type)">Pro Analysis <span class="pro-badge">PRO</span></button>
 
           <!-- PRO buttons -->
           <button class="tb-btn pro" id="ws-colab" type="button" title="CoLab (sharing + collaborators)">
@@ -2197,6 +2231,18 @@
 
                 <div class="result" id="breaker-output">Run breaker to see output here.</div>
               </div>
+              <!-- Pro Analysis -->
+              <div class="tool-card" id="tool-pro_analysis">
+                <div class="tool-row">
+                  <button class="run-btn" id="run-pro-analysis" type="button">Run Pro Analysis <span class="pro-badge">PRO</span></button>
+                  <button class="run-btn secondary" id="copy-pro-analysis" type="button">Copy output</button>
+                </div>
+                <div class="result" id="tool-output-pro">Run Pro Analysis to see a full statistical breakdown here.</div>
+                <div class="hint">
+                  Calls <code>/api/pro-analysis</code>. Best results with 80+ characters of ciphertext.
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -2726,6 +2772,7 @@
       remove_spaces: document.getElementById("tool-remove_spaces"),
       remove_punctuation: document.getElementById("tool-remove_punctuation"),
       breaker: document.getElementById("tool-breaker"),
+      pro_analysis: document.getElementById("tool-pro_analysis"),
     };
 
     function showTool(name) {
@@ -2969,6 +3016,7 @@
       remove_spaces: "No spaces",
       remove_punctuation: "No punct",
       breaker: "Breaker",
+      pro_analysis: "Pro Analysis",
     };
 
     function getActiveToolOutput() {
@@ -3038,6 +3086,171 @@
         setTimeout(() => setStatus("—"), 900);
       } catch {}
     });
+
+    
+    // ===========================
+    // Pro Analysis (outputs into Tool Dock)
+    // ===========================
+    const proBtn = document.getElementById("run-pro-analysis");
+    const proCopyBtn = document.getElementById("copy-pro-analysis");
+    const proOut = document.getElementById("tool-output-pro");
+
+    function formatProReport(data) {
+      const len = data?.length ?? 0;
+      const alpha = data?.alpha_len ?? 0;
+      const digits = data?.digit_len ?? 0;
+      const white = data?.whitespace_len ?? 0;
+      const punct = data?.punct_len ?? 0;
+
+      const ioc = data?.ioc ?? null;
+      const chi = data?.chi_square_english ?? null;
+      const ent = data?.entropy_bits_per_char ?? null;
+      const vr = data?.vowel_ratio ?? null;
+
+      const enc = data?.encoding_hints || {};
+      const encHints = [
+        enc.looks_base64 ? "Base64-ish" : null,
+        enc.looks_hex ? "Hex-ish" : null,
+        enc.looks_binary ? "Binary-ish" : null
+      ].filter(Boolean).join(" · ") || "None";
+
+      const topLetters = Array.isArray(data?.top_letters)
+        ? data.top_letters.slice(0, 18).map(([k,v]) => `${k}:${v}`).join("  ")
+        : "—";
+      const topBigrams = Array.isArray(data?.top_bigrams)
+        ? data.top_bigrams.slice(0, 12).map(([k,v]) => `${k}:${v}`).join("  ")
+        : "—";
+      const topTrigrams = Array.isArray(data?.top_trigrams)
+        ? data.top_trigrams.slice(0, 10).map(([k,v]) => `${k}:${v}`).join("  ")
+        : "—";
+
+      const ranking = Array.isArray(data?.ranking) ? data.ranking : [];
+      const rankLines = ranking.slice(0, 6).map((r, idx) => {
+        const reasons = Array.isArray(r.reasons) ? r.reasons.slice(0, 3).join(" · ") : "";
+        return `${idx+1}. ${r.name} (${r.score}/100)${reasons ? " — " + reasons : ""}`;
+      }).join("\n") || "—";
+
+      const autoc = Array.isArray(data?.autocorr_top) ? data.autocorr_top : [];
+      const autocLines = autoc.slice(0, 6).map(a => `shift ${a.shift}: rate ${a.rate} (${a.matches} matches)`).join("\n") || "—";
+
+      const fried = data?.friedman_keylen ?? null;
+
+      const kas = data?.kasiski || {};
+      const kasRepeats = Array.isArray(kas?.repeats) ? kas.repeats : [];
+      const kasRepeatLines = kasRepeats.slice(0, 6).map(r => {
+        const d = Array.isArray(r.distances) ? r.distances.slice(0, 6).join(",") : "";
+        return `${r.ngram} ×${r.count} | dists: ${d}`;
+      }).join("\n") || "—";
+
+      const kasFactors = Array.isArray(kas?.factor_counts) ? kas.factor_counts : [];
+      const kasFactorLine = kasFactors.slice(0, 10).map(f => `${f.factor}:${f.count}`).join(", ") || "—";
+
+      const steps = Array.isArray(data?.next_steps) ? data.next_steps : [];
+      const stepsText = steps.length ? steps.map(s => `- ${s}`).join("\n") : "—";
+
+      const fmt = (x) => (x === null || x === undefined) ? "—" : String(x);
+
+      return (
+`[Pro Analysis]
+Length: ${len} chars
+Alphabetic: ${alpha} | Digits: ${digits} | Punct: ${punct} | Whitespace: ${white}
+
+Core stats
+- IoC: ${fmt(ioc)}
+- Chi-square vs English: ${fmt(chi)}
+- Entropy (no-whitespace): ${fmt(ent)} bits/char
+- Vowel ratio (A/E/I/O/U/Y): ${fmt(vr)}
+- Encoding hints: ${encHints}
+
+Key length hints
+- Friedman estimate: ${fmt(fried)}
+- Autocorr peaks:
+${autocLines}
+
+Cipher ranking
+${rankLines}
+
+Top letters
+${topLetters}
+
+Top bigrams
+${topBigrams}
+
+Top trigrams
+${topTrigrams}
+
+Kasiski (repeats)
+${kasRepeatLines}
+
+Factor counts (2–20)
+${kasFactorLine}
+
+Next steps
+${stepsText}
+`);
+    }
+
+    async function runProAnalysisToDock() {
+      if (!proOut) return;
+
+      const text = (cipherEl?.value || "").trim();
+      if (text.length < 20) {
+        proOut.textContent = "Add more ciphertext (20+ chars) for meaningful Pro Analysis.";
+        return;
+      }
+
+      proOut.textContent = "Running Pro Analysis…";
+
+      try {
+        const res = await fetch("/api/pro-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        // handle login redirects / forbidden
+        if (res.status === 401) {
+          proOut.textContent = "Login required for Pro Analysis.";
+          openProModal({
+            title: "Login required",
+            body: "Log in to run Pro Analysis on your workspace text.",
+            href: `/login?next=${encodeURIComponent(window.location.pathname)}`,
+            cta: "Login"
+          });
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if (await handleForbidden(res, data, "Pro Analysis")) {
+          proOut.textContent = "Pro Analysis requires Labs Pro.";
+          return;
+        }
+
+        if (!res.ok) {
+          proOut.textContent = data?.error || "Error running Pro Analysis.";
+          return;
+        }
+
+        proOut.textContent = formatProReport(data);
+
+        // Switch to the Pro Analysis card so the user sees it
+        showTool("pro_analysis");
+      } catch (e) {
+        proOut.textContent = "Error running Pro Analysis (network/server).";
+      }
+    }
+
+    proBtn?.addEventListener("click", runProAnalysisToDock);
+
+    // Allow quick copy
+    proCopyBtn?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText((proOut?.textContent || "").trim());
+        toast?.("Copied.");
+      } catch {}
+    });
+
 
     // ===========================
     // Substitution (client-side mapping MVP)

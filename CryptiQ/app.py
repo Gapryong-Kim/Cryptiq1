@@ -4472,6 +4472,7 @@ def _rank_cipher_types(features: dict):
 def api_pro_analysis():
     user = current_user()
     if not user:
+        flash('Please log in before using pro features')
         return jsonify({
             "ok": False,
             "error": "login required",

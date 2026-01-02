@@ -296,7 +296,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 9000;
+      z-index: 9700;
     }
     .lmodal.open{ display: flex; }
 
@@ -682,6 +682,112 @@
   z-index: 9700; /* was 9000 — must be > .pmodal (9600) */
 }
 
+  
+    /* ===== Pro Analysis Hooks ===== */
+    .pro-snapshot{
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-weight: 800;
+      line-height: 1.35;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pro-snapshot .muted{
+      color: var(--muted);
+      font-weight: 700;
+      font-size: .88rem;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .pro-snapshot .row{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 0;
+      border-top: 1px dashed rgba(255,255,255,0.08);
+      font-size: .92rem;
+    }
+    .pro-snapshot .row:first-of-type{ border-top: 0; }
+    .pro-snapshot .k{ color: var(--text-dim); font-weight: 800; }
+    .pro-snapshot .v{ color: var(--text); font-weight: 900; }
+    .pro-snapshot .lock{ opacity: .9; }
+
+    /* subtle pulse on the top-bar Pro Analysis button (one-time nudge) */
+    .pulse-once{
+      animation: proPulse 1.15s ease-in-out 2;
+      box-shadow: 0 0 0 2px var(--accent-soft);
+      border-color: var(--accent);
+    }
+    @keyframes proPulse{
+      0%{ transform: translateY(0); box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+      35%{ transform: translateY(-1px); box-shadow: 0 0 0 6px var(--accent-soft); }
+      100%{ transform: translateY(0); box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+    }
+
+
+    /* ===============================
+       Pro Analysis non‑Pro preview (frosted answers)
+       =============================== */
+    .pmodal.frosted .pmono,
+    .pmodal.frosted .pmeta{
+      filter: blur(7px);
+      opacity: .92;
+      user-select: none;
+    }
+    .pmodal.frosted .pmono{ pointer-events: none; }
+
+    .pa-frost-overlay{
+      position: absolute;
+      inset: 56px 0 56px 0; /* below header, above actions */
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      box-sizing: border-box;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .pmodal.frosted .pa-frost-overlay{ display: flex; }
+
+    .pa-frost-card{
+      width: min(520px, 92vw);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: color-mix(in oklab, var(--panel) 82%, transparent);
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    .pa-frost-title{
+      margin: 0;
+      font-weight: 1000;
+      color: var(--text);
+      font-size: 1rem;
+      letter-spacing: .2px;
+    }
+    .pa-frost-sub{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-weight: 750;
+      font-size: .92rem;
+    }
+    .pa-frost-actions{
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      pointer-events: auto;
+    }
+
   </style>
 </head>
 
@@ -785,6 +891,14 @@
           <div class="cb-actions" style="margin-bottom: 10px;">
             <button id="copy-btn" class="btn secondary" style="display:none;">Copy Plaintext</button>
           </div>
+          
+          <div id="analysis-snapshot" class="pro-snapshot" style="display:none;" role="button" tabindex="0" aria-label="Open Pro Analysis">
+            <span class="muted">Analysis snapshot</span>
+            <div class="row"><span class="k">Likely cipher family</span><span class="v lock"><span class="pro-badge">PRO</span> Locked</span></div>
+            <div class="row"><span class="k">IoC</span><span class="v lock">🔒</span></div>
+            <div class="row"><span class="k">Key length hint</span><span class="v lock">🔒</span></div>
+          </div>
+
           <pre id="result-text" class="cb-pre" aria-live="polite"></pre>
         </div>
       </div>
@@ -824,6 +938,18 @@
             <h4>Notes</h4>
             <p class="pmeta" id="pa-notes">Heuristics are best-effort. Longer ciphertext = better signal.</p>
             <div class="pmono" id="pa-notes-mono" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Non‑Pro preview overlay (content beneath is blurred) -->
+      <div class="pa-frost-overlay" id="pa-frost-overlay" aria-hidden="true">
+        <div class="pa-frost-card">
+          <p class="pa-frost-title">Preview (blurred)</p>
+          <p class="pa-frost-sub">Upgrade to reveal the full breakdown, copy the report, and save it to your Labs.</p>
+          <div class="pa-frost-actions">
+            <a class="lab-btn primary" id="pa-upgrade" href="{{ url_for('labs_pro_page') }}">Upgrade</a>
+            <button class="lab-btn" id="pa-not-now" type="button">Not now</button>
           </div>
         </div>
       </div>
@@ -923,6 +1049,152 @@
 
   const USER_LOGGED_IN = {{ 1 if user else 0 }};
   const USER_IS_PRO = {{ 1 if (user and (user['is_pro']|default(0))) else 0 }};
+
+  // ===========================
+  // Pro Analysis Hooks (Breaker)
+  // ===========================
+  const proAnalysisBtn = document.getElementById("open-pro-analysis");
+  const analysisSnapshot = document.getElementById("analysis-snapshot");
+  const PRO_HOOK_PULSE_KEY = "tcl_pro_pulse_breaker_v1";
+  let lastProInline = null;
+
+  function getCiphertextForAnalysis(){
+    return (textarea?.value || "").trim();
+  }
+
+  function setProBtnState(){
+    if (!proAnalysisBtn) return;
+    const t = getCiphertextForAnalysis();
+    const usable = t.length >= 20;
+    proAnalysisBtn.disabled = !usable;
+    proAnalysisBtn.title = usable ? "Run a full statistical breakdown" : "Add more text (20+ chars) for meaningful analysis";
+  }
+
+  function showLockedSnapshot(){
+    if (!analysisSnapshot) return;
+    analysisSnapshot.style.display = "block";
+    analysisSnapshot.innerHTML = `
+      <span class="muted">Analysis snapshot</span>
+      <div class="row"><span class="k">Likely cipher family</span><span class="v lock"><span class="pro-badge">PRO</span> Locked</span></div>
+      <div class="row"><span class="k">IoC</span><span class="v lock">🔒</span></div>
+      <div class="row"><span class="k">Key length hint</span><span class="v lock">🔒</span></div>
+      <div class="row"><span class="k">Tip</span><span class="v" style="font-weight:800;color:var(--muted);">Click to run Pro Analysis</span></div>
+    `;
+  }
+
+  function showInlineSnapshotFromData(d){
+    if (!analysisSnapshot) return;
+
+    const top = Array.isArray(d?.ranking) && d.ranking.length ? d.ranking[0] : null;
+    const family = top?.name || "—";
+    const ioc = (d?.ioc ?? "—");
+    const keyHint = (d?.friedman_keylen ?? "—");
+
+    analysisSnapshot.style.display = "block";
+    analysisSnapshot.innerHTML = `
+      <span class="muted">Analysis snapshot</span>
+      <div class="row"><span class="k">Top guess</span><span class="v">${family}</span></div>
+      <div class="row"><span class="k">IoC</span><span class="v">${ioc}</span></div>
+      <div class="row"><span class="k">Key length hint</span><span class="v">${keyHint}</span></div>
+      <div class="row"><span class="k">Full report</span><span class="v" style="font-weight:800;color:var(--muted);">Open Pro Analysis</span></div>
+    `;
+  }
+
+  async function refreshInlineSnapshot(){
+    const t = getCiphertextForAnalysis();
+    if (!analysisSnapshot) return;
+
+    if (t.length < 20){
+      analysisSnapshot.style.display = "none";
+      return;
+    }
+
+    // Free users: always show a locked teaser
+        if (!USER_IS_PRO){
+      // Show the analysis UI as a teaser, but blur results for non‑Pro users.
+      setPaFrost(true);
+      setPaLoading(true, "Generating preview…");
+      try{
+        const reportObj = teaserAnalysis(text);
+        buildReport(reportObj);
+
+        // Keep a plaintext version for later (revealed after upgrade).
+        lastPaReport =
+`[Pro Analysis — Preview]
+(Upgrade to reveal)
+
+Length: ${reportObj.length} chars
+Alphabetic: ${reportObj.alpha_len} | Digits: ${reportObj.digit_len} | Punct: ${reportObj.punct_len} | Whitespace: ${reportObj.whitespace_len}
+IoC: ${reportObj.ioc}
+Chi-square vs English: ${reportObj.chi_square_english}
+Entropy (no-whitespace): ${reportObj.entropy_bits_per_char} bits/char
+Vowel ratio (A/E/I/O/U/Y): ${reportObj.vowel_ratio}
+`;
+
+        // Disable copy/save while frosted.
+        if (paCopy) paCopy.disabled = true;
+        if (paSave) paSave.disabled = true;
+
+        setPaLoading(false, "Preview generated");
+      } catch(e){
+        setPaLoading(false, "Could not generate preview.");
+      }
+      return;
+    }
+
+    setPaFrost(false);
+
+    // Pro users: fetch once per "break" to avoid spam
+    try{
+      const res = await fetch("/api/pro-analysis", {
+        method: "POST",
+        headers: { "Content-Type":"application/json", "Accept":"application/json" },
+        body: JSON.stringify({ text: t })
+      });
+      if (!res.ok) throw new Error("bad");
+      const data = await res.json();
+      lastProInline = data;
+      showInlineSnapshotFromData(data);
+    }catch{
+      // fallback if API fails
+      showLockedSnapshot();
+    }
+  }
+
+  function pulseProOnce(){
+    if (!proAnalysisBtn) return;
+    try{
+      if (sessionStorage.getItem(PRO_HOOK_PULSE_KEY)) return;
+      sessionStorage.setItem(PRO_HOOK_PULSE_KEY, "1");
+    }catch{}
+    proAnalysisBtn.classList.add("pulse-once");
+    setTimeout(() => proAnalysisBtn.classList.remove("pulse-once"), 2600);
+  }
+
+  // Snapshot click opens Pro Analysis modal (and runs analysis)
+  function openProAnalysisFromHook(){
+    // use existing handlers
+    stashBreakerState();
+    openPaModal();
+    runProAnalysis();
+  }
+
+  analysisSnapshot?.addEventListener("click", openProAnalysisFromHook);
+  analysisSnapshot?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProAnalysisFromHook(); }
+  });
+
+  // keep pro button state fresh as user types
+  textarea?.addEventListener("input", () => {
+    setProBtnState();
+    // don't refresh inline snapshot on every keystroke; hide until a break happens
+    if (analysisSnapshot) analysisSnapshot.style.display = "none";
+  }, { passive: true });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    setProBtnState();
+  });
+
 
   // ===========================
   // Pro modal helpers
@@ -1144,6 +1416,7 @@
         resultKey.style.display = "none";
       }
       copyBtn.style.display = data.text ? "inline-flex" : "none";
+      if (data.text) { pulseProOnce(); refreshInlineSnapshot(); }
       if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
 
       stashBreakerState();
@@ -1174,6 +1447,246 @@
   const paBox = paModal?.querySelector(".pmodal-box");
   const paX = document.getElementById("pro-analysis-x");
   const paRefresh = document.getElementById("pa-refresh");
+
+  const paFrostOverlay = document.getElementById("pa-frost-overlay");
+  const paUpgrade = document.getElementById("pa-upgrade");
+  const paNotNow = document.getElementById("pa-not-now");
+  let paIsPreview = false;
+
+  function setPaFrost(on){
+    paIsPreview = !!on;
+    if (!paModal) return;
+    paModal.classList.toggle("frosted", !!on);
+    // While frosted, prevent copy/save
+    if (paCopy) paCopy.disabled = !!on || !lastPaReport;
+    if (paSave) paSave.disabled = !!on || !lastPaReport;
+  }
+
+  paNotNow?.addEventListener("click", () => closePaModal());
+
+  function alphaOnlyUpper(s){ return (s||"").toUpperCase().replace(/[^A-Z]/g,""); }
+
+  function calcIoC(alpha){
+    const N = alpha.length;
+    if (N < 2) return 0;
+    const c = {};
+    for (const ch of alpha) c[ch] = (c[ch]||0)+1;
+    let num = 0;
+    for (const k in c) num += c[k]*(c[k]-1);
+    return num / (N*(N-1));
+  }
+
+  function calcEntropy(alpha){
+    const N = alpha.length;
+    if (!N) return 0;
+    const c = {};
+    for (const ch of alpha) c[ch] = (c[ch]||0)+1;
+    let ent = 0;
+    for (const k in c){
+      const p = c[k]/N;
+      ent += -p*Math.log2(p);
+    }
+    return ent;
+  }
+
+  function chiSquareEnglish(alpha){
+    const N = alpha.length;
+    if (!N) return 0;
+    const expected = {
+      A:8.167,B:1.492,C:2.782,D:4.253,E:12.702,F:2.228,G:2.015,H:6.094,I:6.966,J:0.153,
+      K:0.772,L:4.025,M:2.406,N:6.749,O:7.507,P:1.929,Q:0.095,R:5.987,S:6.327,T:9.056,
+      U:2.758,V:0.978,W:2.360,X:0.150,Y:1.974,Z:0.074
+    };
+    const c = {};
+    for (const ch of alpha) c[ch] = (c[ch]||0)+1;
+    let chi = 0;
+    for (const L in expected){
+      const exp = expected[L]*N/100;
+      const obs = c[L] || 0;
+      const diff = obs-exp;
+      chi += (diff*diff) / (exp || 1);
+    }
+    return chi;
+  }
+
+  function vowelRatio(alpha){
+    const N = alpha.length;
+    if (!N) return 0;
+    const vset = new Set(["A","E","I","O","U","Y"]);
+    let v = 0;
+    for (const ch of alpha) if (vset.has(ch)) v++;
+    return v/N;
+  }
+
+  function ngramCounts(alpha, n){
+    const m = {};
+    for (let i=0;i<=alpha.length-n;i++){
+      const g = alpha.slice(i,i+n);
+      m[g] = (m[g]||0)+1;
+    }
+    return m;
+  }
+  function topN(mapObj, n){
+    return Object.entries(mapObj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  }
+  function countRepeatedTypes(mapObj){
+    let c=0;
+    for (const k in mapObj) if (mapObj[k]>1) c++;
+    return c;
+  }
+
+  function looksBase64(raw){
+    const s=(raw||"").trim();
+    if (s.length<16) return false;
+    if (s.length%4!==0) return false;
+    return /^[A-Za-z0-9+/=\s]+$/.test(s) && /[A-Za-z]/.test(s);
+  }
+  function looksHex(raw){
+    const s=(raw||"").trim().replace(/\s+/g,"");
+    if (s.length<16) return false;
+    if (s.length%2!==0) return false;
+    return /^[0-9a-fA-F]+$/.test(s);
+  }
+  function looksBinary(raw){
+    const s=(raw||"").trim().replace(/\s+/g,"");
+    if (s.length<32) return false;
+    return /^[01]+$/.test(s);
+  }
+
+  function autocorrPeaks(alpha, maxShift=20){
+    const N=alpha.length;
+    const out=[];
+    for (let s=1;s<=Math.min(maxShift,N-1);s++){
+      let matches=0;
+      for (let i=0;i<N-s;i++) if (alpha[i]===alpha[i+s]) matches++;
+      const rate = matches/(N-s);
+      out.push({shift:s, matches, rate:Number(rate.toFixed(4))});
+    }
+    out.sort((a,b)=>b.rate-a.rate);
+    return out.slice(0,8);
+  }
+
+  function friedmanKeylen(ioc,N){
+    if (N<2) return null;
+    const denom=((N-1)*ioc)-(0.038*N)+0.065;
+    if (!isFinite(denom) || denom<=0) return null;
+    const k=(0.027*N)/denom;
+    return (isFinite(k) && k>0) ? Number(k.toFixed(2)) : null;
+  }
+
+  function kasiski(alpha){
+    const repeats=[];
+    const factorCounts={};
+    const seen=new Map();
+    for (let n=3;n<=5;n++){
+      for (let i=0;i<=alpha.length-n;i++){
+        const g=alpha.slice(i,i+n);
+        if (!seen.has(g)) seen.set(g, []);
+        seen.get(g).push(i);
+      }
+    }
+    for (const [g,pos] of seen.entries()){
+      if (pos.length<2) continue;
+      const distances=[];
+      for (let i=1;i<pos.length;i++){
+        const d=pos[i]-pos[i-1];
+        if (d>0) distances.push(d);
+      }
+      if (!distances.length) continue;
+      for (const d of distances){
+        for (let f=2;f<=20;f++){
+          if (d%f===0) factorCounts[f]=(factorCounts[f]||0)+1;
+        }
+      }
+      repeats.push({ngram:g, len:g.length, count:pos.length, distances:distances.slice(0,12)});
+    }
+    repeats.sort((a,b)=>(b.count-a.count)||(b.len-a.len));
+    const factorArr=Object.entries(factorCounts).map(([factor,count])=>({factor:Number(factor),count}))
+      .sort((a,b)=>b.count-a.count || a.factor-b.factor);
+    return {repeats:repeats.slice(0,12), factor_counts:factorArr};
+  }
+
+  function rankCipherHints(raw, alpha, ioc, chi, ent, autoc){
+    const out=[];
+    if (looksBase64(raw)) out.push({name:"Base64", score:82, reasons:["Valid alphabet","Length multiple of 4"]});
+    if (looksHex(raw)) out.push({name:"Hex", score:78, reasons:["Hex-only","Even length"]});
+    if (looksBinary(raw)) out.push({name:"Binary", score:74, reasons:["0/1 only","Long bitstream"]});
+
+    const englishLike = chi < 150 && ent < 4.4 && ioc > 0.055;
+    const monoLike = ioc > 0.06 && !englishLike;
+    const polyLike = ioc < 0.05;
+
+    if (englishLike) out.push({name:"Plaintext / light obfuscation", score:72, reasons:["English-like IoC","Lower chi-square"]});
+    if (monoLike) out.push({name:"Monoalphabetic substitution", score:76, reasons:["High IoC","Language-ish structure"]});
+    if (polyLike) out.push({name:"Polyalphabetic (Vigenère family)", score:70, reasons:["Lower IoC","Flatter frequencies"]});
+
+    const top = autoc?.[0];
+    if (top && top.rate > 0.08) out.push({name:"Transposition / periodic structure", score:64, reasons:[`Autocorr peak at ${top.shift}`]});
+
+    if (!out.length) out.push({name:"Unknown", score:50, reasons:["Not enough signal"]});
+    const by={};
+    for (const r of out){ if (!by[r.name] || r.score>by[r.name].score) by[r.name]=r; }
+    return Object.values(by).sort((a,b)=>b.score-a.score);
+  }
+
+  function teaserAnalysis(raw){
+    const len=(raw||"").length;
+    const alpha=alphaOnlyUpper(raw);
+    const alpha_len=alpha.length;
+
+    const digit_len=(raw.match(/[0-9]/g)||[]).length;
+    const whitespace_len=(raw.match(/\s/g)||[]).length;
+    const punct_len = len - alpha_len - digit_len - whitespace_len;
+
+    const ioc = Number(calcIoC(alpha).toFixed(4));
+    const entropy_bits_per_char = Number(calcEntropy(alpha).toFixed(4));
+    const chi_square_english = Number(chiSquareEnglish(alpha).toFixed(2));
+    const vowel_ratio = Number(vowelRatio(alpha).toFixed(4));
+
+    const letterMap = ngramCounts(alpha,1);
+    const bigramMap = ngramCounts(alpha,2);
+    const trigramMap = ngramCounts(alpha,3);
+
+    const autoc = autocorrPeaks(alpha,20);
+    const fried = friedmanKeylen(ioc, alpha_len);
+    const kas = kasiski(alpha);
+    const ranking = rankCipherHints(raw, alpha, ioc, chi_square_english, entropy_bits_per_char, autoc);
+
+    const encHints = { looks_base64: looksBase64(raw), looks_hex: looksHex(raw), looks_binary: looksBinary(raw) };
+
+    const steps=[];
+    if (encHints.looks_base64) steps.push("Try Base64 decode, then re-run analysis on the decoded text.");
+    if (encHints.looks_hex) steps.push("Try Hex decode, then re-run analysis on the decoded bytes/text.");
+    if (encHints.looks_binary) steps.push("Group bits into 8s (ASCII) or 5s (Baconian) and test.");
+    if (ioc > 0.06) steps.push("High IoC: test monoalphabetic substitution (frequency + word patterns).");
+    if (ioc < 0.05) steps.push("Low IoC: test Vigenère; check likely key lengths from Friedman/autocorr.");
+    if (autoc?.[0]?.rate > 0.08) steps.push("Strong periodicity: test transposition or columnar patterns.");
+    steps.push("Longer ciphertext increases signal—try at least 200–300 letters if possible.");
+
+    return {
+      length: len,
+      alpha_len,
+      digit_len,
+      whitespace_len,
+      punct_len,
+      ioc,
+      chi_square_english,
+      entropy_bits_per_char,
+      vowel_ratio,
+      encoding_hints: encHints,
+      friedman_keylen: fried,
+      autocorr_top: autoc.map(a=>({shift:a.shift, rate:a.rate, matches:a.matches})),
+      top_letters: topN(letterMap,18),
+      top_bigrams: topN(bigramMap,12),
+      top_trigrams: topN(trigramMap,10),
+      repeated_bigrams: countRepeatedTypes(bigramMap),
+      repeated_trigrams: countRepeatedTypes(trigramMap),
+      kasiski: kas,
+      ranking,
+      next_steps: steps
+    };
+  }
+
   const paCopy = document.getElementById("pa-copy");
   const paSave = document.getElementById("pa-save");
   const paStatus = document.getElementById("pa-status");
@@ -1192,6 +1705,7 @@
     if (!paModal) return;
     paOpener = document.activeElement;
     paModal.classList.add("open");
+    setPaFrost(!USER_IS_PRO);
     paModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     setTimeout(() => paBox?.focus?.(), 0);
@@ -1200,6 +1714,7 @@
   function closePaModal(){
     if (!paModal) return;
     paModal.classList.remove("open");
+    setPaFrost(false);
     paModal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
     paOpener?.focus?.();
@@ -1340,17 +1855,16 @@ ${notesMono}`;
       redirectToLoginPreservingState();
       return;
     }
+
+    // Non‑Pro: show full report UI but keep answers blurred (preview mode)
     if (!USER_IS_PRO){
-      closePaModal();
-      openProModal({
-        title: "Unlock Pro Analysis",
-        message: "Get a full cipher breakdown: frequency tables, IoC, and a best-guess cipher classification.",
-        upgrade_url: `{{ url_for('labs_pro_page') }}`,
-        note: "Your breaker text stays right here."
-      });
+      setPaLoading(true, "Generating preview…");
+      const preview = teaserAnalysis(text);
+      buildReport(preview);
+      setPaFrost(true);
+      setPaLoading(false, "Preview (blurred).");
       return;
     }
-
     setPaLoading(true, "Running Pro Analysis…");
     try{
       const res = await fetch("/api/pro-analysis", {
@@ -1364,14 +1878,11 @@ ${notesMono}`;
         return;
       }
       if (res.status === 402 || res.status === 403){
-        const j = await res.json().catch(()=>null);
-        closePaModal();
-        openProModal({
-          title: "Unlock Pro Analysis",
-          message: j?.error || "Pro required to use Pro Analysis.",
-          upgrade_url: j?.upgrade_url || `{{ url_for('labs_pro_page') }}`,
-          note: "Your breaker text stays right here."
-        });
+        // If the server says Pro required, fall back to a local preview (blurred)
+        const preview = teaserAnalysis(text);
+        buildReport(preview);
+        setPaFrost(true);
+        setPaLoading(false, "Preview (blurred).");
         return;
       }
 
@@ -1516,6 +2027,7 @@ ${(resultText.textContent || "").trim() || "(empty)"}
 
   // Save Pro Analysis report into Labs (uses same Labs modal)
   paSave?.addEventListener("click", async () => {
+    if (paIsPreview){ window.location.href = `{{ url_for('labs_pro_page') }}`; return; }
   if (!lastPaReport) return;
 
   if (!USER_LOGGED_IN){
