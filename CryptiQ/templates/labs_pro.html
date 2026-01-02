@@ -584,17 +584,20 @@
         <aside class="cta-card">
           <div style="font-weight:900;color:var(--text);">Labs Pro</div>
 
-          <div class="price">
+<div class="price">
   <div class="amount">
-    <span class="old-price">£4.99</span>
-    <span class="new-price">£2.99</span>
+    <span class="old-price">{{ currency_symbol }}{{ old_price }}</span>
+    <span class="new-price">{{ currency_symbol }}{{ new_price }}</span>
   </div>
   <div class="per">/ month</div>
 </div>
 
+
+
 <div class="founder-note">
   Founding member price · Limited time
 </div>
+
 
 <div class="fine">
   Cancel anytime. Secure checkout powered by Stripe.

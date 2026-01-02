@@ -3041,6 +3041,17 @@ def weekly_open_lab():
     conn.close()
 
     return jsonify({"ok": True, "ws_id": ws_id})
+
+
+
+from helpers import get_currency, get_currency_symbol
+
+PRICE_DISPLAY = {
+  "GBP": {"old": "4.99", "new": "2.99"},
+  "EUR": {"old": "5.99", "new": "3.49"},
+  "USD": {"old": "6.99", "new": "3.99"},
+}
+
 @app.route("/labs-pro")
 def labs_pro_page():
     user = current_user()
@@ -3056,12 +3067,18 @@ def labs_pro_page():
 
         viewer_is_pro = is_pro(user)
 
+    cur = get_currency()
+    sym = get_currency_symbol()
+    p = PRICE_DISPLAY.get(cur, PRICE_DISPLAY["GBP"])
     return render_template(
         "labs_pro.html",
-        user=user,
-        viewer_is_pro=viewer_is_pro
+        user=current_user(),
+        viewer_is_pro=viewer_is_pro,
+        currency_code=cur,
+        currency_symbol=sym,
+        old_price=p["old"],
+        new_price=p["new"],
     )
-
 
 import secrets
 
