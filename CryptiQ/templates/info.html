@@ -351,6 +351,31 @@
       .sidebar.open{transform:translateX(0);}
       .more-grid{ grid-template-columns: 1fr; }
     }
+    /* ===============================
+   Footer alignment with fixed sidebar (Info page)
+   =============================== */
+
+/* Desktop: sidebar is 260px + content has margin-left:280px */
+@media (min-width: 981px){
+  body .site-footer .footer-inner{
+    width: min(920px, calc(100% - 280px - 60px)); /* match content max + padding vibe */
+    margin-left: 280px;                            /* same as .content margin-left */
+    margin-right: auto;
+    padding-left: 60px;                            /* same as .content left padding */
+    padding-right: 60px;
+  }
+}
+
+/* Mobile: sidebar overlays, content has no left margin */
+@media (max-width: 980px){
+  body .site-footer .footer-inner{
+    width: min(1100px, 92%);
+    margin: 0 auto;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
   </style>
 </head>
 
@@ -1028,8 +1053,8 @@ Cipher:    reversible only with key</div>
       </details>
     </section>
 
-    {% include "base_footer.html" %}
   </main>
+    {% include "base_footer.html" %}
 
   <script>
     // Optional: only one “Read more” open at a time

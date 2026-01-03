@@ -499,6 +499,83 @@ main > #site-footer{
   border-color: var(--accent, #00ffd5);
   box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
 }
+/* ===============================
+   Header layout fix (no scatter)
+   =============================== */
+
+/* Base: keep it clean + predictable */
+.ed-header{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 95vw;
+  max-width: 1500px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line, #2a2a2a);
+  flex-wrap: nowrap;              /* 🔧 stop weird wrap behavior */
+}
+
+/* Ensure title doesn't jump around */
+.ed-title{
+  margin: 0;
+  white-space: nowrap;            /* keeps "Encoder / Decoder" together */
+}
+
+/* Actions stay right on wide screens */
+.ed-header-actions{
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+/* If space gets tight, let the header reflow nicely (2 rows) */
+@media (max-width: 860px){
+  .ed-header{
+    flex-wrap: wrap;              /* allow wrap, but controlled */
+    align-items: flex-start;
+  }
+
+  /* Title row */
+  .ed-dot{ margin-top: 6px; }
+  .ed-title{
+    flex: 1 1 auto;
+    min-width: 180px;
+    white-space: normal;          /* allow wrap if needed */
+  }
+
+  /* Actions become a clean second row */
+  .ed-header-actions{
+    flex: 0 0 100%;
+    margin-left: 0;               /* 🔧 remove auto push when wrapped */
+    justify-content: flex-start;
+    gap: 10px;
+    padding-top: 10px;
+  }
+}
+
+/* On small screens, buttons fill and look intentional */
+@media (max-width: 520px){
+  .ed-header-actions{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .lab-btn{
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Ultra-small: stack */
+@media (max-width: 380px){
+  .ed-header-actions{
+    grid-template-columns: 1fr;
+  }
+}
 
   </style>
 </head>
@@ -612,9 +689,9 @@ main > #site-footer{
     <p class="breaker-link">
       Want to decode with no key? <a href="/breaker">Try our Cipher Breaker →</a>
     </p>
-          {% include "base_footer.html" %}
 
   </main>
+          {% include "base_footer.html" %}
 
   <!-- ===== Labs Modal ===== -->
   <div id="labs-modal" class="lmodal" aria-hidden="true">
