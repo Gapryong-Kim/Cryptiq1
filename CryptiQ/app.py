@@ -4621,30 +4621,15 @@ def robots_txt():
     return send_from_directory(app.static_folder, "robots.txt", mimetype="text/plain")
 
 
+from flask import send_from_directory
+
 @app.route("/sitemap.xml")
 def sitemap_xml():
-    # Public pages only
-    urls = [
-        f"{DOMAIN}/",
-        f"{DOMAIN}/tools",
-        f"{DOMAIN}/breaker",
-        f"{DOMAIN}/posts",
-        f"{DOMAIN}/leaderboard",
-        f"{DOMAIN}/faqs",
-        f"{DOMAIN}/info",
-        f"{DOMAIN}/labs-pro",
-        f"{DOMAIN}/weekly-cipher",
-    ]
-
-    xml = ['<?xml version="1.0" encoding="UTF-8"?>',
-           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-
-    for u in urls:
-        xml.append(f"  <url><loc>{u}</loc></url>")
-
-    xml.append("</urlset>")
-    return Response("\n".join(xml), mimetype="application/xml")
-
+    return send_from_directory(
+        app.static_folder,
+        "sitemap.xml",
+        mimetype="application/xml"
+    )
 
 
 

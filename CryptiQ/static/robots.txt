@@ -7,8 +7,6 @@ Disallow: /register
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /posts/new
-Disallow: /posts/
-Disallow: /workspaces
 Disallow: /billing
 Disallow: /stripe
 
