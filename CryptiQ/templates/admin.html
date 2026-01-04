@@ -215,7 +215,37 @@
         min-width: 760px;
       }
     }
+    /* Make the page itself scroll normally (safe) */
+html, body { height: 100%; }
+body { overflow-y: auto; }
+
+/* Keep the admin card within the viewport */
+.admin-container{
+  height: calc(100vh - 120px - 60px); /* (top margin + bottom margin) */
+  max-height: calc(100vh - 120px - 60px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* prevent the table from spilling out */
+}
+
+/* The table area becomes the scroll region */
+.admin-table-wrap{
+  flex: 1;
+  min-height: 0;          /* CRITICAL for flex overflow to work */
+  overflow-y: auto;       /* vertical scroll inside the card */
+  overflow-x: auto;       /* keep your horizontal scroll */
+  -webkit-overflow-scrolling: touch;
+}
+.admin-search{
+  flex: 0 0 auto;
+}
+
   </style>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
 </head>
 
 <body>

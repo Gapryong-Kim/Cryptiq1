@@ -789,6 +789,11 @@
     }
 
   </style>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
 </head>
 
 <body>
@@ -894,12 +899,7 @@
             <button id="copy-btn" class="btn secondary" style="display:none;">Copy Plaintext</button>
           </div>
           
-          <div id="analysis-snapshot" class="pro-snapshot" style="display:none;" role="button" tabindex="0" aria-label="Open Pro Analysis">
-            <span class="muted">Analysis snapshot</span>
-            <div class="row"><span class="k">Likely cipher family</span><span class="v lock"><span class="pro-badge">PRO</span> Locked</span></div>
-            <div class="row"><span class="k">IoC</span><span class="v lock">🔒</span></div>
-            <div class="row"><span class="k">Key length hint</span><span class="v lock">🔒</span></div>
-          </div>
+          
 
           <pre id="result-text" class="cb-pre" aria-live="polite"></pre>
         </div>
