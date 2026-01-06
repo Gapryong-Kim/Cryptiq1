@@ -4907,6 +4907,28 @@ colabBtn?.addEventListener("click", async () => {
 </script>
 
 
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const topProBtn = document.getElementById("ws-pro-analysis");
+  if (!topProBtn) return;
+
+  topProBtn.addEventListener("click", (e) => {
+    if (!window.USER_IS_PRO) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof openProModal === "function") {
+        openProModal();
+      } else {
+        document.getElementById("pro-modal")?.classList.add("open");
+      }
+      return;
+    }
+    // PRO users continue normally
+  });
+});
+</script>
+
 </body>
 
 

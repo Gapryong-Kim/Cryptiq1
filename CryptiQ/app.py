@@ -4631,6 +4631,12 @@ def sitemap_xml():
         mimetype="application/xml"
     )
 
+# ------------------- About Page -------------------
+@app.route("/about", methods=["GET"])
+def about_page():
+    return render_template("about.html", user=current_user())
+
+app.add_url_rule("/about", endpoint="about", view_func=about_page)
 
 
 
