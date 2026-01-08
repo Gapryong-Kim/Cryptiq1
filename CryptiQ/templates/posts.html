@@ -527,7 +527,22 @@
       padding: 0;
       font-weight: 800;
     }
-    .comment-reply-btn:hover{ text-decoration: underline; }
+.comment-reply-btn{
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  font-weight: 800;
+
+  transition: text-shadow 0.15s ease, color 0.15s ease;
+}
+
+.comment-reply-btn:hover{
+  background: transparent;        /* 🔑 no box */
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(0,255,213,0.35); /* subtle glow */
+}
 
     /* Collapse thread (per-comment) — tiny reddit-style button */
     .comment-collapse-btn{
