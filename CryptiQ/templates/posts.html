@@ -1613,7 +1613,7 @@ function renderCommentNode(c, { isLogged, depth = 0 } = {}) {
       <div class="comment-header">
         <div class="comment-user">${escapeHtml(c.username || "[Deleted]")}</div>
         <div class="comment-meta">
-          <button class="comment-collapse-btn" data-collapse="${c.id}" aria-label="Collapse" aria-expanded="true">−</button>
+          
           <span class="comment-time">${escapeHtml(time)}</span>
           ${c.can_delete ? `<button class="comment-delete" data-id="${c.id}">Delete</button>` : ""}
         </div>
@@ -1683,6 +1683,14 @@ function renderCommentTree(nodes, parentEl, opts, depth = 0) {
       if (childUl) {
         childUl.style.display = "grid";
         renderCommentTree(n.children, childUl, opts, depth + 1);
+        if (n.children && n.children.length > 0) {
+          const btn = document.createElement('button');
+          btn.className = 'comment-collapse-btn';
+          btn.textContent = '−';
+          btn.setAttribute('aria-label', 'Collapse');
+          btn.setAttribute('aria-expanded', 'true');
+          li.appendChild(btn);
+        }
         applyReplyCollapse(li, childUl, opts);
       }
     }
