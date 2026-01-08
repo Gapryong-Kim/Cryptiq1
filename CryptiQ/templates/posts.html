@@ -440,6 +440,178 @@
       font-size: 0.9rem;
     }
 
+    /* ==========================
+       THREADED REPLIES (Indent + Lines)
+    =========================== */
+   .comment {
+  position: relative;
+  margin-left: calc(var(--depth, 0) * 9px); /* tighter */
+}
+
+
+    /* Vertical thread line for replies (depth > 0) */
+    .comment[data-depth]:not([data-depth="0"])::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: -8px;
+      bottom: -8px;
+      width: 2px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* Small elbow connector into the comment */
+    .comment[data-depth]:not([data-depth="0"])::after {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 18px;
+      width: 10px;
+      height: 2px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.08);
+    }
+
+
+    /* Tighter thread indents on small screens */
+    @media (max-width: 700px) {
+      .comment { margin-left: calc(var(--depth, 0) * 7px); }
+      .comment[data-depth]:not([data-depth="0"])::before { left: -7px; }
+      .comment[data-depth]:not([data-depth="0"])::after  { left: -7px; width: 9px; }
+    }
+
+    .comment-children {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: none;
+      gap: 0;
+    }
+
+    .replies-toggle {
+      margin-top: 8px;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      padding: 6px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+
+    .replies-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* ===== Nested replies ===== */
+    .comment-actions{
+      margin-top: 6px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-size: 0.78rem;
+    }
+    .comment-reply-btn{
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 0;
+      font-weight: 800;
+    }
+    .comment-reply-btn:hover{ text-decoration: underline; }
+
+    /* Collapse thread (per-comment) — tiny reddit-style button */
+    .comment-collapse-btn{
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.02);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 12px;
+      line-height: 0;
+
+  /* optical glyph nudge */
+  padding-bottom: 2px;
+      transform: translateY(-1px);
+      transition: border-color .15s, color .15s, background .15s, transform .15s;
+    }
+    .comment-collapse-btn:hover{
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,255,255,0.05);
+      transform: translateY(-1px) scale(1.02);
+    }
+
+    .comment-collapsed-note{ display:none !important; }
+
+/* When collapsed: hide body + actions + forms + replies */
+    .comment.comment-collapsed .comment-body,
+    .comment.comment-collapsed .comment-actions,
+    .comment.comment-collapsed .reply-form,
+    .comment.comment-collapsed .comment-children,
+    .comment.comment-collapsed .replies-toggle{
+      display: none !important;
+    }
+    .comment.comment-collapsed .comment-collapsed-note{ display:none !important; }
+
+.comment-children{
+  margin-top: 6px;
+  margin-left: 0;          /* ❗ no extra indent */
+  padding-left: 0;         /* ❗ no stacking */
+  border-left: none;       /* line handled by .comment */
+  display: grid;
+  gap: 0;
+}
+
+
+    .reply-form{
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .reply-input{
+      flex: 1;
+      border: 1px solid var(--input-border);
+      border-radius: 999px;
+      background: var(--input-bg);
+      color: var(--text);
+      padding: 8px 12px;
+      min-height: 36px;
+      resize: vertical;
+      font: inherit;
+    }
+    .reply-submit,
+    .reply-cancel{
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+    }
+    .reply-submit{ border-color: var(--accent); color: var(--accent); }
+    .reply-submit:hover{ background: rgba(0,255,213,0.10); }
+    .reply-cancel:hover{ background: rgba(255,255,255,0.06); }
+
+
     .comment-add {
       display: flex;
       align-items: flex-end;
@@ -945,7 +1117,181 @@
 .img-lightbox-close::before{ transform: rotate(45deg); }
 .img-lightbox-close::after { transform: rotate(-45deg); }
 
-  </style>
+  
+
+
+/* When collapsed, keep header visible but dim body */
+.comment.collapsed-thread > .comment-main .comment-body,
+.comment.collapsed-thread > .comment-main .comment-actions,
+.comment.collapsed-thread > .comment-main .reply-form,
+.comment.collapsed-thread > .comment-main .replies-toggle,
+.comment.collapsed-thread > .comment-main .comment-children{
+  display: none !important;
+}
+
+
+
+
+/* Undo extra avatar offset now that button is on the right */
+.comment-avatar{
+  margin-left: 0;
+}
+
+
+
+.comment-collapse-btn{
+  position: absolute;
+
+  /* align with avatar column */
+  left: 10px;              /* matches comment padding/visual gutter */
+  top: 44px;               /* avatar height (34px) + small gap */
+
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  color: var(--muted);
+
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 0;
+
+  /* optical glyph nudge */
+  padding-bottom: 2px;
+
+  display: grid;
+  place-items: center;     /* perfectly center + / − */
+
+  cursor: pointer;
+  z-index: 3;
+
+  transition: border-color .15s, color .15s, background .15s;
+}
+
+.comment-collapse-btn:hover{
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,255,255,0.05);
+}
+
+
+
+.comment-collapse-btn{
+  position: absolute;
+
+  /* center directly under avatar */
+  left: 14px;               /* centered under 34px avatar */
+  top: 44px;                /* avatar height (34px) + gap */
+
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  color: var(--muted);
+
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 0;
+
+  /* optical glyph nudge */
+  padding-bottom: 2px;
+
+  display: grid;
+  place-items: center;
+
+  cursor: pointer;
+  z-index: 3;
+
+  transition: border-color .15s, color .15s, background .15s;
+}
+
+.comment-collapse-btn:hover{
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,255,255,0.05);
+}
+
+
+/* === Collapse button: directly under avatar (final tuned) === */
+.comment{
+  position: relative;
+}
+
+.comment-collapse-btn{
+  position: absolute;
+
+  /* fine-tuned center under avatar */
+  left: 22px;               /* shifted slightly right */
+  top: 64 px;                /* moved up a few pixels */
+
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  color: var(--muted);
+
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 0;
+
+  /* optical glyph nudge */
+  padding-bottom: 2px;
+
+  display: grid;
+  place-items: center;
+
+  cursor: pointer;
+  z-index: 3;
+
+  transition: border-color .15s, color .15s, background .15s;
+}
+
+.comment-collapse-btn:hover{
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,255,255,0.05);
+}
+.comment {
+  position: relative;
+}
+
+.comment-collapse-btn {
+  position: absolute;
+
+  /* 🔑 HORIZONTAL CONTROL */
+  left: 22px;   /* move right → increase, left → decrease */
+
+  /* 🔑 VERTICAL CONTROL */
+  top: 44px;    /* move down → increase, up → decrease */
+
+  width: 16px;
+  height: 16px;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 0;
+
+  padding-bottom: 2px; /* optical centering of + / − */
+
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  color: var(--muted);
+
+  z-index: 3;
+}
+
+
+</style>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
@@ -1205,7 +1551,7 @@ document.addEventListener("click", e => {
 });
 
 /* ============================================================
-   COMMENT UTIL FUNCTIONS
+   COMMENT UTIL FUNCTIONS + NESTED REPLIES
 ============================================================ */
 function escapeHtml(str) {
   return (str || "").replace(/[&<>"']/g, s =>
@@ -1224,32 +1570,127 @@ function formatCommentTime(ts) {
   }).replace(",", "");
 }
 
-function renderComment(c) {
+function buildCommentTree(comments) {
+  const byId = new Map();
+  const roots = [];
+
+  (comments || []).forEach(c => {
+    byId.set(c.id, { ...c, children: [] });
+  });
+
+  byId.forEach(node => {
+    if (node.parent_comment_id && byId.has(node.parent_comment_id)) {
+      byId.get(node.parent_comment_id).children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  // Stable ordering: oldest-first within each thread
+  function sortRec(arr) {
+    arr.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    arr.forEach(n => sortRec(n.children));
+  }
+  sortRec(roots);
+
+  return roots;
+}
+
+function renderCommentNode(c, { isLogged, depth = 0 } = {}) {
   const li = document.createElement("li");
   li.className = "comment";
   li.dataset.commentId = c.id;
+  const depthCap = Math.min(Number(depth) || 0, 6);
+  li.dataset.depth = String(depthCap);
+  li.style.setProperty("--depth", String(depthCap));
 
   const initial = (c.username || "?")[0].toUpperCase();
   const time = formatCommentTime(c.created_at);
 
   li.innerHTML = `
-    <div class="comment-avatar">${initial}</div>
+    <div class="comment-avatar">${escapeHtml(initial)}</div>
     <div class="comment-main">
       <div class="comment-header">
         <div class="comment-user">${escapeHtml(c.username || "[Deleted]")}</div>
         <div class="comment-meta">
-          <span class="comment-time">${time}</span>
+          <button class="comment-collapse-btn" data-collapse="${c.id}" aria-label="Collapse" aria-expanded="true">−</button>
+          <span class="comment-time">${escapeHtml(time)}</span>
           ${c.can_delete ? `<button class="comment-delete" data-id="${c.id}">Delete</button>` : ""}
         </div>
       </div>
+
       <div class="comment-body">${escapeHtml(c.body)}</div>
+
+      <div class="comment-actions">
+        ${isLogged ? `<button class="comment-reply-btn" data-reply-to="${c.id}">Reply</button>` : ""}</div>
+
+      <div class="comment-collapsed-note">Thread collapsed. Click “Expand” to view replies.</div>
+
+      <div class="reply-form" id="reply-form-${c.id}" style="display:none;">
+        <textarea class="reply-input" rows="1" placeholder="Write a reply…"></textarea>
+        <button class="reply-submit" data-parent-id="${c.id}">Reply</button>
+        <button class="reply-cancel" data-cancel-reply="${c.id}">Cancel</button>
+      </div>
+
+      <ul class="comment-children" id="comment-children-${c.id}" style="display:none;"></ul>
     </div>
   `;
+
   return li;
 }
 
+
+function applyReplyCollapse(parentLi, childUl, { maxRepliesPreview = 5 } = {}) {
+  if (!childUl) return;
+  const kids = Array.from(childUl.children);
+  if (kids.length <= maxRepliesPreview) return;
+
+  const hidden = kids.slice(maxRepliesPreview);
+  hidden.forEach(el => (el.style.display = "none"));
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "replies-toggle";
+  btn.dataset.state = "collapsed";
+
+  const hiddenCount = hidden.length;
+  btn.textContent = `Show ${hiddenCount} more repl${hiddenCount === 1 ? "y" : "ies"}`;
+
+  btn.addEventListener("click", () => {
+    const collapsed = btn.dataset.state === "collapsed";
+    if (collapsed) {
+      hidden.forEach(el => (el.style.display = ""));
+      btn.dataset.state = "open";
+      btn.textContent = "Show fewer replies";
+    } else {
+      hidden.forEach(el => (el.style.display = "none"));
+      btn.dataset.state = "collapsed";
+      btn.textContent = `Show ${hiddenCount} more repl${hiddenCount === 1 ? "y" : "ies"}`;
+    }
+  });
+
+  // Put the toggle right above the children list
+  childUl.insertAdjacentElement("beforebegin", btn);
+}
+
+function renderCommentTree(nodes, parentEl, opts, depth = 0) {
+  (nodes || []).forEach(n => {
+    const li = renderCommentNode(n, { ...opts, depth });
+    parentEl.appendChild(li);
+
+    if (n.children && n.children.length) {
+      const childUl = li.querySelector(`#comment-children-${n.id}`);
+      if (childUl) {
+        childUl.style.display = "grid";
+        renderCommentTree(n.children, childUl, opts, depth + 1);
+        applyReplyCollapse(li, childUl, opts);
+      }
+    }
+  });
+}
+
 /* ============================================================
-   LOAD COMMENTS
+   LOAD COMMENTS (nested)
 ============================================================ */
 async function loadComments(postId) {
   const list = document.getElementById(`comment-list-${postId}`);
@@ -1263,7 +1704,10 @@ async function loadComments(postId) {
     const data = await res.json();
 
     list.innerHTML = "";
-    data.comments.forEach(c => list.appendChild(renderComment(c)));
+
+    const isLogged = !!{{ 'true' if user else 'false' }};
+    const tree = buildCommentTree(data.comments || []);
+    renderCommentTree(tree, list, { isLogged, maxRepliesPreview: 5 });
 
     count.textContent = `${data.count} comment${data.count !== 1 ? "s" : ""}`;
     if (numSpan) numSpan.textContent = data.count;
@@ -1273,7 +1717,7 @@ async function loadComments(postId) {
 }
 
 /* ============================================================
-   COMMENTS (toggle, post)
+   COMMENTS (toggle, post, reply)
    ✅ (delete is handled ONLY by popup handler at bottom)
 ============================================================ */
 document.addEventListener("click", async e => {
@@ -1313,12 +1757,12 @@ document.addEventListener("click", async e => {
     return;
   }
 
-  /* Post comment */
+  /* Post root comment */
   const postBtn = e.target.closest(".comment-submit");
   if (postBtn) {
     const id = postBtn.dataset.postId;
     const input = document.getElementById(`comment-input-${id}`);
-    const body = input.value.trim();
+    const body = (input?.value || "").trim();
     if (!body) return;
 
     postBtn.disabled = true;
@@ -1334,14 +1778,91 @@ document.addEventListener("click", async e => {
       const data = await res.json();
 
       if (data.ok) {
-        const list = document.getElementById(`comment-list-${id}`);
-        list.prepend(renderComment(data.comment));
+        // simplest: reload thread to place it correctly (and keep tree integrity)
         input.value = "";
+        await loadComments(id);
       }
     } catch {}
 
     postBtn.disabled = false;
     postBtn.textContent = old;
+    return;
+  }
+
+  /* Collapse / Expand thread */
+  const colBtn = e.target.closest(".comment-collapse-btn");
+  if (colBtn) {
+    const li = colBtn.closest(".comment");
+    if (!li) return;
+    const collapsed = li.classList.toggle("comment-collapsed");
+    colBtn.textContent = collapsed ? "+" : "−";
+    colBtn.setAttribute("aria-label", collapsed ? "Expand" : "Collapse");
+    colBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    return;
+  }
+
+  /* Open reply form */
+  const replyBtn = e.target.closest(".comment-reply-btn");
+  if (replyBtn) {
+    const cid = replyBtn.dataset.replyTo;
+    const form = document.getElementById(`reply-form-${cid}`);
+    if (!form) return;
+    const isOpen = form.style.display !== "none";
+
+    // close any other open reply forms
+    document.querySelectorAll('.reply-form').forEach(f => {
+      if (f !== form) f.style.display = 'none';
+    });
+
+    form.style.display = isOpen ? "none" : "flex";
+    if (!isOpen) form.querySelector(".reply-input")?.focus?.();
+    return;
+  }
+
+  /* Cancel reply */
+  const cancel = e.target.closest(".reply-cancel");
+  if (cancel) {
+    const cid = cancel.dataset.cancelReply;
+    const form = document.getElementById(`reply-form-${cid}`);
+    if (form) form.style.display = "none";
+    return;
+  }
+
+  /* Submit reply */
+  const submitReply = e.target.closest(".reply-submit");
+  if (submitReply) {
+    const parentId = Number(submitReply.dataset.parentId || 0);
+    const commentEl = submitReply.closest(".comment");
+    const postCard = commentEl?.closest?.(".post-card");
+    const postId = Number(postCard?.dataset?.postId || 0);
+
+    const form = submitReply.closest(".reply-form");
+    const input = form?.querySelector?.(".reply-input");
+    const body = (input?.value || "").trim();
+    if (!postId || !parentId || !body) return;
+
+    submitReply.disabled = true;
+    const old = submitReply.textContent;
+    submitReply.textContent = "Replying…";
+
+    try {
+      const res = await fetch("/comments/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: postId, body, parent_comment_id: parentId })
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        input.value = "";
+        form.style.display = "none";
+        await loadComments(postId);
+      }
+    } catch {}
+
+    submitReply.disabled = false;
+    submitReply.textContent = old;
+    return;
   }
 
   /* Delete comment: do nothing here (popup handler handles it) */

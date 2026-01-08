@@ -1,11 +1,8 @@
 <head>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
-
 </head>
 
-
-
-
+<!-- templates/base_footer.html -->
 <!-- templates/base_footer.html -->
 <footer class="site-footer">
   <div class="footer-inner">
@@ -17,11 +14,23 @@
       <a href="{{ url_for('info_page') }}">Info</a>
       <a href="{{ url_for('posts_list') }}">Posts</a>
       <a href="{{ url_for('about') }}">About Us</a>
-
     </nav>
+
+    <div class="footer-badge" aria-label="Product Hunt">
+      <a
+        href="https://www.producthunt.com/products/the-cipher-lab?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-the-cipher-lab"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img
+          src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1059365&theme=dark"
+          alt="The Cipher Lab on Product Hunt"
+          height="54"
+        >
+      </a>
+    </div>
   </div>
 
-  <!-- Popular ciphers (compact, no “second footer” vibe) -->
   <div class="footer-inner footer-popular-row">
     <div class="footer-section-title">Popular ciphers</div>
 
@@ -36,92 +45,99 @@
   </div>
 </footer>
 
+
 <style>
-  .site-footer{
-    width: 100%;
-    border-top: 1px solid var(--line);
-    padding: 18px 0;          /* slightly tighter */
-    margin-top: auto;
-    background: transparent;
-  }
+ /* ===============================
+   Footer
+   =============================== */
 
+.site-footer{
+  width: 100%;
+  border-top: 1px solid var(--line);
+  padding: 18px 0;
+  background: transparent;
+}
+
+.footer-inner{
+  width: min(1100px, 92%);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.footer-brand{
+  color: var(--muted);
+  font-weight: 700;
+  font-size: .95rem;
+  white-space: nowrap;
+}
+
+.footer-right{
+  display: inline-flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.footer-right a{
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: .92rem;
+}
+.footer-right a:hover{
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.footer-badge{
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.footer-badge img{
+  height: 54px;
+  width: auto;
+}
+
+.footer-popular-row{
+  margin-top: 10px;
+  align-items: baseline;
+}
+
+.footer-section-title{
+  color: var(--muted);
+  font-weight: 900;
+  font-size: .88rem;
+}
+
+.footer-popular{
+  display: inline-flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.footer-popular a{
+  color: var(--muted);
+  font-weight: 850;
+  font-size: .90rem;
+  text-decoration: none;
+}
+
+.footer-popular a:hover{
+  color: var(--accent);
+}
+
+@media (max-width: 640px){
   .footer-inner{
-    width: min(1100px, 92%);
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
+    flex-direction: column;
+    align-items: flex-start;
   }
+  .footer-badge{
+    display: none;
+  }
+}
 
-  .footer-brand{
-    color: var(--muted);
-    font-weight: 700;
-    letter-spacing: .2px;
-    font-size: .95rem;
-  }
-
-  .footer-right{
-    display: inline-flex;
-    align-items: center;
-    gap: 18px;
-    flex-wrap: wrap;
-  }
-
-  .footer-right a{
-    color: var(--muted);
-    text-decoration: none;
-    font-weight: 800;
-    font-size: .92rem;
-    transition: color .15s ease, transform .15s ease;
-  }
-  .footer-right a:hover{
-    color: var(--accent);
-    transform: translateY(-1px);
-  }
-
-  /* ===== Popular ciphers: compact second line ===== */
-  .footer-popular-row{
-    margin-top: 10px;         /* small spacing, not a “new footer” */
-    padding-top: 0;           /* remove the heavy row padding */
-    border-top: none;         /* remove the extra divider that makes it look stacked */
-    align-items: baseline;
-  }
-
-  .footer-section-title{
-    color: var(--muted);
-    font-weight: 900;
-    letter-spacing: .2px;
-    font-size: .88rem;
-    white-space: nowrap;
-    opacity: .9;
-  }
-
-  .footer-popular{
-    display: inline-flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
-
-  .footer-popular a{
-    color: var(--muted);
-    text-decoration: none;
-    font-weight: 850;
-    font-size: .90rem;
-    transition: color .15s ease, transform .15s ease;
-  }
-  .footer-popular a:hover{
-    color: var(--accent);
-    transform: translateY(-1px);
-  }
-
-  @media (max-width: 640px){
-    .footer-inner{
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .footer-right{ gap: 14px; }
-    .footer-popular-row{ margin-top: 12px; }
-  }
 </style>

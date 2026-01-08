@@ -177,14 +177,50 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         post_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
+        parent_comment_id INTEGER,
         body TEXT NOT NULL,
         created_at TEXT NOT NULL,
         FOREIGN KEY(post_id) REFERENCES posts(id),
-        FOREIGN KEY(user_id) REFERENCES users(id)
+        FOREIGN KEY(user_id) REFERENCES users(id),
+        FOREIGN KEY(parent_comment_id) REFERENCES comments(id)
     )
     """)
     conn.commit()
     conn.close()
+
+
+def init_core_tables_on_boot():
+    """Ensure core tables and forward migrations exist.
+
+    This app is often run with an existing cryptiq.db created before newer
+    features (e.g., nested comment replies). We run lightweight migrations on
+    boot so older DBs keep working without manual schema edits.
+    """
+    # Create base tables if missing
+    try:
+        init_db()
+    except Exception:
+        # If something goes wrong here, the app can still start; individual
+        # routes may raise clearer errors.
+        pass
+
+    # Apply incremental migrations
+    try:
+        migrate_db()
+    except Exception:
+        pass
+
+    try:
+        migrate_comments_table()
+    except Exception:
+        pass
+
+    # Optional migrations that exist in this codebase
+    for fn in ("migrate_shared_labs", "migrate_labs_pro_fields"):
+        try:
+            globals()[fn]()
+        except Exception:
+            pass
 
 def migrate_db():
     conn = get_db()
@@ -197,6 +233,27 @@ def migrate_db():
         cur.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
     if "has_posted" not in cols:
         cur.execute("ALTER TABLE users ADD COLUMN has_posted INTEGER NOT NULL DEFAULT 0")
+
+    conn.commit()
+    conn.close()
+
+
+def migrate_comments_table():
+    """Add parent_comment_id column + index if missing (supports nested replies)."""
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("PRAGMA table_info(comments)")
+    cols = {row["name"] for row in cur.fetchall()}
+
+    if "parent_comment_id" not in cols:
+        cur.execute("ALTER TABLE comments ADD COLUMN parent_comment_id INTEGER")
+
+    # Helpful index for thread lookups
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_comments_post_parent_time
+        ON comments(post_id, parent_comment_id, created_at)
+    """)
 
     conn.commit()
     conn.close()
@@ -247,8 +304,14 @@ def add_security_headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    # CSP is powerful but easy to break; start basic:
-    resp.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+
+    resp.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "img-src 'self' data: https://api.producthunt.com https://ph-files.imgix.net https://www.producthunt.com; "
+        "script-src 'self' 'unsafe-inline' https://www.producthunt.com; "
+        "style-src 'self' 'unsafe-inline'; "
+        "frame-src https://www.producthunt.com;"
+    )
     return resp
 
 from functools import wraps
@@ -979,22 +1042,22 @@ def comments_list():
 
     conn = get_db()
     cur = conn.execute("""
-        SELECT 
-            c.id, 
-            c.post_id, 
-            c.user_id, 
-            c.body, 
+        SELECT
+            c.id,
+            c.post_id,
+            c.user_id,
+            c.parent_comment_id,
+            c.body,
             c.created_at,
             u.username
         FROM comments c
-        LEFT JOIN users u ON c.user_id = u.id  -- ✅ LEFT JOIN keeps comments after deletion
+        LEFT JOIN users u ON c.user_id = u.id  -- keep comments after user deletion
         WHERE c.post_id = ?
-        ORDER BY datetime(c.created_at) DESC
+        ORDER BY datetime(c.created_at) ASC
     """, (post_id,))
     rows = cur.fetchall()
     conn.close()
 
-    # Convert sqlite3.Row to dict and handle deleted users
     comments = []
     for r in rows:
         username = r["username"] if r["username"] else "[Deleted User]"
@@ -1003,6 +1066,7 @@ def comments_list():
             "id": r["id"],
             "post_id": r["post_id"],
             "user_id": user_id,
+            "parent_comment_id": r["parent_comment_id"],
             "username": username,
             "body": r["body"],
             "created_at": r["created_at"],
@@ -1030,53 +1094,80 @@ def comments_add():
         data = request.get_json(silent=True) or {}
         post_id = int(data.get("post_id") or 0)
         body = (data.get("body") or "").strip()
+        parent_comment_id = data.get("parent_comment_id")
+        try:
+            parent_comment_id = int(parent_comment_id) if parent_comment_id not in (None, "") else None
+        except Exception:
+            parent_comment_id = None
     else:
         post_id = request.form.get("post_id", type=int)
         body = (request.form.get("body") or "").strip()
+        parent_comment_id = request.form.get("parent_comment_id", type=int)
 
     if not post_id or not body:
         return jsonify({"ok": False, "error": "post_id and body required"}), 400
 
-    # Use your existing helper to fetch post (includes owner)
     post = fetch_post(post_id)
     if not post:
         return jsonify({"ok": False, "error": "post not found"}), 404
 
-    post_owner_id = post["user_id"]  # may be NULL if owner deleted
-
     now = datetime.utcnow().isoformat()
     conn = get_db()
+    # Help avoid "database is locked" on busy Windows dev setups
+    try:
+        conn.execute("PRAGMA busy_timeout = 5000")
+    except Exception:
+        pass
     cur = conn.cursor()
+
+    # Validate parent comment (must belong to same post)
+    parent_user_id = None
+    if parent_comment_id is not None:
+        cur.execute("SELECT id, user_id, post_id FROM comments WHERE id=?", (parent_comment_id,))
+        prow = cur.fetchone()
+        if not prow or int(prow["post_id"]) != int(post_id):
+            conn.close()
+            return jsonify({"ok": False, "error": "invalid parent_comment_id"}), 400
+        parent_user_id = prow["user_id"]
 
     # Insert comment
     cur.execute(
-        "INSERT INTO comments (post_id, user_id, body, created_at) VALUES (?, ?, ?, ?)",
-        (post_id, user["id"], body, now)
+        "INSERT INTO comments (post_id, user_id, parent_comment_id, body, created_at) VALUES (?, ?, ?, ?, ?)",
+        (post_id, user["id"], parent_comment_id, body, now)
     )
     comment_id = cur.lastrowid
 
     # Fetch it back with username
     cur.execute("""
-        SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, u.username
+        SELECT c.id, c.post_id, c.user_id, c.parent_comment_id, c.body, c.created_at, u.username
         FROM comments c
         JOIN users u ON c.user_id = u.id
         WHERE c.id = ?
     """, (comment_id,))
     row = cur.fetchone()
 
-    # Create notification for post owner (but not if they commented on their own post)
+    # Notifications
+    # fetch_post() returns sqlite3.Row; it doesn't have .get()
+    try:
+        post_owner_id = post["user_id"]
+    except Exception:
+        post_owner_id = None
+
+    # Notify post owner (unless self)
     if post_owner_id and post_owner_id != user["id"]:
         message = f"{user['username']} replied to your post"
-
-        page = get_post_page(post_id)
-
         cur.execute("""
-            INSERT INTO notifications (
-                user_id, actor_id, post_id, comment_id, message, created_at
-            )
+            INSERT INTO notifications (user_id, actor_id, post_id, comment_id, message, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (post_owner_id, user["id"], post_id, comment_id, message, now))
 
+    # Notify parent comment author (unless self or same as post owner to avoid duplicate notif)
+    if parent_user_id and parent_user_id != user["id"] and parent_user_id != post_owner_id:
+        message = f"{user['username']} replied to your comment"
+        cur.execute("""
+            INSERT INTO notifications (user_id, actor_id, post_id, comment_id, message, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (parent_user_id, user["id"], post_id, comment_id, message, now))
 
     conn.commit()
     conn.close()
@@ -1085,6 +1176,7 @@ def comments_add():
         "id": row["id"],
         "post_id": row["post_id"],
         "user_id": row["user_id"],
+        "parent_comment_id": row["parent_comment_id"],
         "username": row["username"],
         "body": row["body"],
         "created_at": row["created_at"],
@@ -1099,7 +1191,9 @@ def comments_delete(comment_id):
         return jsonify({"ok": False, "error": "login required"}), 401
 
     conn = get_db()
-    cur = conn.execute("SELECT user_id FROM comments WHERE id=?", (comment_id,))
+    cur = conn.cursor()
+
+    cur.execute("SELECT id, user_id, post_id FROM comments WHERE id=?", (comment_id,))
     row = cur.fetchone()
     if not row:
         conn.close()
@@ -1109,10 +1203,31 @@ def comments_delete(comment_id):
         conn.close()
         return jsonify({"ok": False, "error": "forbidden"}), 403
 
-    conn.execute("DELETE FROM comments WHERE id=?", (comment_id,))
+    # Delete this comment AND all descendants (nested replies)
+    to_delete = [comment_id]
+    i = 0
+    while i < len(to_delete):
+        cid = to_delete[i]
+        cur.execute("SELECT id FROM comments WHERE parent_comment_id=?", (cid,))
+        kids = [r["id"] for r in cur.fetchall()]
+        for k in kids:
+            if k not in to_delete:
+                to_delete.append(k)
+        i += 1
+
+    # Clean up notifications pointing at deleted comments (best-effort)
+    cur.execute(
+        f"DELETE FROM notifications WHERE comment_id IN ({','.join(['?']*len(to_delete))})",
+        to_delete,
+    )
+    cur.execute(
+        f"DELETE FROM comments WHERE id IN ({','.join(['?']*len(to_delete))})",
+        to_delete,
+    )
+
     conn.commit()
     conn.close()
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "deleted": len(to_delete)})
 
 # Serve uploaded images
 @app.route("/uploads/<filename>")
@@ -2430,7 +2545,8 @@ def init_workspaces():
     conn.commit()
     conn.close()
 
-# Call once on boot (near init_db/migrate_db)
+# Call once on boot (core tables/migrations + workspaces)
+init_core_tables_on_boot()
 init_workspaces()
 
 
