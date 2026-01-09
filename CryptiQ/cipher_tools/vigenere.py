@@ -1,384 +1,175 @@
-common_words = [
-    "the",
-    "be",
-    "to",
-    "of",
-    "and",
-    "in",
-    "that",
-    "have",
-    "it",
-    "for",
-    "not",
-    "with",
-    "he",
-    "as",
-    "you",
-    "do",
-    "at",
-    "this",
-    "but",
-    "his",
-    "from",
-    "they",
-    "say",
-    "her",
-    "she",
-    "will",
-    "one",
-    "all",
-    "would",
-    "there",
-    "their",
-    "what",
-    "about",
-    "who",
-    "get",
-    "which",
-    "when",
-    "make",
-    "can",
-    "like",
-    "just",
-    "him",
-    "know",
-    "take",
-    "into",
-    "your",
-    "good",
-    "some",
-    "could",
-    "them",
-    "see",
-    "other",
-    "than",
-    "then",
-    "now",
-    "look",
-    "only",
-    "come",
-    "its",
-    "over",
-    "think",
-    "also",
-    "back",
-    "after",
-    "use",
-    "two",
-    "how",
-    "our",
-    "work",
-    "first",
-    "well",
-    "way",
-    "even",
-    "new",
-    "want",
-    "because",
-    "any",
-    "these",
-    "give",
-    "day",
-    "most",
+"""
+Adaptive Vigenère breaker implementing:
+  Method 1: Brute force (short keys only)
+  Method 4: Variational / hill-climbing optimization
+  Method 5: Statistics-only attack (IoC + frequency matching)
+
+Based on "Five Ways to Crack a Vigenère Cipher" by The Mad Doctor.
+"""
+
+from __future__ import annotations
+from dataclasses import dataclass
+from itertools import product
+from math import sqrt
+from random import randrange
+from typing import List, Optional
+import re
+
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+A2I = {c: i for i, c in enumerate(ALPHABET)}
+I2A = {i: c for i, c in enumerate(ALPHABET)}
+
+# English monogram frequencies (normalized)
+EN_FREQ = [
+    0.08167,0.01492,0.02782,0.04253,0.12702,0.02228,0.02015,0.06094,0.06966,
+    0.00153,0.00772,0.04025,0.02406,0.06749,0.07507,0.01929,0.00095,0.05987,
+    0.06327,0.09056,0.02758,0.00978,0.02360,0.00150,0.01974,0.00074
 ]
 
-alphabet = [
-    "a",
-    "b",
-    "c",
-    "d",
-    "e",
-    "f",
-    "g",
-    "h",
-    "i",
-    "j",
-    "k",
-    "l",
-    "m",
-    "n",
-    "o",
-    "p",
-    "q",
-    "r",
-    "s",
-    "t",
-    "u",
-    "v",
-    "w",
-    "x",
-    "y",
-    "z",
-]
+# ------------------ Helpers ------------------
 
-frequent_letters = [
-    "e",
-    "t",
-    "a",
-    "o",
-    "i",
-    "n",
-    "s",
-    "h",
-    "r",
-    "d",
-    "l",
-    "c",
-    "u",
-    "m",
-    "w",
-    "f",
-    "g",
-    "y",
-    "p",
-    "b",
-    "v",
-    "k",
-    "j",
-    "x",
-    "q",
-    "z",
-]
+def clean(text: str) -> str:
+    return "".join(c for c in text.upper() if c.isalpha())
 
+def decrypt(cipher: str, key: str) -> str:
+    out = []
+    for i, c in enumerate(cipher):
+        out.append(I2A[(A2I[c] - A2I[key[i % len(key)]]) % 26])
+    return "".join(out)
 
-
-def vigenere_break_one(message):
-    original_message = message
-    # Keep only letters for analysis
-    cleaned_message = ''.join(i for i in message if i.isalpha()).lower()
-    messages = (cleaned_message, cleaned_message[::-1])
-    possible = []
-    
-    for msg in messages:
-        lengths = range(1, 6)
-        key_possibilities = []
-        for length in lengths:
-            msg = msg.replace(" ", "")
-            key = ""
-            columns = ["" for _ in range(length)]
-            for index, letter in enumerate(msg):
-                columns[index % length] += letter
-
-            for column in columns:
-                possibilities = []
-                for shift in range(26):
-                    probability = 0
-                    decoded = ""
-                    for letter in column:
-                        decoded += alphabet[(alphabet.index(letter) - shift) % 26]
-                    frequencies = [(i, decoded.count(i)) for i in alphabet]
-                    frequencies = sorted(frequencies, key=lambda x: x[1], reverse=True)
-                    distribution = [letter for letter, _ in frequencies]
-
-                    for letter in distribution:
-                        if letter != "z" and letter != "e":
-                            if distribution.index(letter) in [
-                                frequent_letters.index(letter),
-                                frequent_letters.index(letter) + 1,
-                                frequent_letters.index(letter) - 1,
-                                frequent_letters.index(letter) - 2,
-                                frequent_letters.index(letter) + 2,
-                            ]:
-                                probability += 1
-                        elif letter == "e":
-                            if distribution.index(letter) in [
-                                frequent_letters.index(letter),
-                                frequent_letters.index(letter) + 1,
-                            ]:
-                                probability += 1
-                        elif letter == "z":
-                            if distribution.index(letter) in [
-                                frequent_letters.index(letter),
-                                frequent_letters.index(letter) - 1,
-                            ]:
-                                probability += 1
-                    key_letter = alphabet[shift]
-                    possibilities.append((probability, key_letter))
-
-                max_prob = 0
-                final_letter = ""
-                for likelihood, letter in possibilities:
-                    if likelihood > max_prob:
-                        max_prob = likelihood
-                        final_letter = letter
-                key += final_letter
-
-            key_possibilities.append(key)
-
-        msg = msg.replace(" ", "")
-        decoded_possibilities = []
-        for key in key_possibilities:
-            decoded = ""
-            current_key = key
-            repeating_index = 0
-            for i in range(len(msg)):
-                current_key += current_key[repeating_index]
-                repeating_index += 1
-            current_key = current_key[len(key):]
-            for ind, letter in enumerate(msg):
-                shift_index = alphabet.index(current_key[ind])
-                new_index = (alphabet.index(letter) - shift_index) % 26
-                new_letter = alphabet[new_index]
-                decoded += new_letter
-
-            for i in decoded:
-                probability = sum(decoded.count(i) for i in common_words)
-            decoded_possibilities.append((probability, decoded, key))
-
-        max_prob = 0
-        final_msg = ""
-        final_key = ""
-        for likelihood, msg_decoded, key in decoded_possibilities:
-            if likelihood > max_prob:
-                max_prob = likelihood
-                final_msg = msg_decoded
-                final_key = key
-
-        possible.append((max_prob, final_key, final_msg))
-
-    possible.sort(key=lambda x: x[0], reverse=True)
-    key = possible[0][1]
-    final_msg = possible[0][2]
-    final_prob = possible[0][0]
-
-    # === Reinsert punctuation & spaces ===
-    restored = []
-    letter_index = 0
-    for ch in original_message:
-        if ch.isalpha():
-            # Preserve original case
-            new_char = final_msg[letter_index]
-            restored.append(new_char.upper() if ch.isupper() else new_char)
-            letter_index += 1
+def restore(original: str, letters: str) -> str:
+    out, j = [], 0
+    for c in original:
+        if c.isalpha():
+            out.append(letters[j].lower() if c.islower() else letters[j])
+            j += 1
         else:
-            restored.append(ch)
-    restored_text = ''.join(restored)
+            out.append(c)
+    return "".join(out)
 
-    return (final_prob,key, restored_text)
+# ------------------ Statistics ------------------
 
+def index_of_coincidence(text: str) -> float:
+    counts = [0]*26
+    for c in text:
+        counts[A2I[c]] += 1
+    n = sum(counts)
+    if n < 2:
+        return 0.0
+    return 26 * sum(c*(c-1) for c in counts) / (n*(n-1))
 
-def vigenere_break_two(message):
-    original_message = message
-    # Keep only letters for analysis
-    cleaned_message = ''.join(i for i in message if i.isalpha()).lower()
-    messages = (cleaned_message, cleaned_message[::-1])
-    possible = []
-    
-    for msg in messages:
-        lengths = range(6, 11)
-        key_possibilities = []
-        for length in lengths:
-            msg = msg.replace(" ", "")
-            key = ""
-            columns = ["" for _ in range(length)]
-            for index, letter in enumerate(msg):
-                columns[index % length] += letter
+def cosangle(x, y):
+    num = sum(a*b for a,b in zip(x,y))
+    den = sqrt(sum(a*a for a in x)*sum(b*b for b in y))
+    return num/den if den else 0.0
 
-            for column in columns:
-                possibilities = []
-                for shift in range(26):
-                    probability = 0
-                    decoded = ""
-                    for letter in column:
-                        decoded += alphabet[(alphabet.index(letter) - shift) % 26]
-                    frequencies = [(i, decoded.count(i)) for i in alphabet]
-                    frequencies = sorted(frequencies, key=lambda x: x[1], reverse=True)
-                    distribution = [letter for letter, _ in frequencies]
+def slice_frequencies(text: str, period: int):
+    slices = [""]*period
+    for i,c in enumerate(text):
+        slices[i % period] += c
+    freqs = []
+    for s in slices:
+        f = [0]*26
+        for c in s:
+            f[A2I[c]] += 1
+        total = len(s)
+        freqs.append([x/total for x in f])
+    return freqs
 
-                    for letter in distribution:
-                        if letter != "z" and letter != "e":
-                            if distribution.index(letter) in [
-                                frequent_letters.index(letter),
-                                frequent_letters.index(letter) + 1,
-                                frequent_letters.index(letter) - 1,
-                                frequent_letters.index(letter) - 2,
-                                frequent_letters.index(letter) + 2,
-                            ]:
-                                probability += 1
-                        elif letter == "e":
-                            if distribution.index(letter) in [
-                                frequent_letters.index(letter),
-                                frequent_letters.index(letter) + 1,
-                            ]:
-                                probability += 1
-                        elif letter == "z":
-                            if distribution.index(letter) in [
-                                frequent_letters.index(letter),
-                                frequent_letters.index(letter) - 1,
-                            ]:
-                                probability += 1
-                    key_letter = alphabet[shift]
-                    possibilities.append((probability, key_letter))
+# ------------------ Method 5 ------------------
 
-                max_prob = 0
-                final_letter = ""
-                for likelihood, letter in possibilities:
-                    if likelihood > max_prob:
-                        max_prob = likelihood
-                        final_letter = letter
-                key += final_letter
+def stats_only(cipher: str) -> Optional[str]:
+    # find likely period
+    for p in range(1, 21):
+        iocs = []
+        slices = [""]*p
+        for i,c in enumerate(cipher):
+            slices[i % p] += c
+        iocs = [index_of_coincidence(s) for s in slices]
+        if sum(iocs)/p > 1.6:
+            period = p
+            break
+    else:
+        return None
 
-            key_possibilities.append(key)
-
-        msg = msg.replace(" ", "")
-        decoded_possibilities = []
-        for key in key_possibilities:
-            decoded = ""
-            current_key = key
-            repeating_index = 0
-            for i in range(len(msg)):
-                current_key += current_key[repeating_index]
-                repeating_index += 1
-            current_key = current_key[len(key):]
-            for ind, letter in enumerate(msg):
-                shift_index = alphabet.index(current_key[ind])
-                new_index = (alphabet.index(letter) - shift_index) % 26
-                new_letter = alphabet[new_index]
-                decoded += new_letter
-
-            for i in decoded:
-                probability = sum(decoded.count(i) for i in common_words)
-            decoded_possibilities.append((probability, decoded, key))
-
-        max_prob = 0
-        final_msg = ""
-        final_key = ""
-        for likelihood, msg_decoded, key in decoded_possibilities:
-            if likelihood > max_prob:
-                max_prob = likelihood
-                final_msg = msg_decoded
-                final_key = key
-
-        possible.append((max_prob, final_key, final_msg))
-
-    possible.sort(key=lambda x: x[0], reverse=True)
-    key = possible[0][1]
-    final_msg = possible[0][2]
-    final_prob = possible[0][0]
-
-    # === Reinsert punctuation & spaces ===
-    restored = []
-    letter_index = 0
-    for ch in original_message:
-        if ch.isalpha():
-            # Preserve original case
-            new_char = final_msg[letter_index]
-            restored.append(new_char.upper() if ch.isupper() else new_char)
-            letter_index += 1
+    freqs = slice_frequencies(cipher, period)
+    key = []
+    for f in freqs:
+        for shift in range(26):
+            rotated = f[shift:] + f[:shift]
+            if cosangle(EN_FREQ, rotated) > 0.9:
+                key.append(I2A[shift])
+                break
         else:
-            restored.append(ch)
-    restored_text = ''.join(restored)
+            key.append("A")
+    return "".join(key)
 
-    return (final_prob,key, restored_text)
+# ------------------ Method 4 ------------------
 
+def fitness(text: str) -> float:
+    return sum(EN_FREQ[A2I[c]] for c in text) / len(text)
 
-def final_sort(one,two):
-    possible=[one,two]
-    possible.sort(key=lambda x:x[0],reverse=True)
-    final_key=possible[0][1]
-    final_msg=possible[0][2]
-    return final_key,final_msg
+def variational(cipher: str, period: int) -> str:
+    key = ["A"]*period
+    best = fitness(decrypt(cipher, "".join(key)))
+    improved = True
+    while improved:
+        improved = False
+        for i in range(period):
+            for c in ALPHABET:
+                test = key[:]
+                test[i] = c
+                score = fitness(decrypt(cipher, "".join(test)))
+                if score > best:
+                    best = score
+                    key = test
+                    improved = True
+    return "".join(key)
 
+# ------------------ Method 1 ------------------
+
+def brute_force(cipher: str, max_len=3) -> Optional[str]:
+    for L in range(1, max_len+1):
+        for k in product(ALPHABET, repeat=L):
+            key = "".join(k)
+            pt = decrypt(cipher, key)
+            if fitness(pt) > 0.06:
+                return key
+    return None
+
+# ------------------ Adaptive ------------------
+
+@dataclass
+class Result:
+    key: str
+    plaintext: str
+    method: str
+
+def break_vigenere(ciphertext: str) -> Result:
+    clean_ct = clean(ciphertext)
+    n = len(clean_ct)
+
+    # Long text → method 5
+    if n > 200:
+        key = stats_only(clean_ct)
+        if key:
+            return Result(key, restore(ciphertext, decrypt(clean_ct, key)), "statistics-only")
+
+    # Medium → method 4
+    if n > 50:
+        key = variational(clean_ct, 5)
+        return Result(key, restore(ciphertext, decrypt(clean_ct, key)), "variational")
+
+    # Short → method 1
+    key = brute_force(clean_ct)
+    if key:
+        return Result(key, restore(ciphertext, decrypt(clean_ct, key)), "bruteforce")
+
+    return Result("", ciphertext, "failed")
 
 if __name__ == "__main__":
-    print(vigenere_break_one(input('enter text: ')))
+    ct = input("ciphertext: ")
+    r = break_vigenere(ct)
+    print("method:", r.method)
+    print("key:", r.key)
+    print("plaintext:", r.plaintext)

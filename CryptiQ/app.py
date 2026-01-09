@@ -504,10 +504,10 @@ def breaker():
             if cipher_type == "caesar":
                 key, plaintext = caesar_break(text)
             elif cipher_type == "vigenere":
-                vigenere_part_one = vigenere_break_one(text)
-                vigenere_part_two = vigenere_break_two(text)
+                res = break_vigenere(text)   # returns Result(key, plaintext, method)
+                key, plaintext = res.key, res.plaintext
+
                 
-                key, plaintext = final_sort(vigenere_part_one , vigenere_part_two)
             elif cipher_type == "affine":
                 key, plaintext = affine_break(text)
             elif cipher_type == "amsco":
