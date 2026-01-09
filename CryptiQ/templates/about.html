@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Primary SEO -->
+  <title>About — The Cipher Lab</title>
+  <meta name="description" content="The Cipher Lab is built by a single creator passionate about ciphers, cryptography, and programming." />
+  <meta name="robots" content="index,follow" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Theme + Styles -->
+  <meta name="theme-color" content="#00ffd5" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- Icons -->
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+</head>
+
+<body>
+  {% include 'base_nav.html' %}
+
+  <main class="container">
+    <h2>About The Cipher Lab</h2>
+
+    <p style="color: var(--text-dim); line-height: 1.65; font-size: 1.02rem;">
+      The Cipher Lab is an independent project built and maintained by a single creator with a deep love
+      for ciphers, cryptography, and programming.
+    </p>
+
+    <p style="color: var(--text-dim); line-height: 1.65; margin-top: 14px;">
+      What started as a personal fascination with classical encryption and puzzle-solving grew into a place
+      where tools, analysis, and experimentation could live together in one clean workspace.
+      Every feature — from cipher tools to Labs and Weekly Cipher — is designed with clarity,
+      learning, and speed in mind.
+    </p>
+
+    <p style="color: var(--text-dim); line-height: 1.65; margin-top: 14px;">
+      There’s no team, no investors, and no filler — just me, just a focus on building useful cryptographic tools
+      and making them enjoyable to use.
+    </p>
+
+    <hr style="border: none; border-top: 1px solid var(--line); margin: 26px 0;">
+
+    <p style="color: var(--muted); font-size: 0.95rem;">
+      📩 Contact: 
+      <a href="mailto:thecipherlab@gmail.com" style="color: var(--accent); font-weight: 700; text-decoration: none;">
+        thecipherlab@gmail.com
+      </a>
+    </p>
+  </main>
+
+  {% include 'base_footer.html' %}
+</body>
+</html>

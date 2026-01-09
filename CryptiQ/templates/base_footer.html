@@ -1,0 +1,143 @@
+<head>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+</head>
+
+<!-- templates/base_footer.html -->
+<!-- templates/base_footer.html -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">© {{ now_year or 2025 }} The Cipher Lab</div>
+
+    <nav class="footer-right" aria-label="Footer">
+      <a href="{{ url_for('faqs_page') }}">FAQs</a>
+      <a href="{{ url_for('labs_pro_page') }}">Labs Pro</a>
+      <a href="{{ url_for('info_page') }}">Info</a>
+      <a href="{{ url_for('posts_list') }}">Posts</a>
+      <a href="{{ url_for('about') }}">About Us</a>
+    </nav>
+
+    <div class="footer-badge" aria-label="Product Hunt">
+      <a
+        href="https://www.producthunt.com/products/the-cipher-lab?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-the-cipher-lab"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img
+          src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1059365&theme=dark"
+          alt="The Cipher Lab on Product Hunt"
+          height="54"
+        >
+      </a>
+    </div>
+  </div>
+
+  <div class="footer-inner footer-popular-row">
+    <div class="footer-section-title">Popular ciphers</div>
+
+    <nav class="footer-popular" aria-label="Popular cipher tools">
+      <a href="{{ url_for('tool_caesar') }}">Caesar</a>
+      <a href="{{ url_for('tool_vigenere') }}">Vigenère</a>
+      <a href="{{ url_for('tool_affine') }}">Affine</a>
+      <a href="{{ url_for('tool_rail_fence') }}">Rail Fence</a>
+      <a href="{{ url_for('tool_columnar') }}">Columnar</a>
+      <a href="{{ url_for('breaker') }}">Cipher Breaker</a>
+    </nav>
+  </div>
+</footer>
+
+
+<style>
+ /* ===============================
+   Footer
+   =============================== */
+
+.site-footer{
+  width: 100%;
+  border-top: 1px solid var(--line);
+  padding: 18px 0;
+  background: transparent;
+}
+
+.footer-inner{
+  width: min(1100px, 92%);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.footer-brand{
+  color: var(--muted);
+  font-weight: 700;
+  font-size: .95rem;
+  white-space: nowrap;
+}
+
+.footer-right{
+  display: inline-flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.footer-right a{
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: .92rem;
+}
+.footer-right a:hover{
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.footer-badge{
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.footer-badge img{
+  height: 54px;
+  width: auto;
+}
+
+.footer-popular-row{
+  margin-top: 10px;
+  align-items: baseline;
+}
+
+.footer-section-title{
+  color: var(--muted);
+  font-weight: 900;
+  font-size: .88rem;
+}
+
+.footer-popular{
+  display: inline-flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.footer-popular a{
+  color: var(--muted);
+  font-weight: 850;
+  font-size: .90rem;
+  text-decoration: none;
+}
+
+.footer-popular a:hover{
+  color: var(--accent);
+}
+
+@media (max-width: 640px){
+  .footer-inner{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .footer-badge{
+    display: none;
+  }
+}
+
+</style>

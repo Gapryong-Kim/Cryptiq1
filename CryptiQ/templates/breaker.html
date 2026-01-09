@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Cipher Breaker — Automatically Decode Classical Ciphers | The Cipher Lab</title>
+
+  <!-- SEO -->
+  <meta name="description"
+        content="Break classical ciphers automatically. Decode Caesar, Vigenère, Affine, Rail Fence, Columnar Transposition and more using The Cipher Lab’s cipher breaker.">
+  <link rel="canonical" href="{{ request.url }}">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:title" content="Cipher Breaker — The Cipher Lab">
+  <meta property="og:description"
+        content="Automatically break classical ciphers including Caesar, Vigenère, Affine, Rail Fence and more. Paste ciphertext and decode instantly.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.url }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    html { overflow-y: scroll; scrollbar-gutter: means stable both-edges; }
+    /* NOTE: "means" was a typo in older drafts; correct value is "stable". */
+    html { scrollbar-gutter: stable both-edges; }
+
+    .cb-shell {
+      min-height: calc(100dvh - 80px);
+      display: grid;
+      place-items: start center;
+      padding: 50px 16px 40px;
+      box-sizing: border-box;
+    }
+
+    .cb-card {
+      width: 100vw;
+      max-width: 1080px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--elev-shadow);
+      overflow: hidden;
+    }
+
+    .cb-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+      flex-wrap: wrap;
+    }
+
+    .cb-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-soft);
+    }
+
+    .cb-title {
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: .2px;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* ===== Top bar actions ===== */
+    .cb-header-actions{
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .lab-btn{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+      font-size: .9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .lab-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .lab-btn:active{ transform: translateY(1px); }
+    .lab-btn.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .lab-btn.primary:hover{
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .lab-btn:disabled{
+      opacity: .55;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    .cb-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    @media (min-width: 980px) {
+      .cb-grid { grid-template-columns: 1.1fr .9fr; gap: 16px; }
+    }
+
+    .cb-panel {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .cb-panel h3 {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-size: 1rem;
+      letter-spacing: .2px;
+    }
+
+    .cb-row { display: grid; gap: 10px; }
+
+    .cb-help {
+      margin-top: 8px;
+      padding-bottom: 0px;
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.5;
+    }
+
+    .cb-actions {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      align-items: center; margin-top: 6px;
+    }
+
+    .btn {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #0f0f0f;
+      font-weight: 650;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background .15s ease, box-shadow .18s ease, border-color .18s ease, transform .06s ease;
+    }
+
+    .btn:hover {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line-2);
+    }
+
+    .btn.secondary:hover {
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .cb-label { font-weight: 600; color: var(--text); }
+    .cb-select, .cb-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      color: var(--text);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    }
+
+    .cb-select { padding: 10px 12px; font-size: 15px; }
+    .cb-textarea {
+      min-height: 200px;
+      padding: 12px 14px;
+      resize: vertical;
+      line-height: 1.5;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 15px;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .cb-select:hover, .cb-textarea:hover { background: var(--input-hover); }
+    .cb-select:focus, .cb-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .cb-error {
+      display: none;
+      margin: 12px 0 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(255, 83, 83, 0.10);
+      border: 1px solid rgba(255, 83, 83, 0.35);
+      color: #ff8b8b;
+      font-weight: 600;
+    }
+
+    .cb-error.show { display: block; }
+
+    .cb-loading {
+      display: none;
+      align-items: center; gap: 10px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .cb-loading.show { display: inline-flex; }
+
+    .spinner {
+      border: 4px solid #2a2a2a;
+      border-top: 4px solid var(--accent);
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
+    .cb-key {
+      margin: 6px 0 10px;
+      color: var(--text-dim);
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      font-size: .95rem;
+      word-break: break-word;
+    }
+
+    .cb-pre {
+      width: 100%;
+      min-height: 220px;
+      margin: 0;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      box-sizing: border-box;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    @media (max-width: 480px) {
+      .cb-shell { padding: 80px 12px 32px; }
+    }
+
+    .cb-textarea::placeholder {
+      color: var(--muted);
+      opacity: 0.6;
+      font-style: italic;
+    }
+
+    /* ===============================
+       Labs Modal
+       =============================== */
+    .lmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9700;
+    }
+    .lmodal.open{ display: flex; }
+
+    .lmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .lmodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      animation: lmodalPop .12s ease-out;
+    }
+    @keyframes lmodalPop{
+      from { transform: translateY(6px) scale(.98); opacity: .6; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .lmodal-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 4px 0;
+    }
+    .lmodal-title{
+      color: var(--text);
+      font-weight: 900;
+      font-size: .98rem;
+    }
+    .lmodal-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .lmodal-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .lmodal-body{
+      color: var(--muted);
+      line-height: 1.45;
+      padding: 0 4px;
+      display: grid;
+      gap: 10px;
+    }
+    .lmodal-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 6px 4px 2px;
+      flex-wrap: wrap;
+    }
+    .lmodal-row{
+      display: grid;
+      gap: 6px;
+    }
+    .lmodal-help{
+      font-size: .86rem;
+      color: var(--muted);
+    }
+    .lmodal-note{
+      font-size: .82rem;
+      color: var(--muted);
+      opacity: .9;
+    }
+    .ltextarea{
+      min-height: 140px;
+      border-radius: 10px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      resize: vertical;
+      outline: none;
+    }
+    .ltextarea:focus{
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    /* ===============================
+       Pro Upsell Modal
+       =============================== */
+    .promodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9500;
+      padding: 16px;
+    }
+    .promodal.open{ display:flex; animation: proFade .18s ease; }
+    @keyframes proFade{ from{opacity:0} to{opacity:1} }
+
+    .promodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.66);
+      backdrop-filter: blur(6px);
+    }
+
+    .promodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      overflow: hidden;
+      animation: proPop .14s ease-out;
+      outline: none;
+    }
+    @keyframes proPop{
+      from{ transform: translateY(10px) scale(.98); opacity:.7; }
+      to{ transform: translateY(0) scale(1); opacity:1; }
+    }
+
+    .promodal-top{
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    }
+    .promodal-titlewrap{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .promodal-dot{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-soft);
+      flex: 0 0 auto;
+    }
+    .promodal-title{
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .promodal-x{
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+
+      border-radius: 12px;
+      cursor: pointer;
+
+      font-size: 18px;
+      line-height: 1;
+      transition: background .15s ease, border-color .15s ease, box-shadow .18s ease, transform .06s ease;
+    }
+
+    .promodal-x:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .promodal-x:active{ transform: translateY(1px); }
+
+    .promodal-body{
+      padding: 16px;
+      color: var(--text-dim);
+      line-height: 1.55;
+      display: grid;
+      gap: 12px;
+    }
+
+    .promodal-list{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+    .promodal-list li{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-weight: 800;
+    }
+    .tick{
+      width: 22px; height: 22px;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      background: rgba(0,255,213,0.10);
+      border: 1px solid rgba(0,255,213,0.22);
+      color: var(--accent);
+      flex: 0 0 auto;
+      box-shadow: 0 0 10px var(--accent-soft);
+      font-weight: 950;
+    }
+
+    .promodal-actions{
+      padding: 14px 16px 16px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04), transparent);
+    }
+
+    .pro-note{
+      font-size: .88rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* ===============================
+       Pro Analysis Modal
+       =============================== */
+    .pmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9600;
+      padding: 16px;
+    }
+    .pmodal.open{ display:flex; animation: proFade .18s ease; }
+
+    .pmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.66);
+      backdrop-filter: blur(6px);
+    }
+
+    .pmodal-box{
+      position: relative;
+      width: min(760px, 94vw);
+      max-height: min(82vh, 760px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      animation: proPop .14s ease-out;
+      outline: none;
+    }
+
+    .pmodal-top{
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    }
+    .pmodal-titlewrap{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .pmodal-title{
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pmodal-body{
+      padding: 14px 16px 0;
+      overflow: auto;
+    }
+
+    .pmodal-grid{
+      display: grid;
+      gap: 12px;
+      padding-bottom: 14px;
+    }
+    @media (min-width: 860px){
+      .pmodal-grid{
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .pbox{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .pbox h4{
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: .95rem;
+      letter-spacing: .2px;
+    }
+    .pmeta{
+      margin: 0;
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.45;
+    }
+    .pmono{
+      margin: 10px 0 0;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      font-size: .92rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .pmodal-actions{
+      padding: 12px 16px 14px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04), transparent);
+      align-items: center;
+    }
+
+    .pmodal-actions .left{
+      color: var(--muted);
+      font-size: .86rem;
+      font-weight: 700;
+    }
+    .lmodal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9700; /* was 9000 — must be > .pmodal (9600) */
+}
+
+  
+    /* ===== Pro Analysis Hooks ===== */
+    .pro-snapshot{
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-weight: 800;
+      line-height: 1.35;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pro-snapshot .muted{
+      color: var(--muted);
+      font-weight: 700;
+      font-size: .88rem;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .pro-snapshot .row{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 0;
+      border-top: 1px dashed rgba(255,255,255,0.08);
+      font-size: .92rem;
+    }
+    .pro-snapshot .row:first-of-type{ border-top: 0; }
+    .pro-snapshot .k{ color: var(--text-dim); font-weight: 800; }
+    .pro-snapshot .v{ color: var(--text); font-weight: 900; }
+    .pro-snapshot .lock{ opacity: .9; }
+
+    /* subtle pulse on the top-bar Pro Analysis button (one-time nudge) */
+    .pulse-once{
+      animation: proPulse 1.15s ease-in-out 2;
+      box-shadow: 0 0 0 2px var(--accent-soft);
+      border-color: var(--accent);
+    }
+    @keyframes proPulse{
+      0%{ transform: translateY(0); box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+      35%{ transform: translateY(-1px); box-shadow: 0 0 0 6px var(--accent-soft); }
+      100%{ transform: translateY(0); box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+    }
+
+
+    /* ===============================
+       Pro Analysis non‑Pro preview (frosted answers)
+       =============================== */
+    .pmodal.frosted .pmono,
+    .pmodal.frosted .pmeta{
+      filter: blur(7px);
+      opacity: .92;
+      user-select: none;
+    }
+    .pmodal.frosted .pmono{ pointer-events: none; }
+
+    .pa-frost-overlay{
+      position: absolute;
+      inset: 56px 0 56px 0; /* below header, above actions */
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      box-sizing: border-box;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .pmodal.frosted .pa-frost-overlay{ display: flex; }
+
+    .pa-frost-card{
+      width: min(520px, 92vw);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: color-mix(in oklab, var(--panel) 82%, transparent);
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    .pa-frost-title{
+      margin: 0;
+      font-weight: 1000;
+      color: var(--text);
+      font-size: 1rem;
+      letter-spacing: .2px;
+    }
+    .pa-frost-sub{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-weight: 750;
+      font-size: .92rem;
+    }
+    .pa-frost-actions{
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      pointer-events: auto;
+    }
+
+  </style>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
+</head>
+
+<body>
+  {% include 'base_nav.html' %}
+
+  {% set USER_IS_PRO = (user and (user['is_pro']|default(0))) %}
+
+  <main class="cb-shell">
+    <section class="cb-card cb--square" aria-label="Cipher Breaker">
+      <header class="cb-header">
+        <span class="cb-dot" aria-hidden="true"></span>
+        <h1 class="cb-title">Cipher Breaker</h1>
+
+        <div class="cb-header-actions">
+          <!-- Pro Analysis button in top bar, immediate left of Save to Lab -->
+          <button class="lab-btn primary" id="open-pro-analysis" type="button">
+            <span class="pro-badge">PRO</span>
+            Analysis
+          </button>
+
+          {% if user %}
+                      <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+  
+          <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
+          {% else %}
+            <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+  
+          <a class="lab-btn primary" id="login-to-save"
+               href="{{ url_for('login') }}?next={{ request.full_path }}">Login to save</a>
+          {% endif %}
+        </div>
+      </header>
+
+      <div class="cb-grid">
+
+        <!-- LEFT: Input -->
+        <div class="cb-panel input-panel">
+          <h3>Input</h3>
+          <form id="breaker-form" class="cb-row" novalidate>
+            <div class="cb-row">
+              <label for="cipher_type" class="cb-label">Cipher</label>
+              <select name="cipher_type" id="cipher_type" class="cb-select" required>
+                <option value="auto">Auto Detect (Try All)</option>
+                <option value="caesar" selected>Caesar</option>
+                <option value="vigenere">Vigenère</option>
+                <option value="affine">Affine</option>
+                <option value="amsco">AMSCO</option>
+                <option value="railfence">Railfence</option>
+                <option value="columnar">Columnar Transposition</option>
+                <option value="permutation">Permutation</option>
+                <option value="substitution">Basic Substitution</option>
+                <option value="polybius">Polybius Square</option>
+                <option value="atbash">Atbash</option>
+                <option value="base64">Base64</option>
+                <option value="hex">Hexadecimal</option>
+                <option value="binary">Binary</option>
+                <option value="baconian">Baconian</option>
+              </select>
+            </div>
+
+            <div class="cb-row" style="gap: 4px; margin-bottom: 0;">
+              <label for="ciphertext" class="cb-label">Ciphertext</label>
+              <textarea id="ciphertext" name="text" class="cb-textarea"></textarea>
+              <p class="cb-help">Tip: longer samples produce better results for classical ciphers.</p>
+            </div>
+
+            <div style="
+              margin: 0px 0 16px;
+              padding: 12px 14px;
+              border-radius: 10px;
+              border: 1px dashed var(--line);
+              background: var(--panel-2);
+              text-align: center;
+              font-size: .92rem;
+              color: var(--muted);
+            ">
+              Not sure what cipher you're dealing with?
+              <a href="{{ url_for('tools') }}"
+                 style="color: var(--accent); font-weight: 600; text-decoration: none;">
+                 Try our Frequency Analyzer
+              </a>
+              to get an idea.
+            </div>
+
+            <div class="cb-actions">
+              <button type="submit" id="break-btn" class="btn">Break Cipher</button>
+              <button type="button" id="clear-btn" class="btn secondary">Clear</button>
+              <div id="loading" class="cb-loading" aria-live="polite">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Initializing analysis…</span>
+              </div>
+            </div>
+
+            <div id="error-banner" class="cb-error" aria-live="polite">Something went wrong. Please try again.</div>
+          </form>
+        </div>
+
+        <!-- RIGHT: Output -->
+        <div class="cb-panel output-panel">
+          <h3>Result</h3>
+          <div id="result-key" class="cb-key" style="display:none;"></div>
+          <div class="cb-actions" style="margin-bottom: 10px;">
+            <button id="copy-btn" class="btn secondary" style="display:none;">Copy Plaintext</button>
+          </div>
+          
+          
+
+          <pre id="result-text" class="cb-pre" aria-live="polite"></pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+    {% include "base_footer.html" %}
+
+  <!-- ===== Pro Analysis Modal ===== -->
+  <div id="pro-analysis-modal" class="pmodal" aria-hidden="true">
+    <div class="pmodal-backdrop" data-pclose="1"></div>
+
+    <div class="pmodal-box" role="dialog" aria-modal="true" aria-label="Pro Analysis" tabindex="-1">
+      <div class="pmodal-top">
+        <div class="pmodal-titlewrap">
+          <span class="promodal-dot" aria-hidden="true"></span>
+          <h3 class="pmodal-title">            <span class="pro-badge">PRO</span>
+ Analysis</h3>
+        </div>
+        <button class="promodal-x" id="pro-analysis-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="pmodal-body">
+        <div class="pmodal-grid">
+          <div class="pbox">
+            <h4>Summary</h4>
+            <p class="pmeta" id="pa-summary">Paste text to unlock a full crypto-style breakdown.</p>
+            <div class="pmono" id="pa-summary-mono" style="display:none;"></div>
+          </div>
+
+          <div class="pbox">
+            <h4>Frequencies</h4>
+            <p class="pmeta" id="pa-freq">Letter and n-gram frequency highlights.</p>
+            <div class="pmono" id="pa-freq-mono" style="display:none;"></div>
+          </div>
+
+          <div class="pbox" style="grid-column: 1 / -1;">
+            <h4>Notes</h4>
+            <p class="pmeta" id="pa-notes">Heuristics are best-effort. Longer ciphertext = better signal.</p>
+            <div class="pmono" id="pa-notes-mono" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Non‑Pro preview overlay (content beneath is blurred) -->
+      <div class="pa-frost-overlay" id="pa-frost-overlay" aria-hidden="true">
+        <div class="pa-frost-card">
+          <p class="pa-frost-title">Preview</p>
+          <p class="pa-frost-sub">Upgrade to reveal the full breakdown, copy the report, and save it to your Labs.</p>
+          <div class="pa-frost-actions">
+            <a class="lab-btn primary" id="pa-upgrade" href="{{ url_for('labs_pro_page') }}">Upgrade</a>
+            <button class="lab-btn" id="pa-not-now" type="button">Not now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pmodal-actions">
+        <div class="left" id="pa-status">Ready.</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="lab-btn" id="pa-copy" type="button">Copy report</button>
+          <button class="lab-btn" id="pa-save" type="button">Save to Lab</button>
+          <button class="lab-btn primary" id="pa-refresh" type="button">Refresh</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Labs Modal ===== -->
+  <div id="labs-modal" class="lmodal" aria-hidden="true">
+    <div class="lmodal-backdrop" data-close="1"></div>
+
+    <div class="lmodal-box" role="dialog" aria-modal="true" aria-label="Save to Lab">
+      <div class="lmodal-top">
+        <div class="lmodal-title">Save to Lab</div>
+        <button class="lmodal-x" id="labs-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="lmodal-body">
+        <div class="lmodal-help">
+          Creates a new Lab and saves your ciphertext + breaker output into it.
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-title">Lab title</label>
+          <input id="labs-title" type="text" placeholder="e.g. Breaker — Caesar / Auto Detect" />
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-notes">Notes</label>
+          <textarea id="labs-notes" class="ltextarea" placeholder="Add your notes (optional)"></textarea>
+          <div class="lmodal-note">
+            We’ll include: selected cipher, key (if any), and plaintext result.
+          </div>
+        </div>
+      </div>
+
+      <div class="lmodal-actions">
+        <button class="lab-btn" id="labs-cancel" type="button">Cancel</button>
+        <button class="lab-btn primary" id="labs-confirm" type="button">Create Lab</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Pro Modal (re-used for limits + pro analysis upsell) ===== -->
+  <div id="pro-modal" class="promodal" aria-hidden="true">
+    <div class="promodal-backdrop" data-pro-close="1"></div>
+
+    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Upgrade" tabindex="-1">
+      <div class="promodal-top">
+        <div class="promodal-titlewrap">
+          <span class="promodal-dot" aria-hidden="true"></span>
+          <h3 class="promodal-title" id="pro-title">Labs Pro</h3>
+        </div>
+        <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="promodal-body">
+        <div id="pro-body">
+          You’ve hit the free limit. Upgrade to Labs Pro to keep going.
+        </div>
+
+        <ul class="promodal-list">
+          <li><span class="tick">✓</span> Unlimited Labs</li>
+          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+          <li><span class="tick">✓</span> Pro badge across the site</li>
+        </ul>
+
+        <p class="pro-note" id="pro-note" style="display:none;"></p>
+      </div>
+
+      <div class="promodal-actions">
+        <a class="lab-btn" id="pro-not-now" href="#" role="button">Not now</a>
+        <a class="lab-btn primary" id="pro-upgrade" href="{{ url_for('labs_pro_page') }}">Upgrade</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const form = document.getElementById("breaker-form");
+  const breakBtn = document.getElementById("break-btn");
+  const clearBtn = document.getElementById("clear-btn");
+  const loading = document.getElementById("loading");
+  const resultText = document.getElementById("result-text");
+  const resultKey = document.getElementById("result-key");
+  const copyBtn = document.getElementById("copy-btn");
+  const errorBanner = document.getElementById("error-banner");
+  const textarea = document.getElementById("ciphertext");
+  const cipherTypeSelect = document.getElementById("cipher_type");
+
+  const USER_LOGGED_IN = {{ 1 if user else 0 }};
+  const USER_IS_PRO = {{ 1 if (user and (user['is_pro']|default(0))) else 0 }};
+
+  // ===========================
+  // Pro Analysis Hooks (Breaker)
+  // ===========================
+  const proAnalysisBtn = document.getElementById("open-pro-analysis");
+  const analysisSnapshot = document.getElementById("analysis-snapshot");
+  const PRO_HOOK_PULSE_KEY = "tcl_pro_pulse_breaker_v1";
+  let lastProInline = null;
+
+  function getCiphertextForAnalysis(){
+    return (textarea?.value || "").trim();
+  }
+
+ function setProBtnState(){
+  if (!proAnalysisBtn) return;
+  proAnalysisBtn.disabled = false;
+  proAnalysisBtn.title = "Run a full statistical breakdown";
+}
+
+  function showLockedSnapshot(){
+    if (!analysisSnapshot) return;
+    analysisSnapshot.style.display = "block";
+    analysisSnapshot.innerHTML = `
+      <span class="muted">Analysis snapshot</span>
+      <div class="row"><span class="k">Likely cipher family</span><span class="v lock"><span class="pro-badge">PRO</span> Locked</span></div>
+      <div class="row"><span class="k">IoC</span><span class="v lock">🔒</span></div>
+      <div class="row"><span class="k">Key length hint</span><span class="v lock">🔒</span></div>
+      <div class="row"><span class="k">Tip</span><span class="v" style="font-weight:800;color:var(--muted);">Click to run Pro Analysis</span></div>
+    `;
+  }
+
+  function showInlineSnapshotFromData(d){
+    if (!analysisSnapshot) return;
+
+    const top = Array.isArray(d?.ranking) && d.ranking.length ? d.ranking[0] : null;
+    const family = top?.name || "—";
+    const ioc = (d?.ioc ?? "—");
+    const keyHint = (d?.friedman_keylen ?? "—");
+
+    analysisSnapshot.style.display = "block";
+    analysisSnapshot.innerHTML = `
+      <span class="muted">Analysis snapshot</span>
+      <div class="row"><span class="k">Top guess</span><span class="v">${family}</span></div>
+      <div class="row"><span class="k">IoC</span><span class="v">${ioc}</span></div>
+      <div class="row"><span class="k">Key length hint</span><span class="v">${keyHint}</span></div>
+      <div class="row"><span class="k">Full report</span><span class="v" style="font-weight:800;color:var(--muted);">Open Pro Analysis</span></div>
+    `;
+  }
+
+  async function refreshInlineSnapshot(){
+  const t = getCiphertextForAnalysis();
+  if (!analysisSnapshot) return;
+
+  // Always show the snapshot area (no length gating)
+  analysisSnapshot.style.display = "";
+
+  // If empty, just show a locked/empty state and bail
+  if (!t.trim()){
+    showLockedSnapshot(); // or showEmptySnapshot() if you have one
+    return;
+  }
+
+  // Free users: always show a locked teaser (blurred)
+  if (!USER_IS_PRO){
+    setPaFrost(true);
+    setPaLoading(true, "Generating preview…");
+    try{
+      const reportObj = teaserAnalysis(t); // ✅ use t, not undefined 'text'
+      buildReport(reportObj);
+
+      lastPaReport =
+`[Pro Analysis — Preview]
+(Upgrade to reveal)
+
+Length: ${reportObj.length} chars
+Alphabetic: ${reportObj.alpha_len} | Digits: ${reportObj.digit_len} | Punct: ${reportObj.punct_len} | Whitespace: ${reportObj.whitespace_len}
+IoC: ${reportObj.ioc}
+Chi-square vs English: ${reportObj.chi_square_english}
+Entropy (no-whitespace): ${reportObj.entropy_bits_per_char} bits/char
+Vowel ratio (A/E/I/O/U/Y): ${reportObj.vowel_ratio}
+`;
+
+      if (paCopy) paCopy.disabled = true;
+      if (paSave) paSave.disabled = true;
+
+      setPaLoading(false, "Preview generated");
+    } catch (e){
+      setPaLoading(false, "Could not generate preview.");
+    }
+    return;
+  }
+
+  // Pro users: real results (no frost)
+  setPaFrost(false);
+
+  try{
+    const res = await fetch("/api/pro-analysis", {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "Accept":"application/json" },
+      body: JSON.stringify({ text: t })
+    });
+    if (!res.ok) throw new Error("bad");
+
+    const data = await res.json();
+    lastProInline = data;
+
+    // ✅ Show real snapshot, not locked
+    showInlineSnapshotFromData(data);
+
+    // enable actions for Pro
+    if (paCopy) paCopy.disabled = false;
+    if (paSave) paSave.disabled = false;
+
+  } catch {
+    // If API fails for Pro users, show something non-locked but informative
+    // If you don't have a dedicated error snapshot, keep locked:
+    showLockedSnapshot();
+  }
+}
+
+  function pulseProOnce(){
+    if (!proAnalysisBtn) return;
+    try{
+      if (sessionStorage.getItem(PRO_HOOK_PULSE_KEY)) return;
+      sessionStorage.setItem(PRO_HOOK_PULSE_KEY, "1");
+    }catch{}
+    proAnalysisBtn.classList.add("pulse-once");
+    setTimeout(() => proAnalysisBtn.classList.remove("pulse-once"), 2600);
+  }
+
+  // Snapshot click opens Pro Analysis modal (and runs analysis)
+  function openProAnalysisFromHook(){
+    // use existing handlers
+    stashBreakerState();
+    openPaModal();
+    runProAnalysis();
+  }
+
+  analysisSnapshot?.addEventListener("click", openProAnalysisFromHook);
+  analysisSnapshot?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProAnalysisFromHook(); }
+  });
+
+  // keep pro button state fresh as user types
+  textarea?.addEventListener("input", () => {
+    setProBtnState();
+    // don't refresh inline snapshot on every keystroke; hide until a break happens
+    if (analysisSnapshot) analysisSnapshot.style.display = "none";
+  }, { passive: true });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    setProBtnState();
+  });
+
+
+  // ===========================
+  // Pro modal helpers
+  // ===========================
+  const proModal = document.getElementById("pro-modal");
+  const proBox = proModal?.querySelector(".promodal-box");
+  const proX = document.getElementById("pro-x");
+  const proNotNow = document.getElementById("pro-not-now");
+  const proUpgrade = document.getElementById("pro-upgrade");
+  const proTitle = document.getElementById("pro-title");
+  const proBody = document.getElementById("pro-body");
+  const proNote = document.getElementById("pro-note");
+  let proOpener = null;
+
+  function openProModal({ title, message, upgrade_url, note } = {}) {
+    if (!proModal) return;
+    proOpener = document.activeElement;
+
+    if (proTitle) proTitle.textContent = title || "Labs Pro";
+    if (proBody) proBody.textContent = message || "Upgrade to unlock Pro features.";
+    if (proUpgrade && upgrade_url) proUpgrade.href = upgrade_url;
+
+    if (proNote) {
+      if (note) { proNote.style.display = "block"; proNote.textContent = note; }
+      else { proNote.style.display = "none"; proNote.textContent = ""; }
+    }
+
+    proModal.classList.add("open");
+    proModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => proBox?.focus?.(), 0);
+  }
+
+  function closeProModal() {
+    if (!proModal) return;
+    proModal.classList.remove("open");
+    proModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    proOpener?.focus?.();
+    proOpener = null;
+  }
+
+  proX?.addEventListener("click", closeProModal);
+  proNotNow?.addEventListener("click", (e) => { e.preventDefault(); closeProModal(); });
+  proModal?.addEventListener("click", (e) => {
+    if (e.target?.closest?.("[data-pro-close='1']")) closeProModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && proModal?.classList.contains("open")) closeProModal();
+  });
+
+  // ===========================
+  // Return-after-login state persistence
+  // ===========================
+  const STATE_KEY = "tcl_breaker_state:" + window.location.pathname;
+
+  function stashBreakerState(extra = {}) {
+    try {
+      const keyVisible = (resultKey && resultKey.style.display !== "none");
+      const state = {
+        ts: Date.now(),
+        cipher_type: cipherTypeSelect?.value || "auto",
+        ciphertext: textarea?.value || "",
+        result_text: resultText?.textContent || "",
+        result_key_text: keyVisible ? (resultKey?.textContent || "") : "",
+        result_key_visible: !!keyVisible,
+        labs_title: (document.getElementById("labs-title")?.value || ""),
+        labs_notes: (document.getElementById("labs-notes")?.value || ""),
+        ...extra
+      };
+      sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
+    } catch {}
+  }
+
+  function restoreBreakerStateIfAny() {
+    try {
+      const raw = sessionStorage.getItem(STATE_KEY);
+      if (!raw) return false;
+
+      const state = JSON.parse(raw);
+      if (!state || typeof state !== "object") return false;
+
+      if (cipherTypeSelect && state.cipher_type) cipherTypeSelect.value = state.cipher_type;
+      if (textarea && typeof state.ciphertext === "string") textarea.value = state.ciphertext;
+
+      if (resultText && typeof state.result_text === "string") {
+        resultText.textContent = state.result_text;
+      }
+
+      if (resultKey) {
+        const show = !!state.result_key_visible && !!state.result_key_text;
+        resultKey.style.display = show ? "block" : "none";
+        resultKey.textContent = show ? state.result_key_text : "";
+      }
+
+      if (copyBtn) copyBtn.style.display = (resultText?.textContent || "").trim() ? "inline-flex" : "none";
+
+      const lt = document.getElementById("labs-title");
+      const ln = document.getElementById("labs-notes");
+      if (lt && typeof state.labs_title === "string" && state.labs_title) lt.value = state.labs_title;
+      if (ln && typeof state.labs_notes === "string" && state.labs_notes) ln.value = state.labs_notes;
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function redirectToLoginPreservingState() {
+    stashBreakerState();
+    window.location.href = `{{ url_for('login') }}?next={{ request.full_path }}&reason=pro_analysis`;
+  }
+
+  const loginToSave = document.getElementById("login-to-save");
+  loginToSave?.addEventListener("click", () => stashBreakerState());
+
+  textarea?.addEventListener("input", () => stashBreakerState(), { passive: true });
+  cipherTypeSelect?.addEventListener("change", () => stashBreakerState(), { passive: true });
+
+  // ===========================
+  // Placeholder samples
+  // ===========================
+  const funSamples = [
+    "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
+    "This sentence knows it’s about to be decrypted and is very nervous.",
+    "My secret code is hidden in plain sight, but even I forgot the key.",
+    "Somewhere, a potato is learning Morse code faster than I can learn Python.",
+    "The cake is a cipher. You just haven’t decrypted it yet.",
+    "My diary is written entirely in base64. Even I can’t read it anymore.",
+    "Trust no one. Except maybe the hash function."
+  ];
+
+  const randomPlaceholder = funSamples[Math.floor(Math.random() * funSamples.length)];
+  textarea.placeholder = randomPlaceholder;
+  textarea.addEventListener("focus", () => textarea.placeholder = "");
+  textarea.addEventListener("blur", () => {
+    if (!textarea.value.trim()) textarea.placeholder = randomPlaceholder;
+  });
+
+  function showError(msg) {
+    errorBanner.textContent = msg || "Something went wrong. Please try again.";
+    errorBanner.classList.add("show");
+  }
+
+  function clearError() { errorBanner.classList.remove("show"); }
+
+  // === Loading message cycling ===
+  const loadingMessages = [
+    "Analyzing ciphertext…",
+    "Estimating key lengths…",
+    "Testing frequency profiles…",
+    "Constructing potential keys…",
+    "Decrypting sample blocks…",
+    "Comparing pattern likelihoods…",
+    "Optimizing for best match…",
+    "Cross-validating letter maps…",
+    "Refining substitution mapping…",
+    "Finalizing plaintext reconstruction…"
+  ];
+
+  let loadingInterval = null;
+  let msgIndex = 0;
+
+  function startLoadingCycle() {
+    msgIndex = 0;
+    const msgEl = loading.querySelector("span:last-child");
+    msgEl.textContent = loadingMessages[0];
+    loading.classList.add("show");
+
+    loadingInterval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % loadingMessages.length;
+      msgEl.textContent = loadingMessages[msgIndex];
+    }, 6000);
+  }
+
+  function stopLoadingCycle() {
+    clearInterval(loadingInterval);
+    loading.classList.remove("show");
+  }
+
+  function setLoading(isLoading) {
+    if (isLoading) startLoadingCycle();
+    else stopLoadingCycle();
+    breakBtn.disabled = isLoading;
+    clearBtn.disabled = isLoading;
+  }
+
+  clearBtn.addEventListener("click", () => {
+    const ph = funSamples[Math.floor(Math.random() * funSamples.length)];
+    textarea.value = "";
+    textarea.placeholder = ph;
+    resultText.textContent = "";
+    resultKey.style.display = "none";
+    copyBtn.style.display = "none";
+    clearError();
+    textarea.focus();
+    stashBreakerState();
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError();
+    const text = textarea.value.trim();
+    if (!text) {
+      showError("Please paste some ciphertext first.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData(form);
+      const res = await fetch('{{ url_for("breaker") }}', { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Network error");
+      const data = await res.json();
+
+      resultText.textContent = data.text || "";
+      if (data.key) {
+        resultKey.style.display = "block";
+        resultKey.textContent = `Key: ${typeof data.key === 'string' ? data.key : JSON.stringify(data.key)}`;
+      } else {
+        resultKey.style.display = "none";
+      }
+      copyBtn.style.display = data.text ? "inline-flex" : "none";
+      if (data.text) { pulseProOnce(); refreshInlineSnapshot(); }
+      if (!data.text) showError("No plaintext produced. Try a different cipher type or provide more text.");
+
+      stashBreakerState();
+    } catch (err) {
+      showError("Unable to reach the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(resultText.textContent || "");
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
+    } catch {
+      copyBtn.textContent = "Failed to copy";
+      setTimeout(() => (copyBtn.textContent = "Copy Plaintext"), 1400);
+    }
+  });
+
+  // ===========================
+  // Pro Analysis modal logic
+  // ===========================
+  const openProAnalysisBtn = document.getElementById("open-pro-analysis");
+
+  const paModal = document.getElementById("pro-analysis-modal");
+  const paBox = paModal?.querySelector(".pmodal-box");
+  const paX = document.getElementById("pro-analysis-x");
+  const paRefresh = document.getElementById("pa-refresh");
+
+  const paFrostOverlay = document.getElementById("pa-frost-overlay");
+  const paUpgrade = document.getElementById("pa-upgrade");
+  const paNotNow = document.getElementById("pa-not-now");
+  let paIsPreview = false;
+
+  function setPaFrost(on){
+    paIsPreview = !!on;
+    if (!paModal) return;
+    paModal.classList.toggle("frosted", !!on);
+    // While frosted, prevent copy/save
+    if (paCopy) paCopy.disabled = !!on || !lastPaReport;
+    if (paSave) paSave.disabled = !!on || !lastPaReport;
+  }
+
+  paNotNow?.addEventListener("click", () => closePaModal());
+
+  function alphaOnlyUpper(s){ return (s||"").toUpperCase().replace(/[^A-Z]/g,""); }
+
+  function calcIoC(alpha){
+    const N = alpha.length;
+    if (N < 2) return 0;
+    const c = {};
+    for (const ch of alpha) c[ch] = (c[ch]||0)+1;
+    let num = 0;
+    for (const k in c) num += c[k]*(c[k]-1);
+    return num / (N*(N-1));
+  }
+
+  function calcEntropy(alpha){
+    const N = alpha.length;
+    if (!N) return 0;
+    const c = {};
+    for (const ch of alpha) c[ch] = (c[ch]||0)+1;
+    let ent = 0;
+    for (const k in c){
+      const p = c[k]/N;
+      ent += -p*Math.log2(p);
+    }
+    return ent;
+  }
+
+  function chiSquareEnglish(alpha){
+    const N = alpha.length;
+    if (!N) return 0;
+    const expected = {
+      A:8.167,B:1.492,C:2.782,D:4.253,E:12.702,F:2.228,G:2.015,H:6.094,I:6.966,J:0.153,
+      K:0.772,L:4.025,M:2.406,N:6.749,O:7.507,P:1.929,Q:0.095,R:5.987,S:6.327,T:9.056,
+      U:2.758,V:0.978,W:2.360,X:0.150,Y:1.974,Z:0.074
+    };
+    const c = {};
+    for (const ch of alpha) c[ch] = (c[ch]||0)+1;
+    let chi = 0;
+    for (const L in expected){
+      const exp = expected[L]*N/100;
+      const obs = c[L] || 0;
+      const diff = obs-exp;
+      chi += (diff*diff) / (exp || 1);
+    }
+    return chi;
+  }
+
+  function vowelRatio(alpha){
+    const N = alpha.length;
+    if (!N) return 0;
+    const vset = new Set(["A","E","I","O","U","Y"]);
+    let v = 0;
+    for (const ch of alpha) if (vset.has(ch)) v++;
+    return v/N;
+  }
+
+  function ngramCounts(alpha, n){
+    const m = {};
+    for (let i=0;i<=alpha.length-n;i++){
+      const g = alpha.slice(i,i+n);
+      m[g] = (m[g]||0)+1;
+    }
+    return m;
+  }
+  function topN(mapObj, n){
+    return Object.entries(mapObj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  }
+  function countRepeatedTypes(mapObj){
+    let c=0;
+    for (const k in mapObj) if (mapObj[k]>1) c++;
+    return c;
+  }
+
+  function looksBase64(raw){
+    const s=(raw||"").trim();
+    if (s.length<16) return false;
+    if (s.length%4!==0) return false;
+    return /^[A-Za-z0-9+/=\s]+$/.test(s) && /[A-Za-z]/.test(s);
+  }
+  function looksHex(raw){
+    const s=(raw||"").trim().replace(/\s+/g,"");
+    if (s.length<16) return false;
+    if (s.length%2!==0) return false;
+    return /^[0-9a-fA-F]+$/.test(s);
+  }
+  function looksBinary(raw){
+    const s=(raw||"").trim().replace(/\s+/g,"");
+    if (s.length<32) return false;
+    return /^[01]+$/.test(s);
+  }
+
+  function autocorrPeaks(alpha, maxShift=20){
+    const N=alpha.length;
+    const out=[];
+    for (let s=1;s<=Math.min(maxShift,N-1);s++){
+      let matches=0;
+      for (let i=0;i<N-s;i++) if (alpha[i]===alpha[i+s]) matches++;
+      const rate = matches/(N-s);
+      out.push({shift:s, matches, rate:Number(rate.toFixed(4))});
+    }
+    out.sort((a,b)=>b.rate-a.rate);
+    return out.slice(0,8);
+  }
+
+  function friedmanKeylen(ioc,N){
+    if (N<2) return null;
+    const denom=((N-1)*ioc)-(0.038*N)+0.065;
+    if (!isFinite(denom) || denom<=0) return null;
+    const k=(0.027*N)/denom;
+    return (isFinite(k) && k>0) ? Number(k.toFixed(2)) : null;
+  }
+
+  function kasiski(alpha){
+    const repeats=[];
+    const factorCounts={};
+    const seen=new Map();
+    for (let n=3;n<=5;n++){
+      for (let i=0;i<=alpha.length-n;i++){
+        const g=alpha.slice(i,i+n);
+        if (!seen.has(g)) seen.set(g, []);
+        seen.get(g).push(i);
+      }
+    }
+    for (const [g,pos] of seen.entries()){
+      if (pos.length<2) continue;
+      const distances=[];
+      for (let i=1;i<pos.length;i++){
+        const d=pos[i]-pos[i-1];
+        if (d>0) distances.push(d);
+      }
+      if (!distances.length) continue;
+      for (const d of distances){
+        for (let f=2;f<=20;f++){
+          if (d%f===0) factorCounts[f]=(factorCounts[f]||0)+1;
+        }
+      }
+      repeats.push({ngram:g, len:g.length, count:pos.length, distances:distances.slice(0,12)});
+    }
+    repeats.sort((a,b)=>(b.count-a.count)||(b.len-a.len));
+    const factorArr=Object.entries(factorCounts).map(([factor,count])=>({factor:Number(factor),count}))
+      .sort((a,b)=>b.count-a.count || a.factor-b.factor);
+    return {repeats:repeats.slice(0,12), factor_counts:factorArr};
+  }
+
+  function rankCipherHints(raw, alpha, ioc, chi, ent, autoc){
+    const out=[];
+    if (looksBase64(raw)) out.push({name:"Base64", score:82, reasons:["Valid alphabet","Length multiple of 4"]});
+    if (looksHex(raw)) out.push({name:"Hex", score:78, reasons:["Hex-only","Even length"]});
+    if (looksBinary(raw)) out.push({name:"Binary", score:74, reasons:["0/1 only","Long bitstream"]});
+
+    const englishLike = chi < 150 && ent < 4.4 && ioc > 0.055;
+    const monoLike = ioc > 0.06 && !englishLike;
+    const polyLike = ioc < 0.05;
+
+    if (englishLike) out.push({name:"Plaintext / light obfuscation", score:72, reasons:["English-like IoC","Lower chi-square"]});
+    if (monoLike) out.push({name:"Monoalphabetic substitution", score:76, reasons:["High IoC","Language-ish structure"]});
+    if (polyLike) out.push({name:"Polyalphabetic (Vigenère family)", score:70, reasons:["Lower IoC","Flatter frequencies"]});
+
+    const top = autoc?.[0];
+    if (top && top.rate > 0.08) out.push({name:"Transposition / periodic structure", score:64, reasons:[`Autocorr peak at ${top.shift}`]});
+
+    if (!out.length) out.push({name:"Unknown", score:50, reasons:["Not enough signal"]});
+    const by={};
+    for (const r of out){ if (!by[r.name] || r.score>by[r.name].score) by[r.name]=r; }
+    return Object.values(by).sort((a,b)=>b.score-a.score);
+  }
+
+  function teaserAnalysis(raw){
+    const len=(raw||"").length;
+    const alpha=alphaOnlyUpper(raw);
+    const alpha_len=alpha.length;
+
+    const digit_len=(raw.match(/[0-9]/g)||[]).length;
+    const whitespace_len=(raw.match(/\s/g)||[]).length;
+    const punct_len = len - alpha_len - digit_len - whitespace_len;
+
+    const ioc = Number(calcIoC(alpha).toFixed(4));
+    const entropy_bits_per_char = Number(calcEntropy(alpha).toFixed(4));
+    const chi_square_english = Number(chiSquareEnglish(alpha).toFixed(2));
+    const vowel_ratio = Number(vowelRatio(alpha).toFixed(4));
+
+    const letterMap = ngramCounts(alpha,1);
+    const bigramMap = ngramCounts(alpha,2);
+    const trigramMap = ngramCounts(alpha,3);
+
+    const autoc = autocorrPeaks(alpha,20);
+    const fried = friedmanKeylen(ioc, alpha_len);
+    const kas = kasiski(alpha);
+    const ranking = rankCipherHints(raw, alpha, ioc, chi_square_english, entropy_bits_per_char, autoc);
+
+    const encHints = { looks_base64: looksBase64(raw), looks_hex: looksHex(raw), looks_binary: looksBinary(raw) };
+
+    const steps=[];
+    if (encHints.looks_base64) steps.push("Try Base64 decode, then re-run analysis on the decoded text.");
+    if (encHints.looks_hex) steps.push("Try Hex decode, then re-run analysis on the decoded bytes/text.");
+    if (encHints.looks_binary) steps.push("Group bits into 8s (ASCII) or 5s (Baconian) and test.");
+    if (ioc > 0.06) steps.push("High IoC: test monoalphabetic substitution (frequency + word patterns).");
+    if (ioc < 0.05) steps.push("Low IoC: test Vigenère; check likely key lengths from Friedman/autocorr.");
+    if (autoc?.[0]?.rate > 0.08) steps.push("Strong periodicity: test transposition or columnar patterns.");
+    steps.push("Longer ciphertext increases signal—try at least 200–300 letters if possible.");
+
+    return {
+      length: len,
+      alpha_len,
+      digit_len,
+      whitespace_len,
+      punct_len,
+      ioc,
+      chi_square_english,
+      entropy_bits_per_char,
+      vowel_ratio,
+      encoding_hints: encHints,
+      friedman_keylen: fried,
+      autocorr_top: autoc.map(a=>({shift:a.shift, rate:a.rate, matches:a.matches})),
+      top_letters: topN(letterMap,18),
+      top_bigrams: topN(bigramMap,12),
+      top_trigrams: topN(trigramMap,10),
+      repeated_bigrams: countRepeatedTypes(bigramMap),
+      repeated_trigrams: countRepeatedTypes(trigramMap),
+      kasiski: kas,
+      ranking,
+      next_steps: steps
+    };
+  }
+
+  const paCopy = document.getElementById("pa-copy");
+  const paSave = document.getElementById("pa-save");
+  const paStatus = document.getElementById("pa-status");
+
+  const paSummary = document.getElementById("pa-summary");
+  const paSummaryMono = document.getElementById("pa-summary-mono");
+  const paFreq = document.getElementById("pa-freq");
+  const paFreqMono = document.getElementById("pa-freq-mono");
+  const paNotes = document.getElementById("pa-notes");
+  const paNotesMono = document.getElementById("pa-notes-mono");
+
+  let paOpener = null;
+  let lastPaReport = "";
+
+  function openPaModal(){
+    if (!paModal) return;
+    paOpener = document.activeElement;
+    paModal.classList.add("open");
+    setPaFrost(!USER_IS_PRO);
+    paModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => paBox?.focus?.(), 0);
+  }
+
+  function closePaModal(){
+    if (!paModal) return;
+    paModal.classList.remove("open");
+    setPaFrost(false);
+    paModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    paOpener?.focus?.();
+    paOpener = null;
+  }
+
+  function setPaLoading(on, msg){
+    if (paStatus) paStatus.textContent = msg || (on ? "Analyzing…" : "Ready.");
+    if (paRefresh) paRefresh.disabled = !!on;
+    if (paCopy) paCopy.disabled = !!on || !lastPaReport;
+    if (paSave) paSave.disabled = !!on || !lastPaReport;
+  }
+
+  function formatPairs(pairs, max=12){
+    if (!Array.isArray(pairs)) return "—";
+    const take = pairs.slice(0, max);
+    return take.map(([k,v]) => `${k}: ${v}`).join(", ") || "—";
+  }
+
+  function buildReport(data){
+    const len = data?.length ?? 0;
+    const alpha = data?.alpha_len ?? 0;
+    const digits = data?.digit_len ?? 0;
+    const white = data?.whitespace_len ?? 0;
+    const punct = data?.punct_len ?? 0;
+
+    const ioc = data?.ioc ?? 0;
+    const chi = data?.chi_square_english ?? 0;
+    const ent = data?.entropy_bits_per_char ?? 0;
+    const vr = data?.vowel_ratio ?? 0;
+
+    const enc = data?.encoding_hints || {};
+    const fried = data?.friedman_keylen ?? null;
+
+    const topLetters = formatPairs(data?.top_letters, 18);
+    const topBigrams = formatPairs(data?.top_bigrams, 12);
+    const topTrigrams = formatPairs(data?.top_trigrams, 10);
+
+    const ranking = Array.isArray(data?.ranking) ? data.ranking : [];
+    const rankLines = ranking.slice(0, 6).map((r, idx) => {
+      const reasons = Array.isArray(r.reasons) ? r.reasons.slice(0, 3).join(" · ") : "";
+      return `${idx+1}. ${r.name} (${r.score}/100)${reasons ? " — " + reasons : ""}`;
+    }).join("\n") || "—";
+
+    const autoc = Array.isArray(data?.autocorr_top) ? data.autocorr_top : [];
+    const autocLines = autoc.slice(0, 6).map(a => `shift ${a.shift}: rate ${a.rate} (${a.matches} matches)`).join("\n") || "—";
+
+    const kas = data?.kasiski || {};
+    const kasRepeats = Array.isArray(kas?.repeats) ? kas.repeats : [];
+    const kasRepeatLines = kasRepeats.slice(0, 6).map(r => {
+      const d = Array.isArray(r.distances) ? r.distances.slice(0, 6).join(",") : "";
+      return `${r.ngram} (len ${r.len}) ×${r.count} | dists: ${d}`;
+    }).join("\n") || "—";
+
+    const kasFactors = Array.isArray(kas?.factor_counts) ? kas.factor_counts : [];
+    const kasFactorLine = kasFactors.slice(0, 8).map(f => `${f.factor}:${f.count}`).join(", ") || "—";
+
+    const steps = Array.isArray(data?.next_steps) ? data.next_steps : [];
+    const stepsText = steps.length ? steps.map(s => `- ${s}`).join("\n") : "—";
+
+    const encHints = [
+      enc.looks_base64 ? "Base64-ish" : null,
+      enc.looks_hex ? "Hex-ish" : null,
+      enc.looks_binary ? "Binary-ish" : null
+    ].filter(Boolean).join(" · ") || "None";
+
+    const summaryMono =
+`Length: ${len} chars
+Alphabetic: ${alpha} | Digits: ${digits} | Punct: ${punct} | Whitespace: ${white}
+IoC: ${ioc}
+Chi-square vs English: ${chi}
+Entropy (no-whitespace): ${ent} bits/char
+Vowel ratio (A/E/I/O/U/Y): ${vr}
+Encoding hints: ${encHints}
+
+Key length hints
+- Friedman estimate: ${fried ?? "—"}
+- Autocorr peaks:
+${autocLines}
+
+Cipher ranking
+${rankLines}`;
+
+    const freqMono =
+`Top letters:
+${topLetters}
+
+Top bigrams (alpha-only):
+${topBigrams}
+
+Top trigrams (alpha-only):
+${topTrigrams}
+
+Repeat stats:
+- repeated bigram types: ${data?.repeated_bigrams ?? 0}
+- repeated trigram types: ${data?.repeated_trigrams ?? 0}`;
+
+    const notesMono =
+`Kasiski examination (repeated n-grams)
+Top repeats:
+${kasRepeatLines}
+
+Factor counts (2–20):
+${kasFactorLine}
+
+Next steps:
+${stepsText}`;
+
+    if (paSummary) paSummary.textContent = "Core stats + scoring-based classification.";
+    if (paSummaryMono) { paSummaryMono.style.display = "block"; paSummaryMono.textContent = summaryMono; }
+
+    if (paFreq) paFreq.textContent = "Frequencies + repeat behavior (what your cipher is doing).";
+    if (paFreqMono) { paFreqMono.style.display = "block"; paFreqMono.textContent = freqMono; }
+
+    if (paNotes) paNotes.textContent = "Kasiski + actionable next steps.";
+    if (paNotesMono) { paNotesMono.style.display = "block"; paNotesMono.textContent = notesMono; }
+
+    lastPaReport =
+`[Pro Analysis]
+${summaryMono}
+
+${freqMono}
+
+${notesMono}`;
+
+    if (paCopy) paCopy.disabled = !lastPaReport;
+    if (paSave) paSave.disabled = !lastPaReport;
+  }
+
+  async function runProAnalysis(){
+    const text = (textarea?.value || "").trim();
+    if (!text){
+      setPaLoading(false, "Paste some ciphertext first.");
+      return;
+    }
+
+    if (!USER_LOGGED_IN){
+      redirectToLoginPreservingState();
+      return;
+    }
+
+    // Non‑Pro: show full report UI but keep answers blurred (preview mode)
+    if (!USER_IS_PRO){
+      setPaLoading(true, "Generating preview…");
+      const preview = teaserAnalysis(text);
+      buildReport(preview);
+      setPaFrost(true);
+      setPaLoading(false, "Preview (blurred).");
+      return;
+    }
+    setPaLoading(true, "Running Pro Analysis…");
+    try{
+      const res = await fetch("/api/pro-analysis", {
+        method: "POST",
+        headers: { "Content-Type":"application/json", "Accept":"application/json" },
+        body: JSON.stringify({ text })
+      });
+
+      if (res.status === 401){
+        redirectToLoginPreservingState();
+        return;
+      }
+      if (res.status === 402 || res.status === 403){
+        // If the server says Pro required, fall back to a local preview (blurred)
+        const preview = teaserAnalysis(text);
+        buildReport(preview);
+        setPaFrost(true);
+        setPaLoading(false, "Preview (blurred).");
+        return;
+      }
+
+      if (!res.ok) throw new Error("bad response");
+      const data = await res.json();
+
+      buildReport(data);
+      setPaLoading(false, "Done.");
+    }catch(e){
+      setPaLoading(false, "Couldn’t analyze right now.");
+      if (paSummaryMono) { paSummaryMono.style.display = "block"; paSummaryMono.textContent = "Error: server unreachable."; }
+    }
+  }
+
+  openProAnalysisBtn?.addEventListener("click", () => {
+    stashBreakerState();
+    openPaModal();
+    runProAnalysis();
+  });
+
+  paX?.addEventListener("click", closePaModal);
+  paModal?.addEventListener("click", (e) => {
+    if (e.target?.closest?.("[data-pclose='1']")) closePaModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && paModal?.classList.contains("open")) closePaModal();
+  });
+
+  paRefresh?.addEventListener("click", () => runProAnalysis());
+
+  paCopy?.addEventListener("click", async () => {
+    try{
+      if (!lastPaReport) return;
+      await navigator.clipboard.writeText(lastPaReport);
+      const old = paCopy.textContent;
+      paCopy.textContent = "Copied!";
+      setTimeout(() => (paCopy.textContent = old), 1200);
+    }catch{}
+  });
+
+  // ===========================
+  // Labs integration (includes saving Pro report)
+  // ===========================
+  const labsModal = document.getElementById("labs-modal");
+  const labsX = document.getElementById("labs-x");
+  const labsCancel = document.getElementById("labs-cancel");
+  const labsConfirm = document.getElementById("labs-confirm");
+  const labsTitle = document.getElementById("labs-title");
+  const labsNotes = document.getElementById("labs-notes");
+  const saveToLabBtn = document.getElementById("save-to-lab");
+
+  async function gateCanCreateOrShowPro({ note } = {}) {
+    try {
+      const gateRes = await fetch(`{{ url_for('workspace_can_create') }}`, {
+        method: "GET",
+        headers: { "Accept": "application/json" }
+      });
+
+      if (gateRes.status === 401) {
+        redirectToLoginPreservingState();
+        return false;
+      }
+
+      const gate = await gateRes.json().catch(() => null);
+      const canCreate = (gate?.can_create ?? gate?.canCreate ?? gate?.ok);
+
+      if (canCreate === false) {
+        openProModal({
+          title: "Free plan limit reached",
+          message: gate?.reason || gate?.error || "You’ve hit the free limit. Upgrade to Labs Pro to keep going.",
+          upgrade_url: gate?.upgrade_url || gate?.upgradeUrl || `{{ url_for('labs_pro_page') }}`,
+          note: note || "Your draft is saved — you won’t lose your text."
+        });
+        return false;
+      }
+
+      return true;
+    } catch {
+      return true;
+    }
+  }
+
+  function openLabsModal() {
+    if (!labsModal) return;
+    labsModal.classList.add("open");
+    labsModal.setAttribute("aria-hidden", "false");
+
+    const cipherType = (cipherTypeSelect?.value || "auto");
+    const nice = cipherType.charAt(0).toUpperCase() + cipherType.slice(1);
+    if (!labsTitle.value.trim()) labsTitle.value = `Breaker — ${nice}`;
+
+    const keyLine = (resultKey && resultKey.style.display !== "none" && resultKey.textContent)
+      ? resultKey.textContent.replace(/^Key:\s*/i, "").trim()
+      : "";
+
+    if (!labsNotes.value.trim()) {
+      labsNotes.value =
+`[Cipher Breaker]
+Cipher type: ${cipherType}
+
+Ciphertext:
+${textarea.value.trim() || "(empty)"}
+
+Key:
+${keyLine || "—"}
+
+Plaintext:
+${(resultText.textContent || "").trim() || "(empty)"}
+`;
+    }
+
+    stashBreakerState({ labs_title: labsTitle.value || "", labs_notes: labsNotes.value || "" });
+    setTimeout(() => labsTitle.focus(), 0);
+  }
+
+  function closeLabsModal() {
+    if (!labsModal) return;
+    labsModal.classList.remove("open");
+    labsModal.setAttribute("aria-hidden", "true");
+    stashBreakerState({ labs_title: labsTitle.value || "", labs_notes: labsNotes.value || "" });
+  }
+
+  labsX?.addEventListener("click", closeLabsModal);
+  labsCancel?.addEventListener("click", closeLabsModal);
+  labsModal?.addEventListener("click", (e) => {
+    const closeEl = e.target?.closest?.("[data-close='1']");
+    if (closeEl) closeLabsModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && labsModal?.classList.contains("open")) closeLabsModal();
+  });
+
+  labsTitle?.addEventListener("input", () => stashBreakerState({ labs_title: labsTitle.value || "" }), { passive: true });
+  labsNotes?.addEventListener("input", () => stashBreakerState({ labs_notes: labsNotes.value || "" }), { passive: true });
+
+  saveToLabBtn?.addEventListener("click", async () => {
+    stashBreakerState();
+    const ok = await gateCanCreateOrShowPro();
+    if (!ok) return;
+    openLabsModal();
+  });
+
+  // Save Pro Analysis report into Labs (uses same Labs modal)
+  paSave?.addEventListener("click", async () => {
+    if (paIsPreview){ window.location.href = `{{ url_for('labs_pro_page') }}`; return; }
+  if (!lastPaReport) return;
+
+  if (!USER_LOGGED_IN){
+    redirectToLoginPreservingState();
+    return;
+  }
+
+  stashBreakerState();
+  const ok = await gateCanCreateOrShowPro({ note: "Save your Pro Analysis report to a Lab." });
+  if (!ok) return;
+
+  const cipherType = (cipherTypeSelect?.value || "auto");
+  const nice = cipherType.charAt(0).toUpperCase() + cipherType.slice(1);
+
+  const ct = (textarea.value || "").trim();
+  const pt = (resultText.textContent || "").trim();
+  const keyLine = (resultKey && resultKey.style.display !== "none" && resultKey.textContent)
+    ? resultKey.textContent.replace(/^Key:\s*/i, "").trim()
+    : "";
+
+  // ✅ Close Pro Analysis first so we don't stack awkwardly
+  closePaModal();
+
+  // ✅ Open labs AFTER the close has applied
+  requestAnimationFrame(() => {
+    openLabsModal();
+
+    if (labsTitle) labsTitle.value = `Pro Analysis — ${nice}`;
+
+    if (labsNotes) {
+      labsNotes.value =
+`[Pro Analysis]
+Cipher type (breaker selection): ${cipherType}
+
+Ciphertext:
+${ct || "(empty)"}
+
+--- Pro Report ---
+${lastPaReport}
+
+--- Breaker Output (optional) ---
+Key:
+${keyLine || "—"}
+
+Plaintext:
+${pt || "—"}
+`;
+    }
+
+    stashBreakerState({ labs_title: labsTitle?.value || "", labs_notes: labsNotes?.value || "" });
+  });
+});
+
+  async function createWorkspacePOST(title) {
+    const fd = new FormData();
+    fd.append("title", title || "Untitled Lab");
+
+    const res = await fetch(`{{ url_for('workspace_new') }}`, {
+      method: "POST",
+      body: fd,
+      redirect: "follow"
+    });
+
+    if (res.url && res.url.includes("/login")) {
+      redirectToLoginPreservingState();
+      return { ok:false, code:401 };
+    }
+
+    if (res.status === 403) {
+      return { ok:false, code:403 };
+    }
+
+    const finalUrl = res.url || "";
+    const m = finalUrl.match(/\/workspaces\/(\d+)(?:\/)?$/);
+    if (!m) return { ok:false, code:500 };
+    return { ok:true, wsId: Number(m[1]) };
+  }
+
+  async function saveWorkspace(wsId, payload) {
+    const fd = new FormData();
+    fd.append("title", payload.title || "Untitled Lab");
+    fd.append("notes", payload.notes || "");
+    fd.append("cipher_text", payload.cipher_text || "");
+
+    const res = await fetch(`/workspaces/${wsId}/save`, {
+      method: "POST",
+      body: fd
+    });
+
+    if (res.status === 401) {
+      redirectToLoginPreservingState();
+      return { ok:false, code:401 };
+    }
+    if (res.status === 403) {
+      return { ok:false, code:403 };
+    }
+
+    const data = await res.json().catch(() => null);
+    return { ok: !!(data && data.ok), code: (data && data.ok) ? 200 : 500 };
+  }
+
+  labsConfirm?.addEventListener("click", async () => {
+    const allowed = await gateCanCreateOrShowPro();
+    if (!allowed) return;
+
+    const title = (labsTitle.value || "").trim() || "Untitled Lab";
+    const cipher_text = (textarea.value || "").trim();
+    const notes = (labsNotes.value || "").trim();
+
+    stashBreakerState({ labs_title: title, labs_notes: notes });
+
+    labsConfirm.disabled = true;
+    const oldText = labsConfirm.textContent;
+    labsConfirm.textContent = "Creating…";
+
+    try {
+      const created = await createWorkspacePOST(title);
+
+      if (!created.ok) {
+        if (created.code === 403) {
+          closeLabsModal();
+          openProModal({
+            title: "Free plan limit reached",
+            message: "You’ve hit the free limit. Upgrade to Labs Pro to keep going.",
+            upgrade_url: `{{ url_for('labs_pro_page') }}`,
+            note: "Your draft is saved — you won’t lose your text."
+          });
+          return;
+        }
+        throw new Error("create failed");
+      }
+
+      labsConfirm.textContent = "Saving…";
+      const saved = await saveWorkspace(created.wsId, { title, notes, cipher_text });
+
+      if (!saved.ok) {
+        if (saved.code === 403) {
+          closeLabsModal();
+          openProModal({
+            title: "Free plan limit reached",
+            message: "You’ve hit the free limit. Upgrade to Labs Pro to keep going.",
+            upgrade_url: `{{ url_for('labs_pro_page') }}`,
+            note: "Your draft is saved — you won’t lose your text."
+          });
+          return;
+        }
+        throw new Error("save failed");
+      }
+
+      try { sessionStorage.removeItem(STATE_KEY); } catch {}
+      window.location.href = `/workspaces/${created.wsId}`;
+    } catch (e) {
+      labsConfirm.disabled = false;
+      labsConfirm.textContent = oldText;
+      alert("Could not create lab. Are you logged in?");
+    }
+  });
+
+  // ===========================
+  // Restore state on load
+  // ===========================
+  window.addEventListener("DOMContentLoaded", () => {
+    const restored = restoreBreakerStateIfAny();
+
+    if (!restored && !(textarea.value || "").trim()) {
+      const ph = funSamples[Math.floor(Math.random() * funSamples.length)];
+      textarea.value = "";
+      textarea.placeholder = ph;
+    }
+  });
+</script>
+
+</body>
+</html>

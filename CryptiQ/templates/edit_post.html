@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Edit Post — CryptiQ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .img-wrap { position: relative; display: inline-block; }
+        .img-wrap img { max-width: 100%; border-radius: 10px; display:block; }
+        .bin-btn {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #f66;
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+        }
+        .bin-btn:hover { background: rgba(255,80,80,0.18); box-shadow: 0 4px 16px rgba(255,80,80,0.25); }
+        .bin-btn:active { transform: scale(0.96); }
+        .muted { color:#aaa; font-size:0.95rem; }
+    </style>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
+</head>
+<body>
+    {% include 'base_nav.html' %}
+
+    <div class="container">
+        <h2>Edit Post</h2>
+
+        <form method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:12px;">
+            <label class="cipher-label">Title</label>
+            <input type="text" name="title" required
+                   value="{{ post['title'] }}"
+                   style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;">
+
+            <label class="cipher-label">Body</label>
+            <textarea name="body" rows="8" required
+                      style="padding:12px;border-radius:8px;border:none;background:#262626;color:#f0f0f0;">{{ post['body'] }}</textarea>
+
+            {% if post['image_filename'] %}
+            <div>
+                <div class="muted">Current image (click bin to remove):</div>
+                <div class="img-wrap">
+                    <img src="{{ url_for('uploaded_file', filename=post['image_filename']) }}" alt="post image">
+                    <button type="button" class="bin-btn" id="binBtn" title="Remove image">🗑</button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- hidden field toggled by bin icon -->
+            <input type="hidden" name="delete_image" id="delete_image" value="false">
+
+            <label class="cipher-label">Image (optional)</label>
+            <input type="file" name="image" accept="image/*">
+
+            <button type="submit" id="post-save">Save Changes</button>
+        </form>
+    </div>
+
+    <script>
+        const bin = document.getElementById('binBtn');
+        if (bin) {
+            bin.addEventListener('click', () => {
+                if (confirm('Remove the current image from this post?')) {
+                    document.getElementById('delete_image').value = 'true';
+                    // Light visual feedback (optional)
+                    bin.textContent = '✓';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Primary SEO -->
+  <title>Encoder & Decoder for Classic Ciphers — The Cipher Lab</title>
+  <meta name="description" content="Free online cipher encoder & decoder. Instantly encode or decode Caesar, Vigenère, Affine, Rail Fence, Columnar Transposition, Polybius Square, Base64, Hex, Binary, Atbash, Baconian and more." />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+
+  <!-- Canonical (prefer your real domain when you have it) -->
+  <link rel="canonical" href="{{ request.url }}" />
+
+  <!-- Open Graph (Discord/Reddit previews) -->
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Encoder & Decoder for Classic Ciphers — The Cipher Lab" />
+  <meta property="og:description" content="Free online cipher encoder & decoder. Instantly encode or decode Caesar, Vigenère, Affine, Rail Fence, Columnar, Polybius, Base64, Hex, Binary and more." />
+  <meta property="og:url" content="{{ request.url }}" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Encoder & Decoder for Classic Ciphers — The Cipher Lab" />
+  <meta name="twitter:description" content="Free online cipher encoder & decoder for Caesar, Vigenère, Affine, Rail Fence, Columnar, Polybius, Base64, Hex, Binary and more." />
+
+  <!-- Optional but nice -->
+  <meta name="theme-color" content="#00ffd5" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "The Cipher Lab — Encoder / Decoder",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web",
+    "url": "{{ request.url }}",
+    "description": "Free online cipher encoder & decoder for classic ciphers including Caesar, Vigenère, Affine, Rail Fence, Columnar Transposition, Polybius Square, Base64, Hex, Binary, Atbash, and Baconian."
+  }
+  </script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg, #0a0a0a);
+      color: var(--text, #f0f0f0);
+      font-family: "Inter", "Segoe UI", sans-serif;
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    main{
+  min-height: 100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding: 40px 16px 40px;
+  width: 100%;
+}
+
+/* push footer to the bottom of main when there's not much content */
+main > footer,
+main > .site-footer,
+main > #site-footer{
+  margin-top: auto;
+  width: 100%;
+}
+
+
+    .ed-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 95vw;
+      max-width: 1500px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line, #2a2a2a);
+      flex-wrap: wrap;
+    }
+
+    .ed-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent, #00ffd5);
+      box-shadow: 0 0 10px var(--accent-soft, #00ffd57c);
+    }
+
+    .ed-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    /* ===== Labs integration header actions ===== */
+    .ed-header-actions{
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .lab-btn{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+      font-size: .9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lab-btn:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .lab-btn:active{ transform: translateY(1px); }
+    .lab-btn.primary{
+      background: var(--accent, #00ffd5);
+      border-color: var(--accent, #00ffd5);
+      color: #0f0f0f;
+    }
+    .lab-btn.primary:hover{
+      background: var(--accent-strong, #00e6c0);
+      border-color: var(--accent-strong, #00e6c0);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .lab-btn:disabled{
+      opacity: .55;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    .ed-body {
+      display: grid;
+      grid-template-columns: 1fr 0.5fr 1fr;
+      gap: 18px;
+      width: 95vw;
+      max-width: 1500px;
+      padding: 24px 0;
+      box-sizing: border-box;
+      transition: all 0.4s ease;
+    }
+
+    .decode-mode { grid-template-columns: 1fr 0.5fr 1fr; direction: rtl; }
+    .decode-mode .ed-panel, .decode-mode .ed-controls { direction: ltr; }
+
+    .ed-panel {
+      background: var(--panel-2, #151515);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      height: 60vh;
+      min-height: 360px;
+    }
+
+    .ed-panel h3 {
+      background: var(--panel, #1d1d1d);
+      color: var(--accent, #00ffd5);
+      font-size: 0.95rem;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line, #2a2a2a);
+      margin: 0;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--input-bg, #0e0e0e);
+      color: var(--text, #f0f0f0);
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      font-size: 15px;
+      line-height: 1.55;
+      border-radius: 0 0 10px 10px;
+    }
+
+    .ed-controls {
+      background: var(--panel-2, #151515);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 12px;
+      transition: transform 0.4s ease;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 10px 0;
+      border: 1px solid var(--line, #2a2a2a);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--accent, #00ffd5);
+      color: #0f0f0f;
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 8px var(--accent-soft, #00ffd57c);
+    }
+
+    select, input {
+      width: 100%;
+      background: var(--input-bg, #0e0e0e);
+      border: 1px solid var(--input-border, #343434);
+      border-radius: 8px;
+      color: var(--text, #f0f0f0);
+      padding: 10px 12px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    .shift-display {
+      text-align: center;
+      color: var(--accent, #00ffd5);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      padding: 6px;
+      background: var(--input-bg, #0e0e0e);
+      border-radius: 6px;
+      min-height: 1.8em;
+    }
+
+    .polybius-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .polybius-grid input {
+      text-align: center;
+      background: var(--input-bg, #0e0e0e);
+      border: 1px solid var(--input-border, #343434);
+      color: var(--text, #f0f0f0);
+      font-family: 'JetBrains Mono', monospace;
+      border-radius: 6px;
+      font-size: 15px;
+      padding: 6px 0;
+    }
+
+    .polybius-grid input:focus {
+      border-color: var(--accent, #00ffd5);
+      outline: none;
+      background: var(--input-focus, #161616);
+    }
+
+    /* ===== Vigenere custom input ===== */
+    .vigenere-row{
+      display: none;
+      gap: 6px;
+    }
+    .vigenere-row.show{ display: grid; }
+    .vigenere-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 700;
+      font-size: .88rem;
+    }
+    .vigenere-help{
+      margin-top: 2px;
+      color: var(--muted, #a0a0a0);
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
+    /* ===== Affine custom inputs ===== */
+    .affine-row{
+      display: none;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .affine-row.show{ display: grid; }
+    .affine-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 700;
+      font-size: .88rem;
+    }
+
+    /* ===== Rail Fence custom inputs ===== */
+    .rail-row{
+      display: none;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .rail-row.show{ display: grid; }
+    .rail-row label{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #a0a0a0);
+      font-weight: 700;
+      font-size: .88rem;
+    }
+    .rail-help{
+      margin-top: 2px;
+      color: var(--muted, #a0a0a0);
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
+    .breaker-link {
+      text-align: center;
+      margin-top: 12px;
+      color: var(--muted, #a0a0a0);
+      font-size: .9rem;
+    }
+
+    .breaker-link a {
+      color: var(--accent, #00ffd5);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .breaker-link a:hover { text-decoration: underline; }
+
+    @media (max-width: 980px) {
+      .ed-body { grid-template-columns: 1fr; }
+      .ed-panel { height: 40vh; }
+      .ed-controls { order: -1; }
+      main { padding: 60px 10px 20px; }
+    }
+
+    /* ===============================
+       MOBILE MODE SWAP FIX
+       =============================== */
+    @media (max-width: 980px) {
+      #leftPanel  { order: 2; }
+      .ed-controls { order: 1; }
+      #rightPanel { order: 3; }
+
+      .decode-mode #leftPanel  { order: 3; }
+      .decode-mode #rightPanel { order: 2; }
+    }
+
+    /* ===============================
+       Labs Modal
+       =============================== */
+    .lmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8000;
+    }
+    .lmodal.open{ display: flex; }
+
+    .lmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .lmodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel, #1d1d1d);
+      border: 1px solid var(--line, #2a2a2a);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      animation: lmodalPop .12s ease-out;
+    }
+    @keyframes lmodalPop{
+      from { transform: translateY(6px) scale(.98); opacity: .6; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .lmodal-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 4px 0;
+    }
+    .lmodal-title{
+      color: var(--text, #f0f0f0);
+      font-weight: 900;
+      font-size: .98rem;
+    }
+    .lmodal-x{
+      border: 1px solid var(--line-2, #343434);
+      background: transparent;
+      color: var(--text, #f0f0f0);
+      font-weight: 900;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .lmodal-x:hover{
+      background: var(--input-hover, rgba(255,255,255,0.06));
+      border-color: var(--accent, #00ffd5);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+    .lmodal-body{
+      color: var(--muted, #a0a0a0);
+      line-height: 1.45;
+      padding: 0 4px;
+      display: grid;
+      gap: 10px;
+    }
+    .lmodal-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 6px 4px 2px;
+      flex-wrap: wrap;
+    }
+    .lmodal-row{
+      display: grid;
+      gap: 6px;
+    }
+    .lmodal-help{
+      font-size: .86rem;
+      color: var(--muted, #a0a0a0);
+    }
+    .lmodal-note{
+      font-size: .82rem;
+      color: var(--muted, #a0a0a0);
+      opacity: .9;
+    }
+    .ltextarea{
+      min-height: 140px;
+      border-radius: 10px;
+      border: 1px solid var(--input-border,#343434);
+      background: var(--input-bg,#0e0e0e);
+      color: var(--text,#f0f0f0);
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono',monospace;
+      resize: vertical;
+      outline: none;
+    }
+    .ltextarea:focus{
+      border-color: var(--accent, #00ffd5);
+      background: var(--input-focus, #161616);
+      box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+    }
+  /* ===== Pro modal close (center the X) ===== */
+.promodal-x{
+  width: 36px;
+  height: 36px;
+  padding: 0;                 /* important */
+  display: inline-flex;        /* important */
+  align-items: center;         /* important */
+  justify-content: center;     /* important */
+
+  border: 1px solid var(--line-2, #343434);
+  background: transparent;
+  color: var(--text, #f0f0f0);
+
+  border-radius: 12px;
+  cursor: pointer;
+
+  font-size: 18px;             /* tweak if you want bigger/smaller */
+  line-height: 1;              /* important */
+}
+
+.promodal-x:hover{
+  background: var(--input-hover, rgba(255,255,255,0.06));
+  border-color: var(--accent, #00ffd5);
+  box-shadow: 0 0 0 2px var(--accent-soft, #00ffd57c);
+}
+/* ===============================
+   Header layout fix (no scatter)
+   =============================== */
+
+/* Base: keep it clean + predictable */
+.ed-header{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 95vw;
+  max-width: 1500px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line, #2a2a2a);
+  flex-wrap: nowrap;              /* 🔧 stop weird wrap behavior */
+}
+
+/* Ensure title doesn't jump around */
+.ed-title{
+  margin: 0;
+  white-space: nowrap;            /* keeps "Encoder / Decoder" together */
+}
+
+/* Actions stay right on wide screens */
+.ed-header-actions{
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+/* If space gets tight, let the header reflow nicely (2 rows) */
+@media (max-width: 860px){
+  .ed-header{
+    flex-wrap: wrap;              /* allow wrap, but controlled */
+    align-items: flex-start;
+  }
+
+  /* Title row */
+  .ed-dot{ margin-top: 6px; }
+  .ed-title{
+    flex: 1 1 auto;
+    min-width: 180px;
+    white-space: normal;          /* allow wrap if needed */
+  }
+
+  /* Actions become a clean second row */
+  .ed-header-actions{
+    flex: 0 0 100%;
+    margin-left: 0;               /* 🔧 remove auto push when wrapped */
+    justify-content: flex-start;
+    gap: 10px;
+    padding-top: 10px;
+  }
+}
+
+/* On small screens, buttons fill and look intentional */
+@media (max-width: 520px){
+  .ed-header-actions{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .lab-btn{
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Ultra-small: stack */
+@media (max-width: 380px){
+  .ed-header-actions{
+    grid-template-columns: 1fr;
+  }
+}
+
+  </style>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
+</head>
+
+
+<body>
+  {% include 'base_nav.html' %}
+  <main>
+    <div class="ed-header">
+      <span class="ed-dot"></span>
+      <h1 class="ed-title">Encoder / Decoder</h1>
+
+      <div class="ed-header-actions">
+        {% if user %}
+          <button class="lab-btn primary" id="save-to-lab" type="button">Save to Lab</button>
+          <a class="lab-btn" id="open-labs" href="{{ url_for('workspace_list') }}">My Labs</a>
+        {% else %}
+          <a class="lab-btn primary" id="save-to-lab-loggedout" href="{{ url_for('login') }}?next={{ request.path }}">Login to save</a>
+          <a class="lab-btn" href="{{ url_for('workspace_list') }}">My Labs</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div id="bodyWrap" class="ed-body">
+      <div class="ed-panel" id="leftPanel">
+        <h3>Plaintext</h3>
+        <textarea id="leftBox" placeholder="Enter plaintext..."></textarea>
+      </div>
+
+      <div class="ed-controls">
+        <div class="mode-toggle">
+          <button id="encodeMode" class="mode-btn active" type="button">Encode</button>
+          <button id="decodeMode" class="mode-btn" type="button">Decode</button>
+        </div>
+
+        <div>
+          <label for="cipher-select">Cipher</label>
+          <select id="cipher-select">
+            <option value="caesar" selected>Caesar Cipher</option>
+            <option value="vigenere">Vigenère Cipher</option>
+            <option value="affine">Affine Cipher</option>
+            <option value="railfence">Rail Fence</option>
+            <option value="columnar">Columnar Transposition</option>
+            <option value="polybius">Polybius Square</option>
+            <option value="base64">Base64</option>
+            <option value="hex">Hexadecimal</option>
+            <option value="binary">Binary</option>
+            <option value="permutation">Permutation</option>
+            <option value="amsco">Amsco Cipher</option>
+            <option value="baconian">Baconian</option>
+            <option value="atbash">Atbash</option>
+          </select>
+        </div>
+
+        <!-- Default key input -->
+        <div id="key-group">
+          <label for="cipher-key">Key</label>
+          <input id="cipher-key" type="text" value="7" placeholder="Enter key" />
+        </div>
+
+        <!-- Vigenere custom key input -->
+        <div class="vigenere-row" id="vigenere-row">
+          <div>
+            <label for="vigenere-key">Vigenère keyword</label>
+            <input id="vigenere-key" type="text" value="LEMON" placeholder="e.g. LEMON" autocomplete="off" />
+            <div class="vigenere-help">Letters only.</div>
+          </div>
+        </div>
+
+        <!-- Affine custom key inputs -->
+        <div class="affine-row" id="affine-row">
+          <div>
+            <label for="affine-a">Affine a</label>
+            <input id="affine-a" type="number" value="5" min="0" step="1" placeholder="e.g. 5" />
+          </div>
+          <div>
+            <label for="affine-b">Affine b</label>
+            <input id="affine-b" type="number" value="8" min="0" step="1" placeholder="e.g. 8" />
+          </div>
+        </div>
+
+        <!-- Rail Fence custom inputs (rails + offset) -->
+        <div class="rail-row" id="rail-row">
+          <div>
+            <label for="rail-rails">Rails</label>
+            <input id="rail-rails" type="number" value="3" min="2" step="1" placeholder="e.g. 3" />
+          </div>
+          <div>
+            <label for="rail-offset">Offset</label>
+            <input id="rail-offset" type="number" value="0" min="0" step="1" placeholder="e.g. 0" />
+          </div>
+          <div class="rail-help" style="grid-column:1 / -1;">
+            Offset shifts the starting zig-zag position before placing the first character.
+          </div>
+        </div>
+
+        <div id="polybius-grid-wrapper" style="display:none;">
+          <label>Polybius Square</label>
+          <div class="polybius-grid" id="polybius-grid"></div>
+        </div>
+
+        <div class="shift-display" id="shift-display"></div>
+      </div>
+
+      <div class="ed-panel" id="rightPanel">
+        <h3>Ciphertext</h3>
+        <textarea id="rightBox" placeholder="Enter ciphertext..."></textarea>
+      </div>
+    </div>
+
+    <p class="breaker-link">
+      Want to decode with no key? <a href="/breaker">Try our Cipher Breaker →</a>
+    </p>
+
+  </main>
+          {% include "base_footer.html" %}
+
+  <!-- ===== Labs Modal ===== -->
+  <div id="labs-modal" class="lmodal" aria-hidden="true">
+    <div class="lmodal-backdrop" data-close="1"></div>
+
+    <div class="lmodal-box" role="dialog" aria-modal="true" aria-label="Save to Lab">
+      <div class="lmodal-top">
+        <div class="lmodal-title">Save to Lab</div>
+        <button class="lmodal-x" id="labs-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="lmodal-body">
+        <div class="lmodal-help">
+          Creates a new Lab (workspace) and saves your current cipher output + notes into it.
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-title">Lab title</label>
+          <input id="labs-title" type="text" placeholder="e.g. Encoder/Decoder — Caesar (shift 7)" />
+        </div>
+
+        <div class="lmodal-row">
+          <label for="labs-notes">Notes</label>
+          <textarea id="labs-notes" class="ltextarea" placeholder="Add your notes (optional)"></textarea>
+          <div class="lmodal-note">
+            We’ll also include: mode, cipher, key, and the generated output.
+          </div>
+        </div>
+      </div>
+
+      <div class="lmodal-actions">
+        <button class="lab-btn" id="labs-cancel" type="button">Cancel</button>
+        <button class="lab-btn primary" id="labs-confirm" type="button">Create Lab</button>
+      </div>
+    </div>
+  
+  </div>
+  <!-- ===== Labs Pro Limit Modal (nice) ===== -->
+<div id="pro-modal" class="promodal" aria-hidden="true">
+  <div class="promodal-backdrop" data-close="1"></div>
+
+  <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Upgrade required">
+    <div class="promodal-top">
+      <div class="promodal-title" id="pro-title">Free plan limit reached</div>
+
+      <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="promodal-body">
+      <div class="promodal-msg" id="pro-body">
+        You’ve hit the free limit. Upgrade to Labs Pro to keep going.
+      </div>
+
+      <ul class="promodal-list">
+        <li><span class="tick">✓</span> Export lab as PDF</li>
+          <li><span class="tick">✓</span> Clone any lab instantly</li>
+          <li><span class="tick">✓</span> Lab history (snapshots)</li>
+          <li><span class="tick">✓</span> Unlimited Labs</li>
+          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+          <li><span class="tick">✓</span> Pro badge across the site</li>
+      </ul>
+
+      <div class="promodal-note" id="pro-note">
+        Your draft is saved — you won’t lose your text.
+      </div>
+    </div>
+
+    <div class="promodal-actions">
+      <button class="promodal-btn ghost" id="pro-cancel" type="button">Not now</button>
+      <a class="promodal-btn primary" id="pro-cta" href="{{ url_for('labs_pro_page') }}">Upgrade to Pro</a>
+    </div>
+  </div>
+  
+</div>
+
+
+  <script>
+    const leftBox = document.getElementById("leftBox");
+    const rightBox = document.getElementById("rightBox");
+    const cipherSelect = document.getElementById("cipher-select");
+    const cipherKey = document.getElementById("cipher-key");
+    const shiftDisplay = document.getElementById("shift-display");
+    const encodeBtn = document.getElementById("encodeMode");
+    const decodeBtn = document.getElementById("decodeMode");
+    const bodyWrap = document.getElementById("bodyWrap");
+    const keyGroup = document.getElementById("key-group");
+    const polybiusGridWrapper = document.getElementById("polybius-grid-wrapper");
+    const polybiusGrid = document.getElementById("polybius-grid");
+
+    // vigenere
+    const vigenereRow = document.getElementById("vigenere-row");
+    const vigenereKey = document.getElementById("vigenere-key");
+
+    // affine
+    const affineRow = document.getElementById("affine-row");
+    const affineA = document.getElementById("affine-a");
+    const affineB = document.getElementById("affine-b");
+
+    // railfence
+    const railRow = document.getElementById("rail-row");
+    const railRails = document.getElementById("rail-rails");
+    const railOffset = document.getElementById("rail-offset");
+
+    let debounce;
+
+    async function callAPI(endpoint, text, cipher, key) {
+      const res = await fetch(`/api/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, cipher, key })
+      });
+      const data = await res.json();
+      return data.result || "";
+    }
+
+    function schedule(fn) {
+      clearTimeout(debounce);
+      debounce = setTimeout(fn, 70);
+    }
+
+    async function encodeLeftToRight() {
+      const key = getCurrentKey();
+      const result = await callAPI("encode", leftBox.value, cipherSelect.value, key);
+      rightBox.value = result;
+    }
+
+    async function decodeRightToLeft() {
+      const key = getCurrentKey();
+      const result = await callAPI("decode", rightBox.value, cipherSelect.value, key);
+      leftBox.value = result;
+    }
+
+    function sanitizeLettersOnly(s) {
+      return String(s || "").replace(/[^a-zA-Z]/g, "");
+    }
+
+    function getCurrentKey() {
+      const cipher = cipherSelect.value;
+
+      // vigenere uses its own field (letters only)
+      if (cipher === "vigenere") {
+        return sanitizeLettersOnly(vigenereKey?.value || "").trim();
+      }
+
+      // railfence uses "rails,offset"
+      if (cipher === "railfence") {
+        const r = String(railRails?.value ?? "3").trim() || "3";
+        const off = String(railOffset?.value ?? "0").trim() || "0";
+        return `${r},${off}`;
+      }
+
+      // affine uses "a,b"
+      if (cipher === "affine") {
+        const a = String(affineA?.value ?? "").trim();
+        const b = String(affineB?.value ?? "").trim();
+        return `${a},${b}`;
+      }
+
+      if (cipher === "polybius") {
+        return Array.from(polybiusGrid.querySelectorAll("input"))
+          .map(i => i.value.trim().toUpperCase() || "?")
+          .join("");
+      }
+
+      return cipherKey.value;
+    }
+
+    leftBox.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+    }));
+
+    rightBox.addEventListener("input", () => schedule(() => {
+      if (decodeBtn.classList.contains("active")) decodeRightToLeft();
+    }));
+
+    cipherSelect.addEventListener("change", () => {
+      updateKeyInput();
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    });
+
+    cipherKey.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+
+    vigenereKey?.addEventListener("input", () => {
+      // live sanitize while typing
+      const clean = sanitizeLettersOnly(vigenereKey.value);
+      if (vigenereKey.value !== clean) vigenereKey.value = clean;
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    });
+
+    railRails?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+    railOffset?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+
+    affineA?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+    affineB?.addEventListener("input", () => schedule(() => {
+      if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+      else decodeRightToLeft();
+    }));
+
+    function setMode(newMode) {
+      const isDecode = newMode === "decode";
+      encodeBtn.classList.toggle("active", !isDecode);
+      decodeBtn.classList.toggle("active", isDecode);
+      bodyWrap.classList.toggle("decode-mode", isDecode);
+      if (isDecode) rightBox.focus();
+      else leftBox.focus();
+
+      schedule(() => {
+        if (isDecode) decodeRightToLeft();
+        else encodeLeftToRight();
+      });
+    }
+
+    encodeBtn.onclick = () => setMode("encode");
+    decodeBtn.onclick = () => setMode("decode");
+
+    function generatePolybiusGrid() {
+      polybiusGrid.innerHTML = "";
+      const letters = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement("input");
+        cell.maxLength = 1;
+        cell.value = letters[i];
+        cell.addEventListener("input", () => {
+          schedule(() => {
+            if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+            else decodeRightToLeft();
+          });
+        });
+        polybiusGrid.appendChild(cell);
+      }
+    }
+
+    function updateKeyInput() {
+      const cipher = cipherSelect.value;
+
+      // defaults
+      polybiusGridWrapper.style.display = "none";
+      keyGroup.style.display = "block";
+      affineRow?.classList.remove("show");
+      vigenereRow?.classList.remove("show");
+      railRow?.classList.remove("show");
+
+      if (cipher === "polybius") {
+        polybiusGridWrapper.style.display = "block";
+        keyGroup.style.display = "none";
+        generatePolybiusGrid();
+      }
+
+      if (cipher === "affine") {
+        affineRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (cipher === "vigenere") {
+        vigenereRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (cipher === "railfence") {
+        railRow?.classList.add("show");
+        keyGroup.style.display = "none";
+      }
+
+      if (["base64", "hex", "binary", "atbash", "baconian"].includes(cipher)) {
+        keyGroup.style.display = "none";
+      }
+
+      if (cipher === "caesar") {
+        cipherKey.type = "number";
+        cipherKey.placeholder = "Enter shift";
+        shiftDisplay.style.display = "block";
+        updateShiftPreview();
+      } else {
+        shiftDisplay.textContent = "";
+      }
+    }
+
+    function updateShiftPreview() {
+      if (cipherSelect.value !== "caesar") return shiftDisplay.textContent = "";
+      const keyVal = parseInt(cipherKey.value);
+      if (!isNaN(keyVal)) {
+        const shift = ((keyVal % 26) + 26) % 26;
+        shiftDisplay.textContent = `a → ${String.fromCharCode(97 + shift)}`;
+      } else shiftDisplay.textContent = "";
+    }
+
+    cipherKey.addEventListener("input", updateShiftPreview);
+    cipherSelect.addEventListener("change", updateShiftPreview);
+
+    // 🧩 Playful random demo text
+    const funSamples = [
+      "I told my toaster to encrypt my breakfast, but it just gave me burnt toast.",
+      "This sentence knows it’s about to be encrypted and is very nervous.",
+      "My secret code is hidden in plain sight, but even I forgot the key.",
+      "Somewhere, a potato is learning Morse code faster than I can learn Python.",
+      "Warning: decoding this message may summon unintended consequences.",
+      "The cake is a cipher. You just haven’t decrypted it yet.",
+      "Behind every random string lies someone trying to be mysterious.",
+      "Sometimes I encrypt my thoughts just so I can feel like a secret agent.",
+      "I whispered my password to a pigeon. I regret everything.",
+      "My diary is written entirely in base64. Even I can’t read it anymore.",
+      "The vending machine only accepts encrypted coins.",
+      "Somewhere, a cat just brute-forced the Wi-Fi.",
+      "My coffee tastes like ciphertext and regret.",
+      "I accidentally encrypted my shopping list. Now I just buy random stuff.",
+      "Trust no one. Except maybe the hash function.",
+      "I lost my key… literally. It’s somewhere in the cipher.",
+      "The real ciphertext was the friends we made along the way.",
+      "I asked for a decryption key and got a therapy session instead.",
+      "The key was under the doormat the whole time."
+    ];
+
+    // ===========================
+    // Labs integration + login return + restore content
+    // ===========================
+    const labsModal = document.getElementById("labs-modal");
+    const labsX = document.getElementById("labs-x");
+    const labsCancel = document.getElementById("labs-cancel");
+    const labsConfirm = document.getElementById("labs-confirm");
+    const labsTitle = document.getElementById("labs-title");
+    const labsNotes = document.getElementById("labs-notes");
+    const saveToLabBtn = document.getElementById("save-to-lab");
+
+    const DRAFT_KEY = "tcl_ed_draft_v1";
+
+    function buildDraft() {
+      return {
+        ts: Date.now(),
+        mode: encodeBtn.classList.contains("active") ? "encode" : "decode",
+        cipher: cipherSelect.value,
+        key: cipherKey.value,
+        vigenere_key: vigenereKey?.value ?? "",
+        affine_a: affineA?.value ?? "",
+        affine_b: affineB?.value ?? "",
+        rail_rails: railRails?.value ?? "3",
+        rail_offset: railOffset?.value ?? "0",
+        left: leftBox.value || "",
+        right: rightBox.value || ""
+      };
+    }
+
+    function saveDraft() {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(buildDraft())); } catch {}
+    }
+
+    function loadDraft() {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch { return null; }
+    }
+
+    function clearDraft() {
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    }
+
+    function applyDraft(d) {
+      if (!d) return;
+
+      // cipher first (so key UI shows correct fields)
+      cipherSelect.value = d.cipher || "caesar";
+      updateKeyInput();
+      updateShiftPreview();
+
+      // mode
+      setMode(d.mode === "decode" ? "decode" : "encode");
+
+      // keys
+      cipherKey.value = d.key ?? "";
+      if (vigenereKey) vigenereKey.value = d.vigenere_key ?? vigenereKey.value;
+      if (affineA) affineA.value = d.affine_a ?? affineA.value;
+      if (affineB) affineB.value = d.affine_b ?? affineB.value;
+      if (railRails) railRails.value = d.rail_rails ?? railRails.value;
+      if (railOffset) railOffset.value = d.rail_offset ?? railOffset.value;
+
+      // text
+      leftBox.value = d.left ?? "";
+      rightBox.value = d.right ?? "";
+
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    }
+
+    function openLabsModal() {
+      if (!labsModal) return;
+      labsModal.classList.add("open");
+      labsModal.setAttribute("aria-hidden", "false");
+
+      const mode = encodeBtn.classList.contains("active") ? "Encode" : "Decode";
+      const cipher = cipherSelect.value;
+      const key = getCurrentKey();
+      const niceCipher = cipher.charAt(0).toUpperCase() + cipher.slice(1);
+
+      let keySnippet = "";
+      if (cipher === "polybius") keySnippet = "custom square";
+      else if (cipher === "affine") keySnippet = `a=${affineA?.value ?? "?"}, b=${affineB?.value ?? "?"}`;
+      else if (cipher === "vigenere") keySnippet = `keyword ${key || "—"}`;
+      else if (cipher === "railfence") keySnippet = `rails=${railRails?.value ?? "3"}, off=${railOffset?.value ?? "0"}`;
+      else if (key) keySnippet = `key ${key}`;
+
+      labsTitle.value = `Encoder/Decoder — ${niceCipher} (${mode}${keySnippet ? `, ${keySnippet}` : ""})`;
+
+      const input = encodeBtn.classList.contains("active") ? (leftBox.value || "(empty)") : (rightBox.value || "(empty)");
+      const output = encodeBtn.classList.contains("active") ? (rightBox.value || "(empty)") : (leftBox.value || "(empty)");
+
+      const keyLine =
+        cipher === "polybius" ? "(custom polybius square)" :
+        cipher === "affine" ? `a=${affineA?.value ?? "?"}, b=${affineB?.value ?? "Important"}` :
+        cipher === "vigenere" ? (key || "—") :
+        cipher === "railfence" ? `rails=${railRails?.value ?? "3"}, offset=${railOffset?.value ?? "0"}` :
+        (key || "—");
+
+      labsNotes.value =
+`[Encoder/Decoder]
+Mode: ${mode}
+Cipher: ${cipher}
+Key: ${keyLine}
+
+Input:
+${input}
+
+Output:
+${output}
+`;
+
+      setTimeout(() => labsTitle.focus(), 0);
+    }
+
+    function closeLabsModal() {
+      if (!labsModal) return;
+      labsModal.classList.remove("open");
+      labsModal.setAttribute("aria-hidden", "true");
+    }
+
+    labsX?.addEventListener("click", closeLabsModal);
+    labsCancel?.addEventListener("click", closeLabsModal);
+    labsModal?.addEventListener("click", (e) => {
+      const closeEl = e.target?.closest?.("[data-close='1']");
+      if (closeEl) closeLabsModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && labsModal?.classList.contains("open")) closeLabsModal();
+    });
+
+    // keep a live draft while typing (so login round-trip restores)
+    ["input","change"].forEach(evt => {
+      leftBox.addEventListener(evt, saveDraft, { passive: true });
+      rightBox.addEventListener(evt, saveDraft, { passive: true });
+      cipherSelect.addEventListener(evt, saveDraft, { passive: true });
+      cipherKey.addEventListener(evt, saveDraft, { passive: true });
+      vigenereKey?.addEventListener(evt, saveDraft, { passive: true });
+      affineA?.addEventListener(evt, saveDraft, { passive: true });
+      affineB?.addEventListener(evt, saveDraft, { passive: true });
+      railRails?.addEventListener(evt, saveDraft, { passive: true });
+      railOffset?.addEventListener(evt, saveDraft, { passive: true });
+    });
+
+        saveToLabBtn?.addEventListener("click", async () => {
+      saveDraft();
+      const gate = await canCreateLabGate();
+      if (!gate.ok) return;
+      openLabsModal();
+    });
+
+
+        async function createWorkspacePOST(title) {
+      // ✅ Gate first: if free limit hit, open popup (no flash redirect)
+      const gate = await canCreateLabGate();
+      if (!gate.ok) return null;
+
+      const fd = new FormData();
+      fd.append("title", title || "Untitled Lab");
+
+      const res = await fetch(`{{ url_for('workspace_new') }}`, {
+        method: "POST",
+        body: fd,
+        redirect: "follow"
+      });
+
+      // if server still sends to login, keep draft and go login
+      if (res.url && res.url.includes("/login")) {
+        saveDraft();
+        window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
+        return null;
+      }
+
+      const finalUrl = res.url || "";
+      const m = finalUrl.match(/\/workspaces\/(\d+)(?:\/)?$/);
+      if (!m) return null;
+
+      return Number(m[1]);
+    }
+
+    async function saveWorkspace(wsId, payload) {
+      const fd = new FormData();
+      fd.append("title", payload.title || "Untitled Lab");
+      fd.append("notes", payload.notes || "");
+      fd.append("cipher_text", payload.cipher_text || "");
+
+      const res = await fetch(`/workspaces/${wsId}/save`, { method: "POST", body: fd });
+
+      if (res.status === 401) {
+        saveDraft();
+        window.location.href = `{{ url_for('login') }}?next={{ request.path }}`;
+        return false;
+      }
+
+      const data = await res.json().catch(() => null);
+      return !!(data && data.ok);
+    }
+
+    labsConfirm?.addEventListener("click", async () => {
+      const title = (labsTitle.value || "").trim() || "Untitled Lab";
+
+      const cipher_text = rightBox.value || "";
+      const notes = (labsNotes.value || "").trim();
+
+      labsConfirm.disabled = true;
+      const oldText = labsConfirm.textContent;
+      labsConfirm.textContent = "Creating…";
+
+      try {
+        const wsId = await createWorkspacePOST(title);
+        if (!wsId) throw new Error("create failed");
+
+        labsConfirm.textContent = "Saving…";
+        const ok = await saveWorkspace(wsId, { title, notes, cipher_text });
+        if (!ok) throw new Error("save failed");
+
+        clearDraft();
+        window.location.href = `/workspaces/${wsId}`;
+      } catch (e) {
+        labsConfirm.disabled = false;
+        labsConfirm.textContent = oldText;
+        alert("Could not create lab. Are you logged in?");
+      }
+    });
+
+    // ===========================
+    // Boot
+    // ===========================
+    window.addEventListener("DOMContentLoaded", () => {
+      const d = loadDraft();
+      if (d && (d.left || d.right || d.cipher)) {
+        applyDraft(d);
+      } else {
+        leftBox.value = funSamples[Math.floor(Math.random() * funSamples.length)];
+      }
+
+      updateKeyInput();
+      updateShiftPreview();
+
+      schedule(() => {
+        if (encodeBtn.classList.contains("active")) encodeLeftToRight();
+        else decodeRightToLeft();
+      });
+    });
+      // ===========================
+    // Labs Pro popup (free limit)
+    // ===========================
+    const proModal = document.getElementById("pro-modal");
+    const proX = document.getElementById("pro-x");
+    const proCancel = document.getElementById("pro-cancel");
+    const proTitle = document.getElementById("pro-title");
+    const proBody = document.getElementById("pro-body");
+    const proCta = document.getElementById("pro-cta");
+
+    function openProModal({ title, message, upgrade_url } = {}) {
+      saveDraft(); // important: keep their work safe
+
+      if (!proModal) return;
+      if (proTitle) proTitle.textContent = title || "Free plan limit reached";
+      if (proBody) proBody.textContent = message || "Upgrade to Labs Pro for unlimited labs.";
+      if (proCta && upgrade_url) proCta.href = upgrade_url;
+
+      proModal.classList.add("open");
+      proModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setTimeout(() => proCta?.focus?.(), 0);
+    }
+
+    function closeProModal() {
+      if (!proModal) return;
+      proModal.classList.remove("open");
+      proModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    proX?.addEventListener("click", closeProModal);
+    proCancel?.addEventListener("click", closeProModal);
+    proModal?.addEventListener("click", (e) => {
+      const closeEl = e.target?.closest?.("[data-close='1']");
+      if (closeEl) closeProModal();
+    });
+    async function canCreateLabGate() {
+      // If you added my /workspaces/can-create route, this will work.
+      // If not, it fails open (lets it try creating).
+      try {
+        const res = await fetch("/workspaces/can-create", {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.status === 401 && data.redirect) {
+          window.location.href = data.redirect;
+          return { ok: false, redirected: true };
+        }
+
+        if (!res.ok || !data.ok) {
+          openProModal({
+            title: "Free plan limit reached",
+            message: data.error || "Upgrade to Labs Pro for unlimited labs.",
+            upgrade_url: data.upgrade_url || "{{ url_for('labs_pro_page') }}"
+          });
+          return { ok: false, blocked: true };
+        }
+
+        return { ok: true };
+      } catch {
+        return { ok: true }; // fail open if endpoint missing
+      }
+    }
+
+  
+  </script>
+  
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!-- templates/workspace_new.html -->
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Cipher Lab — New Lab</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .page-wrap{ min-height: calc(100dvh - 80px); padding: 18px 14px 22px; }
+    .card{
+      max-width: 720px; margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--elev-shadow);
+      overflow: hidden;
+    }
+    .top{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+    }
+    .title{ margin:0; color: var(--text); font-weight: 900; font-size: 1.05rem; }
+    .body{ padding: 16px; display:grid; gap: 12px; }
+    label{ color: var(--muted); font-weight: 800; font-size: .9rem; }
+    input[type="text"]{
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 12px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    input[type="text"]:focus{
+      outline:none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .btn{
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      cursor:pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+    }
+    .btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .btn.primary:hover{
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .hint{ color: var(--muted); font-size: .9rem; line-height: 1.45; }
+  </style>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
+</head>
+<body>
+  {% include 'base_nav.html' %}
+
+  <main class="page-wrap">
+    <section class="card" aria-label="Create workspace">
+      <div class="top">
+        <h1 class="title">Create Lab</h1>
+        <a style="text-decoration: none;" class="btn" href="{{ url_for('workspace_list') }}">Back</a>
+      </div>
+
+      <form class="body" method="POST" action="{{ url_for('workspace_new') }}">
+        <div style="display:grid; gap:8px;">
+          <label for="title">Workspace title</label>
+          <input id="title" name="title" type="text" placeholder="e.g. Zodiac #340 notes" maxlength="120" />
+          <div class="hint">
+            You can change this later inside the Lab. If left blank, we’ll use “Untitled Lab”.
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn" type="reset">Clear</button>
+          <button class="btn primary" type="submit">Create</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

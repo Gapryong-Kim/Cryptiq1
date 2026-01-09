@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+
+  <!-- Primary title -->
+  <title>Account — The Cipher Lab</title>
+
+  <!-- Viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ✅ SEO / Privacy: account pages should NOT be indexed -->
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet">
+
+  <!-- Optional: prevent referrer leakage to external sites (safe) -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Optional: consistent dark UI on mobile browser chrome (safe, no layout change) -->
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251110">
+
+  <style>
+    :root { --radius: 14px; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    main.account-viewport {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 100px 20px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ===== Background Aura ===== */
+    .account-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(50% 40% at 85% 15%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+        radial-gradient(45% 45% at 15% 25%, rgba(0,255,213,.1) 0%, rgba(0,255,213,0) 60%),
+        linear-gradient(to bottom, rgba(0,255,213,0.05), transparent 40%);
+      filter: blur(22px);
+      opacity: 0.9;
+    }
+
+    /* ===== Main Card ===== */
+    .account-card {
+      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      backdrop-filter: blur(6px);
+      padding: clamp(26px, 3.6vw, 34px);
+      width: min(950px, 95vw);
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      z-index: 1;
+    }
+
+    .account-title {
+      text-align: center;
+      color: var(--accent);
+      font-size: clamp(1.6rem, 2.4vw, 2rem);
+      font-weight: 800;
+      margin: 0 0 6px;
+    }
+
+    .account-subtitle{
+      text-align:center;
+      color: var(--muted);
+      margin: 0 0 10px;
+      font-size: .96rem;
+    }
+
+    /* ===== Hero Section ===== */
+    .account-hero {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding: 14px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    }
+
+    .avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 90%;
+      background: var(--accent);
+      color: #0f0f0f;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 2rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+      flex: 0 0 auto;
+    }
+
+    .hero-info {
+      min-width: min(420px, 92vw);
+      text-align: center;
+    }
+
+    .hero-info h2 {
+      margin: 0 0 6px;
+      color: var(--accent);
+      font-size: 1.35rem;
+      font-weight: 900;
+      text-align: center;
+      display: inline-flex;
+      flex-wrap: wrap;           /* ✅ badges wrap */
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      line-height: 1.2;
+      max-width: 100%;
+    }
+
+    .hero-info p {
+      margin: 2px 0;
+      color: var(--muted);
+      font-size: .95rem;
+      text-align: center;
+    }
+
+    /* ===== Tabs / Links ===== */
+    .account-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .account-links a {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 650;
+      transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .account-links a:hover {
+      background: var(--accent);
+      color: #0f0f0f;
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    /* ===== Sections ===== */
+    .section {
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+    }
+
+    .section h3 {
+      color: var(--accent);
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+      font-weight: 850;
+      text-align: left;
+      letter-spacing: .2px;
+    }
+
+    .section p {
+      color: var(--subtext);
+      margin: 0;
+      font-size: .95rem;
+      line-height: 1.5;
+    }
+
+    /* ===== Clean “settings row” card ===== */
+    .setting-card{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .setting-left{
+      display:flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .setting-title{
+      font-weight: 850;
+      color: var(--text);
+      font-size: .98rem;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .setting-title .dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(0,255,213,0.12);
+      flex: 0 0 auto;
+    }
+    .setting-desc{
+      color: var(--muted);
+      font-size: .93rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .setting-desc b{ color: var(--text); font-weight: 750; }
+
+    /* ===== Leaderboard Mini ===== */
+    .lb-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .lb-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      background: rgba(255,255,255,0.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lb-label { color: var(--subtext); font-size: .9rem; }
+    .lb-value {
+      font-weight: 900;
+      font-size: 1.25rem;
+      margin-top: 6px;
+    }
+
+    .lb-value.rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.35); }
+    .lb-value.rank-2 { color: #c0c0c0; text-shadow: 0 0 10px rgba(192,192,192,0.3); }
+    .lb-value.rank-3 { color: #c08a4c; text-shadow: 0 0 10px rgba(192,138,76,0.3); }
+
+    .lb-item.rank-1::after,
+    .lb-item.rank-2::after,
+    .lb-item.rank-3::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 80%;
+      height: 100%;
+      background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255,255,255,0.25) 50%,
+        transparent 100%
+      );
+      transform: skewX(-25deg);
+      animation: shimmer 3s infinite ease-in-out;
+    }
+
+    @keyframes shimmer {
+      0% { left: -150%; }
+      50% { left: 150%; }
+      100% { left: 150%; }
+    }
+
+    /* ===== Posts ===== */
+    .post-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    a.post-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    a.post-link:hover .post {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(0,255,213,0.18);
+      transform: translateY(-2px);
+    }
+
+    .post {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: rgba(255,255,255,0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: normal;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+    }
+
+    .post h4 { margin: 0; color: var(--accent); font-size: 1rem; font-weight: 850; }
+    .post p { margin: 0; color: var(--text); line-height: 1.5; }
+    .post .meta { color: var(--subtext); font-size: .9rem; }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 16px;
+      border-radius: 12px;
+      font-weight: 850;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all .18s ease;
+      text-decoration: none;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #0f0f0f;
+      border-color: var(--accent);
+    }
+
+    .btn-accent:hover {
+      box-shadow: 0 0 0 3px rgba(0,255,213,0.15);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #ff5a5a;
+      border-color: #ff5a5a;
+    }
+
+    .btn-danger:hover {
+      background: #ff5a5a;
+      color: #0f0f0f;
+      box-shadow: 0 0 0 3px rgba(255,90,90,0.18);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost{
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      border-color: var(--line);
+    }
+    .btn-ghost:hover{
+      border-color: color-mix(in oklab, var(--accent) 60%, var(--line));
+      box-shadow: 0 0 0 3px rgba(0,255,213,0.08);
+      transform: translateY(-1px);
+    }
+
+    .bottom-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    /* ===== Modals ===== */
+    .confirm-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      padding: 16px;
+    }
+
+    .confirm-modal.open { display: flex; animation: fadeIn .25s ease; }
+
+    .confirm-box {
+      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      max-width: 520px;
+      width: min(520px, 92vw);
+      padding: 22px;
+      text-align: left;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .confirm-box h2 { color: var(--accent); margin: 0 0 6px; font-weight: 900; }
+    .confirm-box p { color: var(--muted); margin: 0 0 14px; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(6px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    /* ===== Password fields (use your curated bar styles) ===== */
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+      font-size: .95rem;
+    }
+
+    .auth-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .password-field {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .toggle-pass {
+      position: absolute;
+      right: 8px;
+      top: 15%;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: .85rem;
+      /* 🔒 no movement / no animation */
+    }
+
+    .toggle-pass:hover {
+      background: var(--panel-2);
+      border-color: var(--accent);
+    }
+
+    @media (max-width: 700px) {
+      .account-card { width: 94vw; padding: 22px 18px; }
+      .account-hero { flex-direction: column; }
+      .hero-info { min-width: 0; }
+      .setting-card{ grid-template-columns: 1fr; }
+      .confirm-actions .btn{ width: 100%; }
+    }
+
+    /* ===== Pagination (My Posts) ===== */
+    .pagination{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 0 0;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .page-btn{
+      text-decoration:none;
+      border:1px solid var(--line);
+      padding:8px 12px;
+      border-radius:999px;
+      color: var(--text);
+      background: var(--panel);
+      transition: transform .12s, border-color .12s;
+    }
+    .page-btn:hover{ border-color: var(--accent); transform: translateY(-1px); }
+</style>
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
+</head>
+
+<body class="no-nav-padding">
+  {% include 'base_nav.html' %}
+
+  <main class="account-viewport">
+    <div class="account-bg"></div>
+
+    <div class="account-card">
+      <h1 class="account-title">Account Overview</h1>
+      <p class="account-subtitle">Manage your profile, security, and posts.</p>
+
+      <div class="account-hero">
+        <div class="avatar">{{ user_info['username'][0].upper() }}</div>
+        <div class="hero-info">
+          <h2>
+            {{ user_info['username'] }}
+            {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+            {% if user.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
+          </h2>
+          <p>Email: {{ user_info['email'] }}</p>
+          <p>Member since: {{ user_info['created_at'][:10] }}</p>
+        </div>
+      </div>
+
+      <div class="account-links">
+        <a href="#profile">Profile</a>
+        <a href="#security">Security</a>
+        <a href="#leaderboard">Leaderboard</a>
+        <a href="#posts">My Posts</a>
+      </div>
+
+      <!-- ===== Profile ===== -->
+      <div id="profile" class="section">
+        <h3>Profile</h3>
+        <p>Your profile summary appears above. More options coming soon.</p>
+      </div>
+
+      <!-- ===== Security (Discord-style change password modal) ===== -->
+      <div id="security" class="section">
+        <h3>Security</h3>
+
+        <div class="setting-card">
+          <div class="setting-left">
+            <div class="setting-title">
+              <span class="dot"></span>
+              Password
+            </div>
+            <div class="setting-desc">
+              Update your password by entering your current password, then a new one.
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <button class="btn btn-accent" id="pw-change-btn" type="button">Change password</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== Leaderboard ===== -->
+      <div id="leaderboard" class="section">
+        <h3>Leaderboard</h3>
+        {% if leaderboard_data %}
+        <div class="lb-stats">
+          <div class="lb-item rank-{{ leaderboard_data['rank'] }}">
+            <div class="lb-label">Rank</div>
+            <div class="lb-value rank-{{ leaderboard_data['rank'] }}">#{{ leaderboard_data['rank'] }}</div>
+          </div>
+          <div class="lb-item">
+            <div class="lb-label">Total Score</div>
+            <div class="lb-value">{{ leaderboard_data['total_score'] }}</div>
+          </div>
+          <div class="lb-item">
+            <div class="lb-label">Weeks Played</div>
+            <div class="lb-value">{{ leaderboard_data['weeks_played'] }}</div>
+          </div>
+        </div>
+        {% else %}
+        <p>You haven’t appeared on the leaderboard yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- ===== Posts ===== -->
+      <div id="posts" class="section">
+        <h3>My Posts</h3>
+        {% if posts %}
+        <div class="post-grid">
+          {% for post in posts %}
+          <a href="{{ url_for('posts_list', page=post['list_page']) }}#post-{{ post['id'] }}" class="post-link">
+            <article class="post">
+              <h4>{{ post['title'] }}</h4>
+              <p>{{ post['body'][:180] }}{% if post['body']|length > 180 %}...{% endif %}</p>
+              <div class="meta">Posted on {{ post['created_at'][:10] }}</div>
+            </article>
+          </a>
+          {% endfor %}
+        </div>
+{# --- Posts pagination --- #}
+        {% if posts_total_pages and posts_total_pages > 1 %}
+        <div class="pagination" style="margin-top:14px;">
+          {#
+            IMPORTANT:
+            Build the query string explicitly so it *always* stays on /account
+            (some setups end up generating a wrong endpoint when passing kwargs).
+          #}
+          {% if posts_page > 1 %}
+            <a href="{{ url_for('account') }}?posts_page={{ posts_page-1 }}#posts" class="page-btn">‹ Prev</a>
+          {% endif %}
+          <span>Page {{ posts_page }} of {{ posts_total_pages }}</span>
+          {% if posts_page < posts_total_pages %}
+            <a href="{{ url_for('account') }}?posts_page={{ posts_page+1 }}#posts" class="page-btn">Next ›</a>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <p>You haven’t created any posts yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- ===== Bottom Actions ===== -->
+      <div class="bottom-actions">
+        <a href="#" class="btn btn-ghost" id="logout-btn">Logout</a>
+        <a href="#" class="btn btn-danger" id="delete-btn">Delete Account</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Modals ===== -->
+  <div class="confirm-modal" id="confirm-logout">
+    <div class="confirm-box" style="text-align:center;">
+      <h2>Logout</h2>
+      <p style="color:var(--text);">Are you sure you want to log out?</p>
+      <div class="confirm-actions" style="justify-content:center;">
+        <a href="{{ url_for('logout') }}" class="btn btn-accent">Yes</a>
+        <button class="btn btn-danger" data-close type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-modal" id="confirm-delete">
+    <div class="confirm-box" style="text-align:center;">
+      <h2>Delete Account</h2>
+      <p style="color:var(--text);">This will permanently delete your account and all associated data.</p>
+      <div class="confirm-actions" style="justify-content:center;">
+        <a href="{{ url_for('delete_account') }}" class="btn btn-danger">Delete</a>
+        <button class="btn btn-ghost" data-close type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change password modal (POSTs to your new route) -->
+  <div class="confirm-modal" id="confirm-pwchange" aria-hidden="true">
+    <div class="confirm-box">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+        <div>
+          <h2 style="margin-bottom:6px;">Update your password</h2>
+          <p>Enter your current password and a new password.</p>
+        </div>
+        <button type="button" class="btn btn-ghost" id="pwchange-x" style="padding:8px 10px;">✕</button>
+      </div>
+
+      <form method="post" action="{{ url_for('account_change_password') }}" autocomplete="off">
+        <label for="old_password">Current Password</label>
+        <div class="password-field">
+          <input class="auth-input" id="old_password" name="old_password" type="password" required>
+          <button type="button" class="toggle-pass" data-toggle="old_password">Show</button>
+        </div>
+
+        <label for="new_password">New Password</label>
+        <div class="password-field">
+          <input class="auth-input" id="new_password" name="new_password" type="password" required>
+          <button type="button" class="toggle-pass" data-toggle="new_password">Show</button>
+        </div>
+
+        <label for="confirm_password">Confirm New Password</label>
+        <div class="password-field" style="margin-bottom:0;">
+          <input class="auth-input" id="confirm_password" name="confirm_password" type="password" required>
+          <button type="button" class="toggle-pass" data-toggle="confirm_password">Show</button>
+        </div>
+
+        <div class="confirm-actions">
+          <button class="btn btn-ghost" data-close type="button">Cancel</button>
+          <button class="btn btn-accent" type="submit">Done</button>
+        </div>
+      </form>
+
+      <p style="margin:10px 0 0; font-size:.9rem; color:var(--muted);">
+        Password must be at least 8 characters.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const logoutBtn = document.getElementById('logout-btn');
+    const deleteBtn = document.getElementById('delete-btn');
+    const logoutModal = document.getElementById('confirm-logout');
+    const deleteModal = document.getElementById('confirm-delete');
+
+    const pwChangeBtn = document.getElementById('pw-change-btn');
+    const pwChangeModal = document.getElementById('confirm-pwchange');
+    const pwChangeX = document.getElementById('pwchange-x');
+
+    const open = (m)=>m && m.classList.add('open');
+    const close = (m)=>m && m.classList.remove('open');
+
+    if (logoutBtn) logoutBtn.onclick = e => { e.preventDefault(); open(logoutModal); };
+    if (deleteBtn) deleteBtn.onclick = e => { e.preventDefault(); open(deleteModal); };
+
+    if (pwChangeBtn) pwChangeBtn.onclick = () => {
+      open(pwChangeModal);
+      // focus first field
+      setTimeout(() => document.getElementById("old_password")?.focus(), 50);
+    };
+
+    if (pwChangeX) pwChangeX.onclick = () => close(pwChangeModal);
+
+    // show/hide password (no movement)
+    document.querySelectorAll(".toggle-pass").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-toggle");
+        const input = document.getElementById(id);
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "Hide" : "Show";
+      });
+    });
+
+    // close buttons
+    document.querySelectorAll('[data-close]').forEach(b => {
+      b.onclick = () => [logoutModal, deleteModal, pwChangeModal].forEach(close);
+    });
+
+    // backdrop click closes
+    [logoutModal, deleteModal, pwChangeModal].forEach(m => {
+      if (!m) return;
+      m.addEventListener('click', e => { if (e.target === m) close(m); });
+    });
+
+    // escape closes
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") [logoutModal, deleteModal, pwChangeModal].forEach(close);
+    });
+  </script>
+</body>
+</html>
