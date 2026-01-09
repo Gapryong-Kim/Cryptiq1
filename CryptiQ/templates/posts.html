@@ -739,6 +739,9 @@
       .page-btn { padding: 8px 12px; font-size: 0.9rem; }
 
       .comment { padding: 8px 10px; }
+
+      /* Mobile: tap-to-collapse, hide +/- button */
+      .comment-collapse-btn{ display:none !important; }
     }
 
     /* === Search Bar (Google-style) === */
@@ -1699,6 +1702,7 @@ function renderCommentTree(nodes, parentEl, opts, depth = 0) {
         childUl.style.display = "grid";
         renderCommentTree(n.children, childUl, opts, depth + 1);
         if (n.children && n.children.length > 0) {
+          li.dataset.hasReplies = '1';
           const btn = document.createElement('button');
           btn.className = 'comment-collapse-btn';
           btn.textContent = '−';
@@ -1823,6 +1827,67 @@ document.addEventListener("click", async e => {
     colBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
     return;
   }
+  
+  /* ============================================================
+     MOBILE: Tap comment to collapse (no +/- button shown)
+     - Only on <=700px
+     - Only collapses comments that have replies (data-has-replies)
+     - Ignores taps on interactive elements (reply/delete/forms/links)
+  ============================================================ */
+  /* ============================================================
+   MOBILE: Tap comment to collapse (reliable)
+============================================================ */
+(function(){
+  const mq = window.matchMedia("(max-width: 700px)");
+  const TAP_MAX_MOVE = 10; // px
+  let downX = 0, downY = 0, downTarget = null;
+
+  function isInteractive(el){
+    return !!el.closest("button, a, textarea, input, select, label, form");
+  }
+
+  // Record start point
+  document.addEventListener("pointerdown", (e) => {
+    if (!mq.matches) return;
+    if (e.pointerType !== "touch") return;
+
+    downX = e.clientX;
+    downY = e.clientY;
+    downTarget = e.target;
+  }, { capture: true, passive: true });
+
+  // Toggle on pointerup if it was a real tap (not a scroll)
+  document.addEventListener("pointerup", (e) => {
+    if (!mq.matches) return;
+    if (e.pointerType !== "touch") return;
+
+    const dx = Math.abs(e.clientX - downX);
+    const dy = Math.abs(e.clientY - downY);
+    if (dx > TAP_MAX_MOVE || dy > TAP_MAX_MOVE) return; // was a scroll/drag
+
+    // Use the original down target to avoid weirdness on lift
+    const target = downTarget || e.target;
+
+    if (isInteractive(target)) return;
+
+    const li = target.closest(".comment");
+    if (!li) return;
+
+    // Only collapsible if it has replies
+    if (li.dataset.hasReplies !== "1") return;
+
+    const collapsed = li.classList.toggle("comment-collapsed");
+
+    // Keep hidden desktop button state in sync (optional)
+    const btn = li.querySelector(".comment-collapse-btn");
+    if (btn){
+      btn.textContent = collapsed ? "+" : "−";
+      btn.setAttribute("aria-label", collapsed ? "Expand" : "Collapse");
+      btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    }
+  }, { capture: true, passive: true });
+})();
+
 
   /* Open reply form */
   const replyBtn = e.target.closest(".comment-reply-btn");
