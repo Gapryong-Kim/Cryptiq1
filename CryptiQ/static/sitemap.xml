@@ -18,4 +18,17 @@
   <url><loc>https://thecipherlab.org/info</loc></url>
   <url><loc>https://thecipherlab.org/labs-pro</loc></url>
 
+
+  <!-- Cipher info pages -->
+  <url><loc>https://thecipherlab.org/ciphers/caesar</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/vigenere</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/affine</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/substitution</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/transposition</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/playfair</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/hill</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/autokey</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/bacon</loc></url>
+  <url><loc>https://thecipherlab.org/ciphers/morse</loc></url>
+
 </urlset>

@@ -1078,3 +1078,13 @@ main {
 .site-footer {
   margin-top: auto;          /* <-- key */
 }
+@media (max-width: 640px) {
+  .pro-badge {
+    font-size: 0.7rem;          /* slightly larger */
+    font-weight: 900;           /* force true bold */
+    line-height: 1.15;          /* restores glyph weight */
+    letter-spacing: 0.02em;     /* optical bolding */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
