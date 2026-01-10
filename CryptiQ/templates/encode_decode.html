@@ -625,19 +625,27 @@ textarea::placeholder{
         <div>
           <label for="cipher-select">Cipher</label>
           <select id="cipher-select">
-            <option value="caesar" selected>Caesar Cipher</option>
-            <option value="vigenere">Vigenère Cipher</option>
-            <option value="affine">Affine Cipher</option>
-            <option value="railfence">Rail Fence</option>
-            <option value="columnar">Columnar Transposition</option>
-            <option value="polybius">Polybius Square</option>
-            <option value="base64">Base64</option>
-            <option value="hex">Hexadecimal</option>
-            <option value="binary">Binary</option>
-            <option value="permutation">Permutation</option>
-            <option value="amsco">Amsco Cipher</option>
-            <option value="baconian">Baconian</option>
-            <option value="atbash">Atbash</option>
+            <optgroup label="Substitution">
+              <option value="caesar" selected>Caesar Cipher</option>
+              <option value="vigenere">Vigenère Cipher</option>
+              <option value="affine">Affine Cipher</option>
+              <option value="polybius">Polybius Square</option>
+              <option value="baconian">Baconian</option>
+              <option value="atbash">Atbash</option>
+            </optgroup>
+
+            <optgroup label="Transposition">
+              <option value="railfence">Rail Fence</option>
+              <option value="columnar">Columnar Transposition</option>
+              <option value="permutation">Permutation</option>
+              <option value="amsco">Amsco Cipher</option>
+            </optgroup>
+
+            <optgroup label="Encodings / Formats">
+              <option value="base64">Base64</option>
+              <option value="hex">Hexadecimal</option>
+              <option value="binary">Binary</option>
+            </optgroup>
           </select>
         </div>
 

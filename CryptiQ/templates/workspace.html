@@ -239,6 +239,153 @@
       box-shadow: 0 0 0 2px var(--accent-soft);
     }
 
+    /* =============== Notes Rich Toolbar =============== */
+    .note-editor{
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--input-bg);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 380px;
+    }
+
+    /* === Word/Notes-style SINGLE BAND toolbar (no wrapping) === */
+    .note-toolbar{
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px 10px;
+      background: color-mix(in oklab, var(--panel) 82%, black);
+      border-bottom: 1px solid var(--line);
+      scrollbar-width: none;
+    }
+    .note-toolbar::-webkit-scrollbar{ height: 0; }
+
+    .note-btn{
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      border: 1px solid color-mix(in oklab, var(--line-2) 70%, transparent);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: 900;
+      user-select: none;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      flex: 0 0 auto;
+    }
+    .note-btn svg{
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+/* Force icon strokes even if global CSS resets SVGs */
+.note-btn svg, .note-btn svg *{
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  vector-effect: non-scaling-stroke;
+}
+/* Text in the numbered-list icon should be filled, not stroked */
+.note-btn svg text{
+  fill: currentColor !important;
+  stroke: none !important;
+}
+    .note-btn .txt-ico{ font-size: 14px; font-weight: 900; letter-spacing: .02em; }
+    .note-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .note-btn:active{ transform: translateY(1px); }
+    .note-btn[disabled]{ opacity: .45; cursor: not-allowed; box-shadow:none !important; }
+
+    .note-sep{
+      width: 1px;
+      height: 22px;
+      background: var(--line);
+      opacity: .85;
+      margin: 0 2px;
+      flex: 0 0 auto;
+    }
+
+    .note-select{
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 9px;
+      border: 1px solid color-mix(in oklab, var(--line-2) 70%, transparent);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-weight: 850;
+      font-size: .86rem;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .note-select.size{ width: 86px; }
+    .note-select:focus{
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .note-surface{
+      padding: 12px 12px;
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 17px;
+      line-height: 1.55;
+      overflow-y: auto;
+      min-height: 380px;
+      scrollbar-gutter: stable both-edges;
+      outline: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .note-surface:focus{
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .note-surface blockquote{
+      margin: 10px 0;
+      padding: 10px 12px;
+      border-left: 4px solid var(--accent);
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+    }
+
+    .note-surface pre{
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .note-surface a{ color: var(--accent); font-weight: 900; text-decoration: none; }
+    .note-surface a:hover{ text-decoration: underline; }
+
+    /* Keep toolbar visible even when you scroll the editor area */
+    .note-editor{ position: relative; }
+
+
+
     .doc-actions{
       display: flex;
       gap: 10px;
@@ -2004,6 +2151,128 @@
     min-width: max-content !important;
   }
 }
+/* === NOTES TOOLBAR (Word / Notes style) === */
+.notes-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 10px;
+
+  /* LIGHTER BAR */
+  background: #1f2422; /* lighter than editor */
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.notes-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Toolbar buttons */
+.notes-toolbar button,
+.notes-toolbar select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+  min-height: 32px;
+
+  background: #2a2f2d;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+
+  color: #e7ecea;            /* 👈 FIXED LABEL COLOR */
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  cursor: pointer;
+}
+
+/* Icons */
+.notes-toolbar .icon {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Hover / active */
+.notes-toolbar button:hover,
+.notes-toolbar select:hover {
+  background: #343a38;
+}
+
+.notes-toolbar button.active {
+  background: #3f7f6a;
+  border-color: #3f7f6a;
+  color: #ffffff;
+}
+/* Make toolbar SVG icons inherit the button text color */
+.notes-toolbar svg.icon{
+  width: 16px;
+  height: 16px;
+  display: block;
+
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Fill the bullet circles */
+.notes-toolbar svg.icon circle{
+  fill: currentColor;
+  stroke: none;
+}
+/* Notes toolbar buttons MUST override global button styles */
+.note-btn{
+  padding: 0 !important;              /* override global button padding */
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  border-radius: 9px;
+
+  border: 1px solid color-mix(in oklab, var(--line-2) 70%, transparent) !important;
+  background: rgba(255,255,255,0.02) !important;
+
+  color: var(--text) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+/* Make SVG icons show up (inherit button color) */
+.note-btn svg{
+  width: 18px;
+  height: 18px;
+  display: block;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* If your bullet icon uses circles, fill those */
+.note-btn svg circle{
+  fill: currentColor;
+  stroke: none;
+}
+
+.note-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
 
 </style>
 
@@ -2101,11 +2370,99 @@
               value="{{ ws.title or 'Untitled Workspace' }}"
             />
 
-            <textarea
-              id="ws-notes"
-              class="doc-text"
-              placeholder="Write notes, partial plaintext, hypotheses…"
-            >{{ ws.notes or "" }}</textarea>
+            <div class="note-editor" id="note-editor-wrap">
+              <div class="note-toolbar" id="note-toolbar" role="toolbar" aria-label="Notes formatting toolbar">
+                <!-- Mirrors a mobile notes app: one fixed band, compact icons, horizontal scroll if needed -->
+
+                <button class="note-btn" type="button" id="note-checklist" title="Checklist" aria-label="Checklist">
+                     <svg viewBox="0 0 24 24" aria-hidden="true">
+    <!-- checkbox box -->
+    <rect x="4" y="4" width="16" height="16" rx="3"/>
+
+    <!-- check mark -->
+    <path d="M7 12.5l3 3 7-7"/>
+  </svg>
+                </button>
+
+                <select class="note-select" id="note-style" title="Style" aria-label="Style">
+                  <option value="P" selected>Normal</option>
+                  <option value="H1">H1</option>
+                  <option value="H2">H2</option>
+                  <option value="BLOCKQUOTE">Quote</option>
+                  <option value="PRE">Code</option>
+                </select>
+
+             
+
+                <button class="note-btn" type="button" data-cmd="bold" title="Bold (Ctrl+B)" aria-label="Bold"><span class="txt-ico">B</span></button>
+                <button class="note-btn" type="button" data-cmd="italic" title="Italic (Ctrl+I)" aria-label="Italic"><span class="txt-ico"><i>I</i></span></button>
+                <button class="note-btn" type="button" data-cmd="underline" title="Underline (Ctrl+U)" aria-label="Underline"><span class="txt-ico"><u>U</u></span></button>
+
+                <span class="note-sep" aria-hidden="true"></span>
+
+                <button class="note-btn" type="button" data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">
+<svg viewBox="0 0 24 24" class="icon">
+  <circle cx="5" cy="6" r="1.5"/>
+  <circle cx="5" cy="12" r="1.5"/>
+  <circle cx="5" cy="18" r="1.5"/>
+  <line x1="11" y1="6" x2="21" y2="6"/>
+  <line x1="11" y1="12" x2="21" y2="12"/>
+  <line x1="11" y1="18" x2="21" y2="18"/>
+</svg>
+
+
+                </button>
+                <button class="note-btn" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <text x="3.5" y="8" font-size="7" fill="currentColor">1</text>
+                    <text x="3.5" y="14" font-size="7" fill="currentColor">2</text>
+                    <text x="3.5" y="20" font-size="7" fill="currentColor">3</text>
+                    <path d="M9 6h12"/>
+                    <path d="M9 12h12"/>
+                    <path d="M9 18h12"/>
+                  </svg>
+                </button>
+
+                <span class="note-sep" aria-hidden="true"></span>
+
+                <button class="note-btn" type="button" data-cmd="justifyLeft" title="Align left" aria-label="Align left">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M4 10h10"/><path d="M4 14h16"/><path d="M4 18h10"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="justifyCenter" title="Center" aria-label="Center">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M7 10h10"/><path d="M4 14h16"/><path d="M7 18h10"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="justifyRight" title="Align right" aria-label="Align right">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M10 10h10"/><path d="M4 14h16"/><path d="M10 18h10"/></svg>
+                </button>
+
+                <span class="note-sep" aria-hidden="true"></span>
+
+                <button class="note-btn" type="button" data-action="link" title="Insert link" aria-label="Insert link">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 1 0-7l1.2-1.2a5 5 0 0 1 7 7L17 13"/><path d="M14 11a5 5 0 0 1 0 7L12.8 19.2a5 5 0 0 1-7-7L7 11"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="unlink" title="Remove link" aria-label="Remove link">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7l-1.2-1.2a5 5 0 0 0-7 7L10 14"/><path d="M7 17l1.2 1.2a5 5 0 0 0 7-7L14 10"/><path d="M4 4l16 16"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="removeFormat" title="Clear formatting" aria-label="Clear formatting">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20h12"/><path d="M9.5 4h5"/><path d="M10 4 7.5 14"/><path d="M17 6l2 2"/><path d="M9 18l10-10"/></svg>
+                </button>
+
+                <span class="note-sep" aria-hidden="true"></span>
+
+                <button class="note-btn" type="button" data-cmd="undo" title="Undo (Ctrl+Z)" aria-label="Undo">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14l-4-4 4-4"/><path d="M5 10h8a6 6 0 1 1 0 12h-3"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="redo" title="Redo (Ctrl+Y)" aria-label="Redo">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l4 4-4 4"/><path d="M19 10H11a6 6 0 1 0 0 12h3"/></svg>
+                </button>
+              </div>
+
+              <!-- Rich editor surface -->
+              <div id="ws-editor" class="note-surface" contenteditable="true" spellcheck="true" aria-label="Notes editor"></div>
+
+              <!-- Hidden storage field (keeps existing JS/back-end plumbing intact) -->
+              <textarea id="ws-notes" class="doc-text" style="display:none;">{{ ws.notes or "" }}</textarea>
+            </div>
 
             <div class="doc-actions">
               <button class="mini-btn" id="insert-tool-output" type="button">Insert tool output → doc</button>
@@ -2795,8 +3152,221 @@
     // View-only enforcement (client)
     // ===========================
     const notesEl = document.getElementById("ws-notes");
+    const editorEl = document.getElementById("ws-editor");
+    const toolbarEl = document.getElementById("note-toolbar");
     const titleEl = document.getElementById("ws-title-input");
     const cipherEl = document.getElementById("cipher-text");
+
+
+    // ===========================
+    // Notes Rich Editor (Word-style mini toolbar)
+    // ===========================
+    function looksLikeHtml(s){
+      return /<\w+[\s>]/.test(s || "");
+    }
+
+    function plaintextToHtml(s){
+      // escape HTML then keep newlines
+      const esc = (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      return esc.replace(/\n/g, "<br>");
+    }
+
+    function sanitizeEditorHtml(html){
+      // light cleanup only; we rely on the app being private per-user
+      return (html || "")
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/ on\w+="[^"]*"/g, "")
+        .replace(/ on\w+='[^']*'/g, "");
+    }
+
+    function syncTextareaToEditor(){
+      if (!editorEl || !notesEl) return;
+      const raw = notesEl.value || "";
+      if (raw.trim() === "") { editorEl.innerHTML = ""; return; }
+      editorEl.innerHTML = looksLikeHtml(raw) ? sanitizeEditorHtml(raw) : plaintextToHtml(raw);
+    }
+
+    function syncEditorToTextarea(){
+      if (!editorEl || !notesEl) return;
+      // Ensure checkbox state is serialized (property -> attribute)
+      editorEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        if (cb.checked) cb.setAttribute('checked', '');
+        else cb.removeAttribute('checked');
+      });
+      // store HTML so formatting survives autosave
+      const html = sanitizeEditorHtml(editorEl.innerHTML);
+      notesEl.value = html;
+    }
+
+    function getEditorPlainText(){
+      if (!editorEl) return "";
+      return (editorEl.innerText || "").replace(/ /g, " ").trimEnd();
+    }
+
+    function focusEditorEnd(){
+      if (!editorEl) return;
+      editorEl.focus();
+      const range = document.createRange();
+      range.selectNodeContents(editorEl);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    function insertHtmlAtCursor(html){
+      if (!editorEl) return;
+      editorEl.focus();
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) { focusEditorEnd(); return; }
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      const frag = document.createDocumentFragment();
+      let node, lastNode;
+      while ((node = el.firstChild)) {
+        lastNode = frag.appendChild(node);
+      }
+      range.insertNode(frag);
+      if (lastNode) {
+        range.setStartAfter(lastNode);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+
+    function insertToolOutputIntoEditor(tool, stamp, text){
+      const safe = (text || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      const block = `
+--- ${tool} output (${stamp}) ---
+${safe}
+`;
+      // insert as a <pre> so it stays monospaced and readable
+      insertHtmlAtCursor(`<div><br></div><pre>${block}</pre><div><br></div>`);
+    }
+
+    function exec(cmd, value=null){
+      try{ document.execCommand(cmd, false, value); } catch {}
+      syncEditorToTextarea();
+    }
+
+    function applyFontSizePx(px){
+      // execCommand fontSize is 1-7; we use the classic "size=7" then restyle.
+      try { document.execCommand('styleWithCSS', false, true); } catch {}
+      try { document.execCommand('fontSize', false, '7'); } catch {}
+      // Convert the injected <font size="7"> wrappers to inline font-size in px.
+      editorEl?.querySelectorAll?.('font[size="7"]').forEach(f => {
+        f.removeAttribute('size');
+        f.style.fontSize = `${px}px`;
+      });
+      syncEditorToTextarea();
+    }
+
+    function applyBlockTag(tag){
+      // Use formatBlock for headings/quote/pre
+      const t = (tag || "P").toLowerCase();
+      exec('formatBlock', `<${t}>`);
+    }
+
+    function makeChecklist(){
+      // Convert selection into a checklist item (simple + resilient)
+      // If you're inside a list already, we inject a checkbox into the current LI.
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) { focusEditorEnd(); }
+      const range = sel.getRangeAt(0);
+      let node = range.startContainer;
+      while (node && node !== editorEl) {
+        if (node.nodeName === 'LI') {
+          const li = node;
+          if (!li.querySelector('input[type="checkbox"]')) {
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.style.marginRight = '8px';
+            cb.addEventListener('click', () => syncEditorToTextarea());
+            li.insertBefore(cb, li.firstChild);
+          }
+          syncEditorToTextarea();
+          return;
+        }
+        node = node.parentNode;
+      }
+      // Not in a list: create a new checklist line
+      insertHtmlAtCursor(`<div><label style="display:inline-flex;align-items:flex-start;gap:8px;"><input type="checkbox"/> <span>Checklist item</span></label></div>`);
+      syncEditorToTextarea();
+    }
+
+    function wireToolbar(){
+      if (!toolbarEl || !editorEl) return;
+
+      // Buttons
+      toolbarEl.querySelectorAll('button.note-btn[data-cmd]').forEach(btn => {
+        btn.addEventListener('mousedown', (e) => e.preventDefault()); // keep selection
+        btn.addEventListener('click', () => {
+          if (!CAN_EDIT) return;
+          exec(btn.dataset.cmd);
+        });
+      });
+
+      // Link
+      toolbarEl.querySelectorAll('button.note-btn[data-action="link"]').forEach(btn => {
+        btn.addEventListener('mousedown', (e) => e.preventDefault());
+        btn.addEventListener('click', async () => {
+          if (!CAN_EDIT) return;
+          const url = prompt('Paste a URL (https://...)');
+          if (!url) return;
+          exec('createLink', url.trim());
+        });
+      });
+
+      // Checklist
+      const cl = document.getElementById('note-checklist');
+      cl?.addEventListener('mousedown', (e) => e.preventDefault());
+      cl?.addEventListener('click', () => { if (CAN_EDIT) makeChecklist(); });
+
+      // Style dropdown
+      const styleSel = document.getElementById('note-style');
+      styleSel?.addEventListener('change', () => {
+        if (!CAN_EDIT) return;
+        applyBlockTag(styleSel.value);
+        editorEl.focus();
+      });
+
+      // Font size dropdown
+      const sizeSel = document.getElementById('note-size');
+      sizeSel?.addEventListener('change', () => {
+        if (!CAN_EDIT) return;
+        const px = parseInt(sizeSel.value, 10);
+        if (!Number.isFinite(px)) return;
+        applyFontSizePx(px);
+        editorEl.focus();
+      });
+
+      // Keep hidden textarea synced on checkbox toggles in content
+      editorEl.addEventListener('click', (e) => {
+        const t = e.target;
+        if (t && t.tagName === 'INPUT' && t.type === 'checkbox') {
+          syncEditorToTextarea();
+        }
+      });
+
+      // On paste: keep it clean-ish (no huge styles)
+      editorEl.addEventListener('paste', (e) => {
+        if (!CAN_EDIT) return;
+        // prefer plain text paste
+        if (e.clipboardData) {
+          e.preventDefault();
+          const text = e.clipboardData.getData('text/plain');
+          exec('insertText', text);
+        }
+      });
+    }
+
+    // Init editor from saved notes
+    syncTextareaToEditor();
+    wireToolbar();
+
 
     function applyViewOnlyUI() {
       if (CAN_EDIT) return;
@@ -2810,6 +3380,14 @@
         notesEl.readOnly = true;
         notesEl.setAttribute("aria-readonly", "true");
       }
+      if (editorEl) {
+        editorEl.setAttribute('contenteditable', 'false');
+        editorEl.setAttribute('aria-readonly', 'true');
+      }
+      toolbarEl?.querySelectorAll?.('button, select')?.forEach?.(el => {
+        el.disabled = true;
+        el.title = 'View-only';
+      });
       if (cipherEl) {
         cipherEl.readOnly = true;
         cipherEl.setAttribute("aria-readonly", "true");
@@ -2966,14 +3544,19 @@
     // ✅ Only wire edit listeners if editable
     if (CAN_EDIT) {
       titleEl?.addEventListener("input", markDirty, { passive: true });
-      notesEl?.addEventListener("input", markDirty, { passive: true });
+      // Notes editor: sync rich HTML -> hidden textarea -> autosave
+      editorEl?.addEventListener("input", () => {
+        if (!CAN_EDIT) return;
+        syncEditorToTextarea();
+        markDirty();
+      }, { passive: true });
 
       cipherEl?.addEventListener("input", () => {
         if (internalCipherUpdate) return;
         markDirty();
       }, { passive: true });
 
-      [titleEl, notesEl, cipherEl].forEach(el => {
+      [titleEl, editorEl, cipherEl].forEach(el => {
         if (!el) return;
         el.addEventListener("blur", () => triggerAutosave("blur"));
         el.addEventListener("change", () => markDirty(), { passive: true });
@@ -3052,14 +3635,15 @@
         day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
       }).replace(",", "");
 
-      notesEl.value += (notesEl.value ? "\n\n" : "") + `--- ${tool} output (${stamp}) ---\n` + text + "\n";
-      notesEl.focus();
+      insertToolOutputIntoEditor(tool, stamp, text);
+      editorEl?.focus();
+      syncEditorToTextarea();
       markDirty();
     });
 
     document.getElementById("copy-doc")?.addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(notesEl?.value || "");
+        await navigator.clipboard.writeText(getEditorPlainText());
         setStatus("Copied");
         setTimeout(() => setStatus("—"), 900);
       } catch {}
