@@ -2622,7 +2622,7 @@
                 </div>
               </div>
 
-              <div class="cipher-upload-status" id="cipher-image-status">—</div>
+              <div class="cipher-upload-status" id="cipher-image-status"></div>
 
               <div class="cipher-tabs" id="cipher-tabs" aria-label="Cipher image tabs"></div>
               <div class="hint" id="cipher-tabs-hint" style="display:none;margin-top:-2px;">
@@ -3237,14 +3237,62 @@
     }
 
     function insertToolOutputIntoEditor(tool, stamp, text){
-      const safe = (text || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-      const block = `
---- ${tool} output (${stamp}) ---
-${safe}
-`;
-      // insert as a <pre> so it stays monospaced and readable
-      insertHtmlAtCursor(`<div><br></div><pre>${block}</pre><div><br></div>`);
-    }
+  const editor = document.getElementById("ws-editor");
+  if (!editor) return;
+
+  // Always focus so selection is inside the editor
+  editor.focus();
+
+  const block =
+`--- ${tool} output (${stamp}) ---
+${text || ""}`;
+
+  insertPlainTextWithLineBreaksAtCursor(block, { padBefore: true, padAfter: true });
+}
+
+function insertPlainTextWithLineBreaksAtCursor(text, opts = {}) {
+  const { padBefore = false, padAfter = false } = opts;
+
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+
+  const range = sel.getRangeAt(0);
+
+  // Ensure we’re inserting into the editor (fallback: append to end)
+  const editor = document.getElementById("ws-editor");
+  if (editor && !editor.contains(range.commonAncestorContainer)) {
+    const r = document.createRange();
+    r.selectNodeContents(editor);
+    r.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
+
+  const frag = document.createDocumentFragment();
+
+  // optional padding blank lines
+  if (padBefore) { frag.appendChild(document.createElement("br")); frag.appendChild(document.createElement("br")); }
+
+  // insert text preserving newlines
+  const lines = String(text).split(/\r?\n/);
+  lines.forEach((line, i) => {
+    frag.appendChild(document.createTextNode(line));
+    if (i !== lines.length - 1) frag.appendChild(document.createElement("br"));
+  });
+
+  if (padAfter) { frag.appendChild(document.createElement("br")); frag.appendChild(document.createElement("br")); }
+
+  // replace selection with fragment
+  range.deleteContents();
+  range.insertNode(frag);
+
+  // move caret to end of inserted content
+  sel.removeAllRanges();
+  const endRange = document.createRange();
+  endRange.selectNodeContents(editor);
+  endRange.collapse(false);
+  sel.addRange(endRange);
+}
 
     function exec(cmd, value=null){
       try{ document.execCommand(cmd, false, value); } catch {}
