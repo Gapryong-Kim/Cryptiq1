@@ -61,7 +61,23 @@
       border-radius:8px;
       transition:.2s;
     }
-    .sidebar a:hover{
+    
+    .sidebar .sb-group{
+      margin-top: 12px;
+      margin-bottom: 6px;
+      padding: 6px 8px 8px;
+      color: var(--text);
+      font-weight: 950;
+      font-size: .78rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .85;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar a.sb-item{
+      padding-left: 16px; /* indent under group header */
+    }
+.sidebar a:hover{
       background:var(--accent);
       color:#0f0f0f;
       box-shadow:0 0 12px var(--accent-soft-2);
@@ -151,90 +167,28 @@
 
     html{ scroll-behavior:smooth; }
 
+    
+
     /* ===============================
-       WhatsApp-style “Read more”
-       (no big cards; just a neat
-       expandable block inside section)
+       Inline deep-dive blocks (no dropdowns)
        =============================== */
-
-    details.more{
+    .deep-dive{
       margin: 10px 0 22px;
-      border-radius: 12px;
-      border: 1px solid var(--line-2);
-      background: rgba(0,0,0,0.12);
-      overflow: hidden;
-    }
-    details.more > summary{
-      list-style:none;
-      cursor:pointer;
-      padding: 12px 12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      user-select:none;
-      outline:none;
-    }
-    details.more > summary::-webkit-details-marker{ display:none; }
-
-    .more-left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap: wrap;
-    }
-    .more-chip{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border:1px solid var(--line-2);
-      background: rgba(255,255,255,0.03);
-      color: var(--text);
-      font-weight: 900;
-      font-size: .88rem;
-      white-space: nowrap;
-      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
-    }
-    details.more:hover .more-chip{
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-soft, rgba(0,255,213,0.18));
-    }
-
-    .more-meta{
-      color: var(--muted, #a0a0a0);
-      font-size: .9rem;
-      font-weight: 700;
-    }
-
-    .chev{
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      border: 1px solid var(--line-2);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color: var(--text);
-      background: rgba(255,255,255,0.02);
-      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
-      flex: 0 0 auto;
-    }
-    details.more[open] .chev{
-      transform: rotate(180deg);
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-soft, rgba(0,255,213,0.18));
-    }
-
-    .more-body{
       padding: 12px 14px 14px;
-      border-top: 1px solid var(--line-2);
-      display: grid;
-      gap: 12px;
+      border-left: 3px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.06);
+      border-radius: 12px;
     }
-
-    .more-grid{
+    .deep-head{
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: .2px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      font-size: .78rem;
+      opacity: .85;
+    }
+.more-grid{
       display:grid;
       grid-template-columns: 1.15fr 0.85fr;
       gap: 12px;
@@ -376,6 +330,18 @@
   }
 }
 
+  
+    .freq-hint{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid rgba(0,255,213,0.55);
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+    .freq-hint strong{ color: var(--text); }
+
   </style>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
@@ -390,17 +356,25 @@
 
   <aside class="sidebar" id="sidebar">
     <h3>Quick Jump</h3>
+
     <a href="#intro">Overview</a>
-    <a href="#substitution">Substitution Cipher</a>
-    <a href="#caesar">Caesar Cipher</a>
-    <a href="#vigenere">Vigenère Cipher</a>
-    <a href="#affine">Affine Cipher</a>
-    <a href="#playfair">Playfair Cipher</a>
-    <a href="#hill">Hill Cipher</a>
-    <a href="#autokey">Autokey Cipher</a>
-    <a href="#transposition">Transposition Cipher</a>
-    <a href="#bacon">Bacon Cipher</a>
-    <a href="#morse">Morse & Enigma</a>
+
+    <div class="sb-group">Substitution</div>
+    <a class="sb-item" href="#substitution">Substitution Cipher</a>
+    <a class="sb-item" href="#caesar">Caesar Cipher</a>
+    <a class="sb-item" href="#vigenere">Vigenère Cipher</a>
+    <a class="sb-item" href="#affine">Affine Cipher</a>
+    <a class="sb-item" href="#playfair">Playfair Cipher</a>
+    <a class="sb-item" href="#hill">Hill Cipher</a>
+    <a class="sb-item" href="#autokey">Autokey Cipher</a>
+
+    <div class="sb-group">Transposition</div>
+    <a class="sb-item" href="#transposition">Transposition Cipher</a>
+
+    <div class="sb-group">Encoding / Other</div>
+    <a class="sb-item" href="#bacon">Bacon Cipher</a>
+    <a class="sb-item" href="#morse">Morse &amp; Enigma</a>
+
   </aside>
 
   <div id="sidebar-overlay"></div>
@@ -419,20 +393,23 @@
       <p>
         This page explains the most well-known ciphers in plain language and shows you how to break them yourself
         using The Cipher Lab’s interactive <a class="inline-link" href="{{ url_for('tools_page') }}">Tools</a> and
-        <a class="inline-link" href="{{ url_for('index') }}">Cipher Breaker</a>.
+        <a class="inline-link" href="{{ url_for('index') }}">Cipher Encoder / Decoder</a>.
       </p>
       <div class="tip">
         💡 <strong>Tip:</strong> To start analysing any cipher, run your text through the
         <a class="inline-link" href="{{ url_for('tools_page') }}">Frequency Analyzer</a> — it highlights the most common letters, which often exposes the key.
       </div>
       <div class="note">
-        Each cipher below has a compact explanation, plus a <strong>Read more</strong> dropdown with a deeper “how it works / how to break / quick visual”.
+        Each cipher below has a quick overview. Click <strong>Learn more</strong> to open a dedicated page with full history, how to encode, how to break, and frequency-analysis signals.
       </div>
     </section>
 
     <!-- ========================= SUBSTITUTION ========================= -->
     <section id="substitution">
       <h2>Substitution Cipher</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='substitution') }}">Learn more →</a>
+      </p>
       <p>
         A substitution cipher replaces every letter in the alphabet with another. The mapping stays the same for the entire message —
         that consistency is exactly what you exploit to break it.
@@ -445,16 +422,11 @@ Ciphertext: QEBBY TBOBD</div>
       <p>
         Use frequency + word patterns. In English, E/T/A/O/I are common. If spaces are kept, word lengths and repeats give huge clues.
       </p>
+      <p class="freq-hint"><strong>What the frequency looks like:</strong> Monogram frequencies keep the same overall “English shape” (one letter is still the most common, a few are medium, many are rare), but the labels are swapped. Bigrams/trigrams also look English-ish but with letters renamed.</p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">how it works • what leaks • best workflow</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -482,8 +454,10 @@ Ciphertext: QEBBY TBOBD</div>
               <div class="mini-code">Plain:  ABCDEFGHIJKLMNOPQRSTUVWXYZ
 Cipher: QWERTYUIOPASDFGHJKLZXCVBNM</div>
               <div class="more-cta-row">
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='substitution' ) }}">Learn more</a>
+                
                 <a class="more-cta primary" href="{{ url_for('tools_page') }}">Open Tools</a>
-                <a class="more-cta" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
               </div>
             </div>
           </div>
@@ -492,12 +466,16 @@ Cipher: QWERTYUIOPASDFGHJKLZXCVBNM</div>
             If you get even 6–10 letters right, the rest becomes much easier. Keep a running mapping and don’t “un-guess” without a reason.
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= CAESAR ========================= -->
     <section id="caesar">
       <h2>Caesar Cipher</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='caesar') }}">Learn more →</a>
+      </p>
       <p>
         The Caesar cipher shifts every letter by the same number of positions in the alphabet. After Z, it wraps back to A.
       </p>
@@ -509,16 +487,11 @@ Plaintext: HELLO → Ciphertext: KHOOR</div>
       <p>
         There are only 25 possible shifts. Brute force them and pick the one that produces readable English.
       </p>
+      <p class="freq-hint"><strong>What the frequency looks like:</strong> Exactly like normal English, just shifted: the frequency curve is unchanged. A chi‑square match against English over all 25 shifts usually pops the right one immediately.</p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">formula • wrap-around • quick checks</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -543,18 +516,24 @@ Plaintext: HELLO → Ciphertext: KHOOR</div>
               <div class="mini-code">Plain:  ABCDEFGHIJKLMNOPQRSTUVWXYZ
 Shift+3: DEFGHIJKLMNOPQRSTUVWXYZABC</div>
               <div class="more-cta-row">
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='caesar' ) }}">Learn more</a>
+                
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
                 <a class="more-cta" href="{{ url_for('tools_page') }}">Frequency Tool</a>
               </div>
             </div>
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= VIGENERE ========================= -->
     <section id="vigenere">
       <h2>Vigenère Cipher</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='vigenere') }}">Learn more →</a>
+      </p>
       <p>
         Vigenère uses a keyword to apply multiple Caesar shifts. The shift changes through the message based on the key letters.
       </p>
@@ -567,16 +546,11 @@ Ciphertext: KXRKGIKXREQF</div>
       <p>
         Find the <strong>key length</strong> first (Kasiski / IOC), then solve each column as a Caesar cipher.
       </p>
+      <p class="freq-hint"><strong>What the frequency looks like:</strong> Frequencies get “flattened” compared to English (lower IoC, less obvious E/T/A peaks). If you split the text by key position, each slice looks like a Caesar‑shifted English distribution.</p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">Kasiski • IOC • per-column frequency</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -605,7 +579,9 @@ Col 1:  K   K   K   E
 Col 2:    X   G   X   Q
 Col 3:      R   I   R   F</div>
               <div class="more-cta-row">
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='vigenere' ) }}">Learn more</a>
+                
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
                 <a class="more-cta" href="{{ url_for('tools_page') }}">Tools (freq)</a>
               </div>
             </div>
@@ -615,12 +591,16 @@ Col 3:      R   I   R   F</div>
             Once you know the key length, Vigenère becomes several smaller Caesar ciphers — one for each key position.
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= AFFINE ========================= -->
     <section id="affine">
       <h2>Affine Cipher</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='affine') }}">Learn more →</a>
+      </p>
       <p>
         Affine encrypts letters using multiplication and addition mod 26. It’s stronger than Caesar, but still small enough to brute force.
       </p>
@@ -632,16 +612,11 @@ Plaintext: AFFINE → Ciphertext: IHHWVCS</div>
       <p>
         Brute force all valid (a,b) pairs and score the outputs for English.
       </p>
+      <p class="freq-hint"><strong>What the frequency looks like:</strong> Like Caesar/Substitution: monogram frequencies keep the English-like curve but permuted. A chi‑square test over valid (a,b) pairs is typically very effective.</p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">formula • valid a values • decryption</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -676,18 +651,24 @@ A(0)->I(8)
 B(1)->N(13)
 C(2)->S(18)</div>
               <div class="more-cta-row">
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='affine' ) }}">Learn more</a>
+                
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
                 <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
               </div>
             </div>
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= PLAYFAIR ========================= -->
     <section id="playfair">
       <h2>Playfair Cipher</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='playfair') }}">Learn more →</a>
+      </p>
       <p>
         Playfair encrypts <strong>pairs</strong> of letters using a 5×5 key square (I/J combined). It hides single-letter frequencies — but digraph patterns leak.
       </p>
@@ -699,16 +680,11 @@ HELLO → GYIYQ</div>
       <p>
         Use digraph frequency + cribs. For serious cracking, heuristic search (hill-climbing) is common.
       </p>
+      <p class="freq-hint"><strong>What the frequency looks like:</strong> Single-letter frequencies are less helpful because encryption works on digraphs. You’ll often see fewer obvious English bigrams, no doubled letters (like “LL”), and digraph patterns dominate instead.</p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">key square • rules • breaking strategy</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -744,18 +720,24 @@ E F G I K
 L P Q S T
 U V W X Z</div>
               <div class="more-cta-row">
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='playfair' ) }}">Learn more</a>
+                
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
                 <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
               </div>
             </div>
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= HILL ========================= -->
     <section id="hill">
       <h2>Hill Cipher</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='hill') }}">Learn more →</a>
+      </p>
       <p>
         The Hill cipher encrypts blocks of letters using matrix multiplication mod 26. It’s a classical cipher that directly uses linear algebra.
       </p>
@@ -768,15 +750,9 @@ Plaintext (HI) → Ciphertext (RC)</div>
         If you know matching plaintext/ciphertext blocks, you can solve for the matrix. Otherwise, brute force only works for tiny keys.
       </p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">invertibility • block size • key recovery</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -809,18 +785,24 @@ Plaintext (HI) → Ciphertext (RC)</div>
 K=[[3,3],[2,5]]
 C=K·P mod 26</div>
               <div class="more-cta-row">
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='hill' ) }}">Learn more</a>
+                
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
                 <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
               </div>
             </div>
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= AUTOKEY ========================= -->
     <section id="autokey">
       <h2>Autokey Cipher</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='autokey') }}">Learn more →</a>
+      </p>
       <p>
         Autokey is a Vigenère variant where the key extends using the plaintext itself, reducing repetition and hiding key-length patterns.
       </p>
@@ -834,15 +816,9 @@ Ciphertext: KXRKGIQXREQF</div>
         Use cribs (“DEAR”, “ATTACK”, known headers). Once a chunk of plaintext is guessed, the key stream can unravel.
       </p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">why harder • where it leaks • breaking</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -868,18 +844,24 @@ Ciphertext: KXRKGIQXREQF</div>
               <div class="mini-code">Key:      K E Y A T T A C K ...
 Plaintext: A T T A C K A T D A W N</div>
               <div class="more-cta-row">
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='autokey' ) }}">Learn more</a>
+                
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
                 <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
               </div>
             </div>
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= TRANSPOSITION ========================= -->
     <section id="transposition">
       <h2>Transposition Ciphers</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='transposition') }}">Learn more →</a>
+      </p>
       <p>
         Transposition ciphers rearrange letters instead of replacing them. Letter frequency stays roughly English, but words are scrambled.
       </p>
@@ -893,15 +875,9 @@ Ciphertext: EVLNEACDTKESEAQROFO</div>
         Try likely widths (column counts), look for word fragments, and use cribs if you suspect certain words appear.
       </p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">spotting it • width testing • cribs</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -930,18 +906,24 @@ DISCO
 VERED
 RUNXX  (padding)</div>
               <div class="more-cta-row">
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='transposition' ) }}">Learn more</a>
+                
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
                 <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
               </div>
             </div>
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= BACON ========================= -->
     <section id="bacon">
       <h2>Bacon Cipher</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='bacon') }}">Learn more →</a>
+      </p>
       <p>
         Bacon’s cipher hides letters as patterns of As and Bs — often disguised using two text styles (case, font, bold/normal).
       </p>
@@ -953,15 +935,9 @@ RUNXX  (padding)</div>
         Identify the two styles, map them to A/B, group into 5s, and decode.
       </p>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">carrier text • two styles • decode steps</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -988,33 +964,33 @@ RUNXX  (padding)</div>
               <div class="mini-code">a A b a a  -> A B A A A
 Group by 5 -> decode</div>
               <div class="more-cta-row">
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='bacon' ) }}">Learn more</a>
+                
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
                 <a class="more-cta" href="{{ url_for('tools_page') }}">Tools</a>
               </div>
             </div>
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
     <!-- ========================= MORSE & ENIGMA ========================= -->
     <section id="morse">
       <h2>Morse & Enigma</h2>
+      <p style="margin-top:-6px;margin-bottom:10px;">
+        <a class="inline-link" href="{{ url_for('cipher_info', slug='morse') }}">Learn more →</a>
+      </p>
       <p>
         Morse is an <strong>encoding</strong> (no secret key), while Enigma is a rotor-based cipher that changes substitution with every key press.
       </p>
 
       <div class="example-box">HELLO → •••• · ·−·· ·−·· −−−</div>
 
-      <details class="more">
-        <summary>
-          <div class="more-left">
-            <span class="more-chip">Read more</span>
-            <span class="more-meta">morse basics • enigma concept • breaking</span>
-          </div>
-          <span class="chev">⌄</span>
-        </summary>
-
+      
+      <div class="deep-dive">
+        <div class="deep-head">Deep dive</div>
         <div class="more-body">
           <div class="more-grid">
             <div class="more-panel">
@@ -1045,8 +1021,10 @@ Group by 5 -> decode</div>
               <div class="mini-code">Encoding: reversible without secret
 Cipher:    reversible only with key</div>
               <div class="more-cta-row">
+                <a class="more-cta" href="{{ url_for('cipher_info', slug='morse' ) }}">Learn more</a>
+                
                 <a class="more-cta" href="{{ url_for('posts_list') }}">Community Posts</a>
-                <a class="more-cta primary" href="{{ url_for('index') }}">Try Breaker</a>
+                <a class="more-cta primary" href="{{ url_for('index') }}">Try Encoder / Decoder</a>
               </div>
             </div>
           </div>
@@ -1055,23 +1033,58 @@ Cipher:    reversible only with key</div>
             If someone says “Morse cipher”, they usually mean “Morse encoding” — there’s no key to crack, just decoding.
           </div>
         </div>
-      </details>
+      </div>
+
     </section>
 
-  </main>
+  
+<section class="info-section" id="frequency-analysis">
+  <h2>Frequency analysis</h2>
+  <p class="muted">
+    Frequency analysis is the classic first step in breaking many “pen-and-paper” ciphers. It doesn’t guess the key.
+    It measures the <em>shape</em> of the text: which letters and patterns repeat, and how closely that resembles real language.
+  </p>
+
+  <h3>What it looks at</h3>
+  <ul>
+    <li><strong>Letter counts (A–Z):</strong> In English, E/T/A/O/I/N are common. Substitution ciphers keep these counts (just relabeled).</li>
+    <li><strong>Digraphs &amp; trigraphs:</strong> Common pairs like <em>TH</em>, <em>HE</em>, <em>IN</em> and triples like <em>THE</em>, <em>AND</em>.</li>
+    <li><strong>Index of Coincidence (IoC):</strong> A quick “how clumpy are letters?” signal. Random text is low; natural language is higher.</li>
+    <li><strong>Chi‑square vs English:</strong> A score of how far the letter distribution deviates from expected English.</li>
+    <li><strong>Repeats:</strong> Repeated n‑grams can hint at transposition vs substitution, and can help key‑length guesses in polyalphabetic ciphers.</li>
+  </ul>
+
+  <h3>What it tells you (fast triage)</h3>
+  <ul>
+    <li><strong>Substitution vs transposition:</strong>
+      transposition tends to preserve overall letter counts (so frequencies can still look “English-ish”),
+      while substitution changes which letters are common but the distribution shape remains similar.</li>
+    <li><strong>Is it polyalphabetic (e.g. Vigenère)?</strong>
+      IoC often drops compared to plain English when multiple alphabets are used, and periodic structure can appear.</li>
+    <li><strong>Is it probably not a classic cipher?</strong>
+      Very high entropy / lots of non‑letters can suggest encoding (Base64/Hex), compression, or binary data.</li>
+  </ul>
+
+  <h3>How to use it in the lab</h3>
+  <ol>
+    <li>Paste text into <strong>Encoder / Decoder</strong> to strip/normalize if needed (remove spacing, keep letters only, etc.).</li>
+    <li>Run analysis: check IoC + chi‑square first, then scan the top bigrams/trigrams.</li>
+    <li>Use the result to pick the right tool:
+      <ul>
+        <li><strong>Looks monoalphabetic:</strong> try Caesar/Affine/Substitution.</li>
+        <li><strong>Looks transposition‑ish:</strong> try Railfence/Columnar/Permutation.</li>
+        <li><strong>Looks polyalphabetic:</strong> try Vigenère and test likely key lengths.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <p class="muted">
+    Frequency analysis won’t magically “solve” everything, but it’s a powerful filter: it narrows your search space so you don’t waste time on the wrong family of ciphers.
+  </p>
+</section>
+
+</main>
     {% include "base_footer.html" %}
 
-  <script>
-    // Optional: only one “Read more” open at a time
-    document.addEventListener("DOMContentLoaded", () => {
-      const all = Array.from(document.querySelectorAll("details.more"));
-      all.forEach(d => {
-        d.addEventListener("toggle", () => {
-          if (!d.open) return;
-          all.forEach(other => { if (other !== d) other.open = false; });
-        });
-      });
-    });
-  </script>
-</body>
+  </body>
 </html>

@@ -4761,6 +4761,1488 @@ def about_page():
 app.add_url_rule("/about", endpoint="about", view_func=about_page)
 
 
+from flask import abort, redirect, request, url_for, render_template
+
+# One place to define your cipher pages (SEO content + links)
+CIPHER_INFO = {
+
+  # ============================================================
+  # CAESAR
+  # ============================================================
+  "caesar": {
+    "cipher_name": "Caesar Cipher",
+    "page_title": "Caesar Cipher — Complete Guide, Examples, and How to Break It | The Cipher Lab",
+    "meta_description": (
+      "The most detailed Caesar cipher guide online: what it is, how it works, how to encode/decode, "
+      "frequency analysis clues, brute-force cracking, common mistakes, variants like ROT13, and practice prompts."
+    ),
+    "page_blurb": "A classic substitution cipher that shifts letters by a fixed amount.",
+
+    "cipher_family": "Substitution",
+    "cipher_era": "Ancient Rome",
+    "cipher_strength": "Very weak",
+
+    "cipher_history": (
+      "The Caesar cipher is one of the oldest and most famous encryption methods. It’s traditionally attributed "
+      "to Julius Caesar, who reportedly used a shift of three for military correspondence. Historically, its value "
+      "was practical: it prevented a casual reader from instantly understanding a message. Today, it is mainly used "
+      "for learning, puzzle hunts, escape rooms, and as a building block for understanding stronger substitution systems.\n\n"
+      "Modern cryptography considers Caesar completely insecure because the keyspace is tiny (26 possibilities) and "
+      "because statistical fingerprints of the language survive encryption. Still, Caesar is *the* perfect cipher to "
+      "learn first because it teaches: modular arithmetic, alphabet indexing, and how cryptanalysis (breaking ciphers) "
+      "often starts with patterns and frequency."
+    ),
+
+    "what_it_is": (
+      "The Caesar cipher is a monoalphabetic substitution cipher. Each plaintext letter is replaced with a ciphertext "
+      "letter obtained by shifting a fixed number of positions through the alphabet. The shift is the key. "
+      "Because the same substitution is applied everywhere, Caesar preserves the underlying structure of the language: "
+      "common letters remain common, digrams remain relatively common, and the message still ‘looks like’ English—just shifted."
+    ),
+
+    "how_it_works": (
+      "Pick an integer shift k from 0 to 25. Convert each letter into an index A=0, B=1, …, Z=25. "
+      "To encode: add k (mod 26). To decode: subtract k (mod 26). Wrap-around happens automatically via mod 26: "
+      "if shifting past Z, you continue from A.\n\n"
+      "Most implementations leave punctuation, spaces, and digits unchanged, and only transform alphabetic characters. "
+      "Some variants also shift lowercase separately (preserving case), while others normalize everything to uppercase."
+    ),
+
+    "core_rules": [
+      "Only alphabetic letters are shifted; punctuation/spaces are usually unchanged.",
+      "Wrap-around: Z shifted by +1 becomes A.",
+      "Shift 0 is the identity (no change).",
+      "If preserving case, lowercase stays lowercase and uppercase stays uppercase.",
+      "If removing spaces/punctuation, ciphertext becomes a continuous block (common in puzzle variants).",
+    ],
+
+    "worked_example": (
+      "Example 1 (classic):\n"
+      "Plaintext:  ATTACK AT DAWN\n"
+      "Shift:      3\n"
+      "Ciphertext: DWWDFN DW GDZQ\n\n"
+      "Example 2 (wrap-around):\n"
+      "Plaintext:  XYZ\n"
+      "Shift:      4\n"
+      "Ciphertext: BCD"
+    ),
+
+    "encode_steps": [
+      "Decide whether you’re preserving punctuation/spaces and case.",
+      "Choose a shift k (0–25).",
+      "For each letter: map A=0..Z=25, compute (index + k) mod 26, map back to a letter.",
+      "Leave non-letters unchanged (typical behavior).",
+      "Double-check wrap-around: near Z you should cycle back to A."
+    ],
+
+    "encoding_notes": (
+      "If you’re debugging an implementation: test simple cases first like A→D at shift 3, "
+      "and wrap-around cases like Z→C at shift 3. Most Caesar bugs are off-by-one indexing or wrap-around mistakes."
+    ),
+
+    "break_overview": (
+      "Caesar is one of the easiest ciphers to break because the keyspace is tiny: only 26 shifts exist. "
+      "A brute-force attack tries all shifts and picks the result that looks most like natural language. "
+      "Even faster, frequency analysis often reveals the shift immediately by comparing the most common ciphertext letter "
+      "to the most common English letters (E, T, A, O, I, N).\n\n"
+      "Practical note: for short ciphertexts (like < 20 letters), brute force is more reliable than frequency guesses, "
+      "because short samples can have misleading statistics."
+    ),
+
+    "break_steps": [
+      "Method A — brute force (guaranteed): try all 26 shifts and inspect outputs.",
+      "Method B — frequency shortcut: identify the most frequent ciphertext letter and assume it maps to E (or T).",
+      "Method C — scoring: rank each brute-force output by English-likeness (dictionary hits, common bigrams, vowel ratio).",
+      "Method D — crib-based: if you suspect a word (e.g., THE), try shifts that produce it and verify surrounding text."
+    ],
+
+    "frequency_summary": (
+      "Caesar preserves letter frequency exactly—only shifted. This means a Caesar ciphertext has nearly the same profile "
+      "as English, just rotated. A bar chart of letters still has a few dominant peaks; it does *not* look flat/random.\n\n"
+      "Key signals:\n"
+      "• Index of Coincidence (IoC) stays close to English (~0.066).\n"
+      "• Common digrams (TH, HE, IN) remain common, just shifted.\n"
+      "• The most frequent ciphertext letter often corresponds to E (but not always for short text)."
+    ),
+
+    "freq_hints": [
+      "IoC is close to English; not close to random.",
+      "One or two letters dominate frequency (shifted versions of E/T/A/O).",
+      "Bigram frequency still has strong peaks (shifted TH/HE/IN patterns).",
+      "Brute force outputs will ‘snap’ into readable English for the correct shift.",
+    ],
+
+    "freq_example": (
+      "Suppose ciphertext letter frequency shows 'K' as most common.\n"
+      "If plaintext most common letter is assumed 'E':\n"
+      "Shift = (K - E) = (10 - 4) = 6.\n"
+      "Try decoding with shift 6 and verify if common words appear."
+    ),
+
+    "pitfalls": [
+      "Assuming Caesar always uses shift 3 (puzzles often vary).",
+      "Forgetting wrap-around for letters near Z.",
+      "Shifting punctuation/digits when you didn’t intend to (or not shifting them when a variant expects it).",
+      "Not preserving case consistently (encode preserves case, decode doesn’t, etc.).",
+      "Using frequency analysis on very short ciphertexts (statistics can lie).",
+    ],
+
+    "variants": [
+      "ROT13: shift fixed at 13 (self-inverse, encode=decode).",
+      "Shift with a custom alphabet: e.g., keyword alphabet or shuffled alphabet (becomes general substitution).",
+      "Caesar on ASCII / printable characters (shifts beyond letters).",
+      "Two-track Caesar: different shifts for vowels vs consonants (rare puzzle variant).",
+    ],
+
+    "practice_blurb": (
+      "Best way to internalize Caesar: do a few by hand, then practice breaking unknown shifts using brute force. "
+      "Try short messages (harder) and longer paragraphs (easier)."
+    ),
+
+    "practice_prompts": [
+      "Encode: MEET ME AT MIDNIGHT with shift 5.",
+      "Decode: YMJ VZNHP GWTBS KTC OZRUJI TAJW YMJ QFED ITL (hint: classic pangram).",
+      "You find ciphertext: QEB NRFZH YOLTK CLU GRJMP LSBO QEB IXWV ALD. Identify the shift.",
+      "Write a script that tries all shifts and ranks by dictionary hits.",
+    ],
+
+    "faq": [
+      {"q": "How many possible keys does the Caesar cipher have?",
+       "a": "Only 26 (shifts 0–25). That’s why brute forcing is instant."},
+      {"q": "How do I know if my Caesar implementation is correct?",
+       "a": "Test known examples: ATTACKATDAWN with shift 3 → DWWDFNDWGDZQ, and wrap-around like XYZ with shift 4 → BCD."},
+      {"q": "Does Caesar preserve spaces and punctuation?",
+       "a": "Most tools do (they only shift letters). Some puzzle variants remove spaces/punctuation first."},
+      {"q": "Can frequency analysis always break Caesar?",
+       "a": "For long enough text, usually yes. For very short text, brute force is safer."},
+      {"q": "Is Caesar used in real security?",
+       "a": "No. It’s educational and recreational only."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Affine Cipher", "url": "/ciphers/affine"},
+      {"name": "Vigenère Cipher", "url": "/ciphers/vigenere"},
+      {"name": "Substitution Cipher", "url": "/ciphers/substitution"},
+    ],
+
+    "try_encode_url": "/tools?cipher=caesar",
+    "try_break_url": "/breaker?cipher=caesar",
+    "tools_url": "/tools",
+  },
+
+
+  # ============================================================
+  # VIGENERE
+  # ============================================================
+  "vigenere": {
+    "cipher_name": "Vigenère Cipher",
+    "page_title": "Vigenère Cipher — Full Guide, Examples, and How to Break It | The Cipher Lab",
+    "meta_description": (
+      "The ultimate Vigenère cipher guide: how it works, encoding/decoding with keywords, worked examples, "
+      "frequency analysis, index of coincidence, Kasiski examination, column attacks, and practical breaking workflow."
+    ),
+    "page_blurb": "A polyalphabetic substitution cipher that uses a repeating keyword to change the shift per letter.",
+
+    "cipher_family": "Polyalphabetic substitution",
+    "cipher_era": "1500s–1800s (popularized in Renaissance Europe)",
+    "cipher_strength": "Weak (by modern standards)",
+
+    "cipher_history": (
+      "The Vigenère cipher is a classical cipher designed to defeat simple frequency analysis. Instead of using one fixed "
+      "substitution alphabet (like Caesar), it uses many—changing the Caesar shift with each character based on a keyword.\n\n"
+      "It was historically considered strong enough to earn the nickname “le chiffre indéchiffrable” (“the indecipherable cipher”). "
+      "However, it is breakable with classical methods once you have enough ciphertext. Key breakthroughs include the Kasiski examination "
+      "and the index of coincidence, which let an attacker estimate the key length and then reduce the problem to multiple Caesar ciphers."
+    ),
+
+    "what_it_is": (
+      "Vigenère is a repeating-key substitution cipher. The key is a word or phrase. Each key letter determines a Caesar shift. "
+      "As the key repeats, each plaintext letter is encrypted using the shift from the corresponding key position."
+    ),
+
+    "how_it_works": (
+      "Write the keyword repeatedly under the plaintext. Convert letters to indices (A=0..Z=25). "
+      "To encode: C[i] = (P[i] + K[i]) mod 26. To decode: P[i] = (C[i] - K[i]) mod 26.\n\n"
+      "Many implementations advance the keyword only when a plaintext/ciphertext letter is processed (skipping spaces/punctuation). "
+      "This matters a lot when you’re trying to break a real puzzle—keyword alignment changes the result."
+    ),
+
+    "core_rules": [
+      "Keyword letters map to shifts (A=0, B=1, …, Z=25).",
+      "Keyword repeats to match message length (unless using a non-repeating variant).",
+      "Non-letters may be left unchanged and may or may not advance the key depending on implementation.",
+      "Case handling varies (some tools preserve case, others normalize).",
+      "If the key is length 1, Vigenère reduces to Caesar.",
+    ],
+
+    "worked_example": (
+      "Plaintext:  ATTACKATDAWN\n"
+      "Keyword:    LEMONLEMONLE\n"
+      "Indices:    L=11 E=4 M=12 O=14 N=13 ...\n"
+      "Ciphertext: LXFOPVEFRNHR\n\n"
+      "One character shown:\n"
+      "A(0) + L(11) = 11 → L\n"
+      "T(19) + E(4) = 23 → X"
+    ),
+
+    "encode_steps": [
+      "Choose a keyword (letters only is safest).",
+      "Normalize text and key consistently (uppercase/lowercase).",
+      "Repeat the keyword to align with the message’s letters.",
+      "For each letter, apply the key letter’s Caesar shift.",
+      "Keep punctuation/spaces unchanged unless using a stripped variant."
+    ],
+
+    "encoding_notes": (
+      "Security depends heavily on key length and repetition. Short repeating keys create patterns that attackers exploit. "
+      "If you’re solving puzzles, short keys are *more common* than long random keys."
+    ),
+
+    "break_overview": (
+      "Breaking Vigenère typically follows a structured workflow:\n"
+      "1) Estimate the key length.\n"
+      "2) Split the ciphertext into key-length columns.\n"
+      "3) Solve each column as a Caesar cipher.\n"
+      "4) Rebuild the keyword and decrypt.\n\n"
+      "Two classic tools are Kasiski examination (find repeated chunks and factor spacings) and the index of coincidence (measure how English-like each column is)."
+    ),
+
+    "break_steps": [
+      "Look for repeated sequences (3–5 letters) and record distances between repeats (Kasiski).",
+      "Compute IoC for candidate key lengths and prefer those whose column IoCs look English-like.",
+      "For each key position: treat letters at i, i+L, i+2L… as a Caesar cipher and solve via frequency scoring.",
+      "Combine the best shifts to produce the keyword, then decrypt and sanity-check.",
+      "If results are close-but-wrong: try nearby key lengths, handle punctuation alignment differences, or test alternate scoring.",
+    ],
+
+    "frequency_summary": (
+      "Vigenère ‘smears’ frequency across multiple alphabets. Overall ciphertext frequency looks flatter than Caesar, "
+      "but not fully random unless the key is long and non-repeating.\n\n"
+      "The breakthrough is column analysis:\n"
+      "If the key length is L, then every Lth letter was encrypted with the same shift. Each column is a Caesar cipher, "
+      "so each column’s letter frequency resembles shifted English. This is why IoC and frequency analysis still work—just after splitting."
+    ),
+
+    "freq_hints": [
+      "Overall frequency is flatter than Caesar, but still not random for short keys.",
+      "Repeated trigrams/tetragrams often reappear because the same key alignment repeats.",
+      "IoC for the full ciphertext is between English and random; IoC per correct column is close to English.",
+      "If you guess the right key length, column frequency peaks become obvious and Caesar scoring works well.",
+    ],
+
+    "freq_example": (
+      "If you test key length L=5:\n"
+      "Split ciphertext into 5 columns by position mod 5.\n"
+      "Compute IoC for each column. If average IoC is close to English (~0.066), L is plausible.\n"
+      "Then solve each column as Caesar by testing shifts that maximize English frequency similarity."
+    ),
+
+    "pitfalls": [
+      "Key alignment mismatch: does the key advance over punctuation/spaces or only over letters?",
+      "Using too small a ciphertext sample: short text makes key-length estimation noisy.",
+      "Assuming the key is a dictionary word (often yes in puzzles, not always).",
+      "Forgetting that key length candidates can be multiples of the true length (e.g., 10 when true length is 5).",
+      "Over-trusting a single technique—best results come from combining Kasiski + IoC + scoring.",
+    ],
+
+    "variants": [
+      "Autokey Vigenère (key is seeded then continues with plaintext).",
+      "Beaufort cipher (a related polyalphabetic cipher with different arithmetic).",
+      "Gronsfeld cipher (numeric key, effectively Vigenère with digits).",
+      "Running-key cipher (key is a long text like a book; much harder if truly non-repeating).",
+    ],
+
+    "practice_blurb": (
+      "Practice breaking by starting with known small key lengths (3–6), then increase difficulty by hiding punctuation handling "
+      "and using longer ciphertexts."
+    ),
+
+    "practice_prompts": [
+      "Encrypt a paragraph with keyword LEMON and try to recover the key from ciphertext only.",
+      "Take a Vigenère ciphertext and compute IoC for key lengths 1–12; pick the top candidates.",
+      "Try Kasiski: find repeated 3–5 letter sequences and factor their spacing distances.",
+      "Break Vigenère where key advances only on letters (ignore punctuation).",
+    ],
+
+    "faq": [
+      {"q": "Why does Vigenère defeat simple frequency analysis?",
+       "a": "Because the same plaintext letter can encrypt to different ciphertext letters depending on the keyword position, flattening overall frequency."},
+      {"q": "How do I estimate the key length?",
+       "a": "Use Kasiski examination (repeat distances) and/or index of coincidence scanning across candidate lengths."},
+      {"q": "What if my decrypted text is almost readable but slightly wrong?",
+       "a": "You may have the wrong key length (often a multiple), wrong punctuation/key-advance behavior, or one column shift mis-guessed."},
+      {"q": "Does Vigenère encrypt spaces?",
+       "a": "Usually no. Many implementations leave spaces/punctuation unchanged and do not advance the key for them—but some variants do."},
+      {"q": "Is Vigenère secure today?",
+       "a": "No. It’s breakable with classical methods given enough ciphertext, and it’s not used for real security."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Caesar Cipher", "url": "/ciphers/caesar"},
+      {"name": "Affine Cipher", "url": "/ciphers/affine"},
+      {"name": "Substitution Cipher", "url": "/ciphers/substitution"},
+      {"name": "Columnar Transposition", "url": "/ciphers/columnar"},
+    ],
+
+    "try_encode_url": "/tools?cipher=vigenere",
+    "try_break_url": "/breaker?cipher=vigenere",
+    "tools_url": "/tools",
+  },
+
+
+  # ============================================================
+  # AFFINE
+  # ============================================================
+  "affine": {
+    "cipher_name": "Affine Cipher",
+    "page_title": "Affine Cipher — Full Guide, Examples, and How to Break It | The Cipher Lab",
+    "meta_description": (
+      "Deep dive into the Affine cipher: how it works, valid keys, modular inverses, encoding/decoding, "
+      "frequency analysis, and cracking methods."
+    ),
+    "page_blurb": "A mathematical substitution cipher defined by two numbers a and b (mod 26).",
+
+    "cipher_family": "Substitution (mathematical)",
+    "cipher_era": "Classical / early modern (education + puzzles)",
+    "cipher_strength": "Weak",
+
+    "cipher_history": (
+      "The affine cipher generalizes Caesar by adding a multiplication step. Instead of shifting letters by a fixed amount, "
+      "it multiplies the letter index by a and then adds b, all modulo 26. This creates a larger keyspace than Caesar, but "
+      "it remains monoalphabetic substitution, so classical frequency analysis still breaks it quickly."
+    ),
+
+    "what_it_is": (
+      "Affine is a monoalphabetic substitution cipher defined by a pair (a, b). Each plaintext letter x (0–25) maps to "
+      "E(x) = (a*x + b) mod 26. Decoding requires the modular inverse of a modulo 26."
+    ),
+
+    "how_it_works": (
+      "Convert letters to numbers A=0..Z=25. Choose parameters a and b. Compute ciphertext index as (a*x + b) mod 26. "
+      "To decode, compute x = a^{-1} * (y - b) mod 26, where a^{-1} is the modular inverse of a modulo 26."
+    ),
+
+    "core_rules": [
+      "a must be coprime with 26 (otherwise no inverse exists and decoding is impossible).",
+      "Valid a values mod 26 are: 1,3,5,7,9,11,15,17,19,21,23,25.",
+      "b can be any integer 0–25.",
+      "Still monoalphabetic: one plaintext letter always maps to the same ciphertext letter for a given key."
+    ],
+
+    "worked_example": (
+      "Let a=5, b=8.\n"
+      "Plaintext:  AFFINE\n"
+      "Ciphertext: IHHWVC\n\n"
+      "Because: E(A=0) = (5*0+8)=8 → I\n"
+      "E(F=5) = (5*5+8)=33 mod 26=7 → H"
+    ),
+
+    "encode_steps": [
+      "Choose a and b (a must be coprime with 26).",
+      "Map letters A=0..Z=25.",
+      "Compute (a*x + b) mod 26 for each letter.",
+      "Map result back to letters."
+    ],
+
+    "encoding_notes": (
+      "If decoding fails, the most common cause is choosing an invalid a (not coprime with 26)."
+    ),
+
+    "break_overview": (
+      "Affine is still a monoalphabetic substitution, so it is breakable via frequency analysis. "
+      "Additionally, the keyspace is small enough to brute force: there are 12 valid a values and 26 b values, "
+      "so only 312 possible keys."
+    ),
+
+    "break_steps": [
+      "Brute force all valid (a,b) pairs (312 keys).",
+      "Score outputs using English-likeness (dictionary hits, common words).",
+      "Frequency analysis shortcut: map the most common ciphertext letter to E (and second-most to T) to solve for a and b.",
+      "If you have a known plaintext fragment (crib), solve directly using two letter mappings."
+    ],
+
+    "frequency_summary": (
+      "Affine preserves frequency distribution like Caesar because it is still monoalphabetic substitution. "
+      "So ciphertext has strong peaks and IoC close to English. The difference is that the substitution is not a simple shift; "
+      "it’s a permutation defined by the linear function."
+    ),
+
+    "freq_hints": [
+      "IoC is close to English (~0.066).",
+      "Single-letter frequencies remain strongly peaked.",
+      "Brute force reveals readable output very quickly because the keyspace is tiny."
+    ],
+
+    "pitfalls": [
+      "Using an invalid a (no modular inverse).",
+      "Mixing up encode vs decode formula.",
+      "Forgetting mod 26 wrap-around.",
+      "Inconsistent handling of punctuation/case."
+    ],
+
+    "variants": [
+      "Affine over different alphabets (e.g., including digits).",
+      "Affine on ASCII ranges (rare).",
+      "Multi-alphabet affine (becomes polyalphabetic, not standard)."
+    ],
+
+    "practice_blurb": "Try brute forcing Affine keys and compare scoring methods (word hits vs bigram scoring).",
+
+    "practice_prompts": [
+      "Encode HELLOWORLD with a=7, b=3.",
+      "Given ciphertext and knowing it’s Affine, brute force all 312 keys and pick the best output.",
+      "Try solving for a and b using assumptions about most common letters."
+    ],
+
+    "faq": [
+      {"q": "Why must a be coprime with 26?",
+       "a": "Because decoding needs a modular inverse of a modulo 26, which exists only if gcd(a,26)=1."},
+      {"q": "Is Affine stronger than Caesar?",
+       "a": "Slightly (bigger keyspace), but still monoalphabetic and easy to break."},
+      {"q": "How many Affine keys are there?",
+       "a": "312 total (12 valid a values × 26 b values)."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Caesar Cipher", "url": "/ciphers/caesar"},
+      {"name": "Vigenère Cipher", "url": "/ciphers/vigenere"},
+      {"name": "Substitution Cipher", "url": "/ciphers/substitution"},
+    ],
+
+    "try_encode_url": "/tools?cipher=affine",
+    "try_break_url": "/breaker?cipher=affine",
+    "tools_url": "/tools",
+  },
+    "substitution": {
+    "cipher_name": "Substitution Cipher",
+    "page_title": "Substitution Cipher — Complete Guide, Examples, and How to Break It | The Cipher Lab",
+    "meta_description": (
+      "A deep, practical guide to monoalphabetic substitution: what it is, how it works, how to encode/decode, "
+      "how to break it with frequency + word patterns, common traps, and real puzzle workflows."
+    ),
+    "page_blurb": "A monoalphabetic cipher that swaps each letter for a different letter using a fixed mapping.",
+
+    "cipher_family": "Substitution",
+    "cipher_era": "Classical (popular in puzzles & historical variants)",
+    "cipher_strength": "Weak (breakable with statistics + patterns)",
+
+    "cipher_history": (
+      "A substitution cipher is the natural “next step” after Caesar: instead of rotating the alphabet, you permute it. "
+      "It shows up everywhere—historical ciphers, newspaper cryptograms, puzzle hunts, escape rooms—and is the backbone of "
+      "many beginner cryptanalysis exercises.\n\n"
+      "Its core weakness is that the substitution is consistent across the entire message. That consistency preserves the "
+      "statistical fingerprint of the underlying language (letter frequencies, common digrams, repeated word shapes). "
+      "Once you lock a few letters, the rest often collapses quickly."
+    ),
+
+    "what_it_is": (
+      "A monoalphabetic substitution cipher replaces each plaintext letter with a ciphertext letter using one fixed "
+      "one-to-one mapping (a permutation of the alphabet). If plaintext has E as the most common letter, ciphertext will also "
+      "have one dominant most-common letter—just relabeled."
+    ),
+
+    "how_it_works": (
+      "Choose a key alphabet: a shuffled version of A–Z (often built from a keyword, then the remaining letters). "
+      "To encode, replace each plaintext letter with its mapped ciphertext letter. "
+      "To decode, invert the mapping.\n\n"
+      "Most puzzle implementations keep spaces/punctuation unchanged, which leaks word lengths and repeated patterns—"
+      "making the cipher much easier to solve."
+    ),
+
+    "core_rules": [
+      "One fixed mapping for the entire message (monoalphabetic).",
+      "Mapping must be one-to-one (no two plaintext letters map to the same ciphertext letter).",
+      "Spaces/punctuation are usually preserved (unless the variant strips them).",
+      "Case may be preserved or normalized; tools should be consistent.",
+      "If a keyword is used, duplicates are removed before building the keyed alphabet.",
+    ],
+
+    "worked_example": (
+      "Example (illustrative mapping):\n"
+      "Plain:  ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
+      "Cipher: QWERTYUIOPASDFGHJKLZXCVBNM\n\n"
+      "Plaintext:  HELLO WORLD\n"
+      "Ciphertext: ITSSG VGKSR"
+    ),
+
+    "encode_steps": [
+      "Pick a substitution key (either a random shuffled alphabet or a keyword-based alphabet).",
+      "Write the plain alphabet and cipher alphabet aligned.",
+      "Replace each plaintext letter with its partner from the cipher alphabet.",
+      "Keep punctuation/spaces unchanged unless using a stripped variant.",
+      "To decode, reverse the mapping (cipher → plain).",
+    ],
+
+    "encoding_notes": (
+      "If you’re building a keyword alphabet: write the keyword (remove duplicates), then append the remaining letters "
+      "A–Z that aren’t already used. Use that as your cipher alphabet."
+    ),
+
+    "break_overview": (
+      "Breaking substitution is about combining three signals:\n"
+      "1) **Frequency** (single letters + bigrams/trigrams),\n"
+      "2) **word shapes** (pattern constraints like _H_ = THE), and\n"
+      "3) **confirmation loops** (every solved letter makes the next guess easier).\n\n"
+      "For typical puzzle texts, you rarely need “heavy” automation. A good workflow is: find THE/AND/OF/TO, lock letters, "
+      "then iterate using common word fragments and digrams."
+    ),
+
+    "break_steps": [
+      "Run frequency on ciphertext: guess likely E/T/A/O/I/N candidates.",
+      "Use 1–3 letter words: A, I, AN, IN, OF, TO, THE, AND.",
+      "Use word pattern constraints: repeated letters, apostrophes, common endings (-ING, -ED).",
+      "Lock letters only when multiple clues agree; keep a pencil/temporary mapping for uncertain guesses.",
+      "Iterate: each confirmed letter unlocks new readable fragments → confirm more letters.",
+    ],
+
+    "frequency_summary": (
+      "Substitution preserves the **shape** of English frequency—just re-labels the peaks. "
+      "So you’ll still see a small set of very common letters, a mid-tier, and many rare letters.\n\n"
+      "Bigram/trigram statistics also remain English-like in structure (common pairs/triples still dominate), "
+      "but with letters renamed."
+    ),
+
+    "freq_hints": [
+      "IoC is close to English (not close to random).",
+      "One ciphertext letter dominates (likely a relabeled E/T).",
+      "Common double letters exist (LL, EE, SS, OO → relabeled).",
+      "If spaces are preserved, common word lengths (3 for THE/AND) show up often.",
+    ],
+
+    "freq_example": (
+      "If the most common ciphertext letter is 'X', it might be plaintext 'E' or 'T'.\n"
+      "Try mapping X→E first, then look for patterns that could form THE/AND.\n"
+      "If you see a repeated 3-letter word like 'XQX', it might be 'EVE', 'DAD', etc.—use context."
+    ),
+
+    "pitfalls": [
+      "Over-committing to single-letter frequency on short ciphertexts.",
+      "Forgetting that the most common letter might be T (not always E), especially in short texts.",
+      "Ignoring spaces/punctuation leaks (they are huge clues).",
+      "Treating guesses as facts—keep a tentative mapping until confirmed.",
+      "Not using digrams/trigrams; they are often stronger than monograms.",
+    ],
+
+    "variants": [
+      "Keyword substitution alphabet (common in puzzles).",
+      "Homophonic substitution (letters map to multiple symbols; harder).",
+      "Substitution with removed spaces/punctuation (harder but still solvable).",
+      "Aristocrat/Patristocrat newspaper cryptogram styles.",
+    ],
+
+    "practice_blurb": (
+      "Start with a ciphertext that keeps spaces and punctuation. Solve THE/AND first, then push outward. "
+      "Once you can solve those reliably, try one where spaces are removed."
+    ),
+
+    "practice_prompts": [
+      "Create a keyword alphabet from 'MONARCHY' and encode a paragraph.",
+      "Solve a cryptogram where you know it contains the word 'THE' at least twice.",
+      "Solve a substitution where spaces are removed; look for repeated trigrams.",
+      "Try doing the first 6–10 letter mappings by hand before using tools.",
+    ],
+
+    "faq": [
+      {"q": "Is a substitution cipher just Caesar with a bigger key?",
+       "a": "Conceptually yes: Caesar is a special case where the key is a rotation. General substitution allows any permutation."},
+      {"q": "What’s the fastest way to start breaking one?",
+       "a": "Look for THE/AND/OF/TO using word shapes + frequency, then lock letters and iterate."},
+      {"q": "Why does it still look “English-like” after encryption?",
+       "a": "Because letter frequency and common patterns survive—only the labels change."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Caesar Cipher", "url": "/ciphers/caesar"},
+      {"name": "Affine Cipher", "url": "/ciphers/affine"},
+      {"name": "Vigenère Cipher", "url": "/ciphers/vigenere"},
+    ],
+
+    "try_encode_url": "/tools?cipher=substitution",
+    "try_break_url": "/breaker?cipher=substitution",
+    "tools_url": "/tools",
+  },
+
+
+  # ============================================================
+  # TRANSPOSITION (GENERAL FAMILY)
+  # ============================================================
+  "transposition": {
+    "cipher_name": "Transposition Ciphers",
+    "page_title": "Transposition Ciphers — Complete Guide, Examples, and How to Break Them | The Cipher Lab",
+    "meta_description": (
+      "A detailed guide to transposition ciphers: what they are, how they work, how to encode/decode, "
+      "how to detect them using frequency clues, and how to break common types like rail fence and columnar."
+    ),
+    "page_blurb": "Ciphers that scramble the order of characters without changing the characters themselves.",
+
+    "cipher_family": "Transposition",
+    "cipher_era": "Classical → modern puzzles (common variants in WWII-era systems and puzzle hunts)",
+    "cipher_strength": "Weak–medium (variant dependent)",
+
+    "cipher_history": (
+      "Transposition is the second big idea in classical cryptography (alongside substitution). "
+      "Instead of changing letters, you rearrange them. This preserves letter counts (and often vowel ratio) "
+      "so the ciphertext can look deceptively “language-like” while still being unreadable.\n\n"
+      "Historically, transpositions were frequently combined with substitution to increase strength. "
+      "In puzzles, pure transposition appears a lot because it’s visually confusing but conceptually simple."
+    ),
+
+    "what_it_is": (
+      "A transposition cipher permutes positions. The plaintext letters are the same letters in the ciphertext—"
+      "just in a different order. Many transpositions are implemented by writing text into a grid or zig-zag, "
+      "then reading out in a different order."
+    ),
+
+    "how_it_works": (
+      "At a high level: choose a rule that maps plaintext positions → ciphertext positions. "
+      "Common rules are based on grids (columnar), zig-zags (rail fence), or permutations (fixed position swaps).\n\n"
+      "Because letters are not replaced, monogram frequencies and IoC tend to stay close to English, "
+      "but bigrams/trigrams get disrupted because neighbors are no longer neighbors."
+    ),
+
+    "core_rules": [
+      "Letters are preserved; only positions change.",
+      "Monogram frequency looks “normal” (English-like) if the plaintext is English.",
+      "Bigrams/trigrams are degraded (TH/HE/THE stop being dominant).",
+      "Padding rules matter (X’s or nulls may be added).",
+      "Some variants remove spaces before transposition.",
+    ],
+
+    "worked_example": (
+      "Columnar-style concept (no key shown):\n"
+      "Plaintext: WEAREDISCOVEREDRUN\n"
+      "Write into rows of width 5, then read columns → scrambled output.\n\n"
+      "Key idea: the letters are all still there, just reordered."
+    ),
+
+    "encode_steps": [
+      "Choose a specific transposition scheme (rail fence / columnar / permutation).",
+      "Normalize text (decide if you remove spaces/punctuation).",
+      "Apply the position-reordering rule.",
+      "If the scheme uses a grid, decide how to pad the final row (if needed).",
+      "To decode, reverse the exact same rule (padding must match).",
+    ],
+
+    "encoding_notes": (
+      "Most “my decode is almost right” bugs are padding/normalization mismatches: "
+      "spaces removed vs preserved, or different filler characters at the end."
+    ),
+
+    "break_overview": (
+      "Breaking a transposition is about finding the rearrangement rule. "
+      "Because the letters are correct but order is wrong, you often see:\n"
+      "• vowel ratio looks normal,\n"
+      "• letter frequency looks normal,\n"
+      "• but common words don’t appear.\n\n"
+      "Practical workflow: decide which transposition family it resembles (rail vs columnar), "
+      "then brute small parameters (rails/width) and score outputs for English."
+    ),
+
+    "break_steps": [
+      "Confirm it’s likely transposition: English-like frequency + high IoC, but no readable brute shifts (Caesar/Affine).",
+      "Try rail fence first with small rails (2–6) and score outputs.",
+      "Try column widths (2–20) for simple grid transpositions; look for readable fragments.",
+      "Use cribs: if you suspect 'THE' or 'FLAG{' etc., test placements that could create them.",
+      "For keyed columnar: test short keywords, or use heuristic scoring if you have enough text.",
+    ],
+
+    "frequency_summary": (
+      "Transposition keeps monogram frequency close to plaintext because it doesn’t change letters. "
+      "So your frequency chart still has the typical English curve. The giveaway is that bigrams/trigrams "
+      "that are normally dominant (TH, HE, THE, AND) are reduced because adjacency is destroyed."
+    ),
+
+    "freq_hints": [
+      "IoC is often close to English.",
+      "Monogram frequency looks English-like (peaks exist).",
+      "But common bigrams/trigrams are unusually weak or scrambled.",
+      "Vowel ratio often looks normal compared to random data.",
+    ],
+
+    "freq_example": (
+      "If frequency looks English-like but brute-forcing Caesar gives nothing readable:\n"
+      "→ suspect transposition.\n"
+      "Then brute rails (2–6) or column widths (2–20) and score outputs for English."
+    ),
+
+    "pitfalls": [
+      "Misclassifying as substitution just because frequency looks English-like.",
+      "Ignoring padding (one missing/extra filler breaks decoding).",
+      "Not normalizing the same way the encoder did (spaces removed vs kept).",
+      "Assuming there is always a keyword; many transpositions are parameter-only (rails/width).",
+    ],
+
+    "variants": [
+      "Rail Fence (zig-zag).",
+      "Columnar (keyed column order).",
+      "Permutation (fixed shuffle).",
+      "Double transposition (apply two columnars; much harder).",
+      "Route ciphers (spiral/diagonal read patterns in a grid).",
+    ],
+
+    "practice_blurb": (
+      "Practice by encoding a message with rail fence (rails 3–5) and with columnar (short keyword), "
+      "then try to recover the parameters from ciphertext only."
+    ),
+
+    "practice_prompts": [
+      "Rail fence with rails=3: encode a sentence, then recover rails by brute force.",
+      "Column width=7 grid transposition: recover the width by scoring outputs.",
+      "Try a columnar keyword of length 5 and see how padding changes decoding.",
+      "Take a ciphertext and decide substitution vs transposition using frequency + bigrams.",
+    ],
+
+    "faq": [
+      {"q": "Why does transposition keep frequency “normal”?",
+       "a": "Because letters aren’t substituted, only rearranged—counts don’t change."},
+      {"q": "What’s the quickest first thing to brute force?",
+       "a": "Rail fence rails 2–6, then simple grid widths 2–20."},
+      {"q": "Why do bigrams/trigrams look worse than normal?",
+       "a": "Because neighbors in plaintext aren’t neighbors in ciphertext anymore."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Rail Fence Cipher", "url": "/ciphers/railfence"},
+      {"name": "Columnar Transposition", "url": "/ciphers/columnar"},
+      {"name": "Vigenère Cipher", "url": "/ciphers/vigenere"},
+    ],
+
+    "try_encode_url": "/tools?cipher=railfence",
+    "try_break_url": "/breaker?cipher=railfence",
+    "tools_url": "/tools",
+  },
+
+
+  # ============================================================
+  # PLAYFAIR
+  # ============================================================
+  "playfair": {
+    "cipher_name": "Playfair Cipher",
+    "page_title": "Playfair Cipher — Full Guide, 5×5 Square, Examples, and How to Break It | The Cipher Lab",
+    "meta_description": (
+      "An in-depth Playfair cipher guide: building the 5×5 key square, plaintext rules (digraphs, filler letters), "
+      "worked examples, what frequency looks like, and practical breaking approaches."
+    ),
+    "page_blurb": "A digraph substitution cipher using a 5×5 key square (usually merging I/J).",
+
+    "cipher_family": "Substitution (digraph / polygraphic)",
+    "cipher_era": "1850s+ (Victorian era; military interest)",
+    "cipher_strength": "Weak–medium (stronger than monoalphabetic, still breakable)",
+
+    "cipher_history": (
+      "Playfair was designed to be practical by hand while resisting single-letter frequency analysis. "
+      "Because it encrypts pairs of letters (digraphs), it disrupts monogram patterns like 'E is most common'.\n\n"
+      "It was historically attractive for field use because it’s faster than many manual systems and doesn’t require "
+      "complex mathematics. In puzzle contexts, it’s common because the rules produce distinctive artifacts: "
+      "no double letters in a pair, filler insertions, and a 5×5 square constraint."
+    ),
+
+    "what_it_is": (
+      "Playfair encrypts text two letters at a time using a 5×5 grid built from a keyword. "
+      "Each digraph is transformed based on whether the letters are in the same row, same column, or form a rectangle."
+    ),
+
+    "how_it_works": (
+      "1) Build a 5×5 square from a keyword (remove duplicates), then fill remaining letters (often I/J combined).\n"
+      "2) Prepare plaintext into digraphs: split into pairs; if a pair is double (LL), insert a filler (often X) between.\n"
+      "3) Encrypt each pair:\n"
+      "   • Same row → take letters to the right (wrap around)\n"
+      "   • Same column → take letters below (wrap)\n"
+      "   • Rectangle → swap columns (take the other corner in the same row)\n\n"
+      "Decryption reverses the direction (left/up)."
+    ),
+
+    "core_rules": [
+      "I/J are usually merged (implementation choice; sometimes Q omitted instead).",
+      "Plaintext is split into digraphs; double letters in a pair are separated by a filler (often X).",
+      "If plaintext length is odd, add a filler at the end.",
+      "Same-row: shift right (encrypt); same-column: shift down (encrypt).",
+      "Rectangle: swap columns (corners).",
+    ],
+
+    "worked_example": (
+      "Keyword: MONARCHY (I/J merged)\n"
+      "Square:\n"
+      "M O N A R\n"
+      "C H Y B D\n"
+      "E F G I K\n"
+      "L P Q S T\n"
+      "U V W X Z\n\n"
+      "Plaintext prep: HELLO → HE LX LO (insert X to split LL)\n"
+      "Encrypt each pair using row/column/rectangle rules."
+    ),
+
+    "encode_steps": [
+      "Choose a keyword; remove duplicate letters.",
+      "Build the 5×5 square (merge I/J or use your tool’s rule).",
+      "Normalize plaintext (typically letters only).",
+      "Split into pairs; if a pair has double letters, insert filler (X) between them.",
+      "Encrypt pairs using the three Playfair rules; pad last letter if needed.",
+    ],
+
+    "encoding_notes": (
+      "Most Playfair confusion is plaintext preparation: the filler insertion and I/J merging rules. "
+      "If your result differs from another tool, compare those two rules first."
+    ),
+
+    "break_overview": (
+      "Playfair hides monogram frequency, but it leaks digraph structure and the constraints of the 5×5 square. "
+      "Manual breaking is possible with cribs and digraph logic, but serious breaking often uses heuristic search "
+      "(hill-climbing / simulated annealing) scored by English tetragrams.\n\n"
+      "In puzzles, a shortcut is often: known keyword theme, or partial square given, or a crib like 'THE' aligned to pairs."
+    ),
+
+    "break_steps": [
+      "Confirm it behaves like Playfair: digraph behavior, lack of obvious double letters, I/J style.",
+      "Look for common digraph patterns and crib words; remember plaintext was modified (X inserted).",
+      "If automated: use hill-climbing with tetragram scoring to recover the square.",
+      "If crib-based: test square placements consistent with rectangle/row/column transformations.",
+      "Validate by decrypting a longer chunk; Playfair solutions 'snap' into readable text when correct.",
+    ],
+
+    "frequency_summary": (
+      "Because Playfair encrypts **pairs**, single-letter frequency is less directly useful. "
+      "You’ll often see:\n"
+      "• fewer clear monogram peaks,\n"
+      "• digraph patterns dominate,\n"
+      "• and characteristic artifacts like inserted X’s in plaintext (not visible in ciphertext, but affects structure)."
+    ),
+
+    "freq_hints": [
+      "Monograms are less diagnostic than digraph/tetragram scoring.",
+      "Common English digraphs (TH/HE/IN) don’t map cleanly—pairs are transformed.",
+      "Ciphertext often lacks patterns you'd see in monoalphabetic substitution.",
+      "If you decrypt with a near-correct square, English-like bigrams/tetragrams rapidly improve.",
+    ],
+
+    "freq_example": (
+      "If your frequency tool says monograms are unhelpful but text is alphabetic and seems structured:\n"
+      "Try Playfair heuristics: digraph-based cracking or hill-climb with tetragrams."
+    ),
+
+    "pitfalls": [
+      "Not matching the same square rules (I/J merge vs Q omitted vs other).",
+      "Forgetting filler insertion (LL → LX LO type transformations).",
+      "Assuming ciphertext digraph boundaries match plaintext (they do, but plaintext was altered first).",
+      "Comparing results across tools with different preprocessing rules.",
+    ],
+
+    "variants": [
+      "Different merge rules (I/J or I/J/K etc.).",
+      "Different filler letters (X, Q, Z).",
+      "6×6 Playfair including digits (less common).",
+    ],
+
+    "practice_blurb": (
+      "Practice by building a square from a keyword, encrypting a short message, and verifying digraph rules. "
+      "Then try recovering the square using a crib or by recognizing a likely keyword theme."
+    ),
+
+    "practice_prompts": [
+      "Build a Playfair square from the keyword 'MONARCHY' and encrypt 'HIDETHEGOLD'.",
+      "Encrypt text with many doubles (BALLOON, HELLO) and observe filler behavior.",
+      "Try decrypting with the wrong I/J rule and see how the output differs.",
+      "Use a crib: assume plaintext contains 'THE' and test plausible square constraints.",
+    ],
+
+    "faq": [
+      {"q": "Why does Playfair merge I and J?",
+       "a": "A 5×5 grid only holds 25 letters, so one letter is merged/omitted. I/J is the most common convention."},
+      {"q": "Why do we insert X between double letters?",
+       "a": "Because Playfair encrypts digraphs and cannot encode a pair like 'LL' directly without ambiguity."},
+      {"q": "Is Playfair stronger than substitution?",
+       "a": "Yes against simple monogram frequency, but it’s still breakable with digraph/tetragram statistics and automation."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Substitution Cipher", "url": "/ciphers/substitution"},
+      {"name": "Vigenère Cipher", "url": "/ciphers/vigenere"},
+      {"name": "Hill Cipher", "url": "/ciphers/hill"},
+    ],
+
+    "try_encode_url": "/tools?cipher=playfair",
+    "try_break_url": "/breaker?cipher=playfair",
+    "tools_url": "/tools",
+  },
+
+
+  # ============================================================
+  # HILL
+  # ============================================================
+  "hill": {
+    "cipher_name": "Hill Cipher",
+    "page_title": "Hill Cipher — Linear Algebra Encryption, Examples, and How to Break It | The Cipher Lab",
+    "meta_description": (
+      "The most practical Hill cipher guide: block encryption with matrices mod 26, invertibility requirements, "
+      "worked examples, encoding/decoding workflow, and breaking via known-plaintext and scoring."
+    ),
+    "page_blurb": "A block cipher that encrypts letter vectors using matrix multiplication modulo 26.",
+
+    "cipher_family": "Substitution (polygraphic / linear algebra)",
+    "cipher_era": "1920s+ (classical academic cipher)",
+    "cipher_strength": "Weak (against known plaintext); medium in puzzles",
+
+    "cipher_history": (
+      "The Hill cipher is famous because it brings linear algebra into cryptography. Instead of substituting letters one at a time, "
+      "it encrypts blocks (pairs, triples, etc.), which can better obscure single-letter frequencies.\n\n"
+      "Its key weakness is linearity: with enough known plaintext/ciphertext pairs, the key matrix can be solved directly. "
+      "In puzzle settings, it’s still interesting because it produces ciphertext that looks structured but not easily solvable by "
+      "basic frequency methods."
+    ),
+
+    "what_it_is": (
+      "Hill encrypts blocks of size n. Each block is treated as a vector of numbers (A=0..Z=25), multiplied by an n×n key matrix K, "
+      "all modulo 26. Decryption uses the modular inverse matrix K⁻¹."
+    ),
+
+    "how_it_works": (
+      "1) Choose block size n (e.g., 2).\n"
+      "2) Choose an invertible key matrix K modulo 26.\n"
+      "3) Convert plaintext into vectors of length n.\n"
+      "4) Encrypt: C = K·P (mod 26).\n"
+      "5) Decrypt: P = K⁻¹·C (mod 26).\n\n"
+      "Invertibility is crucial: det(K) must be coprime with 26 so that det(K) has a modular inverse."
+    ),
+
+    "core_rules": [
+      "Work mod 26 (or mod m if using a different alphabet).",
+      "Key matrix must be invertible mod 26 (det(K) must have an inverse).",
+      "Plaintext is grouped into fixed-size blocks; padding may be added.",
+      "Because it’s linear, known plaintext can reveal the key quickly.",
+    ],
+
+    "worked_example": (
+      "Block size n=2\n"
+      "Key K = [[3, 3], [2, 5]]\n"
+      "Plaintext 'HI' → [7, 8]\n"
+      "C = K·P mod 26\n"
+      "C0 = 3*7 + 3*8 = 45 mod 26 = 19 → T\n"
+      "C1 = 2*7 + 5*8 = 54 mod 26 = 2 → C\n"
+      "Ciphertext: 'TC'"
+    ),
+
+    "encode_steps": [
+      "Choose block size n (2 is common for puzzles).",
+      "Pick an n×n key matrix K that is invertible mod 26.",
+      "Normalize plaintext to letters (decide how to handle spaces/punctuation).",
+      "Convert letters to numbers A=0..Z=25, group into blocks of n, pad if needed.",
+      "Compute C = K·P (mod 26), convert back to letters.",
+    ],
+
+    "encoding_notes": (
+      "If your decoder fails, the usual cause is a non-invertible matrix mod 26. "
+      "Always verify det(K) is coprime with 26 before using it."
+    ),
+
+    "break_overview": (
+      "Hill is vulnerable to known-plaintext attacks. If you know enough plaintext blocks and their corresponding ciphertext blocks, "
+      "you can solve for K with linear algebra modulo 26.\n\n"
+      "Without known plaintext, brute force is only feasible for tiny block sizes with small constrained key spaces. "
+      "In practice, you’d use heuristic scoring or exploit puzzle constraints (e.g., known header, known word list)."
+    ),
+
+    "break_steps": [
+      "If you have known plaintext/ciphertext: collect n blocks, set up equations, solve for K mod 26.",
+      "Check invertibility and validate by encrypting/decrypting additional blocks.",
+      "If no known plaintext: try guessing common cribs and solving for K.",
+      "For puzzles: use scoring (tetragrams) across candidate keys if the search space is constrained.",
+    ],
+
+    "frequency_summary": (
+      "Hill disrupts monogram frequency more than monoalphabetic ciphers because letters influence each other within a block. "
+      "However, it is still structured: ciphertext remains alphabetic and often has more uniform-looking distributions than Caesar/Affine.\n\n"
+      "Bigram/trigram patterns are not preserved in the same way as transposition; instead, blocks behave like mixed substitutions."
+    ),
+
+    "freq_hints": [
+      "Monograms may look flatter than standard English.",
+      "Text remains alphabetic and structured (unlike random bytes/encodings).",
+      "If block size is small (2), some repeating patterns can still occur in ciphertext.",
+      "Known-plaintext is the real killer; frequency alone won’t solve it.",
+    ],
+
+    "freq_example": (
+      "If you suspect Hill with n=2 and you know plaintext contains 'TH' somewhere, "
+      "and you can locate its ciphertext pair, you can derive constraints on K."
+    ),
+
+    "pitfalls": [
+      "Using a matrix that isn’t invertible mod 26.",
+      "Mixing different A=0 vs A=1 indexing conventions across tools.",
+      "Forgetting padding rules (changes last block).",
+      "Assuming spaces are included in the alphabet (most Hill implementations do letters-only).",
+    ],
+
+    "variants": [
+      "Different modulus/alphabet sizes (include digits, punctuation).",
+      "Block size 3 or more (harder to brute force).",
+      "Affine Hill (adds a vector offset).",
+    ],
+
+    "practice_blurb": (
+      "Practice with n=2 first: pick a valid matrix, encrypt a sentence, then try recovering the key from a few known blocks."
+    ),
+
+    "practice_prompts": [
+      "Use K=[[3,3],[2,5]] to encrypt a short message and verify decoding.",
+      "Given plaintext/ciphertext pairs of 2-letter blocks, solve for K mod 26.",
+      "Try different padding letters and see how ciphertext changes.",
+      "Try n=3 with a known invertible matrix and observe how much harder it looks.",
+    ],
+
+    "faq": [
+      {"q": "Why must the key matrix be invertible mod 26?",
+       "a": "Because decryption requires K⁻¹. If det(K) has no inverse mod 26, K⁻¹ doesn’t exist."},
+      {"q": "Is Hill secure?",
+       "a": "No. Its linear structure makes it vulnerable to known-plaintext and modern cryptanalysis."},
+      {"q": "Why does Hill feel “mathy” compared to other ciphers?",
+       "a": "Because it uses vector/matrix multiplication and modular inverses as the core mechanism."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Playfair Cipher", "url": "/ciphers/playfair"},
+      {"name": "Affine Cipher", "url": "/ciphers/affine"},
+      {"name": "Vigenère Cipher", "url": "/ciphers/vigenere"},
+    ],
+
+    "try_encode_url": "/tools?cipher=hill",
+    "try_break_url": "/breaker?cipher=hill",
+    "tools_url": "/tools",
+  },
+
+
+  # ============================================================
+  # AUTOKEY
+  # ============================================================
+  "autokey": {
+    "cipher_name": "Autokey Cipher",
+    "page_title": "Autokey Cipher — Vigenère Variant, Examples, and How to Break It | The Cipher Lab",
+    "meta_description": (
+      "A detailed Autokey cipher guide: how it differs from Vigenère, how the keystream is formed, "
+      "encoding/decoding examples, frequency clues, and practical breaking strategies using cribs."
+    ),
+    "page_blurb": "A Vigenère-style cipher where the key extends using plaintext (or ciphertext) rather than repeating.",
+
+    "cipher_family": "Polyalphabetic substitution (Vigenère variant)",
+    "cipher_era": "Classical (19th century variants; common in puzzles)",
+    "cipher_strength": "Weak–medium (crib-sensitive)",
+
+    "cipher_history": (
+      "Autokey was designed to fix a major weakness of Vigenère: repeating keys create periodic patterns "
+      "that reveal the key length (Kasiski/IoC). Autokey reduces repetition by extending the keystream using text itself.\n\n"
+      "In puzzle cryptography, Autokey is popular because it’s one step harder than Vigenère but still crackable when you have "
+      "a crib, a known header, or predictable plaintext structure."
+    ),
+
+    "what_it_is": (
+      "Autokey starts with a short keyword (the seed), then appends plaintext (most common variant) to form the keystream. "
+      "Each keystream letter acts like a Caesar shift (A=0..Z=25) just like Vigenère."
+    ),
+
+    "how_it_works": (
+      "Plaintext-autokey (common):\n"
+      "• Keystream = KEYWORD + PLAINTEXT (then truncated to message length)\n"
+      "• Encrypt: C[i] = (P[i] + K[i]) mod 26\n"
+      "• Decrypt: P[i] = (C[i] - K[i]) mod 26, but K after the seed depends on recovered plaintext\n\n"
+      "This creates a feedback loop: once you recover some plaintext, you recover more of the keystream automatically."
+    ),
+
+    "core_rules": [
+      "Seed keyword provides the first keystream letters.",
+      "Keystream continues with plaintext (or sometimes ciphertext in another variant).",
+      "Non-letters are usually skipped for keystream advancement (implementation dependent).",
+      "If you recover a plaintext fragment, you can extend the keystream from it.",
+    ],
+
+    "worked_example": (
+      "Seed key: KEY\n"
+      "Plaintext: ATTACKATDAWN\n"
+      "Keystream: KEYATTACKATDA (seed + plaintext, truncated)\n"
+      "Encrypt using Vigenère arithmetic with this keystream."
+    ),
+
+    "encode_steps": [
+      "Pick a seed keyword (letters only).",
+      "Normalize plaintext/key rules (uppercase, letters-only advancement).",
+      "Build keystream = seed + plaintext (truncate to length).",
+      "Encrypt each letter like Vigenère using the matching keystream letter.",
+      "Preserve or strip punctuation consistently with your chosen convention.",
+    ],
+
+    "encoding_notes": (
+      "Autokey variants differ. The big question: does the keystream extend with plaintext or ciphertext, "
+      "and does it advance over punctuation? Make sure your tool and your puzzle use the same convention."
+    ),
+
+    "break_overview": (
+      "Autokey is harder than repeating-key Vigenère because the usual key-length attacks weaken. "
+      "The most practical break is a **crib attack**: guess a likely plaintext word/phrase, then use it to bootstrap the keystream.\n\n"
+      "Once the guess is correct, decryption rapidly becomes self-sustaining because recovered plaintext generates more keystream."
+    ),
+
+    "break_steps": [
+      "Look for predictable structure: greetings, headers, 'THE', 'ATTACK', 'FLAG{', dates, etc.",
+      "Guess a crib at a position; derive keystream letters for that region.",
+      "Use derived keystream to decrypt forward; recovered plaintext extends the keystream.",
+      "If output becomes increasingly readable, the crib is likely correct.",
+      "If output collapses into nonsense quickly, try a different crib or alignment.",
+    ],
+
+    "frequency_summary": (
+      "Autokey often looks less periodic than Vigenère because the keystream changes with plaintext. "
+      "IoC and Kasiski can be less decisive. Frequency analysis is more of a triage tool here: "
+      "it tells you it’s classical/polyalphabetic, but cribs do the heavy lifting."
+    ),
+
+    "freq_hints": [
+      "Less clear repeating structure than Vigenère with short repeating key.",
+      "Still alphabetic and language-linked (not random bytes).",
+      "If you try Vigenère key-length scans and nothing clean appears, Autokey is a suspect.",
+      "Crib success produces a strong ‘snowball’ effect in readability.",
+    ],
+
+    "freq_example": (
+      "Try guessing the plaintext contains 'THE' near the start. "
+      "If that guess produces readable continuation (not just a single word), you likely found the right alignment."
+    ),
+
+    "pitfalls": [
+      "Using the wrong Autokey variant (plaintext-autokey vs ciphertext-autokey).",
+      "Wrong key advancement rules over punctuation/spaces.",
+      "Assuming you can estimate key length like standard Vigenère (often misleading).",
+      "Not testing multiple crib alignments (off by 1–2 characters is common).",
+    ],
+
+    "variants": [
+      "Plaintext Autokey (common).",
+      "Ciphertext Autokey (keystream extends with ciphertext).",
+      "Running-key cipher (keystream is long external text; cousin concept).",
+    ],
+
+    "practice_blurb": (
+      "Practice by encrypting with a short seed like 'KEY', then try breaking it by guessing 'THE' or a known header near the start."
+    ),
+
+    "practice_prompts": [
+      "Encrypt a paragraph with seed 'KEY' and try to recover plaintext using a crib.",
+      "Try the same plaintext with different punctuation handling and see how breaks differ.",
+      "Construct a ciphertext-autokey example and compare breaking difficulty.",
+      "Use a known phrase like 'MEETAT' and test alignments.",
+    ],
+
+    "faq": [
+      {"q": "Why is Autokey harder than Vigenère?",
+       "a": "Because it reduces repeating-key periodicity, weakening key-length detection."},
+      {"q": "What’s the best way to break it in puzzles?",
+       "a": "Cribs. A correct guessed word can bootstrap the keystream and snowball into full recovery."},
+      {"q": "Does Autokey keep spaces/punctuation?",
+       "a": "Usually punctuation is preserved, but key advancement rules vary by implementation."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Vigenère Cipher", "url": "/ciphers/vigenere"},
+      {"name": "Caesar Cipher", "url": "/ciphers/caesar"},
+      {"name": "Substitution Cipher", "url": "/ciphers/substitution"},
+    ],
+
+    "try_encode_url": "/tools?cipher=autokey",
+    "try_break_url": "/breaker?cipher=autokey",
+    "tools_url": "/tools",
+  },
+
+
+  # ============================================================
+  # BACON
+  # ============================================================
+  "bacon": {
+    "cipher_name": "Bacon Cipher (Baconian)",
+    "page_title": "Bacon Cipher — A/B Encoding, Hidden Messages, Examples, and How to Break It | The Cipher Lab",
+    "meta_description": (
+      "A complete Bacon cipher guide: A/B encoding, 5-bit groups, classic and modern variants, "
+      "how to hide Baconian in formatting, and step-by-step decoding/breaking."
+    ),
+    "page_blurb": "A steganographic-style cipher that encodes letters as patterns of A and B (often hidden in text styling).",
+
+    "cipher_family": "Encoding / Steganography (binary pattern mapping)",
+    "cipher_era": "1600s (Francis Bacon), modern puzzle usage",
+    "cipher_strength": "Weak (pattern extraction is the main challenge)",
+
+    "cipher_history": (
+      "Bacon’s cipher is historically famous because it’s as much about hiding a message as encrypting it. "
+      "The classic idea is to encode letters using two symbols (A/B), often disguised as two text styles "
+      "(uppercase/lowercase, bold/normal, serif/sans).\n\n"
+      "In modern puzzles, the hardest part isn’t the substitution—it’s noticing the two-channel signal and extracting it cleanly."
+    ),
+
+    "what_it_is": (
+      "Baconian encodes each plaintext letter as a 5-character pattern of A and B (like a 5-bit code). "
+      "Once you have the A/B stream, decoding is straightforward: group into 5s and map to letters."
+    ),
+
+    "how_it_works": (
+      "1) Decide which visible feature means A vs B (e.g., lowercase=A, uppercase=B).\n"
+      "2) Read the cover text and convert each character into A or B.\n"
+      "3) Group A/B into chunks of 5.\n"
+      "4) Convert each chunk into a letter using the Baconian table.\n\n"
+      "Classic tables often merge I/J and U/V, but modern variants may not."
+    ),
+
+    "core_rules": [
+      "Two distinct symbols/styles represent A and B.",
+      "Group into 5s (classic) to map to letters.",
+      "Variant tables differ (I/J merge, U/V merge, or full 26 mapping).",
+      "Extraction is the hard part: formatting can be lost in copy/paste.",
+    ],
+
+    "worked_example": (
+      "A/B stream:\n"
+      "AABAA AABAB ABBAB\n"
+      "→ HELLO (example mapping; depends on table variant)\n\n"
+      "If hiding in case:\n"
+      "aAbAA aAbAb aBBaB\n"
+      "Lowercase=A, Uppercase=B → same A/B stream."
+    ),
+
+    "encode_steps": [
+      "Pick a Bacon table variant (classic vs full 26).",
+      "Convert plaintext letters into A/B 5-tuples.",
+      "Choose a carrier: text where you can encode A/B via styling (case/bold/font).",
+      "Apply styling for each carrier letter to represent the next A/B symbol.",
+      "Verify extraction survives the medium (screenshots/HTML preserve better than plain copy).",
+    ],
+
+    "encoding_notes": (
+      "Bacon is often broken because formatting disappears. If you suspect Bacon, inspect the HTML/CSS, or use a screenshot, "
+      "or look for consistent alternations like upper/lower patterns."
+    ),
+
+    "break_overview": (
+      "Breaking Baconian is mostly: 1) detect the two-channel signal, 2) extract A/B reliably, 3) pick the correct table.\n\n"
+      "Once extracted, try both A/B polarity assignments (swap A↔B) and try classic vs full-26 tables."
+    ),
+
+    "break_steps": [
+      "Identify the two encodings (case, font weight, punctuation type, spacing, etc.).",
+      "Map one style to A and the other to B (try both ways if unsure).",
+      "Extract a continuous A/B stream and group into 5s.",
+      "Decode with the Bacon table; if gibberish, swap polarity or switch table variant.",
+      "If output is close-but-wrong, check grouping offset (start 1–4 symbols later).",
+    ],
+
+    "frequency_summary": (
+      "Frequency analysis on letters isn’t the main tool—Bacon hides a binary stream. "
+      "The tell is often *visual*: two styles appear with roughly balanced counts.\n\n"
+      "After extraction, you’re effectively decoding 5-bit symbols, not cracking natural-language frequencies."
+    ),
+
+    "freq_hints": [
+      "Look for two visual/textual states that alternate (case, boldness, font).",
+      "A/B distribution often near-balanced over long text (not always).",
+      "If copy/paste normalizes everything, the cipher ‘disappears’.",
+      "Try shifting grouping alignment if the decode looks off by one.",
+    ],
+
+    "freq_example": (
+      "If you extract: ABBAB AABAA ...\n"
+      "Try decoding using classic Bacon mapping; if nonsense, swap A↔B and retry; "
+      "then try a full 26-letter mapping."
+    ),
+
+    "pitfalls": [
+      "Formatting destroyed by copy/paste (turns everything into one style).",
+      "Wrong table variant (classic merges letters).",
+      "Wrong A/B polarity assignment.",
+      "Wrong grouping offset (start position).",
+    ],
+
+    "variants": [
+      "Classic Bacon (I/J and U/V merged).",
+      "Full 26 Bacon table (distinct I/J, U/V).",
+      "Carrier variations: punctuation, whitespace width, emoji types, etc.",
+    ],
+
+    "practice_blurb": (
+      "Practice by hiding a short secret in case (upper/lower) inside an innocent sentence, then try extracting it from different mediums."
+    ),
+
+    "practice_prompts": [
+      "Hide 'HELLO' as A/B using uppercase/lowercase in a paragraph.",
+      "Try extracting from rendered HTML vs copied text and note differences.",
+      "Decode with both Bacon tables and compare outputs.",
+      "Encode a longer message and see how easy it is to lose alignment.",
+    ],
+
+    "faq": [
+      {"q": "Is Bacon a cipher or steganography?",
+       "a": "It’s often treated as steganography because the message is hidden in an innocuous carrier."},
+      {"q": "Why does copy/paste break Bacon?",
+       "a": "Because many carriers rely on formatting that gets normalized when you copy as plain text."},
+      {"q": "What if decoding gives gibberish?",
+       "a": "Swap A/B polarity, try a different table variant, and check grouping offset."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Morse Encoding", "url": "/ciphers/morse"},
+      {"name": "Substitution Cipher", "url": "/ciphers/substitution"},
+      {"name": "Transposition Ciphers", "url": "/ciphers/transposition"},
+    ],
+
+    "try_encode_url": "/tools?cipher=bacon",
+    "try_break_url": "/breaker?cipher=bacon",
+    "tools_url": "/tools",
+  },
+
+
+  # ============================================================
+  # MORSE (ENCODING) + ENIGMA (OVERVIEW PAGE)
+  # ============================================================
+  "morse": {
+    "cipher_name": "Morse & Enigma",
+    "page_title": "Morse Code and Enigma — Encoding vs Cipher, How to Decode, and How Enigma Worked | The Cipher Lab",
+    "meta_description": (
+      "A detailed overview of Morse code (encoding) and Enigma (rotor cipher): how Morse is decoded, spacing rules, "
+      "and how Enigma’s rotors + plugboard created a changing substitution, plus high-level breaking concepts."
+    ),
+    "page_blurb": "Morse is an encoding (no secret key). Enigma is a rotor cipher (a real keyed system with changing substitution).",
+
+    "cipher_family": "Encoding (Morse) + Rotor cipher (Enigma)",
+    "cipher_era": "Morse: 1800s; Enigma: 1900s",
+    "cipher_strength": "Morse: no secrecy; Enigma: strong historically, broken with constraints + automation",
+
+    "cipher_history": (
+      "Morse code is often misnamed as a “cipher,” but it’s an encoding: it converts letters into dots and dashes and can be reversed "
+      "without a secret key. Its difficulty is operational (signal clarity, timing, spacing), not cryptographic secrecy.\n\n"
+      "Enigma, by contrast, is a true cipher machine. It uses a plugboard and a stack of rotating rotors to produce a substitution "
+      "that changes with every key press. Historically, it was defeated using a combination of cribs (guessed plaintext), "
+      "mathematical constraints, and automation (bombes)."
+    ),
+
+    "what_it_is": (
+      "Morse: a reversible representation of text as short/long signals.\n"
+      "Enigma: a rotor-based polyalphabetic substitution system where the mapping changes each character."
+    ),
+
+    "how_it_works": (
+      "Morse decoding basics:\n"
+      "• Dots/dashes form letters.\n"
+      "• Spacing matters: short gaps between elements, medium gaps between letters, longer gaps between words.\n\n"
+      "Enigma basics:\n"
+      "• Plugboard swaps pairs before/after rotors.\n"
+      "• Rotors implement substitution and step (rotate) each key press.\n"
+      "• A reflector sends the signal back through rotors, making encryption/decryption symmetric for the same settings."
+    ),
+
+    "core_rules": [
+      "Morse has no secret key; Enigma absolutely does.",
+      "Morse difficulty is spacing + noise; Enigma difficulty is huge key space + stepping.",
+      "Enigma encryption is symmetric (same settings decrypt).",
+      "Morse word spacing is critical to correct decoding.",
+    ],
+
+    "worked_example": (
+      "Morse example:\n"
+      "HELLO → •••• · ·−·· ·−·· −−−\n\n"
+      "Enigma example (conceptual):\n"
+      "Pressing the same letter twice produces different ciphertext letters because rotors step."
+    ),
+
+    "encode_steps": [
+      "Morse: convert each letter to dots/dashes; preserve clear letter and word spacing.",
+      "Enigma: choose rotor order, ring settings, start positions, and plugboard pairs; then type plaintext.",
+    ],
+
+    "encoding_notes": (
+      "If you’re solving a puzzle and someone says “Morse cipher,” treat it as Morse encoding first—there’s no key to crack."
+    ),
+
+    "break_overview": (
+      "Morse: you don’t “break” it—you decode it. The task is to parse dots/dashes and spacing correctly.\n\n"
+      "Enigma: breaking historically relied on operational mistakes, message formats, repeated keys, and cribs. "
+      "Modern hobby breaking usually assumes you know the machine model and uses software with constraints."
+    ),
+
+    "break_steps": [
+      "Morse: identify dot/dash symbols and letter/word gaps; decode using a Morse table.",
+      "If ambiguous, try alternate spacing segmentation.",
+      "Enigma: find a crib (guessed plaintext) and use it to constrain rotor/plugboard settings.",
+      "Use automation/solvers rather than manual search (keyspace is enormous).",
+    ],
+
+    "frequency_summary": (
+      "Morse doesn’t preserve letter frequency in a helpful way because it’s not substitution—it's representation.\n"
+      "Enigma output can look close to random because substitution changes each character."
+    ),
+
+    "freq_hints": [
+      "If the text is dots/dashes, treat as encoding (Morse), not a cipher family.",
+      "If the ciphertext is alphabetic but very “flat” and resists classical attacks, a rotor-like system may be involved.",
+      "For Morse, look for separators or timing cues rather than frequencies.",
+    ],
+
+    "freq_example": (
+      "If you see: •− ••• •−−− ...\n"
+      "Try decoding with standard Morse. If there are no clear gaps, you may need to infer spacing from context."
+    ),
+
+    "pitfalls": [
+      "Calling Morse a cipher and looking for a key that doesn’t exist.",
+      "Losing Morse spacing information (turns a decode into a segmentation puzzle).",
+      "Assuming Enigma can be brute-forced casually without constraints.",
+    ],
+
+    "variants": [
+      "Morse variants: American vs International (most puzzles use International).",
+      "Enigma variants: different rotor sets, reflectors, plugboard configurations.",
+    ],
+
+    "practice_blurb": (
+      "Practice Morse by decoding short phrases with and without explicit spaces. For Enigma, practice the concept: "
+      "stepping substitution and the idea of cribs."
+    ),
+
+    "practice_prompts": [
+      "Decode: •••• · ·−·· ·−·· −−− (HELLO).",
+      "Write MORSE in dots/dashes and share it without spaces—can you still decode it?",
+      "Explain why Enigma encryption changes each key press (rotor stepping).",
+      "Try an online Enigma simulator with known settings to see symmetry (same settings decrypt).",
+    ],
+
+    "faq": [
+      {"q": "Is Morse code encryption?",
+       "a": "Not in the secrecy sense—it's encoding. Anyone can decode it with the table."},
+      {"q": "Why was Enigma hard to break?",
+       "a": "Huge key space plus changing substitution each character—breaks relied on constraints, cribs, and automation."},
+      {"q": "Why does Enigma decrypt with the same settings?",
+       "a": "Because of the reflector design; the process is symmetric when configured identically."},
+    ],
+
+    "related_ciphers": [
+      {"name": "Bacon Cipher", "url": "/ciphers/bacon"},
+      {"name": "Vigenère Cipher", "url": "/ciphers/vigenere"},
+      {"name": "Transposition Ciphers", "url": "/ciphers/transposition"},
+    ],
+
+    "try_encode_url": "/tools?cipher=morse",
+    "try_break_url": "/breaker?cipher=morse",
+    "tools_url": "/tools",
+  },
+
+
+}
+
+@app.route("/ciphers/<slug>")
+def cipher_info(slug):
+    cfg = CIPHER_INFO.get(slug.lower())
+    if not cfg:
+        abort(404)
+
+    user = current_user()  # if you want nav/login state
+    return render_template(
+        "cipher_info.html",
+        user=user,
+        canonical_url=request.base_url,
+        **cfg
+    )
 
 
 

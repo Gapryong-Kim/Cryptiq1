@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Primary SEO -->
+  <title>{{ page_title }}</title>
+  <meta name="description" content="{{ meta_description }}" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="{{ canonical_url or request.base_url }}" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="The Cipher Lab" />
+  <meta property="og:title" content="{{ page_title }}" />
+  <meta property="og:description" content="{{ meta_description }}" />
+  <meta property="og:url" content="{{ canonical_url or request.base_url }}" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="{{ page_title }}" />
+  <meta name="twitter:description" content="{{ meta_description }}" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    /* Reuse your existing info.html style language */
+    body{ background:var(--bg); color:var(--text); font-family:'Inter','Segoe UI',Tahoma,sans-serif; margin:0; }
+    html{ scroll-behavior:smooth; }
+
+    .sidebar{
+      position: fixed; top:65px; left:0;
+      width:260px; height:calc(100% - 65px);
+      background:var(--panel-2);
+      border-right:1px solid var(--line);
+      overflow-y:auto; padding:18px;
+      box-sizing:border-box; z-index:900;
+    }
+    .sidebar h3{
+      color:var(--accent); margin:0 0 10px;
+      font-size:.95rem; text-transform:uppercase; letter-spacing:1px;
+    }
+
+    .sidebar .sb-group{
+      margin-top: 12px;
+      margin-bottom: 6px;
+      padding: 6px 8px 8px;
+      color: var(--text);
+      font-weight: 950;
+      font-size: .78rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .85;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .sidebar a{
+      display:block;
+      color:var(--text-dim);
+      text-decoration:none;
+      margin:6px 0;
+      padding:8px 10px;
+      border-radius:8px;
+      transition:.2s;
+    }
+    .sidebar a.sb-item{ padding-left: 16px; }
+    .sidebar a:hover{
+      background:var(--accent);
+      color:#0f0f0f;
+      box-shadow:0 0 12px var(--accent-soft-2);
+    }
+
+    .content{
+      margin-left:280px;
+      padding:110px 60px 60px;
+      max-width: 980px;
+    }
+
+    .breadcrumbs{
+      display:flex; gap:8px; flex-wrap:wrap;
+      color: var(--muted, #a0a0a0);
+      font-size: .92rem;
+      margin-bottom: 10px;
+    }
+    .breadcrumbs a{ color: var(--accent); text-decoration:none; font-weight:700; }
+    .breadcrumbs a:hover{ text-decoration:underline; }
+
+    h1{ color:var(--accent); font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 10px 0 10px; }
+    h2{
+      color: var(--accent);
+      margin-top: 46px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--accent);
+      padding-bottom: 6px;
+    }
+    h3{ color: var(--accent); margin-top: 18px; font-size: 1.08rem; }
+
+    p, li{ line-height:1.72; color:var(--text); }
+
+    .hero-meta{
+      display:flex; flex-wrap:wrap; gap:10px;
+      margin-top: 10px;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.02);
+      color: var(--text-dim);
+      font-weight: 800;
+      font-size: .82rem;
+      letter-spacing:.02em;
+      text-transform: uppercase;
+    }
+
+    .cta-row{
+      display:flex; flex-wrap:wrap; gap:10px;
+      margin-top: 14px;
+    }
+    .cta{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      text-decoration:none;
+      font-weight: 900;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+    }
+    .cta:hover{
+      background: rgba(255,255,255,0.06);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft, rgba(0,255,213,0.18));
+    }
+    .cta.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .cta.primary:hover{
+      background: var(--accent-strong, #00e6c0);
+      border-color: var(--accent-strong, #00e6c0);
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+    }
+
+    /* ===============================
+       INFO-STYLE EXAMPLE / TIP / NOTE
+       (ported from info.html vibe)
+       =============================== */
+    .example-box,.tip,.note{
+      border-radius: 12px;
+      transition: .25s;
+    }
+    .example-box:hover,.tip:hover{
+      box-shadow: 0 0 18px var(--accent-soft-2);
+    }
+
+    .example-box{
+      background: var(--panel-2);
+      border: 1px solid var(--line-2);
+      padding: 12px 14px;
+      margin: 12px 0 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      color: var(--accent);
+      white-space: pre-wrap;
+    }
+
+    .tip{
+      background: var(--panel);
+      border-left: 4px solid var(--accent);
+      padding: 10px 14px;
+      margin: 12px 0 18px;
+      border-radius: 12px;
+      color: var(--text-dim);
+    }
+
+    :root{
+      --note-glow: rgba(255, 215, 0, 0.28);
+      --note-ring: rgba(255, 215, 0, 0.35);
+    }
+    .note{
+      background: linear-gradient(180deg, rgba(255,215,0,0.06), transparent);
+      border: 1px dashed rgba(255,215,0,0.35);
+      padding: 10px 14px;
+      margin: 12px 0 18px;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.10);
+      color: var(--text);
+    }
+    .note:hover{
+      box-shadow:
+        0 0 0 2px var(--note-ring),
+        0 0 24px var(--note-glow);
+    }
+
+    /* subtle glow container (your existing) */
+    .glow-box{
+      background: rgba(0,0,0,0.16);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin: 16px 0;
+      transition: box-shadow .2s ease, border-color .2s ease, transform .15s ease;
+    }
+    .glow-box:hover{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(0,255,213,0.14), 0 12px 28px rgba(0,0,0,.35);
+      transform: translateY(-1px);
+    }
+
+    /* top inline links (styled pills) */
+    .inline-links{
+      display:flex;
+      flex-wrap:wrap;
+      gap:14px;
+      margin-top:10px;
+      align-items:center;
+    }
+    .inline-links a{
+      color: var(--accent);
+      font-weight: 900;
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.02);
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+    }
+    .inline-links a:hover{
+      background: rgba(255,255,255,0.06);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(0,255,213,0.18);
+    }
+    .inline-links a:active{ transform: translateY(1px); }
+
+    .pill-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top: 10px;
+    }
+
+    .freq-hint{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid rgba(0,255,213,0.55);
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+    .freq-hint strong{ color: var(--text); }
+
+    .faq{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.10);
+      border-radius: 14px;
+      overflow:hidden;
+      margin-top: 12px;
+    }
+    .faq-item{
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .faq-item:last-child{ border-bottom:none; }
+    .faq-q{ font-weight: 950; color: var(--text); margin-bottom: 6px; }
+    .faq-a{ color: var(--text-dim); line-height: 1.7; }
+
+    .related{ margin-top: 46px; }
+    .related-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap:14px;
+    }
+    .related-grid a{
+      display:block;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.16);
+      color: var(--text);
+      font-weight: 900;
+      text-decoration:none;
+      transition:.2s;
+    }
+    .related-grid a:hover{
+      border-color: var(--accent);
+      box-shadow:0 0 0 2px rgba(0,255,213,.18);
+    }
+
+    @media(max-width:980px){
+      .content{margin-left:0;padding:110px 20px 60px;}
+      .sidebar{ transform:translateX(-110%); width:84%; max-width:340px; box-shadow:6px 0 24px rgba(0,0,0,0.35); }
+      .sidebar.open{ transform:translateX(0); }
+    }
+    /* FAQ (collapsible) */
+.faq{
+  border:1px solid var(--line);
+  background: rgba(0,0,0,0.10);
+  border-radius: 14px;
+  overflow:hidden;
+  margin-top: 12px;
+}
+
+.faq-item{
+  border-bottom: 1px solid var(--line);
+}
+.faq-item:last-child{ border-bottom:none; }
+
+/* clickable question row */
+.faq-q{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  padding: 12px 14px;
+  font-weight: 950;
+  color: var(--text);
+  text-align:left;
+
+  transition: background .15s ease, box-shadow .2s ease;
+}
+
+.faq-q:hover{
+  background: rgba(255,255,255,0.03);
+}
+
+/* subtle info-style glow on hover (like your cards) */
+.faq-item:hover .faq-q{
+  box-shadow: inset 0 0 0 2px rgba(0,255,213,.10);
+}
+
+.faq-q-text{
+  flex: 1;
+}
+
+/* chevron rotate */
+.faq-chevron{
+  font-weight: 900;
+  color: var(--accent);
+  transform: rotate(0deg);
+  transition: transform .18s ease;
+}
+.faq-item.open .faq-chevron{
+  transform: rotate(180deg);
+}
+
+/* answer panel (animated collapse) */
+.faq-a{
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .22s ease;
+}
+
+.faq-a-inner{
+  padding: 0 14px 14px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+  </style>
+
+  {% if faq and faq|length %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {% for item in faq %}
+      {
+        "@type": "Question",
+        "name": {{ item.q|tojson }},
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": {{ item.a|tojson }}
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
+  </script>
+  {% endif %}
+</head>
+
+<body>
+  {% include "base_nav.html" %}
+
+  <aside class="sidebar" id="sidebar">
+    <h3>{{ sidebar_title or "On this page" }}</h3>
+
+    <div class="sb-group">{{ cipher_family or "Cipher" }}</div>
+    <a class="sb-item" href="#overview">Overview</a>
+    <a class="sb-item" href="#how-it-works">How it works</a>
+    <a class="sb-item" href="#how-to-encode">How to encode</a>
+    <a class="sb-item" href="#how-to-break">How to break</a>
+    <a class="sb-item" href="#frequency">What frequency looks like</a>
+    <a class="sb-item" href="#pitfalls">Common mistakes</a>
+    <a class="sb-item" href="#variants">Variants</a>
+    <a class="sb-item" href="#practice">Practice</a>
+    <a class="sb-item" href="#faq">FAQ</a>
+  </aside>
+
+<main class="content">
+
+  <section id="overview">
+    <h1 style="padding-top: 15px;">{{ cipher_name }}</h1>
+    <p>{{ page_blurb }}</p>
+
+    <div class="pill-row">
+      {% if cipher_family %}<span class="pill">Family: {{ cipher_family }}</span>{% endif %}
+      {% if cipher_era %}<span class="pill">Era: {{ cipher_era }}</span>{% endif %}
+      {% if cipher_strength %}<span class="pill">Strength: {{ cipher_strength }}</span>{% endif %}
+    </div>
+
+    <div class="inline-links">
+      {% if try_encode_url %}<a href="{{ try_encode_url }}">Try in Encoder / Decoder →</a>{% endif %}
+      {% if try_break_url %}<a href="{{ try_break_url }}">Try in Breaker →</a>{% endif %}
+      {% if tools_url %}<a href="{{ tools_url }}">Open Tools →</a>{% endif %}
+    </div>
+
+    {% if cipher_history %}
+    <div>
+      <h2 style="margin-top:0;">History & context</h2>
+      <p style="margin:0;color:var(--text-dim);">{{ cipher_history }}</p>
+    </div>
+    {% endif %}
+
+    {% if overview_tip %}
+      <div class="tip">💡 <strong>Tip:</strong> {{ overview_tip }}</div>
+    {% endif %}
+    {% if overview_note %}
+      <div class="note">{{ overview_note }}</div>
+    {% endif %}
+  </section>
+
+  <section id="how-it-works" >
+    <h2>How {{ cipher_name }} works</h2>
+    <p>{{ how_it_works }}</p>
+
+    {% if core_rules %}
+      <h3>Core rules</h3>
+      <ul>
+        {% for r in core_rules %}<li>{{ r }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if worked_example %}
+      <h3>Worked example</h3>
+      <div class="example-box">{{ worked_example }}</div>
+    {% endif %}
+
+    {% if how_it_works_tip %}
+      <div class="tip">💡 <strong>Tip:</strong> {{ how_it_works_tip }}</div>
+    {% endif %}
+  </section>
+
+  <section id="how-to-encode">
+    <h2>How to encode / decode</h2>
+
+    {% if encode_steps %}
+      <h3>Step-by-step</h3>
+      <ol>
+        {% for s in encode_steps %}<li>{{ s }}</li>{% endfor %}
+      </ol>
+    {% endif %}
+
+    {% if encoding_notes %}
+      <div class="tip">💡 <strong>Tip:</strong> {{ encoding_notes }}</div>
+    {% endif %}
+
+    {% if encode_example %}
+      <h3>Mini example</h3>
+      <div class="example-box">{{ encode_example }}</div>
+    {% endif %}
+
+    {% if encode_note %}
+      <div class="note">{{ encode_note }}</div>
+    {% endif %}
+  </section>
+
+  <section id="how-to-break">
+    <h2>How to break a {{ cipher_name }}</h2>
+    <p>{{ break_overview }}</p>
+
+    {% if break_steps %}
+      <h3>Practical checklist</h3>
+      <ul>
+        {% for s in break_steps %}<li>{{ s }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if break_example %}
+      <h3>Worked breaking example</h3>
+      <div class="example-box">{{ break_example }}</div>
+    {% endif %}
+
+    {% if break_tip %}
+      <div class="tip">💡 <strong>Tip:</strong> {{ break_tip }}</div>
+    {% endif %}
+    {% if break_note %}
+      <div class="note">{{ break_note }}</div>
+    {% endif %}
+  </section>
+
+  <section id="frequency">
+    <h2>What frequency looks like</h2>
+    <p>{{ frequency_summary }}</p>
+
+    {% if freq_hints %}
+      <div class="freq-hint">
+        <strong>Signals to look for:</strong>
+        <ul style="margin:8px 0 0;padding-left:18px;">
+          {% for h in freq_hints %}<li>{{ h }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if freq_example %}
+      <h3>Mini example</h3>
+      <div class="example-box">{{ freq_example }}</div>
+    {% endif %}
+
+    {% if freq_tip %}
+      <div class="tip">💡 <strong>Tip:</strong> {{ freq_tip }}</div>
+    {% endif %}
+  </section>
+
+  <section id="pitfalls">
+    <h2>Common mistakes</h2>
+    {% if pitfalls %}
+      <ul>
+        {% for p in pitfalls %}<li>{{ p }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p style="color:var(--text-dim);margin:0;">No common mistakes added yet.</p>
+    {% endif %}
+
+    {% if pitfalls_note %}
+      <div class="note">{{ pitfalls_note }}</div>
+    {% endif %}
+  </section>
+
+  <section id="variants">
+    <h2>Variants</h2>
+    {% if variants %}
+      <ul>
+        {% for v in variants %}<li>{{ v }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p style="color:var(--text-dim);margin:0;">No variants added yet.</p>
+    {% endif %}
+
+    {% if variants_example %}
+      <h3>Variant example</h3>
+      <div class="example-box">{{ variants_example }}</div>
+    {% endif %}
+  </section>
+
+  <section id="practice">
+    <h2>Practice</h2>
+    <p>{{ practice_blurb }}</p>
+
+    {% if practice_prompts %}
+      <h3>Try these prompts</h3>
+      <ul>
+        {% for pr in practice_prompts %}<li>{{ pr }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if practice_example %}
+      <h3>Practice example</h3>
+      <div class="example-box">{{ practice_example }}</div>
+    {% endif %}
+  </section>
+
+  {% if faq %}
+<section id="faq">
+  <h2>FAQ</h2>
+
+  <div class="faq">
+    {% for f in faq %}
+    <div class="faq-item" data-faq>
+      <button class="faq-q" type="button" aria-expanded="false">
+        <span class="faq-q-text">{{ f.q }}</span>
+        <span class="faq-chevron" aria-hidden="true">▾</span>
+      </button>
+
+      <div class="faq-a" role="region">
+        <div class="faq-a-inner">
+          {{ f.a }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+  {% include "base_footer.html" %}
+
+</main>
+<script>
+(function initFaqAccordion(){
+  const items = document.querySelectorAll("[data-faq]");
+  if (!items.length) return;
+
+  items.forEach(item => {
+    const btn = item.querySelector(".faq-q");
+    const panel = item.querySelector(".faq-a");
+    if (!btn || !panel) return;
+
+    // Start collapsed
+    item.classList.remove("open");
+    btn.setAttribute("aria-expanded", "false");
+    panel.style.maxHeight = "0px";
+
+    btn.addEventListener("click", () => {
+      const isOpen = item.classList.toggle("open");
+      btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+
+      // Smooth height animation
+      if (isOpen) {
+        panel.style.maxHeight = panel.scrollHeight + "px";
+      } else {
+        panel.style.maxHeight = "0px";
+      }
+    });
+
+    // If content changes on resize, keep open panels correct
+    window.addEventListener("resize", () => {
+      if (item.classList.contains("open")) {
+        panel.style.maxHeight = panel.scrollHeight + "px";
+      }
+    }, { passive: true });
+  });
+})();
+</script>
+
+</body>
+</html>

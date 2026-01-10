@@ -577,7 +577,13 @@ main > #site-footer{
   }
 }
 
-  </style>
+  
+textarea::placeholder{
+  font-style: italic;
+  opacity: .65;
+}
+</style>
+
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
@@ -1346,5 +1352,18 @@ ${output}
   
   </script>
   
+
+<script>
+(function(){
+  const ghostLines = ['I told my toaster to encrypt my breakfast, but it just gave me burnt toast.', 'This sentence knows it’s about to be decrypted and is very nervous.', 'My secret code is hidden in plain sight, but even I forgot the key.', 'Somewhere, a potato is learning Morse code faster than I can learn Python.', 'The cake is a cipher. You just haven’t decrypted it yet.', 'My diary is written entirely in base64. Even I can’t read it anymore.', 'Trust no one. Except maybe the hash function.', 'I encrypted this message for privacy, then lost the password immediately.', 'Even the cipher doesn’t remember what this was supposed to say.', 'This text is just vibes and entropy.'];
+  const pick = () => ghostLines[Math.floor(Math.random() * ghostLines.length)];
+  const left = document.getElementById("leftBox");
+  const right = document.getElementById("rightBox");
+
+  if (left) left.placeholder = pick();
+  if (right && !right.placeholder) right.placeholder = "Something encrypted goes here…";
+})();
+</script>
+
 </body>
 </html>

@@ -788,6 +788,26 @@
       pointer-events: auto;
     }
 
+  /* ===============================
+   Cipher dropdown group styling
+=============================== */
+select optgroup {
+  font-weight: 800;
+  padding-left: 6px;
+}
+
+select optgroup[label] {
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+/* Indent options under each group */
+select optgroup option {
+  padding-left: 16px;
+  font-weight: 500;
+}
+
   </style>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
@@ -837,21 +857,30 @@
               <label for="cipher_type" class="cb-label">Cipher</label>
               <select name="cipher_type" id="cipher_type" class="cb-select" required>
                 <option value="auto">Auto Detect (Try All)</option>
-                <option value="caesar" selected>Caesar</option>
-                <option value="vigenere">Vigenère</option>
-                <option value="affine">Affine</option>
-                <option value="amsco">AMSCO</option>
-                <option value="railfence">Railfence</option>
-                <option value="columnar">Columnar Transposition</option>
-                <option value="permutation">Permutation</option>
-                <option value="substitution">Basic Substitution</option>
-                <option value="polybius">Polybius Square</option>
-                <option value="atbash">Atbash</option>
-                <option value="base64">Base64</option>
-                <option value="hex">Hexadecimal</option>
-                <option value="binary">Binary</option>
-                <option value="baconian">Baconian</option>
-              </select>
+
+                <optgroup label="Substitution">
+                  <option value="caesar" selected>Caesar</option>
+                  <option value="vigenere">Vigenère</option>
+                  <option value="affine">Affine</option>
+                  <option value="substitution">Basic Substitution</option>
+                </optgroup>
+
+                <optgroup label="Transposition">
+                  <option value="amsco">AMSCO</option>
+                  <option value="railfence">Railfence</option>
+                  <option value="columnar">Columnar Transposition</option>
+                  <option value="permutation">Permutation</option>
+                </optgroup>
+
+                <optgroup label="Codes / Encoding">
+                  <option value="atbash">Atbash</option>
+                  <option value="polybius">Polybius Square</option>
+                  <option value="base64">Base64</option>
+                  <option value="hex">Hexadecimal</option>
+                  <option value="binary">Binary</option>
+                  <option value="baconian">Baconian</option>
+                </optgroup>
+</select>
             </div>
 
             <div class="cb-row" style="gap: 4px; margin-bottom: 0;">

@@ -11,7 +11,7 @@ from datetime import datetime
 
 # --- Breakers (keyed) ---
 from cipher_tools.caesar import caesar_break
-from cipher_tools.vigenere import *
+from cipher_tools.vigenere import break_vigenere
 from cipher_tools.affine import affine_break
 from cipher_tools.amsco import amsco_break
 from cipher_tools.railfence import railfence_break
@@ -42,6 +42,39 @@ COMMON_WORDS = {
     "make","can","like","time","no","just","him","know","take","people","into",
     "year","your","good","some"
 }
+def vigenere_auto(raw_text: str):
+    r = break_vigenere(raw_text)   # your adaptive 1/4/5 breaker
+    return r.key, r.plaintext
+
+
+# ===============================
+#  CANDIDATE FILTERING (avoid friendly failure strings winning)
+# ===============================
+FAIL_MARKERS = (
+    "no valid binary", "not a valid binary", "invalid binary",
+    "no valid base64", "invalid base64", "not valid base64",
+    "no valid hex", "invalid hex", "not valid hex",
+    "no valid bacon", "invalid bacon",
+    "failed to decode", "unable to decode",
+)
+
+def _should_skip_candidate(name: str, raw_text: str, key, pt: str) -> bool:
+    """Skip candidates that are clearly error messages or no-op decodes."""
+    if not isinstance(pt, str):
+        return True
+    pt_stripped = pt.strip()
+    if not pt_stripped:
+        return True
+    low = pt_stripped.lower()
+    # Skip known decoder failure messages
+    if any(m in low for m in FAIL_MARKERS):
+        return True
+    # For universal decoders: if output is identical to input, treat as no-op
+    if name in {"Binary", "Base64", "Hex", "Baconian"}:
+        if pt_stripped == (raw_text or "").strip():
+            return True
+    return False
+
 
 def score_english(text: str) -> float:
     """Rates text by how 'English-like' it is."""
@@ -97,11 +130,13 @@ def auto_break(text: str):
     if broad_type == "Substitution":
         cipher_funcs = [
             ("Caesar",      caesar_break),
-            ("Vigenere",    final_sort(vigenere_break_one(text),vigenere_break_two(text))),
+            ("Vigenere",    vigenere_auto),
             ("Affine",      affine_break),
             ("Amsco",       amsco_break),
-            ("Substitution",substitution_break),
         ]
+        # Optional substitution breaker (only if available in imports)
+        if "substitution_break" in globals():
+            cipher_funcs.append(("Substitution", substitution_break))
     elif broad_type == "Transposition":
         cipher_funcs = [
             ("Columnar",    columnar_break),
@@ -112,7 +147,7 @@ def auto_break(text: str):
         # Unknown → try a balanced set
         cipher_funcs = [
             ("Caesar",      caesar_break),
-            ("Vigenere",    final_sort(vigenere_break_one(text),vigenere_break_two(text))),
+            ("Vigenere",    vigenere_auto),
             ("Columnar",    columnar_break),
             ("Railfence",   railfence_break),
             ("Affine",      affine_break),
@@ -138,6 +173,8 @@ def auto_break(text: str):
                 key, pt = result
             else:
                 key, pt = None, str(result)
+            if _should_skip_candidate(name, raw_text, key, pt):
+                continue
             candidates[name] = (key, pt)
         except Exception:
             continue
