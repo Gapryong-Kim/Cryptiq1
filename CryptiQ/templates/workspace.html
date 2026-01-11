@@ -2813,6 +2813,13 @@
     const CAN_EDIT = {{ "true" if viewer_can_edit else "false" }};
 
     // ===========================
+    // Auth / Pro flags (server truth)
+    // ===========================
+    window.USER_LOGGED_IN = {{ 1 if user else 0 }};
+    window.USER_IS_PRO = {{ 1 if viewer_is_pro else 0 }};
+
+
+    // ===========================
     // Helpers
     // ===========================
     function escapeHtml(str) {

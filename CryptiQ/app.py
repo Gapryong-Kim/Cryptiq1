@@ -216,7 +216,7 @@ def init_core_tables_on_boot():
         pass
 
     # Optional migrations that exist in this codebase
-    for fn in ("migrate_shared_labs", "migrate_labs_pro_fields"):
+    for fn in ("migrate_shared_labs", "migrate_labs_pro_fields", "migrate_guest_setup_fields"):
         try:
             globals()[fn]()
         except Exception:
@@ -368,8 +368,35 @@ def migrate_shared_labs():
 
     conn.commit()
     conn.close()
+# --- FIXED app.py (only change is migration function bug fix) ---
+
+def migrate_guest_setup_fields():
+    """Flags for accounts created via guest checkout (Pro-first flow)."""
+    conn = get_db()
+    cur = conn.cursor()
+
+    # FIX: cols was never defined before
+    cur.execute("PRAGMA table_info(users)")
+    cols = {row[1] for row in cur.fetchall()}
+
+    if "needs_password" not in cols:
+        cur.execute(
+            "ALTER TABLE users ADD COLUMN needs_password INTEGER NOT NULL DEFAULT 0"
+        )
+
+    if "needs_username" not in cols:
+        cur.execute(
+            "ALTER TABLE users ADD COLUMN needs_username INTEGER NOT NULL DEFAULT 0"
+        )
+
+    conn.commit()
+    conn.close()
+
+
+
 
 def migrate_labs_pro_fields():
+    """Add/ensure Labs Pro billing-related columns on users table."""
     conn = get_db()
     cur = conn.cursor()
     cur.execute("PRAGMA table_info(users)")
@@ -384,10 +411,8 @@ def migrate_labs_pro_fields():
     if "labs_tour_seen" not in cols:
         cur.execute("ALTER TABLE users ADD COLUMN labs_tour_seen INTEGER NOT NULL DEFAULT 0")
 
-
     conn.commit()
     conn.close()
-
 
 def ensure_admin_flag():
     if not ADMIN_EMAIL:
@@ -1748,38 +1773,81 @@ def account_change_password():
         flash("Please log in to change your password.", "error")
         return redirect(url_for("login"))
 
-    old_pass = request.form.get("old_password", "")
+    back = url_for("account") + "#security"
+
     new_pass = request.form.get("new_password", "")
     confirm  = request.form.get("confirm_password", "")
 
-    # Always send them back to the account security section (GET-safe)
-    back = url_for("account") + "#security"
-
-    if not old_pass or not new_pass or not confirm:
-        flash("Please fill in all fields.", "error")
-        return redirect(back)
-
-    if old_pass == new_pass:
-        flash("New password must be different from your current password.", "error")
-        return redirect(back)
-
-    if new_pass != confirm:
-        flash("New passwords do not match.", "error")
-        return redirect(back)
-
-    if len(new_pass) < 8:
-        flash("Password must be at least 8 characters.", "error")
-        return redirect(back)
-
     conn = get_db()
     row = conn.execute(
-        "SELECT password_hash FROM users WHERE id=?",
+        "SELECT password_hash, needs_password FROM users WHERE id=?",
         (user["id"],)
     ).fetchone()
 
     if not row or not row["password_hash"]:
         conn.close()
         flash("Account error: password not found.", "error")
+        return redirect(back)
+
+    # ✅ FIX: sqlite3.Row has no .get()
+    try:
+        needs_password = int(row["needs_password"] or 0)
+    except (KeyError, IndexError, TypeError):
+        needs_password = 0
+
+    # ------------------------------------------------------
+    # Pro-first accounts: Set password (skip old password)
+    # ------------------------------------------------------
+    if needs_password:
+        if not new_pass or not confirm:
+            conn.close()
+            flash("Please fill in all fields.", "error")
+            return redirect(back)
+
+        if new_pass != confirm:
+            conn.close()
+            flash("New passwords do not match.", "error")
+            return redirect(back)
+
+        if len(new_pass) < 8:
+            conn.close()
+            flash("Password must be at least 8 characters.", "error")
+            return redirect(back)
+
+        new_hash = generate_password_hash(new_pass)
+        conn.execute(
+            "UPDATE users SET password_hash=?, needs_password=0 WHERE id=?",
+            (new_hash, user["id"])
+        )
+        conn.commit()
+        conn.close()
+
+        flash("Password set.", "success")
+        return redirect(back)
+
+    # ------------------------------------------------------
+    # Normal accounts: Change password (require old password)
+    # ------------------------------------------------------
+    old_pass = request.form.get("old_password", "")
+
+    if not old_pass or not new_pass or not confirm:
+        conn.close()
+        flash("Please fill in all fields.", "error")
+        return redirect(back)
+
+    if old_pass == new_pass:
+        conn.close()
+        flash("New password must be different from your current password.", "error")
+        return redirect(back)
+
+    if new_pass != confirm:
+        conn.close()
+        flash("New passwords do not match.", "error")
+        return redirect(back)
+
+    if len(new_pass) < 8:
+        conn.close()
+        flash("Password must be at least 8 characters.", "error")
         return redirect(back)
 
     if not check_password_hash(row["password_hash"], old_pass):
@@ -1799,6 +1867,80 @@ def account_change_password():
     return redirect(back)
 
 
+@app.route("/account/change-username", methods=["POST"])
+def account_change_username():
+    user = current_user()
+    if not user:
+        flash("Please log in to change your username.", "error")
+        return redirect(url_for("login"))
+
+    back = url_for("account") + "#security"
+
+    new_username = (request.form.get("new_username") or "").strip()
+    password = request.form.get("password") or ""
+
+    if not new_username:
+        flash("Please enter a username.", "error")
+        return redirect(back)
+
+    if len(new_username) < 3 or len(new_username) > 24:
+        flash("Username must be 3–24 characters.", "error")
+        return redirect(back)
+
+    if not re.match(r"^[A-Za-z0-9_]+$", new_username):
+        flash("Username can only contain letters, numbers, and underscores.", "error")
+        return redirect(back)
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT password_hash, needs_username FROM users WHERE id=?",
+        (user["id"],)
+    ).fetchone()
+
+    if not row:
+        conn.close()
+        flash("Account error.", "error")
+        return redirect(back)
+
+    # ✅ FIX: sqlite3.Row has no .get()
+    try:
+        needs_username = int(row["needs_username"] or 0)
+    except (KeyError, IndexError, TypeError):
+        needs_username = 0
+
+    # Normal accounts: confirm password before changing username
+    if not needs_username:
+        if not password:
+            conn.close()
+            flash("Please enter your password to change your username.", "error")
+            return redirect(back)
+
+        if not check_password_hash(row["password_hash"], password):
+            conn.close()
+            flash("Password is incorrect.", "error")
+            return redirect(back)
+
+    # uniqueness check (case-insensitive)
+    exists = conn.execute(
+        "SELECT id FROM users WHERE lower(username)=lower(?) AND id<>?",
+        (new_username, user["id"])
+    ).fetchone()
+
+    if exists:
+        conn.close()
+        flash("That username is taken.", "error")
+        return redirect(back)
+
+    conn.execute(
+        "UPDATE users SET username=?, needs_username=0 WHERE id=?",
+        (new_username, user["id"])
+    )
+    conn.commit()
+    conn.close()
+
+    flash("Username set." if needs_username else "Username updated.", "success")
+    return redirect(back)
+
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
@@ -1814,7 +1956,7 @@ def account():
 
     # User info + posts
     conn = get_db()
-    cur = conn.execute("SELECT username, email, created_at FROM users WHERE id=?", (user["id"],))
+    cur = conn.execute("SELECT username, email, created_at, needs_password, needs_username FROM users WHERE id=?", (user["id"],))
     user_info = cur.fetchone()
 
     # --- My Posts pagination (same style as /posts) ---
@@ -1878,7 +2020,22 @@ def account():
             break
 
     conn.close()
-    return render_template("account.html", user=user, user_info=user_info, posts=posts, leaderboard_data=leaderboard_data, posts_page=posts_page, posts_total_pages=posts_total_pages)
+
+	# sqlite3.Row supports dict-style access (row["col"]) but does NOT implement .get().
+    needs_password = bool(user_info["needs_password"]) if (user_info and ("needs_password" in user_info.keys())) else False
+    needs_username = bool(user_info["needs_username"]) if (user_info and ("needs_username" in user_info.keys())) else False
+
+    return render_template(
+		"account.html",
+		user=user,
+		user_info=user_info,
+		posts=posts,
+		leaderboard_data=leaderboard_data,
+		posts_page=posts_page,
+		posts_total_pages=posts_total_pages,
+		needs_password=needs_password,
+		needs_username=needs_username,
+	)
 
 
 @app.route("/delete_account")
@@ -2656,8 +2813,6 @@ def workspace_new():
 # GET /workspaces/<id>
 # endpoint MUST be workspace_view because your list template calls it
 # ----------------------
-@app.route("/workspaces/<int:ws_id>", methods=["GET"], endpoint="workspace_view")
-
 @app.route("/workspaces/<int:ws_id>", methods=["GET"], endpoint="workspace_view")
 def workspace_view(ws_id):
     user = current_user()
@@ -3887,6 +4042,40 @@ def inject_now_year():
     return {"now_year": datetime.utcnow().year}
 
 
+@app.context_processor
+def inject_user_setup_flags():
+    """Expose needs_password/needs_username globally so the nav can show a setup pulse."""
+    u = current_user()
+    if not u:
+        return {}
+
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT needs_password, needs_username FROM users WHERE id=?",
+            (u["id"],)
+        ).fetchone()
+        conn.close()
+    except Exception:
+        return {}
+
+    needs_password = 0
+    needs_username = 0
+    try:
+        if row:
+            needs_password = int(row["needs_password"] or 0)
+            needs_username = int(row["needs_username"] or 0)
+    except Exception:
+        # If row isn't indexable for some reason, fail closed (no pulse)
+        needs_password = 0
+        needs_username = 0
+
+    return {
+        "needs_password": needs_password,
+        "needs_username": needs_username,
+        "setup_needed_global": bool(needs_password or needs_username),
+    }
+
 # --- helpers you should already have ---
 # current_user() -> dict or None
 # get_db() -> sqlite connection
@@ -4583,14 +4772,27 @@ def _rank_cipher_types(features: dict):
 def api_pro_analysis():
     user = current_user()
     if not user:
-        flash('Error: login required')
         return jsonify({
             "ok": False,
             "error": "login required",
             "redirect": url_for("login", next=request.path, reason="pro_analysis")
         }), 401
 
-    if not is_pro(user):
+    # 🔧 FIX: refresh user from DB so is_pro is accurate
+    conn = get_db()
+    fresh = conn.execute(
+        "SELECT * FROM users WHERE id=?",
+        (user["id"],)
+    ).fetchone()
+    conn.close()
+
+    if not fresh:
+        return jsonify({
+            "ok": False,
+            "error": "user not found"
+        }), 401
+
+    if not is_pro(fresh):
         return jsonify({
             "ok": False,
             "error": "Pro required to use Pro Analysis.",
@@ -4604,7 +4806,6 @@ def api_pro_analysis():
     if len(raw) > 50000:
         raw = raw[:50000]
 
-    # Basic profiling
     total_len = len(raw)
     alpha_only = re.findall(r"[A-Z]", raw.upper())
     alpha_str = "".join(alpha_only)
@@ -4614,32 +4815,26 @@ def api_pro_analysis():
     whitespace = sum(ch.isspace() for ch in raw)
     punctuation = total_len - alpha_len - digits - whitespace
 
-    # letter counts (A–Z)
     letter_counts = Counter(alpha_str)
     ioc = _ioc_from_counts(letter_counts, alpha_len)
     chi = _chisq_english(letter_counts, alpha_len)
 
-    # entropy over visible symbols (raw, excluding whitespace to make it meaningful)
     raw_nowhite = re.sub(r"\s+", "", raw)
     sym_counts = Counter(raw_nowhite) if raw_nowhite else Counter()
     ent = _shannon_entropy_from_counts(sym_counts, sum(sym_counts.values()))
 
-    # vowel ratio (alpha-only)
     vowels = sum(1 for ch in alpha_str if ch in _VOWELS)
     vowel_ratio = (vowels / alpha_len) if alpha_len else 0.0
 
-    # n-grams (alpha-only)
     uni = Counter(alpha_str)
     bi = Counter(alpha_str[i:i+2] for i in range(max(0, alpha_len - 1)))
     tri = Counter(alpha_str[i:i+3] for i in range(max(0, alpha_len - 2)))
 
-    # repeat stats: how many repeated ngrams exist at all
     repeated_bi = sum(1 for _k, v in bi.items() if v >= 2)
     repeated_tri = sum(1 for _k, v in tri.items() if v >= 2)
 
     encoding_hints = _detect_encodings(raw)
 
-    # key-length heuristics
     friedman = _friedman_keylen_estimate(ioc, alpha_len)
     autocorr = _autocorr_shifts(alpha_str, max_shift=20)
     autocorr_top = autocorr[:6]
@@ -4657,52 +4852,44 @@ def api_pro_analysis():
     }
     ranking = _rank_cipher_types(features)
 
-    # Suggested next steps (short but valuable)
     steps = []
     if encoding_hints["looks_base64"]:
-        steps.append("Try Base64 decode first (if output becomes readable/ASCII, you’re done).")
+        steps.append("Try Base64 decode first.")
     if encoding_hints["looks_hex"]:
-        steps.append("Try Hex decode (then re-run analysis on decoded output).")
+        steps.append("Try Hex decode.")
     if encoding_hints["looks_binary"]:
-        steps.append("Try Binary decode (8-bit grouping is common).")
+        steps.append("Try Binary decode.")
     if friedman:
-        steps.append(f"Try Vigenère with key length around ~{friedman} (also check autocorr peaks).")
+        steps.append(f"Try Vigenère with key length around ~{friedman}.")
     if kasiski.get("factor_counts"):
         top_factor = kasiski["factor_counts"][0]["factor"]
-        steps.append(f"Kasiski suggests factors like {top_factor} (test as key length / column count).")
+        steps.append(f"Kasiski suggests factors like {top_factor}.")
     if ioc >= 0.055 and chi < 180:
-        steps.append("Try Caesar/Affine first (fast wins) then Substitution if needed.")
+        steps.append("Try Caesar/Affine first.")
     if ioc >= 0.05 and chi >= 180:
-        steps.append("Try transposition (columnar/railfence) — letter counts are preserved but digrams are scrambled.")
+        steps.append("Try transposition ciphers.")
 
     return jsonify({
         "ok": True,
-
         "length": total_len,
         "alpha_len": alpha_len,
         "digit_len": digits,
         "whitespace_len": whitespace,
         "punct_len": punctuation,
         "unique_symbols": len(sym_counts),
-
         "ioc": round(float(ioc), 6),
         "chi_square_english": round(float(chi), 3),
         "entropy_bits_per_char": round(float(ent), 3),
         "vowel_ratio": round(float(vowel_ratio), 4),
-
         "encoding_hints": encoding_hints,
-
         "friedman_keylen": friedman,
         "autocorr_top": autocorr_top,
         "kasiski": kasiski,
-
         "repeated_bigrams": int(repeated_bi),
         "repeated_trigrams": int(repeated_tri),
-
         "top_letters": _safe_top(uni, 26),
         "top_bigrams": _safe_top(bi, 20),
         "top_trigrams": _safe_top(tri, 20),
-
         "ranking": ranking,
         "next_steps": steps[:8],
     })

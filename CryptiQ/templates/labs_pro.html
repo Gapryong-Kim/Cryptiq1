@@ -536,7 +536,24 @@
   letter-spacing: .02em;
 }
 
-  </style>
+  
+    .pro-email{
+      width: 100%;
+      border-radius: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      outline: none;
+      font-weight: 700;
+    }
+    .pro-email::placeholder{ color: rgba(255,255,255,0.55); }
+    .pro-email:focus{
+      border-color: rgba(0,255,213,0.35);
+      box-shadow: 0 0 0 3px rgba(0,255,213,0.10);
+    }
+
+</style>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
@@ -577,11 +594,7 @@
               {% endif %}
             {% else %}
               <span class="dot free"></span>
-              You’re browsing as a guest.
-              <a href="{{ url_for('login') }}" style="color: var(--accent); text-decoration: none; font-weight: 700;">
-                Log in
-              </a>
-              to upgrade.
+              You’re browsing as a guest. 
             {% endif %}
           </div>
         </div>
@@ -613,9 +626,21 @@
 
           <div class="btn-row">
             {% if not user %}
-              <a class="btn primary" href="{{ url_for('login') }}?next={{ request.path }}">
-                Log in to upgrade
+              <form action="{{ url_for('billing.billing_checkout') }}" method="POST" style="margin:0;">
+                {% if request.args.get("checkout_error") == "email" %}
+                  <div style="margin-bottom:10px;color:#ffb3b3;font-weight:800;">Please enter a valid email to continue.</div>
+                {% endif %}
+
+                <input class="pro-email" type="email" name="email" placeholder="Email (we’ll create your Pro account)" autocomplete="email" required />
+                <div style="height:10px;"></div>
+                <button class="btn primary" type="submit">Upgrade to Labs Pro</button>
+              </form>
+
+              <a class="btn ghost" href="{{ url_for('login') }}?next={{ request.path }}">
+                Already have an account? Log in
               </a>
+
+              <a class="btn ghost" href="{{ url_for('workspace_list') }}">Try Labs</a>
 
             {% elif viewer_is_pro|default(false) %}
               <a class="btn primary" href="{{ url_for('workspace_list') }}">
