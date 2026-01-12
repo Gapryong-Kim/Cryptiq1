@@ -3014,8 +3014,7 @@ def workspace_image_upload(ws_id):
     img = request.files.get("image")
     if not img or not img.filename:
         return jsonify({"ok": False, "error": "no image provided"}), 400
-    if not allowed_file(img.filename):
-        return jsonify({"ok": False, "error": "unsupported file type"}), 400
+    
 
     conn = get_db()
 
