@@ -509,6 +509,9 @@ main.weekly-wrap > #site-footer{
     <section class="weekly-body">
       <!-- LEFT COLUMN -->
       <div>
+        {% if wc.description %}
+          <p class="desc">{{ wc.description }}</p>
+        {% endif %}
         <div class="cipher-block">
           <div class="cipher-label">Ciphertext</div>
           <div class="ciphertext">{{ wc.ciphertext }}</div>
@@ -520,9 +523,7 @@ main.weekly-wrap > #site-footer{
           Work on this cipher in your personal lab with notes and tools.
         </div>
 
-        {% if wc.description %}
-          <p class="desc">{{ wc.description }}</p>
-        {% endif %}
+        
 
         {% if wc.hint %}
           <div class="hint-wrap">
@@ -601,9 +602,7 @@ main.weekly-wrap > #site-footer{
         </li>
 
         <li>💡 <strong>Hints & Scoring</strong><br>
-          Some puzzles have hints. You can reveal them anytime — but each hint slightly reduces
-          the points you can earn for that week’s cipher.
-        </li>
+Some puzzles may include hints. These are typically released later, allowing solvers time to work through the challenge without guidance first.        </li>
       </ul>
 
       <p style="margin-top:14px;color:var(--text-dim);font-size:0.94rem;">
