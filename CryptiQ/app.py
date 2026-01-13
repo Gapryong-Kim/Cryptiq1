@@ -1683,7 +1683,7 @@ def forgot_password():
 
         # Prevent account enumeration
         flash(
-            "If an account with that email exists, a reset link has been sent.",
+            "If an account with that email exists, a reset link has been sent. If you cant' find it, check your spam folder.",
             "info"
         )
 
@@ -2193,10 +2193,29 @@ def weekly_page():
         solved_score=user_score
     )
 
+import re
+import unicodedata
+
+import re
+import unicodedata
+from datetime import datetime
+from flask import request, jsonify
+
+def normalize_submission(text: str) -> str:
+    if not text:
+        return ""
+    # Normalize unicode (smart quotes, em dashes, etc.)
+    text = unicodedata.normalize("NFKD", text)
+    text = text.upper()
+    # Keep only A–Z and digits (remove spaces/punct/case)
+    return re.sub(r"[^A-Z0-9]", "", text)
+
+
 @app.route("/weekly/submit", methods=["POST"])
 def weekly_submit():
     data = request.get_json(silent=True) or {}
-    answer = (data.get("answer") or "").strip()
+    answer_raw = (data.get("answer") or "").strip()
+
     wc = get_current_weekly()
     if not wc:
         return jsonify({"ok": False, "error": "Weekly cipher not found."}), 404
@@ -2204,13 +2223,10 @@ def weekly_submit():
     user = current_user()
     now = datetime.utcnow()
 
-    def normalize(text):
-        return re.sub(r"[^A-Z0-9]", "", (text or "").upper())
+    answer_clean = normalize_submission(answer_raw)
+    solution_clean = normalize_submission(wc.get("solution", ""))
 
-    answer_clean = normalize(answer)
-    solution_clean = normalize(wc["solution"])
-
-    correct = 1 if answer_clean == solution_clean else 0
+    correct = 1 if (answer_clean and answer_clean == solution_clean) else 0
     score = 0
     solve_time_seconds = None
 
@@ -2244,6 +2260,7 @@ def weekly_submit():
             bonus = 10
         else:
             bonus = 0
+
         score = base_score + bonus
 
     # === Always record submission ===
@@ -2260,7 +2277,7 @@ def weekly_submit():
             (user["id"] if user else None),
             (user["username"] if user else None),
             wc["week_number"],
-            answer,
+            answer_raw,   # store what the user typed
             correct,
             score,
             now.isoformat(),
@@ -2271,12 +2288,7 @@ def weekly_submit():
     conn.commit()
     conn.close()
 
-    # === Always return a response ===
-    return jsonify({
-        "ok": True,
-        "correct": bool(correct),
-        "score": score
-    })
+    return jsonify({"ok": True, "correct": bool(correct), "score": score})
 
 
 @app.route("/admin/weekly", methods=["GET", "POST"])

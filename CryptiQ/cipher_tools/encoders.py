@@ -32,18 +32,26 @@ def caesar_decode(text, shift=3):
 # ==============================
 #  VIGENERE
 # ==============================
-def vigenere_encode(text, key):
-    result, key = [], key.upper()
+def vigenere_encode(text: str, key: str) -> str:
+    # Keep letters only, uppercase
+    clean_key = ''.join(ch for ch in key.upper() if 'A' <= ch <= 'Z')
+    if not clean_key:
+        raise ValueError("Key must contain at least one A–Z letter.")
+
+    result = []
     ki = 0
+
     for ch in text:
         if ch.isalpha():
-            shift = ord(key[ki % len(key)]) - 65
-            base = 'A' if ch.isupper() else 'a'
-            result.append(chr((ord(ch) - ord(base) + shift) % 26 + ord(base)))
+            shift = ord(clean_key[ki % len(clean_key)]) - ord('A')
+            base = ord('A') if ch.isupper() else ord('a')
+            result.append(chr((ord(ch) - base + shift) % 26 + base))
             ki += 1
         else:
             result.append(ch)
+
     return ''.join(result)
+
 
 def vigenere_decode(text, key):
     result, key = [], key.upper()
