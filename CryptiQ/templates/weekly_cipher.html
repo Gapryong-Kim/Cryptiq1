@@ -83,6 +83,39 @@
       letter-spacing: 0.02em;
     }
 
+    .archive-nav{
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .archive-link{
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+      border-bottom: 1px dashed var(--accent);
+      padding-bottom: 1px;
+    }
+
+    .archive-select{
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.92rem;
+    }
+
+    .archive-banner{
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: var(--muted);
+    }
+
     .info-btn {
       position: absolute;
       top: 18px;
@@ -472,6 +505,26 @@ main.weekly-wrap > .site-footer,
 main.weekly-wrap > #site-footer{
   margin-top: auto;
 }
+.archive-btn{
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.archive-btn:hover{
+  background: var(--accent);
+  color: #0f0f0f;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 
   </style>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
@@ -491,6 +544,21 @@ main.weekly-wrap > #site-footer{
         <div class="weekly-meta">
           Week #{{ wc.week_number }} · Posted {{ wc.posted_at[:19].replace('T',' ') }}
         </div>
+
+        <!-- Archives nav -->
+        <div class="archive-nav">
+<a class="archive-btn" href="{{ url_for('weekly_archives') }}">View Archives</a>
+          {% if archives and archives|length > 0 %}
+            <select id="archive-select" class="archive-select" aria-label="Jump to archived week">
+              <option value="current" {% if not is_archive %}selected{% endif %}>Current week</option>
+              {% for a in archives %}
+                <option value="{{ a.week_number }}" {% if is_archive and a.week_number == wc.week_number %}selected{% endif %}>
+                  Week #{{ a.week_number }} — {{ a.title }}
+                </option>
+              {% endfor %}
+            </select>
+          {% endif %}
+        </div>
       </div>
 
       <!-- Info Button -->
@@ -505,6 +573,13 @@ main.weekly-wrap > #site-footer{
       </div>
       {% endif %}
     </section>
+
+    {% if is_archive %}
+      <div class="archive-banner">
+        You’re viewing an archived Weekly Cipher. Submissions are closed.
+        <a class="archive-link" href="{{ url_for('weekly_page') }}" style="margin-left:8px;">Back to current</a>
+      </div>
+    {% endif %}
 
     <section class="weekly-body">
       <!-- LEFT COLUMN -->
@@ -539,6 +614,14 @@ main.weekly-wrap > #site-footer{
       <div class="submit-card">
         <h3>Submit Your Answer</h3>
 
+        {% if is_archive %}
+          <p style="color:var(--muted);margin:0 0 10px 0;">
+            This is an archived puzzle — submissions are closed.
+          </p>
+          <a class="lab-btn" href="{{ url_for('weekly_page') }}" style="text-decoration:none;text-align:center;">Back to current week</a>
+
+        {% else %}
+
         {% if already_solved %}
           <p style="color:var(--accent);font-weight:700;margin:0 0 6px 0;">
             ✅ You’ve already solved this week’s cipher — great job!
@@ -562,6 +645,8 @@ main.weekly-wrap > #site-footer{
           <input id="answer" class="answer-input" type="text" placeholder="Your answer…" />
           <button id="submit" class="submit-btn">Submit</button>
           <div id="feedback" class="feedback" aria-live="polite"></div>
+        {% endif %}
+
         {% endif %}
       </div>
     </section>
@@ -619,6 +704,20 @@ Some puzzles may include hints. These are typically released later, allowing sol
   <script>
     const ALREADY_SOLVED = {{ "true" if already_solved else "false" }};
     const SOLVED_SCORE = {{ solved_score or 0 }};
+
+    // Archive jump dropdown
+    (function(){
+      const sel = document.getElementById("archive-select");
+      if (!sel) return;
+      sel.addEventListener("change", () => {
+        const v = sel.value;
+        if (v === "current") {
+          window.location.href = "{{ url_for('weekly_page') }}";
+        } else {
+          window.location.href = "{{ url_for('weekly_archive_view', week_number=0) }}".replace("/0", "/" + v);
+        }
+      });
+    })();
   </script>
 
   <script>

@@ -1596,7 +1596,7 @@ def login():
         if next_url and is_safe_url(next_url):
             return redirect(next_url)
 
-        return redirect(url_for("index"))
+        return redirect(url_for("posts"))
 
     # GET: render login with next preserved so the form can POST it back
     return render_template("login.html", user=current_user(), next=next_url)
@@ -2135,6 +2135,64 @@ def init_weekly_tables():
     conn.commit()
     conn.close()
 
+
+def init_weekly_archive_tables():
+    """Archive store for previous Weekly Ciphers (read-only)."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS weekly_cipher_archive (
+            week_number INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            ciphertext TEXT NOT NULL,
+            solution TEXT NOT NULL,
+            hint TEXT,
+            posted_at TEXT NOT NULL,
+            archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_weekly_cipher_archive_posted ON weekly_cipher_archive(posted_at)"
+    )
+    conn.commit()
+    conn.close()
+
+
+def archive_weekly_cipher_row(wc_row: dict):
+    """Insert a weekly_cipher row into the archive (idempotent by week_number)."""
+    if not wc_row:
+        return
+    try:
+        wn = int(wc_row.get("week_number") or 0)
+    except Exception:
+        wn = 0
+    if wn <= 0:
+        return
+
+    conn = get_db()
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO weekly_cipher_archive
+          (week_number, title, description, ciphertext, solution, hint, posted_at, archived_at)
+        VALUES
+          (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        """,
+        (
+            wn,
+            (wc_row.get("title") or f"Week #{wn}"),
+            (wc_row.get("description") or ""),
+            (wc_row.get("ciphertext") or ""),
+            (wc_row.get("solution") or ""),
+            (wc_row.get("hint") or ""),
+            (wc_row.get("posted_at") or ""),
+        ),
+    )
+    conn.commit()
+    conn.close()
+
 def get_current_weekly():
     conn = get_db()
     cur = conn.execute("SELECT * FROM weekly_cipher WHERE id=1 LIMIT 1")
@@ -2143,6 +2201,7 @@ def get_current_weekly():
     return dict(row) if row else None
 
 init_weekly_tables()
+init_weekly_archive_tables()
 migrate_weekly_tables()
 
 @app.before_request
@@ -2164,9 +2223,19 @@ def weekly_page():
     conn = get_db()
     cur = conn.cursor()
 
-    # Fetch latest cipher
-    cur.execute("SELECT * FROM weekly_cipher ORDER BY week_number DESC LIMIT 1")
+    # Current cipher is always the singleton row (id=1)
+    cur.execute("SELECT * FROM weekly_cipher WHERE id=1 LIMIT 1")
     wc = cur.fetchone()
+
+    # Recent archives for quick navigation
+    archives = cur.execute(
+        """
+        SELECT week_number, title, posted_at
+        FROM weekly_cipher_archive
+        ORDER BY week_number DESC
+        LIMIT 24
+        """
+    ).fetchall()
 
     # Check if user already solved it
     solved = False
@@ -2190,7 +2259,71 @@ def weekly_page():
         user=user,
         user_is_admin=user_is_admin,
         already_solved=solved,
-        solved_score=user_score
+        solved_score=user_score,
+        is_archive=False,
+        archives=archives,
+        current_week_number=(wc["week_number"] if wc else None),
+    )
+
+
+@app.route("/weekly/archives")
+def weekly_archives():
+    """List page for all archived weekly ciphers."""
+    user = current_user()
+    conn = get_db()
+    rows = conn.execute(
+        """
+        SELECT week_number, title, posted_at, archived_at
+        FROM weekly_cipher_archive
+        ORDER BY week_number DESC
+        """
+    ).fetchall()
+    conn.close()
+    return render_template("weekly_archives.html", user=user, archives=rows)
+
+
+@app.route("/weekly/archive/<int:week_number>")
+def weekly_archive_view(week_number: int):
+    """Read-only view of an archived Weekly Cipher."""
+    user = current_user()
+    user_is_admin = is_admin(user)
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM weekly_cipher_archive WHERE week_number=? LIMIT 1",
+        (week_number,),
+    ).fetchone()
+
+    # Also pass recent archives for dropdown nav
+    archives = conn.execute(
+        """
+        SELECT week_number, title, posted_at
+        FROM weekly_cipher_archive
+        ORDER BY week_number DESC
+        LIMIT 24
+        """
+    ).fetchall()
+    conn.close()
+
+    if not row:
+        # fall back to current if they request the active week
+        wc = get_current_weekly()
+        if wc and int(wc.get("week_number") or -1) == int(week_number):
+            return redirect(url_for("weekly_page"))
+        abort(404)
+
+    # Make it look like the normal wc object
+    wc = dict(row)
+    return render_template(
+        "weekly_cipher.html",
+        wc=wc,
+        user=user,
+        user_is_admin=user_is_admin,
+        already_solved=True,
+        solved_score=0,
+        is_archive=True,
+        archives=archives,
+        current_week_number=week_number,
     )
 
 import re
@@ -2323,7 +2456,11 @@ def admin_weekly():
             ):
                 reset_needed = True
 
-        # --- Upsert into weekly_cipher ---
+        # --- Auto-archive previous current cipher when week number changes ---
+        if wc and int(wc.get("week_number") or 0) != int(week_number):
+            archive_weekly_cipher_row(wc)
+
+        # --- Upsert into weekly_cipher (singleton row id=1) ---
         conn.execute("""
             INSERT INTO weekly_cipher (id, week_number, title, description, ciphertext, solution, hint, posted_at)
             VALUES (1, ?, ?, ?, ?, ?, ?, datetime('now'))
@@ -2338,7 +2475,7 @@ def admin_weekly():
         """, (week_number, title, description, ciphertext, solution, hint))
 
         # --- Reset submissions only if needed ---
-        if reset_needed:
+        if reset_needed and wc and int(wc.get("week_number") or 0) == int(week_number):
             conn.execute("DELETE FROM cipher_submissions WHERE cipher_week=?", (week_number,))
             flash("Ciphertext or solution changed — previous submissions have been reset.", "warning")
         else:
@@ -6442,6 +6579,22 @@ def cipher_info(slug):
         **cfg
     )
 
+import os
+
+@app.route("/__admin/db-download/<token>")
+@admin_required
+def admin_db_download(token):
+    user = current_user()
+    
+    if token != os.environ.get("DB_DL_SECRET"):
+        abort(404)   # 404 hides existence
+
+    return send_file(
+        "cryptiq.db",
+        as_attachment=True,
+        download_name="cryptiq.db",
+        mimetype="application/octet-stream"
+    )
 
 
 

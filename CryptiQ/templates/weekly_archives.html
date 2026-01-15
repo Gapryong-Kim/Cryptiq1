@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Weekly Cipher Archives | The Cipher Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browse past Weekly Cipher challenges on The Cipher Lab." />
+  <meta name="robots" content="index, follow" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    body{
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter','Segoe UI',Tahoma,sans-serif;
+      margin:0;
+    }
+
+    main.archives-wrap{
+      width: min(980px, 94%);
+      margin: 14px auto 80px;
+      display:flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn .35s ease;
+    }
+
+    @keyframes fadeIn{
+      from{opacity:0; transform: translateY(10px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+
+    .arch-card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    }
+
+    h1{
+      margin:0;
+      color: var(--accent);
+      font-weight: 900;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+    }
+
+    .sub{
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .toprow{
+      display:flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .backlink{
+      color: var(--accent);
+      text-decoration:none;
+      font-weight: 700;
+      border-bottom: 1px dashed var(--accent);
+      padding-bottom:1px;
+      white-space: nowrap;
+    }
+
+    .search{
+      width: 100%;
+      display:flex;
+    }
+
+    .search input{
+      width:100%;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--input-border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .list{
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .row{
+      display:flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .row:hover{ background: rgba(255,255,255,0.04); }
+
+    .wk{
+      font-weight: 900;
+      color: var(--accent);
+      min-width: 92px;
+    }
+
+    .ttl{
+      flex: 1;
+      min-width: 0;
+      font-weight: 750;
+      color: var(--text);
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .meta{
+      color: var(--muted);
+      font-size: .92rem;
+      white-space: nowrap;
+    }
+
+    .openbtn{
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration:none;
+      white-space: nowrap;
+    }
+
+    .openbtn:hover{ border-color: var(--accent); }
+
+    .empty{
+      color: var(--muted);
+      font-style: italic;
+      text-align:center;
+      margin: 8px 0 0;
+    }
+
+    @media (max-width: 720px){
+      main.archives-wrap{ width: calc(100% - 18px); margin: 86px auto 60px; }
+      .arch-card{ padding: 18px 14px; }
+      .row{ flex-wrap: wrap; align-items: flex-start; }
+      .wk{ min-width:auto; }
+      .ttl{ white-space: normal; line-height: 1.25; }
+      .meta{ white-space: normal; }
+    }
+  </style>
+
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+</head>
+<body>
+  {% include 'base_nav.html' %}
+
+  <main class="archives-wrap">
+    <section class="arch-card">
+      <div class="toprow">
+        <div>
+          <h1>Weekly Cipher Archives</h1>
+          <div class="sub">Past puzzles are read-only — but you can still open them in the lab.</div>
+        </div>
+        <a class="backlink" href="{{ url_for('weekly_page') }}">Back to current week</a>
+      </div>
+
+      <div class="search" style="margin-top:14px;">
+        <input id="arch-search" type="text" placeholder="Search week or title…" />
+      </div>
+    </section>
+
+    <section class="arch-card">
+      {% if not archives or archives|length == 0 %}
+        <p class="empty">No archived weeks yet.</p>
+      {% else %}
+      <div class="list" id="arch-list">
+        {% for a in archives %}
+          <div class="row" data-week="{{ a.week_number }}" data-title="{{ (a.title or '')|lower }}">
+            <div class="wk">Week #{{ a.week_number }}</div>
+            <div class="ttl">{{ a.title }}</div>
+            <div class="meta">{{ (a.posted_at or '')[:19].replace('T',' ') }}</div>
+            <a class="openbtn" href="{{ url_for('weekly_archive_view', week_number=a.week_number) }}">Open</a>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    {% include 'base_footer.html' %}
+  </main>
+
+  <script>
+    (function(){
+      const input = document.getElementById('arch-search');
+      const list = document.getElementById('arch-list');
+      if (!input || !list) return;
+
+      input.addEventListener('input', () => {
+        const q = (input.value || '').trim().toLowerCase();
+        const rows = list.querySelectorAll('.row');
+        rows.forEach(r => {
+          const wk = (r.getAttribute('data-week') || '').toLowerCase();
+          const title = (r.getAttribute('data-title') || '').toLowerCase();
+          const ok = !q || wk.includes(q) || title.includes(q) || (`week #${wk}`).includes(q);
+          r.style.display = ok ? '' : 'none';
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1367,11 +1367,35 @@ Vowel ratio (A/E/I/O/U/Y): ${reportObj.vowel_ratio}
     "Trust no one. Except maybe the hash function."
   ];
 
-  const randomPlaceholder = funSamples[Math.floor(Math.random() * funSamples.length)];
-  textarea.placeholder = randomPlaceholder;
-  textarea.addEventListener("focus", () => textarea.placeholder = "");
+  // Pick a placeholder that doesn't repeat the last one (feels more "random")
+  const PH_KEY = "tcl_breaker_placeholder_v1";
+
+  function pickPlaceholder(){
+    if (!funSamples.length) return "";
+    let last = null;
+    try { last = sessionStorage.getItem(PH_KEY); } catch {}
+
+    // Try a few times to avoid repeats
+    let pick = funSamples[Math.floor(Math.random() * funSamples.length)];
+    if (funSamples.length > 1){
+      for (let tries = 0; tries < 6 && pick === last; tries++){
+        pick = funSamples[Math.floor(Math.random() * funSamples.length)];
+      }
+    }
+
+    try { sessionStorage.setItem(PH_KEY, pick); } catch {}
+    return pick;
+  }
+
+  function setFreshPlaceholder(){
+    textarea.placeholder = pickPlaceholder();
+  }
+
+  setFreshPlaceholder();
+
+  textarea.addEventListener("focus", () => { textarea.placeholder = ""; });
   textarea.addEventListener("blur", () => {
-    if (!textarea.value.trim()) textarea.placeholder = randomPlaceholder;
+    if (!textarea.value.trim()) setFreshPlaceholder();
   });
 
   function showError(msg) {
@@ -1423,9 +1447,8 @@ Vowel ratio (A/E/I/O/U/Y): ${reportObj.vowel_ratio}
   }
 
   clearBtn.addEventListener("click", () => {
-    const ph = funSamples[Math.floor(Math.random() * funSamples.length)];
     textarea.value = "";
-    textarea.placeholder = ph;
+    setFreshPlaceholder();
     resultText.textContent = "";
     resultKey.style.display = "none";
     copyBtn.style.display = "none";
@@ -2234,10 +2257,9 @@ ${pt || "—"}
   window.addEventListener("DOMContentLoaded", () => {
     const restored = restoreBreakerStateIfAny();
 
-    if (!restored && !(textarea.value || "").trim()) {
-      const ph = funSamples[Math.floor(Math.random() * funSamples.length)];
+    if (!restored && !((textarea.value || "").trim())) {
       textarea.value = "";
-      textarea.placeholder = ph;
+      setFreshPlaceholder();
     }
   });
 </script>
