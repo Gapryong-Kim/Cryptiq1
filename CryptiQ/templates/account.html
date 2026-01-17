@@ -495,26 +495,6 @@
       transition: transform .12s, border-color .12s;
     }
     .page-btn:hover{ border-color: var(--accent); transform: translateY(-1px); }
-
-/* ===== Setup attention for password button ===== */
-.btn.setup-attn{
-  animation: setupPulse 1.25s ease-in-out infinite;
-  position: relative;
-}
-.btn.setup-attn::after{
-  content: "Finish setup";
-  position: absolute;
-  top: -10px;
-  right: -6px;
-  font-size: 10px;
-  font-weight: 900;
-  padding: 4px 6px;
-  border-radius: 999px;
-  background: rgba(0,255,213,0.9);
-  color: #0f0f0f;
-  box-shadow: 0 6px 16px rgba(0,0,0,.35);
-}
-
 </style>
 <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
@@ -559,57 +539,29 @@
         <p>Your profile summary appears above. More options coming soon.</p>
       </div>
 
-      
-<!-- ===== Security (Discord-style modals) ===== -->
-<div id="security" class="section">
-  <h3>Security</h3>
+      <!-- ===== Security (Discord-style change password modal) ===== -->
+      <div id="security" class="section">
+        <h3>Security</h3>
 
-  <div class="setting-card">
-    <div class="setting-left">
-      <div class="setting-title">
-        <span class="dot"></span>
-        Username
+        <div class="setting-card">
+          <div class="setting-left">
+            <div class="setting-title">
+              <span class="dot"></span>
+              Password
+            </div>
+            <div class="setting-desc">
+              Update your password by entering your current password, then a new one.
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <button class="btn btn-accent" id="pw-change-btn" type="button">Change password</button>
+          </div>
+        </div>
+
       </div>
-      <div class="setting-desc">
-        {% if needs_username %}
-          Set a username for your account (created during Pro checkout).
-        {% else %}
-          Change your username (password confirmation required).
-        {% endif %}
-      </div>
-    </div>
 
-    <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
-      <button class="btn btn-accent {% if needs_username %}setup-attn{% endif %}" id="un-change-btn" type="button">
-        {% if needs_username %}Click here to set username{% else %}Change username{% endif %}
-      </button>
-    </div>
-  </div>
-
-  <div class="setting-card">
-    <div class="setting-left">
-      <div class="setting-title">
-        <span class="dot"></span>
-        Password
-      </div>
-      <div class="setting-desc">
-        {% if needs_password %}
-          Set a password for your account (created during Pro checkout).
-        {% else %}
-          Update your password by entering your current password, then a new one.
-        {% endif %}
-      </div>
-    </div>
-
-    <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
-      <button class="btn btn-accent {% if needs_password %}setup-attn{% endif %}" id="pw-change-btn" type="button">
-        {% if needs_password %}Click here to set password{% else %}Change password{% endif %}
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== Leaderboard ===== -->
+      <!-- ===== Leaderboard ===== -->
       <div id="leaderboard" class="section">
         <h3>Leaderboard</h3>
         {% if leaderboard_data %}
@@ -691,173 +643,301 @@
   </div>
 
   <div class="confirm-modal" id="confirm-delete">
-    <div class="confirm-box" style="text-align:center;">
-      <h2>Delete Account</h2>
-      <p style="color:var(--text);">This will permanently delete your account and all associated data.</p>
-      <div class="confirm-actions" style="justify-content:center;">
-        <a href="{{ url_for('delete_account') }}" class="btn btn-danger">Delete</a>
-        <button class="btn btn-ghost" data-close type="button">Cancel</button>
-      </div>
-    </div>
-  </div>
+    <div class="confirm-box" style="text-align:left;">
 
-  
-<!-- Change username modal -->
-<div class="confirm-modal" id="confirm-unchange" aria-hidden="true">
-  <div class="confirm-box">
-    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-      <div>
-        <h2 style="margin-bottom:6px;">{% if needs_username %}Set your username{% else %}Update your username{% endif %}</h2>
-        <p>
-          {% if needs_username %}
-            Pick a username to finish setting up your account.
-          {% else %}
-            Enter a new username and confirm with your password.
-          {% endif %}
+      <!-- Step 1: Big warning + continue -->
+      <div id="delete-step-1">
+        <h2 style="text-align:center;">Delete Account</h2>
+        <p style="color:var(--text); text-align:center;">
+          This is permanent. Your account and all associated data will be deleted.
         </p>
-      </div>
-      <button type="button" class="btn btn-ghost" id="unchange-x" style="padding:8px 10px;">✕</button>
-    </div>
 
-    <form method="post" action="{{ url_for('account_change_username') }}" autocomplete="off">
-      <label for="new_username">New Username</label>
-      <input class="auth-input" id="new_username" name="new_username" type="text" required maxlength="24" placeholder="e.g. cipherqueen_01">
-
-      {% if not needs_username %}
-        <label for="un_password" style="margin-top:12px;">Password</label>
-        <div class="password-field" style="margin-bottom:0;">
-          <input class="auth-input" id="un_password" name="password" type="password" required>
-          <button type="button" class="toggle-pass" data-toggle="un_password">Show</button>
+        <div style="margin:14px 0 10px; background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.28); border-radius: 12px; padding: 12px 12px;">
+          <div style="font-weight:900; color:#ff8b8b; margin-bottom:6px;">Before you continue:</div>
+          <ul style="margin: 0 0 0 18px; padding: 0; color: var(--text); line-height: 1.5;">
+            <li>This action can’t be undone.</li>
+            <li>Your posts, solves, and stats will be removed.</li>
+            <li>You will be logged out immediately.</li>
+          </ul>
         </div>
-      {% endif %}
 
-      <div class="confirm-actions">
-        <button class="btn btn-ghost" data-close type="button">Cancel</button>
-        <button class="btn btn-accent" type="submit">Done</button>
+        <div class="confirm-actions" style="justify-content:center;">
+          <button class="btn btn-ghost" data-close type="button">Cancel</button>
+          <button class="btn btn-danger" id="delete-continue" type="button">Continue</button>
+        </div>
       </div>
-    </form>
 
-    <p style="margin:10px 0 0; font-size:.9rem; color:var(--muted);">
-      3–24 chars. Letters, numbers, underscores only.
-    </p>
-  </div>
-</div>
-
-<!-- Change password modal -->
-<div class="confirm-modal" id="confirm-pwchange" aria-hidden="true">
-  <div class="confirm-box">
-    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-      <div>
-        <h2 style="margin-bottom:6px;">{% if needs_password %}Set your password{% else %}Update your password{% endif %}</h2>
-        <p>
-          {% if needs_password %}
-            Create a password for this account.
-          {% else %}
-            Enter your current password and a new password.
-          {% endif %}
+      <!-- Step 2: Type-to-confirm + hold-to-confirm -->
+      <div id="delete-step-2" style="display:none;">
+        <h2 style="text-align:center; margin-bottom:6px;">Final confirmation</h2>
+        <p style="text-align:center; margin-top:0;">
+          To delete your account, complete all fields below.
         </p>
-      </div>
-      <button type="button" class="btn btn-ghost" id="pwchange-x" style="padding:8px 10px;">✕</button>
-    </div>
 
-    <form method="post" action="{{ url_for('account_change_password') }}" autocomplete="off">
-      {% if not needs_password %}
+        <label for="delete-username">Type your username</label>
+        <input class="auth-input" id="delete-username" type="text" autocomplete="off" placeholder="{{ user_info['username'] }}" />
+
+        <label for="delete-phrase" style="margin-top:12px;">Type <span style="font-weight:900; color: var(--text);">DELETE MY ACCOUNT</span></label>
+        <input class="auth-input" id="delete-phrase" type="text" autocomplete="off" placeholder="DELETE MY ACCOUNT" />
+
+        <div style="display:flex; gap:10px; align-items:flex-start; margin-top:12px;">
+          <input id="delete-check" type="checkbox" style="margin-top:4px; width:18px; height:18px;" />
+          <label for="delete-check" style="margin:0; color: var(--text); line-height: 1.35;">
+            I understand this is permanent and cannot be undone.
+          </label>
+        </div>
+
+        <div id="delete-hint" style="margin-top:10px; text-align:center; color: var(--muted); font-size:.92rem;">
+          When everything matches, the delete button will unlock after a short countdown.
+        </div>
+
+        <div class="confirm-actions" style="justify-content:center;">
+          <button class="btn btn-ghost" id="delete-back" type="button">Back</button>
+          <button class="btn btn-danger" id="delete-final" type="button" disabled>Delete (locked)</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Change password modal (POSTs to your new route) -->
+  <div class="confirm-modal" id="confirm-pwchange" aria-hidden="true">
+    <div class="confirm-box">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+        <div>
+          <h2 style="margin-bottom:6px;">Update your password</h2>
+          <p>Enter your current password and a new password.</p>
+        </div>
+        <button type="button" class="btn btn-ghost" id="pwchange-x" style="padding:8px 10px;">✕</button>
+      </div>
+
+      <form method="post" action="{{ url_for('account_change_password') }}" autocomplete="off">
         <label for="old_password">Current Password</label>
         <div class="password-field">
           <input class="auth-input" id="old_password" name="old_password" type="password" required>
           <button type="button" class="toggle-pass" data-toggle="old_password">Show</button>
         </div>
-      {% endif %}
 
-      <label for="new_password">{% if needs_password %}Password{% else %}New Password{% endif %}</label>
-      <div class="password-field">
-        <input class="auth-input" id="new_password" name="new_password" type="password" required>
-        <button type="button" class="toggle-pass" data-toggle="new_password">Show</button>
-      </div>
+        <label for="new_password">New Password</label>
+        <div class="password-field">
+          <input class="auth-input" id="new_password" name="new_password" type="password" required>
+          <button type="button" class="toggle-pass" data-toggle="new_password">Show</button>
+        </div>
 
-      <label for="confirm_password">Confirm {% if needs_password %}Password{% else %}New Password{% endif %}</label>
-      <div class="password-field" style="margin-bottom:0;">
-        <input class="auth-input" id="confirm_password" name="confirm_password" type="password" required>
-        <button type="button" class="toggle-pass" data-toggle="confirm_password">Show</button>
-      </div>
+        <label for="confirm_password">Confirm New Password</label>
+        <div class="password-field" style="margin-bottom:0;">
+          <input class="auth-input" id="confirm_password" name="confirm_password" type="password" required>
+          <button type="button" class="toggle-pass" data-toggle="confirm_password">Show</button>
+        </div>
 
-      <div class="confirm-actions">
-        <button class="btn btn-ghost" data-close type="button">Cancel</button>
-        <button class="btn btn-accent" type="submit">Done</button>
-      </div>
-    </form>
+        <div class="confirm-actions">
+          <button class="btn btn-ghost" data-close type="button">Cancel</button>
+          <button class="btn btn-accent" type="submit">Done</button>
+        </div>
+      </form>
 
-    <p style="margin:10px 0 0; font-size:.9rem; color:var(--muted);">
-      Password must be at least 8 characters.
-    </p>
+      <p style="margin:10px 0 0; font-size:.9rem; color:var(--muted);">
+        Password must be at least 8 characters.
+      </p>
+    </div>
   </div>
-</div>
 
-<script>
-  const logoutBtn = document.getElementById('logout-btn');
-  const deleteBtn = document.getElementById('delete-btn');
-  const logoutModal = document.getElementById('confirm-logout');
-  const deleteModal = document.getElementById('confirm-delete');
+  <script>
+    const logoutBtn = document.getElementById('logout-btn');
+    const deleteBtn = document.getElementById('delete-btn');
+    const logoutModal = document.getElementById('confirm-logout');
+    const deleteModal = document.getElementById('confirm-delete');
 
-  const pwChangeBtn = document.getElementById('pw-change-btn');
-  const pwChangeModal = document.getElementById('confirm-pwchange');
-  const pwChangeX = document.getElementById('pwchange-x');
+    const pwChangeBtn = document.getElementById('pw-change-btn');
+    const pwChangeModal = document.getElementById('confirm-pwchange');
+    const pwChangeX = document.getElementById('pwchange-x');
 
-  const unChangeBtn = document.getElementById('un-change-btn');
-  const unChangeModal = document.getElementById('confirm-unchange');
-  const unChangeX = document.getElementById('unchange-x');
+    // ===== Delete account (multi-step, harder to do accidentally) =====
+    const DELETE_URL = "{{ url_for('delete_account') }}";
+    const delStep1 = document.getElementById('delete-step-1');
+    const delStep2 = document.getElementById('delete-step-2');
+    const delContinue = document.getElementById('delete-continue');
+    const delBack = document.getElementById('delete-back');
+    const delFinal = document.getElementById('delete-final');
+    const delUser = document.getElementById('delete-username');
+    const delPhrase = document.getElementById('delete-phrase');
+    const delCheck = document.getElementById('delete-check');
+    const delHint = document.getElementById('delete-hint');
+    const REQUIRED_USERNAME = "{{ user_info['username'] }}";
+    const REQUIRED_PHRASE = "DELETE MY ACCOUNT";
 
-  const NEEDS_PASSWORD = {{ 'true' if needs_password else 'false' }};
-  const NEEDS_USERNAME = {{ 'true' if needs_username else 'false' }};
+    let delCountdown = null;
+    let delRemaining = 0;
 
-  const open = (m)=>m && m.classList.add('open');
-  const close = (m)=>m && m.classList.remove('open');
+    function stopDeleteCountdown(){
+      if (delCountdown) {
+        clearInterval(delCountdown);
+        delCountdown = null;
+      }
+      delRemaining = 0;
+    }
 
-  if (logoutBtn) logoutBtn.onclick = e => { e.preventDefault(); open(logoutModal); };
-  if (deleteBtn) deleteBtn.onclick = e => { e.preventDefault(); open(deleteModal); };
+    function setDeleteButtonLocked(){
+      if (!delFinal) return;
+      delFinal.disabled = true;
+      delFinal.textContent = "Delete (locked)";
+    }
 
-  if (pwChangeBtn) pwChangeBtn.onclick = () => {
-    open(pwChangeModal);
-    setTimeout(() => {
-      const id = NEEDS_PASSWORD ? "new_password" : "old_password";
-      document.getElementById(id)?.focus();
-    }, 50);
-  };
-  if (pwChangeX) pwChangeX.onclick = () => close(pwChangeModal);
+    function setDeleteButtonArmed(seconds){
+      if (!delFinal) return;
+      delFinal.disabled = true;
+      delFinal.textContent = `Delete (${seconds})`;
+    }
 
-  if (unChangeBtn) unChangeBtn.onclick = () => {
-    open(unChangeModal);
-    setTimeout(() => document.getElementById("new_username")?.focus(), 50);
-  };
-  if (unChangeX) unChangeX.onclick = () => close(unChangeModal);
+    function setDeleteButtonReady(){
+      if (!delFinal) return;
+      delFinal.disabled = false;
+      delFinal.textContent = "Delete permanently";
+    }
 
-  // show/hide password
-  document.querySelectorAll(".toggle-pass").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-toggle");
-      const input = document.getElementById(id);
-      if (!input) return;
-      const show = input.type === "password";
-      input.type = show ? "text" : "password";
-      btn.textContent = show ? "Hide" : "Show";
+    function deleteInputsValid(){
+      const u = (delUser?.value || "").trim();
+      const p = (delPhrase?.value || "").trim().toUpperCase();
+      const c = !!delCheck?.checked;
+      return (u === REQUIRED_USERNAME) && (p === REQUIRED_PHRASE) && c;
+    }
+
+    function refreshDeleteState(){
+      if (!delStep2 || delStep2.style.display === 'none') return;
+
+      if (!deleteInputsValid()) {
+        stopDeleteCountdown();
+        setDeleteButtonLocked();
+        if (delHint) delHint.textContent = "Complete all fields exactly to unlock deletion.";
+        return;
+      }
+
+      // If inputs are valid and countdown not started, start it.
+      if (!delCountdown && delRemaining === 0) {
+        delRemaining = 5;
+        if (delHint) delHint.textContent = "Hold on… unlocking in a moment.";
+        setDeleteButtonArmed(delRemaining);
+        delCountdown = setInterval(() => {
+          // If user changes anything mid-countdown, re-lock.
+          if (!deleteInputsValid()) {
+            stopDeleteCountdown();
+            setDeleteButtonLocked();
+            if (delHint) delHint.textContent = "Complete all fields exactly to unlock deletion.";
+            return;
+          }
+
+          delRemaining -= 1;
+          if (delRemaining > 0) {
+            setDeleteButtonArmed(delRemaining);
+            return;
+          }
+
+          stopDeleteCountdown();
+          if (deleteInputsValid()) {
+            setDeleteButtonReady();
+            if (delHint) delHint.textContent = "Unlocked. Click ‘Delete permanently’ to continue.";
+          } else {
+            setDeleteButtonLocked();
+            if (delHint) delHint.textContent = "Complete all fields exactly to unlock deletion.";
+          }
+        }, 1000);
+      }
+    }
+
+    function resetDeleteFlow(){
+      stopDeleteCountdown();
+      if (delStep1) delStep1.style.display = '';
+      if (delStep2) delStep2.style.display = 'none';
+      if (delUser) delUser.value = '';
+      if (delPhrase) delPhrase.value = '';
+      if (delCheck) delCheck.checked = false;
+      setDeleteButtonLocked();
+      if (delHint) delHint.textContent = "When everything matches, the delete button will unlock after a short countdown.";
+    }
+
+    const open = (m)=>m && m.classList.add('open');
+    const close = (m)=>{
+      if (!m) return;
+      m.classList.remove('open');
+      if (m === deleteModal) resetDeleteFlow();
+    };
+
+    if (logoutBtn) logoutBtn.onclick = e => { e.preventDefault(); open(logoutModal); };
+    if (deleteBtn) deleteBtn.onclick = e => {
+      e.preventDefault();
+      resetDeleteFlow();
+      open(deleteModal);
+    };
+
+    if (delContinue) delContinue.addEventListener('click', () => {
+      if (delStep1) delStep1.style.display = 'none';
+      if (delStep2) delStep2.style.display = '';
+      setDeleteButtonLocked();
+      if (delHint) delHint.textContent = "Complete all fields exactly to unlock deletion.";
+      setTimeout(() => delUser?.focus(), 50);
     });
-  });
 
-  // close buttons
-  document.querySelectorAll('[data-close]').forEach(b => {
-    b.onclick = () => [logoutModal, deleteModal, pwChangeModal, unChangeModal].forEach(close);
-  });
+    if (delBack) delBack.addEventListener('click', () => {
+      stopDeleteCountdown();
+      if (delStep2) delStep2.style.display = 'none';
+      if (delStep1) delStep1.style.display = '';
+      setDeleteButtonLocked();
+      if (delHint) delHint.textContent = "When everything matches, the delete button will unlock after a short countdown.";
+      setTimeout(() => delContinue?.focus(), 50);
+    });
 
-  // backdrop click closes
-  [logoutModal, deleteModal, pwChangeModal, unChangeModal].forEach(m => {
-    if (!m) return;
-    m.addEventListener('click', e => { if (e.target === m) close(m); });
-  });
+    [delUser, delPhrase, delCheck].forEach(el => {
+      if (!el) return;
+      const evt = (el === delCheck) ? 'change' : 'input';
+      el.addEventListener(evt, refreshDeleteState);
+    });
 
-  // escape closes
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") [logoutModal, deleteModal, pwChangeModal, unChangeModal].forEach(close);
-  });
-</script>
+    if (delFinal) delFinal.addEventListener('click', () => {
+      // extra guard
+      if (delFinal.disabled) return;
+      if (!deleteInputsValid()) {
+        setDeleteButtonLocked();
+        if (delHint) delHint.textContent = "Complete all fields exactly to unlock deletion.";
+        return;
+      }
+      window.location.href = DELETE_URL;
+    });
+
+    if (pwChangeBtn) pwChangeBtn.onclick = () => {
+      open(pwChangeModal);
+      // focus first field
+      setTimeout(() => document.getElementById("old_password")?.focus(), 50);
+    };
+
+    if (pwChangeX) pwChangeX.onclick = () => close(pwChangeModal);
+
+    // show/hide password (no movement)
+    document.querySelectorAll(".toggle-pass").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-toggle");
+        const input = document.getElementById(id);
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "Hide" : "Show";
+      });
+    });
+
+    // close buttons
+    document.querySelectorAll('[data-close]').forEach(b => {
+      b.onclick = () => [logoutModal, deleteModal, pwChangeModal].forEach(close);
+    });
+
+    // backdrop click closes
+    [logoutModal, deleteModal, pwChangeModal].forEach(m => {
+      if (!m) return;
+      m.addEventListener('click', e => { if (e.target === m) close(m); });
+    });
+
+    // escape closes
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") [logoutModal, deleteModal, pwChangeModal].forEach(close);
+    });
+  </script>
 </body>
 </html>
