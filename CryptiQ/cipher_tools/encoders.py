@@ -315,13 +315,44 @@ def binary_decode(text):
 # ==============================
 #  PERMUTATION (simple key map)
 # ==============================
-def permutation_encode(text, key):
-    key_map = {ALPHABET[i]: key[i].upper() for i in range(26)}
-    return ''.join(key_map.get(ch.upper(), ch) if ch.isalpha() else ch for ch in text)
+import string
 
-def permutation_decode(text, key):
-    rev_map = {key[i].upper(): ALPHABET[i] for i in range(26)}
-    return ''.join(rev_map.get(ch.upper(), ch) if ch.isalpha() else ch for ch in text)
+ALPHABET = string.ascii_uppercase
+
+def _validate_key(key: str) -> str:
+    key = ''.join(ch.upper() for ch in key if ch.isalpha())
+    if len(key) != 26:
+        raise ValueError("Key must contain 26 letters.")
+    if len(set(key)) != 26:
+        raise ValueError("Key must contain 26 unique letters (a permutation).")
+    return key
+
+def permutation_encode(text: str, key: str) -> str:
+    key = _validate_key(key)
+    enc = {ALPHABET[i]: key[i] for i in range(26)}
+    out = []
+    for ch in text:
+        if ch.isalpha():
+            up = ch.upper()
+            mapped = enc[up]
+            out.append(mapped if ch.isupper() else mapped.lower())
+        else:
+            out.append(ch)
+    return ''.join(out)
+
+def permutation_decode(text: str, key: str) -> str:
+    key = _validate_key(key)
+    dec = {key[i]: ALPHABET[i] for i in range(26)}
+    out = []
+    for ch in text:
+        if ch.isalpha():
+            up = ch.upper()
+            mapped = dec[up]
+            out.append(mapped if ch.isupper() else mapped.lower())
+        else:
+            out.append(ch)
+    return ''.join(out)
+
 
 
 # ==============================
@@ -394,3 +425,4 @@ def baconian_decode(cipher):
         decoded += inv.get(chunk, "")
     return decoded
     
+
