@@ -315,43 +315,72 @@ def binary_decode(text):
 # ==============================
 #  PERMUTATION (simple key map)
 # ==============================
-import string
-
-ALPHABET = string.ascii_uppercase
-
-def _validate_key(key: str) -> str:
-    key = ''.join(ch.upper() for ch in key if ch.isalpha())
-    if len(key) != 26:
-        raise ValueError("Key must contain 26 letters.")
-    if len(set(key)) != 26:
-        raise ValueError("Key must contain 26 unique letters (a permutation).")
-    return key
-
 def permutation_encode(text: str, key: str) -> str:
-    key = _validate_key(key)
-    enc = {ALPHABET[i]: key[i] for i in range(26)}
+    """
+    Block transposition cipher using a keyword.
+
+    The keyword determines the permutation by alphabetical order
+    of its letters (stable for duplicates, left-to-right).
+
+    Pads the final block with 'X'.
+    """
+    perm = _perm_from_keyword(key)
+    n = len(perm)
+
+    pad = "X"
     out = []
-    for ch in text:
-        if ch.isalpha():
-            up = ch.upper()
-            mapped = enc[up]
-            out.append(mapped if ch.isupper() else mapped.lower())
-        else:
-            out.append(ch)
-    return ''.join(out)
+
+    for i in range(0, len(text), n):
+        block = list(text[i:i+n])
+        if len(block) < n:
+            block.extend(pad * (n - len(block)))
+        out.append("".join(block[perm[j]] for j in range(n)))
+
+    return "".join(out)
+
 
 def permutation_decode(text: str, key: str) -> str:
-    key = _validate_key(key)
-    dec = {key[i]: ALPHABET[i] for i in range(26)}
+    """
+    Inverse of permutation_encode.
+    Padding is NOT automatically stripped.
+    """
+    perm = _perm_from_keyword(key)
+    n = len(perm)
+
+    inv = [0] * n
+    for j, src in enumerate(perm):
+        inv[src] = j
+
     out = []
-    for ch in text:
-        if ch.isalpha():
-            up = ch.upper()
-            mapped = dec[up]
-            out.append(mapped if ch.isupper() else mapped.lower())
-        else:
-            out.append(ch)
-    return ''.join(out)
+
+    for i in range(0, len(text), n):
+        block = list(text[i:i+n])
+        if len(block) < n:
+            block.extend("X" * (n - len(block)))
+        plain = [""] * n
+        for j in range(n):
+            plain[j] = block[inv[j]]
+        out.append("".join(plain))
+
+    return "".join(out)
+
+
+def _perm_from_keyword(keyword: str):
+    if not isinstance(keyword, str):
+        raise TypeError("Key must be a string.")
+
+    letters = [ch.upper() for ch in keyword if ch.isalpha()]
+    if len(letters) < 2:
+        raise ValueError("Key must contain at least two letters.")
+
+    # Stable alphabetical ranking
+    order = sorted(range(len(letters)), key=lambda i: (letters[i], i))
+
+    perm = [0] * len(letters)
+    for rank, pos in enumerate(order):
+        perm[pos] = rank
+
+    return perm
 
 
 
@@ -425,4 +454,5 @@ def baconian_decode(cipher):
         decoded += inv.get(chunk, "")
     return decoded
     
+
 
