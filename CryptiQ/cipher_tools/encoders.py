@@ -389,6 +389,8 @@ def _perm_from_keyword(keyword: str):
 
 
 
+
+
 def _perm_from_keyword(keyword: str):
     if not isinstance(keyword, str):
         raise TypeError("Key must be a string.")
@@ -478,6 +480,7 @@ def baconian_decode(cipher):
         decoded += inv.get(chunk, "")
     return decoded
     
+
 
 
 
