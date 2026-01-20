@@ -317,32 +317,31 @@ def binary_decode(text):
 # ==============================
 def permutation_encode(text: str, key: str) -> str:
     """
-    Block transposition cipher using a keyword.
-
-    The keyword determines the permutation by alphabetical order
-    of its letters (stable for duplicates, left-to-right).
-
-    Pads the final block with 'X'.
+    Block transposition cipher using a keyword-derived permutation.
+    Only letters A-Z are processed/output. Everything else is ignored.
+    Output is uppercase. Pads final block with 'X'.
     """
     perm = _perm_from_keyword(key)
     n = len(perm)
 
+    letters = [ch.upper() for ch in text if ch.isalpha()]
+
     pad = "X"
+    if len(letters) % n != 0:
+        letters.extend([pad] * (n - (len(letters) % n)))
+
     out = []
-
-    for i in range(0, len(text), n):
-        block = list(text[i:i+n])
-        if len(block) < n:
-            block.extend(pad * (n - len(block)))
+    for i in range(0, len(letters), n):
+        block = letters[i:i+n]
         out.append("".join(block[perm[j]] for j in range(n)))
-
     return "".join(out)
 
 
 def permutation_decode(text: str, key: str) -> str:
     """
-    Inverse of permutation_encode.
-    Padding is NOT automatically stripped.
+    Inverse of permutation_encode for the same keyword.
+    Only letters A-Z are processed/output. Everything else is ignored.
+    Output is uppercase. Does not strip padding.
     """
     perm = _perm_from_keyword(key)
     n = len(perm)
@@ -351,18 +350,43 @@ def permutation_decode(text: str, key: str) -> str:
     for j, src in enumerate(perm):
         inv[src] = j
 
+    letters = [ch.upper() for ch in text if ch.isalpha()]
+
+    pad = "X"
+    if len(letters) % n != 0:
+        letters.extend([pad] * (n - (len(letters) % n)))
+
     out = []
-
-    for i in range(0, len(text), n):
-        block = list(text[i:i+n])
-        if len(block) < n:
-            block.extend("X" * (n - len(block)))
+    for i in range(0, len(letters), n):
+        block = letters[i:i+n]
         plain = [""] * n
-        for j in range(n):
-            plain[j] = block[inv[j]]
+        for pos in range(n):
+            plain[pos] = block[inv[pos]]
         out.append("".join(plain))
-
     return "".join(out)
+
+
+def _perm_from_keyword(keyword: str):
+    """
+    Convert keyword -> permutation by stable alphabetical order.
+    Example: ZEBRA -> [4,2,1,3,0] (A smallest ... Z largest)
+    Duplicate letters are handled left-to-right stably.
+    """
+    if not isinstance(keyword, str):
+        raise TypeError("Key must be a string.")
+
+    letters = [ch.upper() for ch in keyword if ch.isalpha()]
+    if len(letters) < 2:
+        raise ValueError("Key must contain at least two letters A-Z.")
+
+    order = sorted(range(len(letters)), key=lambda i: (letters[i], i))
+
+    perm = [0] * len(letters)
+    for rank, pos in enumerate(order):
+        perm[pos] = rank
+
+    return perm
+
 
 
 def _perm_from_keyword(keyword: str):
@@ -454,5 +478,6 @@ def baconian_decode(cipher):
         decoded += inv.get(chunk, "")
     return decoded
     
+
 
 
