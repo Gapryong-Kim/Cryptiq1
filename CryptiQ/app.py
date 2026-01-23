@@ -565,8 +565,8 @@ def breaker():
             elif cipher_type == "substitution":
                 key, plaintext = substitution_break(
                     text,
-                    max_restarts=2,
-                    sa_steps=3000,
+                    max_restarts=30,
+                    sa_steps=14000,
                     seed=42,
                     time_limit_seconds=10,
                     threads=1,   # auto: Render → 1, local → cores
@@ -768,6 +768,7 @@ def posts_list():
             users.username,
             users.email,
             users.is_admin,
+            users.is_pro,
             users.banned
         FROM posts
         LEFT JOIN users ON posts.user_id = users.id
@@ -792,6 +793,7 @@ def posts_list():
         if not p.get("username"):
             p["username"] = "[Deleted User]"
             p["is_admin"] = 0
+            p["is_pro"] = 0
             p["banned"] = 0
 
         if uid:
@@ -1379,6 +1381,7 @@ def api_search_posts():
             p.image_filename,
             u.username,
             u.is_admin AS is_admin,
+            u.is_pro AS is_pro,
             u.banned AS banned
         FROM posts p
         LEFT JOIN users u ON u.id = p.user_id
@@ -1399,6 +1402,7 @@ def api_search_posts():
             "pinned": False,  # still unused
             "image_filename": r["image_filename"],
             "is_admin": r["is_admin"],
+            "is_pro": r["is_pro"],
             "banned": r["banned"],
         })
 
@@ -1447,6 +1451,7 @@ def api_search():
             posts.user_id AS owner_id,
             users.username,
             users.is_admin AS is_admin,
+            users.is_pro AS is_pro,
             users.banned
         FROM posts
         LEFT JOIN users ON users.id = posts.user_id
@@ -1473,6 +1478,7 @@ def api_search():
             "owner_id": owner_id,
             "username": r["username"] or "[Deleted User]",
             "is_admin": bool(r["is_admin"]),
+            "is_pro": bool(r["is_pro"]),
             "banned": bool(r["banned"]),
             "can_edit": bool(can_edit),
             "can_delete": bool(can_delete),
@@ -2326,6 +2332,22 @@ def weekly_archive_view(week_number: int):
         current_week_number=week_number,
     )
 
+
+
+@app.route("/weekly/archive/<int:week_number>/solution")
+def weekly_archive_solution(week_number: int):
+    """Return the official solution for an archived weekly cipher (used by the reveal animation)."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT solution FROM weekly_cipher_archive WHERE week_number=? LIMIT 1",
+        (week_number,),
+    ).fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({"ok": False, "error": "Archive not found."}), 404
+
+    return jsonify({"ok": True, "solution": row["solution"] or ""})
 import re
 import unicodedata
 
@@ -2456,8 +2478,16 @@ def admin_weekly():
             ):
                 reset_needed = True
 
-        # --- Auto-archive previous current cipher when week number changes ---
-        if wc and int(wc.get("week_number") or 0) != int(week_number):
+        # --- Auto-archive the previous current cipher when it changes ---
+        # This used to only archive when the week number changed. If you swap in
+        # a new puzzle but forget to bump the week number, you'd silently lose
+        # the previous puzzle. So we archive when either:
+        #   - the week number changes, OR
+        #   - the actual puzzle changes (ciphertext/solution)
+        if wc and (
+            int(wc.get("week_number") or 0) != int(week_number)
+            or reset_needed
+        ):
             archive_weekly_cipher_row(wc)
 
         # --- Upsert into weekly_cipher (singleton row id=1) ---
