@@ -1369,7 +1369,7 @@
           <div class="post-author">
             by {{ p.username or '[Deleted User]' }}
             {% if p.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
-            {% if user.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
+            {% if p.is_pro %}<span class="pro-badge">PRO</span>{% endif %}
             {% if p.banned %}<span class="banned-badge">BANNED</span>{% endif %}
           </div>
         </div>
@@ -2415,3 +2415,4 @@ document.addEventListener("click", e => {
 
 </body>
 </html>
+
