@@ -2151,6 +2151,7 @@ function renderPostHTML(p, isAdmin, isLogged) {
       <div class="post-author">
         by ${escapeHtml(p.username || "[Deleted User]")}
         ${p.is_admin ? `<span class="admin-badge">Admin</span>` : ""}
+        ${p.is_pro ? `<span class="pro-badge">PRO</span>` : ""}
         ${p.banned ? `<span class="banned-badge">BANNED</span>` : ""}
       </div>
     </div>
@@ -2415,4 +2416,3 @@ document.addEventListener("click", e => {
 
 </body>
 </html>
-
