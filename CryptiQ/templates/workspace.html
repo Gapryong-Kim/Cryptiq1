@@ -2301,7 +2301,13 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
-
+.padd {
+  padding-right: 0px;
+  margin: 0px;
+}
+.ws-topbar {
+  padding-left: 40px;
+}
 </style>
 
 
@@ -2319,10 +2325,7 @@
     <section class="ws-card" aria-label="Cipher Workspace">
       <!-- Top Bar -->
       <header class="ws-topbar">
-        <div class="ws-titlewrap">
-          <span class="ws-dot" aria-hidden="true"></span>
-          <span class="ws-sub" id="ws-id">#{{ ws.id }}</span>
-        </div>
+        
 
         <div class="ws-tools" role="toolbar" aria-label="Workspace tools">
           <button class="tb-btn active" data-tool="frequency" type="button">Frequency</button>
