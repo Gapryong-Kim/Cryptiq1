@@ -1,0 +1,5630 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Workspace — The Cipher Lab</title>
+
+  <!-- 🚫 Do NOT index private pages -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Optional: safety canonical (not required, but clean) -->
+  <link rel="canonical" href="{{ request.url }}">
+
+  <!-- App metadata -->
+  <meta name="application-name" content="The Cipher Lab">
+  <meta name="theme-color" content="#00ffd5">
+
+  <!-- Open Graph (won't be indexed but prevents ugly previews) -->
+  <meta property="og:title" content="Cipher Workspace — The Cipher Lab">
+  <meta property="og:description" content="Private cipher-solving workspace.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.url }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    html { overflow-y: scroll; scrollbar-gutter: stable both-edges; }
+
+    /* =============== Shell =============== */
+    .ws-shell{
+      min-height: calc(100dvh - 80px);
+      display: grid;
+      grid-template-rows: 1fr;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .ws-card{
+      width: 98vw;
+      max-width: none;
+      margin: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    /* =============== Top Toolbar =============== */
+    .ws-topbar{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(0deg, rgba(0,0,0,0.04), transparent);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .ws-titlewrap{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .ws-dot{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-soft);
+      flex: 0 0 auto;
+    }
+
+    .ws-title{
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: .2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ws-sub{
+      color: var(--muted);
+      font-size: .86rem;
+      margin-left: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ws-tools{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tb-btn{
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 700;
+      font-size: .86rem;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+
+    .tb-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .tb-btn:active{ transform: translateY(1px); }
+
+    .tb-btn.active{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+      box-shadow: 0 6px 16px rgba(0,0,0,.35);
+    }
+
+    .tb-btn.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+
+    .tb-btn.primary:hover{
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+
+    .ws-status{
+      color: var(--muted);
+      font-size: .86rem;
+      min-width: 88px;
+      text-align: right;
+    }
+
+    /* =============== Main Grid =============== */
+    .ws-grid{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(460px, 600px);
+      gap: 16px;
+      padding: 16px;
+      box-sizing: border-box;
+      align-items: stretch;
+    }
+
+    @media (max-width: 980px){
+      .ws-grid{ grid-template-columns: 1fr; }
+    }
+
+    /* =============== Panels =============== */
+    .ws-panel{
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .ws-panel h3{
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: .98rem;
+      letter-spacing: .2px;
+    }
+
+    /* =============== Doc Area =============== */
+    .doc-wrap{
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+    }
+
+    .doc-meta{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .doc-title{
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 12px 12px;
+      color: var(--text);
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .doc-title:focus{
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .doc-text{
+      width: 100%;
+      min-height: 380px;
+      box-sizing: border-box;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 12px 12px;
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 15px;
+      line-height: 1.55;
+      resize: vertical;
+      white-space: pre-wrap;
+      word-break: break-word;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .doc-text:focus{
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    /* =============== Notes Rich Toolbar =============== */
+    .note-editor{
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--input-bg);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 380px;
+    }
+
+    /* === Word/Notes-style SINGLE BAND toolbar (no wrapping) === */
+    .note-toolbar{
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px 10px;
+      background: color-mix(in oklab, var(--panel) 82%, black);
+      border-bottom: 1px solid var(--line);
+      scrollbar-width: none;
+    }
+    .note-toolbar::-webkit-scrollbar{ height: 0; }
+
+    .note-btn{
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      border: 1px solid color-mix(in oklab, var(--line-2) 70%, transparent);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: 900;
+      user-select: none;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      flex: 0 0 auto;
+    }
+    .note-btn svg{
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+/* Force icon strokes even if global CSS resets SVGs */
+.note-btn svg, .note-btn svg *{
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  vector-effect: non-scaling-stroke;
+}
+/* Text in the numbered-list icon should be filled, not stroked */
+.note-btn svg text{
+  fill: currentColor !important;
+  stroke: none !important;
+}
+    .note-btn .txt-ico{ font-size: 14px; font-weight: 900; letter-spacing: .02em; }
+    .note-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .note-btn:active{ transform: translateY(1px); }
+    .note-btn[disabled]{ opacity: .45; cursor: not-allowed; box-shadow:none !important; }
+
+    .note-sep{
+      width: 1px;
+      height: 22px;
+      background: var(--line);
+      opacity: .85;
+      margin: 0 2px;
+      flex: 0 0 auto;
+    }
+
+    .note-select{
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 9px;
+      border: 1px solid color-mix(in oklab, var(--line-2) 70%, transparent);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-weight: 850;
+      font-size: .86rem;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .note-select.size{ width: 86px; }
+    .note-select:focus{
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .note-surface{
+      padding: 12px 12px;
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 17px;
+      line-height: 1.55;
+      overflow-y: auto;
+      min-height: 380px;
+      scrollbar-gutter: stable both-edges;
+      outline: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .note-surface:focus{
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .note-surface blockquote{
+      margin: 10px 0;
+      padding: 10px 12px;
+      border-left: 4px solid var(--accent);
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+    }
+
+    .note-surface pre{
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .note-surface a{ color: var(--accent); font-weight: 900; text-decoration: none; }
+    .note-surface a:hover{ text-decoration: underline; }
+
+    /* Keep toolbar visible even when you scroll the editor area */
+    .note-editor{ position: relative; }
+
+
+
+    .doc-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .mini-btn{
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .mini-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    /* =============== Right Sidebar =============== */
+    .cipher-side{
+      display: grid;
+      gap: 12px;
+      position: sticky;
+      top: 74px;
+    }
+
+    @media (max-width: 980px){
+      .cipher-side{ position: relative; top: 0; }
+    }
+
+    .cipher-text{
+      width: 100%;
+      min-height: 420px;
+      box-sizing: border-box;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 14px;
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .cipher-text:focus{
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: .86rem;
+      line-height: 1.45;
+    }
+
+    /* =============== Tool Panel (Dock) =============== */
+    .tool-panel{ margin-top: 12px; }
+    .tool-card{ display: none; }
+    .tool-card.active{ display: grid; gap: 10px; }
+
+    .tool-row{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    select, input[type="number"], input[type="text"]{
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 14px;
+      transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    }
+    select:focus, input:focus{
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .run-btn{
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #0f0f0f;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, box-shadow .18s ease, transform .06s ease;
+    }
+    .run-btn:hover{
+      background: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .run-btn:active{ transform: translateY(1px); }
+
+    .run-btn.secondary{
+      background: transparent;
+      border: 1px solid var(--line-2);
+      color: var(--text);
+      font-weight: 800;
+    }
+    .run-btn.secondary:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .result{
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 12px 12px;
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 60px;
+    }
+
+    /* =============== Substitution MVP =============== */
+    .sub-grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+      gap: 10px;
+    }
+
+    .sub-box{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 6px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .sub-top{
+      color: var(--text-dim);
+      font-size: .82rem;
+      font-weight: 900;
+      text-transform: lowercase;
+    }
+
+    .sub-arrow{
+      font-size: .75rem;
+      color: var(--muted);
+      opacity: .8;
+    }
+
+    .sub-input{
+      width: 36px;
+      height: 34px;
+      text-align: center;
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 15px;
+      transition: .18s ease;
+    }
+    .sub-input:focus{
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .helper{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-top: 1px dashed var(--line);
+      padding-top: 10px;
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    /* =============== Image Zoom Modal =============== */
+    .img-modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 6000;
+    }
+    .img-modal.open{ display: flex; }
+
+    .img-modal-box{
+      width: min(1100px, 92vw);
+      height: min(82vh, 820px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .img-modal-top{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .img-modal-title{
+      color: var(--text);
+      font-weight: 900;
+      font-size: .92rem;
+    }
+
+    .img-close{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .img-close:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .img-modal-img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* =========================================================
+       MOBILE TOPBAR OVERRIDE
+       ========================================================= */
+    @media (max-width: 640px){
+      html, body,
+      .ws-shell,
+      .ws-card,
+      .ws-topbar,
+      .ws-grid,
+      .ws-panel,
+      .doc-wrap,
+      .cipher-side{
+        overflow-x: hidden !important;
+      }
+
+      .ws-topbar{
+        justify-content: flex-start !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+        scrollbar-width: none;
+        padding-bottom: 10px;
+      }
+      .ws-topbar::-webkit-scrollbar{ display: none; }
+
+      .ws-titlewrap{
+        width: auto !important;
+        min-width: max-content !important;
+        flex: 0 0 auto !important;
+        gap: 6px !important;
+      }
+
+      .ws-tools{
+        width: auto !important;
+        min-width: max-content !important;
+        flex: 0 0 auto !important;
+
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+
+        overflow: visible !important;
+        margin-left: 4px !important;
+      }
+
+      .ws-tools .tb-btn{
+        flex: 0 0 auto;
+        white-space: nowrap;
+      }
+
+      .doc-actions, .cipher-upload-actions { justify-content: flex-start; }
+      .mini-btn, .img-btn { width: 100%; }
+    }
+
+    /* =========================================================
+       Upload image buttons + preview
+       ========================================================= */
+
+    .cipher-upload{
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+      display: grid;
+      gap: 10px;
+    }
+
+    .cipher-upload-row{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    #cipher-image-input{
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .cipher-upload-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .img-btn{
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+      white-space: nowrap;
+    }
+    .img-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .img-btn:active{ transform: translateY(1px); }
+
+    .img-btn.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .img-btn.primary:hover{
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+
+    .img-btn.danger{
+      border-color: rgba(255, 107, 107, 0.35);
+      color: #ff8b8b;
+    }
+    .img-btn.danger:hover{
+      background: rgba(255, 107, 107, 0.12);
+      border-color: #ff7070;
+      box-shadow: 0 0 0 2px rgba(255, 112, 112, 0.18);
+    }
+
+    .img-btn:disabled{
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    .cipher-upload-status{
+      color: var(--muted);
+      font-size: .86rem;
+      min-height: 18px;
+    }
+
+    .cipher-img-wrap{
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+      gap: 10px;
+    }
+
+    .cipher-img{
+      width: 100%;
+      max-height: 360px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      object-fit: contain;
+      background: rgba(255,255,255,0.02);
+      cursor: zoom-in;
+    }
+
+    /* ===========================
+       Split-scroll layout
+       =========================== */
+    @media (min-width: 981px){
+      .ws-shell{
+        height: calc(100dvh - 80px);
+        overflow: hidden;
+      }
+
+      .ws-grid{
+        height: calc(100dvh - 80px - 58px);
+        overflow: hidden;
+      }
+
+      .ws-grid > .ws-panel{
+        height: 100%;
+        overflow-y: auto;
+        scrollbar-gutter: stable both-edges;
+      }
+
+      .cipher-side{
+        position: relative;
+        top: auto;
+        height: 100%;
+        overflow-y: auto;
+        scrollbar-gutter: stable both-edges;
+      }
+
+      .cipher-side .ws-panel{
+        height: auto;
+      }
+    }
+
+    @media (max-width: 980px){
+      .ws-shell{ height: auto; overflow: visible; }
+      .ws-grid{ height: auto; overflow: visible; }
+      .ws-grid > .ws-panel{ height: auto; overflow: visible; }
+      .cipher-side{ height: auto; overflow: visible; }
+    }
+
+    /* =========================================================
+       Image tabs + kebab menu
+       ========================================================= */
+    .cipher-tabs{
+      display: none;
+      margin-top: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      overflow: visible;
+    }
+    .cipher-tabs.show{ display: flex; }
+
+    .cipher-tab-wrap{
+      position: relative;
+      display: inline-flex;
+      overflow: visible;
+      z-index: 1;
+    }
+
+    .cipher-tab{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      max-width: 100%;
+    }
+    .cipher-tab:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .cipher-tab.active{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+
+    .cipher-tab-label{
+      display: inline-block;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cipher-tab-more{
+      background: none;
+      border: none;
+      padding: 0 4px;
+      margin-left: 2px;
+      color: inherit;
+      font-weight: 900;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      opacity: .6;
+    }
+    .cipher-tab-more:hover{ opacity: 1; }
+
+    .cipher-menu-item{
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+
+      padding: 10px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+    }
+    .cipher-menu-item:hover{
+      background: var(--input-hover);
+      border-color: var(--line-2);
+    }
+    .cipher-menu-item.danger{
+      color: #ff8b8b;
+    }
+    .cipher-menu-item.danger:hover{
+      background: rgba(255, 107, 107, 0.12);
+      border-color: rgba(255, 107, 107, 0.35);
+    }
+
+    .cipher-tab-input{
+      width: 190px;
+      max-width: 62vw;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .cipher-tab-input:focus{
+      outline: none;
+      border-color: var(--accent);
+      background: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    /* ===== Confirm modal ===== */
+    .cmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9000;
+    }
+    .cmodal.open{ display: flex; }
+
+    .cmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .cmodal-box{
+      position: relative;
+      width: min(520px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      animation: cmodalPop .12s ease-out;
+    }
+    @keyframes cmodalPop{
+      from { transform: translateY(6px) scale(.98); opacity: .6; }
+      to   { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .cmodal-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 4px 0;
+    }
+
+    .cmodal-title{
+      color: var(--text);
+      font-weight: 900;
+      font-size: .98rem;
+    }
+
+    .cmodal-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .cmodal-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .cmodal-body{
+      color: var(--muted);
+      line-height: 1.45;
+      padding: 0 4px;
+    }
+
+    .cmodal-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 6px 4px 2px;
+      flex-wrap: wrap;
+    }
+
+    .cmodal-btn{
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .cmodal-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .cmodal-btn.ghost{ opacity: .95; }
+
+    .cmodal-btn.danger{
+      border-color: rgba(255, 107, 107, 0.35);
+      color: #ff8b8b;
+    }
+    .cmodal-btn.danger:hover{
+      background: rgba(255, 107, 107, 0.12);
+      border-color: #ff7070;
+      box-shadow: 0 0 0 2px rgba(255, 112, 112, 0.18);
+    }
+
+    /* floating menu (portal) */
+    .cipher-float-menu{
+      position: fixed;
+      min-width: 170px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.45);
+      padding: 6px;
+      display: none;
+      z-index: 99999;
+    }
+    .cipher-float-menu.open{ display: grid; gap: 4px; }
+
+    /* =========================================================
+       AUTOSAVE PILL + SPINNER
+       ========================================================= */
+    .autosave-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .78rem;
+    }
+
+    .autosave-pill.saving{
+      color: var(--text);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .spinner{
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.18);
+      border-top-color: var(--accent);
+      display: none;
+      animation: spin .75s linear infinite;
+    }
+
+    .autosave-pill.saving .spinner{ display: inline-block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =========================================================
+       Labs Pro upsell modal
+       ========================================================= */
+    .promodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8000;
+    }
+    .promodal.open{ display: flex; }
+
+    .promodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.68);
+      backdrop-filter: blur(7px);
+    }
+
+    .promodal-box{
+      position: relative;
+      width: min(560px, 92vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 22px 70px rgba(0,0,0,.6);
+      overflow: hidden;
+      animation: cmodalPop .12s ease-out;
+    }
+
+    .promodal-hero{
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(70% 60% at 15% 20%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+        radial-gradient(55% 50% at 85% 10%, rgba(0,255,213,.10) 0%, rgba(0,255,213,0) 55%);
+    }
+
+    .promodal-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .promodal-title{
+      font-weight: 1000;
+      color: var(--text);
+      font-size: 1.05rem;
+      letter-spacing: .1px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pro-chip{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #0f0f0f;
+      font-weight: 1000;
+      font-size: .78rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pro-chip::after{
+      content:"";
+      position:absolute;
+      inset:-40% -70%;
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.28) 45%, transparent 70%);
+      transform: translateX(-80%);
+      animation: proShine 2.6s ease-in-out infinite;
+    }
+    @keyframes proShine{
+      0%{ transform: translateX(-80%); }
+      55%{ transform: translateX(80%); }
+      100%{ transform: translateX(80%); }
+    }
+
+    .promodal-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .promodal-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .promodal-body{
+      padding: 14px 16px 10px;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+
+    .promodal-list{
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+    .promodal-list li{
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .promodal-list .tick{
+      color: var(--accent);
+      font-weight: 1000;
+    }
+
+    .promodal-actions{
+      padding: 12px 16px 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .promodal-btn{
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 1000;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .promodal-btn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .promodal-btn.primary{
+      background: var(--accent);
+      color: #0f0f0f;
+      border-color: var(--accent);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 0 3px var(--accent-soft);
+    }
+    .promodal-btn.primary:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+
+    /* =========================================================
+       HISTORY MODAL (Labs Pro)
+       ========================================================= */
+    .hmodal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8500;
+    }
+    .hmodal.open{ display: flex; }
+
+    .hmodal-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+
+    .hmodal-box{
+      position: relative;
+      width: min(760px, 94vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      overflow: hidden;
+      animation: cmodalPop .12s ease-out;
+    }
+
+    .hmodal-top{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .hmodal-title{
+      font-weight: 1000;
+      color: var(--text);
+      font-size: 1rem;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .hmodal-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .hmodal-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .hmodal-body{
+      padding: 12px 14px 10px;
+      color: var(--muted);
+      display: grid;
+      gap: 10px;
+    }
+
+    .hlist{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+      max-height: min(60vh, 520px);
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .hitem{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      padding: 10px 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .hrow{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+
+    .hwhen{
+      color: var(--text);
+      font-weight: 900;
+      font-size: .92rem;
+    }
+    .hmeta{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .82rem;
+    }
+
+    .hactions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .hbtn{
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .hbtn:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .hbtn.primary{
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f0f;
+    }
+    .hbtn.primary:hover{
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+      transform: translateY(-1px);
+    }
+
+    .hstatus{
+      font-size: .86rem;
+      color: var(--muted);
+      min-height: 18px;
+    }
+
+    /* =========================================================
+       CoLab modal (sharing + collaborators)
+       ========================================================= */
+    .colab{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 8600; /* above history (8500) */
+    }
+    .colab.open{ display: flex; }
+
+    .colab-backdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.66);
+      backdrop-filter: blur(7px);
+    }
+
+    .colab-box{
+      position: relative;
+      width: min(760px, 94vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 22px 70px rgba(0,0,0,.6);
+      overflow: hidden;
+      animation: cmodalPop .12s ease-out;
+    }
+
+    .colab-hero{
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(70% 60% at 15% 20%, rgba(0,255,213,.16) 0%, rgba(0,255,213,0) 60%),
+        radial-gradient(55% 50% at 85% 10%, rgba(0,255,213,.10) 0%, rgba(0,255,213,0) 55%);
+    }
+
+    .colab-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .colab-title{
+      font-weight: 1000;
+      color: var(--text);
+      font-size: 1.05rem;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .colab-x{
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .colab-x:hover{
+      background: var(--input-hover);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .colab-body{
+      padding: 14px 16px 16px;
+      display: grid;
+      gap: 12px;
+      color: var(--muted);
+    }
+
+    .colab-row{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .colab-chip{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-weight: 900;
+      font-size: .78rem;
+    }
+    .colab-chip.on{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+      color: var(--text);
+    }
+
+    .colab-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .colab-linkbox{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .colab-linkrow{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .colab-link{
+      flex: 1;
+      min-width: 220px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+    }
+
+    .colab-divider{
+      height: 1px;
+      background: var(--line);
+      opacity: .9;
+      margin: 2px 0 0;
+    }
+
+    .colab-list{
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+      max-height: min(46vh, 420px);
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    .colab-item{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .colab-who{
+      display: grid;
+      gap: 2px;
+      min-width: 220px;
+    }
+    .colab-name{
+      color: var(--text);
+      font-weight: 1000;
+      font-size: .95rem;
+    }
+    .colab-meta{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: .82rem;
+    }
+
+    .colab-item-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .colab-status{
+      min-height: 18px;
+      font-size: .86rem;
+      color: var(--muted);
+    }
+
+    .colab-warn{
+      border: 1px solid rgba(255, 193, 7, 0.35);
+      background: rgba(255, 193, 7, 0.08);
+      color: #ffd36b;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 900;
+      font-size: .86rem;
+      display: none;
+    }
+    .colab-warn.show{ display:block; }
+
+    /* ===== NEW: role controls ===== */
+    .role-wrap{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .role-label{
+      color: var(--muted);
+      font-weight: 900;
+      font-size: .78rem;
+      letter-spacing: .02em;
+    }
+    .role-select{
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-weight: 900;
+      font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+    }
+    .role-select:focus{
+      outline:none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .role-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border: 1px solid var(--line-2);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-weight: 1000;
+      font-size: .75rem;
+      letter-spacing:.02em;
+    }
+    .role-badge.owner{
+      border-color: rgba(255, 215, 0, 0.35);
+      color: #ffd36b;
+      background: rgba(255, 215, 0, 0.08);
+    }
+
+    /* ===============================
+       PRO BUTTON (PRIMARY)
+       =============================== */
+
+    .btn.pro {
+      position: relative;
+      background: linear-gradient(
+        135deg,
+        color-mix(in oklab, var(--accent) 88%, white),
+        var(--accent)
+      );
+      color: #0b0b0b;
+      border: 1px solid color-mix(in oklab, var(--accent) 70%, black);
+      font-weight: 900;
+      letter-spacing: .02em;
+
+      box-shadow:
+        0 0 0 3px var(--accent-soft),
+        0 10px 28px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.35);
+
+      overflow: hidden;
+    }
+
+    .btn.pro::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        radial-gradient(
+          circle at 30% 30%,
+          rgba(255,255,255,.35),
+          transparent 55%
+        );
+      opacity:.55;
+      pointer-events:none;
+    }
+
+    .btn.pro::after{
+      content:"";
+      position:absolute;
+      inset:-120% -80%;
+      background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255,255,255,.55) 45%,
+        transparent 70%
+      );
+      transform: translateX(-80%);
+      transition: transform .6s ease;
+      pointer-events:none;
+    }
+
+    .btn.pro:hover{
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+      box-shadow:
+        0 0 0 4px var(--accent-soft),
+        0 14px 36px rgba(0,0,0,.45);
+    }
+
+    .btn.pro:hover::after{
+      transform: translateX(80%);
+    }
+
+    .btn.pro:active{
+      transform: translateY(0);
+      box-shadow:
+        0 0 0 3px var(--accent-soft),
+        0 8px 18px rgba(0,0,0,.35);
+    }
+
+    .btn.pro-ghost{
+      position: relative;
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,.04),
+        rgba(255,255,255,.01)
+      );
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-weight: 800;
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .btn.pro-ghost:hover{
+      background: rgba(0,255,213,.08);
+      transform: translateY(-1px);
+    }
+
+    .btn.pro .star{
+      font-size: .9em;
+      opacity: .9;
+    }
+    
+    /* ===== Image Zoom Modal (FIXED) ===== */
+/* ===== Image Lightbox (true fullscreen) ===== */
+.img-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,.85);
+
+  display: none;            /* closed */
+  align-items: center;      /* center image vertically */
+  justify-content: center;  /* center image horizontally */
+
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.img-lightbox.open {
+  display: flex;
+}
+
+.img-lightbox-img {
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 48px);
+
+  width: auto;
+  height: auto;
+
+  object-fit: contain;
+  display: block;
+
+  border-radius: 12px;
+  background: #111;
+}
+
+.img-lightbox-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100000;
+
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  cursor: pointer;
+}
+
+  .tb-btn.pro {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(24, 24, 24, 0.95),
+    rgba(16, 16, 16, 0.95)
+  );
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 8px 22px rgba(0,0,0,0.35);
+}
+
+.tb-btn.pro:hover {
+  border-color: rgba(255, 215, 0, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 10px 28px rgba(0,0,0,0.45);
+}
+/* Vertical divider before PRO actions */
+.tb-btn.pro:first-of-type {
+  position: relative;
+  margin-left: 14px;
+}
+
+.tb-btn.pro:first-of-type::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 60%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255,255,255,0.18),
+    transparent
+  );
+}
+.tb-btn.pro:first-of-type::before {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 200, 0, 0.35),
+    transparent
+  );
+}
+.tb-btn.pro {
+      background: linear-gradient(135deg,
+ color-mix(in oklab, var(--accent) 88%, white), var(--accent));
+    }
+  /* Bigger image in lightbox */
+.img-lightbox{
+  padding: 10px; /* was 24px */
+}
+
+.img-lightbox-img{
+  /* fill as much of the viewport as possible */
+  width: min(96vw, 1400px);
+  height: min(92vh, 900px);
+
+  max-width: 96vw;
+  max-height: 92vh;
+
+  object-fit: contain;
+  display: block;
+
+  border-radius: 12px;
+  background: #111;
+}
+.img-lightbox-close{
+  top: 12px;
+  right: 12px;
+  padding: 8px 12px;
+}
+
+  /* ===== CoLab toggle button states ===== */
+
+/* ENABLE sharing → blue / accent */
+.run-btn.secondary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0f0f0f;
+}
+
+.run-btn.secondary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+/* DISABLE sharing → dark / neutral */
+.run-btn.danger {
+  background: transparent;
+    
+  
+  border-color: var(--line-2);
+  color: var(--text);
+ 
+}
+
+.run-btn.danger:hover {
+  border-color: rgba(255,255,255,0.25);
+    
+}
+
+  <style>
+  .tour-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    z-index: 9000;
+  }
+  .tour-overlay.open{ display: block; }
+
+  .tour-highlight{
+    position: fixed;
+    border-radius: 14px;
+    box-shadow:
+      0 0 0 3px rgba(0,255,209,0.20),
+      0 0 0 9999px rgba(0,0,0,0.55);
+    border: 1px solid rgba(0,255,209,0.35);
+    pointer-events: none;
+    z-index: 9001;
+    transition: all 0.15s ease;
+  }
+
+  .tour-card{
+    position: fixed;
+    width: min(360px, calc(100vw - 24px));
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+    padding: 14px 14px 12px;
+    z-index: 9002;
+  }
+
+  .tour-title{
+    font-weight: 1000;
+    color: var(--accent);
+    margin: 0 0 6px;
+    font-size: 1.02rem;
+  }
+  .tour-body{
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+  .tour-actions{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tour-actions .left, .tour-actions .right{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tour-btn{
+    padding: 9px 11px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-weight: 950;
+    cursor: pointer;
+  }
+  .tour-btn:hover{
+    background: var(--input-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .tour-btn.primary{
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 0 3px var(--accent-soft);
+  }
+  .tour-btn.primary:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+
+  .tour-step{
+    color: var(--muted);
+    font-weight: 900;
+    font-size: .85rem;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .tour-highlight{ transition: none; }
+  }
+  <style>
+  .tour-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    z-index: 9000;
+  }
+  .tour-overlay.open{ display:block; }
+
+  /* highlight hugs the element (no fake padding) */
+  .tour-highlight{
+    position: fixed;
+    pointer-events: none;
+    z-index: 9001;
+
+    /* the “hole” effect */
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+    border: 2px solid rgba(0,255,209,0.28);
+    outline: 1px solid rgba(0,255,209,0.14);
+
+    transition: left .12s ease, top .12s ease, width .12s ease, height .12s ease;
+  }
+
+  .tour-card{
+    position: fixed;
+    width: min(360px, calc(100vw - 24px));
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+    padding: 14px 14px 12px;
+    z-index: 9002;
+  }
+
+  .tour-title{
+    font-weight: 1000;
+    color: var(--accent);
+    margin: 0 0 6px;
+    font-size: 1.02rem;
+  }
+  .tour-body{
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+
+  .tour-actions{
+    display:flex;
+    justify-content: space-between;
+    gap:10px;
+    flex-wrap: wrap;
+    align-items:center;
+  }
+  .tour-actions .left, .tour-actions .right{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+
+  .tour-btn{
+    padding: 9px 11px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--text);
+    font-weight: 950;
+    cursor: pointer;
+  }
+  .tour-btn:hover{
+    background: var(--input-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .tour-btn.primary{
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 0 3px var(--accent-soft);
+  }
+
+  .tour-step{
+    color: var(--muted);
+    font-weight: 900;
+    font-size: .85rem;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .tour-highlight{ transition:none; }
+  }
+
+/* ============================
+   DESKTOP: keep toolbar one line
+   ============================ */
+@media (min-width: 641px){
+  .ws-topbar{
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ws-tools{
+    flex-wrap: nowrap !important;     /* <-- this is the main culprit */
+    overflow: visible !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* buttons never wrap or shrink */
+  .ws-tools .tb-btn{
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+
+  /* title cluster shouldn't force wrapping */
+  .ws-titlewrap{
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+  }
+}
+/* === NOTES TOOLBAR (Word / Notes style) === */
+.notes-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 10px;
+
+  /* LIGHTER BAR */
+  background: #1f2422; /* lighter than editor */
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.notes-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Toolbar buttons */
+.notes-toolbar button,
+.notes-toolbar select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+  min-height: 32px;
+
+  background: #2a2f2d;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+
+  color: #e7ecea;            /* 👈 FIXED LABEL COLOR */
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  cursor: pointer;
+}
+
+/* Icons */
+.notes-toolbar .icon {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Hover / active */
+.notes-toolbar button:hover,
+.notes-toolbar select:hover {
+  background: #343a38;
+}
+
+.notes-toolbar button.active {
+  background: #3f7f6a;
+  border-color: #3f7f6a;
+  color: #ffffff;
+}
+/* Make toolbar SVG icons inherit the button text color */
+.notes-toolbar svg.icon{
+  width: 16px;
+  height: 16px;
+  display: block;
+
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Fill the bullet circles */
+.notes-toolbar svg.icon circle{
+  fill: currentColor;
+  stroke: none;
+}
+/* Notes toolbar buttons MUST override global button styles */
+.note-btn{
+  padding: 0 !important;              /* override global button padding */
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  border-radius: 9px;
+
+  border: 1px solid color-mix(in oklab, var(--line-2) 70%, transparent) !important;
+  background: rgba(255,255,255,0.02) !important;
+
+  color: var(--text) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+/* Make SVG icons show up (inherit button color) */
+.note-btn svg{
+  width: 18px;
+  height: 18px;
+  display: block;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* If your bullet icon uses circles, fill those */
+.note-btn svg circle{
+  fill: currentColor;
+  stroke: none;
+}
+
+.note-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.note-surface{
+  padding: 12px 12px;
+  color: var(--text);
+  font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+  font-size: 17px;
+  line-height: 1.55;
+  overflow-y: auto;
+  min-height: 380px;
+  scrollbar-gutter: stable both-edges;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.note-surface{
+  padding: 12px 12px;
+  color: var(--text);
+  font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+  font-size: 17px;
+  line-height: 1.55;
+
+  height: 420px;        /* ✅ fixed editor height */
+  overflow-y: auto;     /* ✅ internal scroll */
+
+  scrollbar-gutter: stable both-edges;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+</style>
+
+
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+
+</head>
+
+<body>
+  {% include 'base_nav.html' %}
+
+  <main class="ws-shell">
+    <section class="ws-card" aria-label="Cipher Workspace">
+      <!-- Top Bar -->
+      <header class="ws-topbar">
+        <div class="ws-titlewrap">
+          <span class="ws-dot" aria-hidden="true"></span>
+          <span class="ws-sub" id="ws-id">#{{ ws.id }}</span>
+        </div>
+
+        <div class="ws-tools" role="toolbar" aria-label="Workspace tools">
+          <button class="tb-btn active" data-tool="frequency" type="button">Frequency</button>
+          <button class="tb-btn" data-tool="substitution" type="button">Substitution</button>
+          <button class="tb-btn" data-tool="replacer" type="button">Replace</button>
+          <button class="tb-btn" data-tool="spacer" type="button">Spacer</button>
+          <button class="tb-btn" data-tool="remove_spaces" type="button">No spaces</button>
+          <button class="tb-btn" data-tool="remove_punctuation" type="button">No punct</button>
+          <button class="tb-btn" data-tool="breaker" type="button">Breaker</button>
+
+          <button class="tb-btn pro" data-tool="pro_analysis" id="ws-pro-analysis" type="button" title="Pro Analysis (stats + likely cipher type)">Pro Analysis <span class="pro-badge">PRO</span></button>
+
+          <!-- PRO buttons -->
+          <button class="tb-btn pro" id="ws-colab" type="button" title="CoLab (sharing + collaborators)">
+            CoLab
+            <span class="pro-chip-mini">
+              <span class="spark" aria-hidden="true"></span>
+              <span class="pro-badge">PRO</span>
+            </span>
+          </button>
+
+          <button class="tb-btn pro" id="ws-export-pdf" type="button" title="Export this lab as a PDF">
+            Export PDF
+            <span class="pro-chip-mini">
+              <span class="spark" aria-hidden="true"></span>
+              <span class="pro-badge">PRO</span>
+            </span>
+          </button>
+
+          <button class="tb-btn pro" id="ws-clone" type="button" title="Clone this lab">
+            Clone
+            <span class="pro-chip-mini">
+              <span class="spark" aria-hidden="true"></span>
+              <span class="pro-badge">PRO</span>
+            </span>
+          </button>
+
+          <button class="tb-btn pro" id="ws-history" type="button" title="View lab history snapshots">
+            History
+            <span class="pro-chip-mini">
+              <span class="spark" aria-hidden="true"></span>
+              <span class="pro-badge">PRO</span>
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <div class="ws-grid">
+        <!-- Left: Doc + Tool Dock -->
+        <div class="ws-panel">
+          <div class="doc-wrap">
+            <div class="doc-meta">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <span style="color:var(--text-dim);font-weight:800;">Notes / Plaintext</span>
+
+                <!-- Autosave indicator -->
+                <span class="autosave-pill" id="autosave-pill" aria-live="polite">
+                  <span class="spinner" id="autosave-spinner" aria-hidden="true"></span>
+                  <span id="autosave-text">Autosave on</span>
+                </span>
+              </div>
+
+              <div style="color:var(--muted);">
+                Updated: <span id="updated-at">{{ ws.updated_at if ws.updated_at else "—" }}</span>
+              </div>
+            </div>
+
+            <input
+              id="ws-title-input"
+              class="doc-title"
+              placeholder="Lab title"
+              value="{{ ws.title or 'Untitled Workspace' }}"
+            />
+
+            <div class="note-editor" id="note-editor-wrap">
+              <div class="note-toolbar" id="note-toolbar" role="toolbar" aria-label="Notes formatting toolbar">
+                <!-- Mirrors a mobile notes app: one fixed band, compact icons, horizontal scroll if needed -->
+
+                <button class="note-btn" type="button" id="note-checklist" title="Checklist" aria-label="Checklist">
+                     <svg viewBox="0 0 24 24" aria-hidden="true">
+    <!-- checkbox box -->
+    <rect x="4" y="4" width="16" height="16" rx="3"/>
+
+    <!-- check mark -->
+    <path d="M7 12.5l3 3 7-7"/>
+  </svg>
+                </button>
+
+                <select class="note-select" id="note-style" title="Style" aria-label="Style">
+                  <option value="P" selected>Normal</option>
+                  <option value="H1">H1</option>
+                  <option value="H2">H2</option>
+                  <option value="BLOCKQUOTE">Quote</option>
+                  <option value="PRE">Code</option>
+                </select>
+
+             
+
+                <button class="note-btn" type="button" data-cmd="bold" title="Bold (Ctrl+B)" aria-label="Bold"><span class="txt-ico">B</span></button>
+                <button class="note-btn" type="button" data-cmd="italic" title="Italic (Ctrl+I)" aria-label="Italic"><span class="txt-ico"><i>I</i></span></button>
+                <button class="note-btn" type="button" data-cmd="underline" title="Underline (Ctrl+U)" aria-label="Underline"><span class="txt-ico"><u>U</u></span></button>
+
+                <span class="note-sep" aria-hidden="true"></span>
+
+                <button class="note-btn" type="button" data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">
+<svg viewBox="0 0 24 24" class="icon">
+  <circle cx="5" cy="6" r="1.5"/>
+  <circle cx="5" cy="12" r="1.5"/>
+  <circle cx="5" cy="18" r="1.5"/>
+  <line x1="11" y1="6" x2="21" y2="6"/>
+  <line x1="11" y1="12" x2="21" y2="12"/>
+  <line x1="11" y1="18" x2="21" y2="18"/>
+</svg>
+
+
+                </button>
+                <button class="note-btn" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <text x="3.5" y="8" font-size="7" fill="currentColor">1</text>
+                    <text x="3.5" y="14" font-size="7" fill="currentColor">2</text>
+                    <text x="3.5" y="20" font-size="7" fill="currentColor">3</text>
+                    <path d="M9 6h12"/>
+                    <path d="M9 12h12"/>
+                    <path d="M9 18h12"/>
+                  </svg>
+                </button>
+
+                <span class="note-sep" aria-hidden="true"></span>
+
+                <button class="note-btn" type="button" data-cmd="justifyLeft" title="Align left" aria-label="Align left">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M4 10h10"/><path d="M4 14h16"/><path d="M4 18h10"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="justifyCenter" title="Center" aria-label="Center">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M7 10h10"/><path d="M4 14h16"/><path d="M7 18h10"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="justifyRight" title="Align right" aria-label="Align right">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M10 10h10"/><path d="M4 14h16"/><path d="M10 18h10"/></svg>
+                </button>
+
+                <span class="note-sep" aria-hidden="true"></span>
+
+                <button class="note-btn" type="button" data-action="link" title="Insert link" aria-label="Insert link">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 1 0-7l1.2-1.2a5 5 0 0 1 7 7L17 13"/><path d="M14 11a5 5 0 0 1 0 7L12.8 19.2a5 5 0 0 1-7-7L7 11"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="unlink" title="Remove link" aria-label="Remove link">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7l-1.2-1.2a5 5 0 0 0-7 7L10 14"/><path d="M7 17l1.2 1.2a5 5 0 0 0 7-7L14 10"/><path d="M4 4l16 16"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="removeFormat" title="Clear formatting" aria-label="Clear formatting">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20h12"/><path d="M9.5 4h5"/><path d="M10 4 7.5 14"/><path d="M17 6l2 2"/><path d="M9 18l10-10"/></svg>
+                </button>
+
+                <span class="note-sep" aria-hidden="true"></span>
+
+                <button class="note-btn" type="button" data-cmd="undo" title="Undo (Ctrl+Z)" aria-label="Undo">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14l-4-4 4-4"/><path d="M5 10h8a6 6 0 1 1 0 12h-3"/></svg>
+                </button>
+                <button class="note-btn" type="button" data-cmd="redo" title="Redo (Ctrl+Y)" aria-label="Redo">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l4 4-4 4"/><path d="M19 10H11a6 6 0 1 0 0 12h3"/></svg>
+                </button>
+              </div>
+
+              <!-- Rich editor surface -->
+              <div id="ws-editor" class="note-surface" contenteditable="true" spellcheck="true" aria-label="Notes editor"></div>
+
+              <!-- Hidden storage field (keeps existing JS/back-end plumbing intact) -->
+              <textarea id="ws-notes" class="doc-text" style="display:none;">{{ ws.notes or "" }}</textarea>
+            </div>
+
+            <div class="doc-actions">
+              <button class="mini-btn" id="insert-tool-output" type="button">Insert tool output → doc</button>
+              <button class="mini-btn" id="copy-doc" type="button">Copy doc</button>
+            </div>
+
+            <!-- Tool Dock -->
+            <div class="ws-panel tool-panel" style="padding: 14px;">
+              <h3>Tool Dock</h3>
+
+              <!-- Frequency -->
+              <div class="tool-card active" id="tool-frequency">
+                <div class="tool-row">
+                  <button class="run-btn" id="run-frequency" type="button">Run frequency</button>
+                  <button class="run-btn secondary" id="copy-tool" type="button">Copy output</button>
+                </div>
+                <div class="result" id="tool-output">Run a tool to see output here.</div>
+                <div class="hint">
+                  Use this to get an idea of what kind of cipher you're working with.
+                </div>
+              </div>
+
+              <!-- Substitution -->
+              <div class="tool-card" id="tool-substitution">
+                <div class="hint">
+                  Map plaintext letters (top) → ciphertext letters (input). This MVP applies the mapping live to the cipher text below.
+                </div>
+
+                <div class="sub-grid" id="sub-grid"></div>
+
+                <div class="helper">
+                  <div>Tip: enter ciphertext letters as <strong>A–Z</strong> under each marker.</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="run-btn secondary" id="sub-clear" type="button">Clear mapping</button>
+                    <button class="run-btn secondary" id="sub-reset" type="button">Reset view</button>
+                    <button class="run-btn" id="sub-frequency" type="button">Freq from cipher</button>
+                  </div>
+                </div>
+
+                <div class="result" id="sub-freq-output">Frequency output will appear here.</div>
+              </div>
+
+              <!-- Text Replacer -->
+              <div class="tool-card" id="tool-replacer">
+                <div class="tool-row" style="align-items:flex-end;">
+                  <div style="display:grid;gap:6px;flex:1;">
+                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Find</label>
+                    <input id="rep-find" type="text" placeholder="e.g. XQ" />
+                  </div>
+                  <div style="display:grid;gap:6px;flex:1;">
+                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Replace</label>
+                    <input id="rep-with" type="text" placeholder="e.g. TH" />
+                  </div>
+                  <button class="run-btn" id="run-replace" type="button">Run</button>
+                </div>  
+
+                <div class="result" id="tool-output-replace">Output will appear here.</div>
+                <div class="hint">Calls <code>/tools/run</code> with <code>tool_type=text_replacer</code>.</div>
+              </div>
+
+              <!-- Spacer -->
+              <div class="tool-card" id="tool-spacer">
+                <div class="tool-row" style="align-items:flex-end;">
+                  <div style="display:grid;gap:6px;">
+                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Block length</label>
+                    <input id="spacer-len" type="number" min="1" value="5" style="width:120px;" />
+                  </div>
+                  <button class="run-btn" id="run-spacer" type="button">Run</button>
+                </div>
+
+                <div class="result" id="tool-output-spacer">Output will appear here.</div>
+                <div class="hint">Calls <code>/tools/run</code> with <code>tool_type=text_spacer</code>.</div>
+              </div>
+
+              <!-- Remove spaces -->
+              <div class="tool-card" id="tool-remove_spaces">
+                <div class="tool-row">
+                  <button class="run-btn" id="run-remove-spaces" type="button">Remove spaces</button>
+                </div>
+                <div class="result" id="tool-output-remove-spaces">Output will appear here.</div>
+              </div>
+
+              <!-- Remove punctuation -->
+              <div class="tool-card" id="tool-remove_punctuation">
+                <div class="tool-row">
+                  <button class="run-btn" id="run-remove-punct" type="button">Remove punctuation</button>
+                </div>
+                <div class="result" id="tool-output-remove-punct">Output will appear here.</div>
+              </div>
+
+              <!-- Breaker -->
+              <div class="tool-card" id="tool-breaker">
+                <div class="hint">
+                  Calls <code>/breaker</code>. Optional fixed-map format: <code>AB=TH, CD=ER</code>
+                </div>
+
+                <div class="tool-row" style="align-items:flex-end;">
+                  <div style="display:grid;gap:6px;flex:1;min-width:180px;">
+                    <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Cipher type</label>
+                    <select id="breaker-type">
+                      <option value="auto">auto</option>
+                      <option value="caesar">caesar</option>
+                      <option value="vigenere" selected>vigenere</option>
+                      <option value="affine">affine</option>
+                      <option value="amsco">amsco</option>
+                      <option value="railfence">railfence</option>
+                      <option value="columnar">columnar</option>
+                      <option value="permutation">permutation</option>
+                      <option value="polybius">polybius</option>
+                      <option value="substitution">substitution</option>
+                      <option value="atbash">atbash</option>
+                      <option value="base64">base64</option>
+                      <option value="hex">hex</option>
+                      <option value="binary">binary</option>
+                      <option value="baconian">baconian</option>
+                    </select>
+                  </div>
+
+                  <button class="run-btn" id="run-breaker" type="button">Run breaker</button>
+                  <button class="run-btn secondary" id="copy-breaker" type="button">Copy output</button>
+                </div>
+
+                <div style="display:grid;gap:6px;margin-top:6px;">
+                  <label style="color:var(--muted);font-weight:800;font-size:.86rem;">Known plaintext / fixed map (optional)</label>
+                  <input id="breaker-known" type="text" placeholder="e.g. AB=TH, CD=ER" />
+                </div>
+
+                <div class="result" id="breaker-output">Run breaker to see output here.</div>
+              </div>
+              <!-- Pro Analysis -->
+              <div class="tool-card" id="tool-pro_analysis">
+                <div class="tool-row">
+                  <button class="run-btn" id="run-pro-analysis" type="button">Run Pro Analysis <span class="pro-badge">PRO</span></button>
+                  <button class="run-btn secondary" id="copy-pro-analysis" type="button">Copy output</button>
+                </div>
+                <div class="result" id="tool-output-pro">Run Pro Analysis to see a full statistical breakdown here.</div>
+                <div class="hint">
+                  Calls <code>/api/pro-analysis</code>. Best results with 80+ characters of ciphertext.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Cipher View -->
+        <aside class="ws-panel cipher-side" aria-label="Cipher sidebar">
+          <div class="ws-panel" style="padding:14px;">
+            <h3>Cipher View</h3>
+
+            <input id="cipher-image-input" type="file" accept="image/*" style="display:none;" />
+
+            <div class="cipher-upload">
+              <div class="cipher-upload-row">
+                <div class="cipher-upload-actions">
+                  <button class="img-btn primary" id="upload-cipher-image" type="button">Upload image</button>
+                  <button class="img-btn danger" id="delete-cipher-image" type="button">Remove</button>
+                </div>
+              </div>
+
+              <div class="cipher-upload-status" id="cipher-image-status"></div>
+
+              <div class="cipher-tabs" id="cipher-tabs" aria-label="Cipher image tabs"></div>
+              <div class="hint" id="cipher-tabs-hint" style="display:none;margin-top:-2px;">
+                Tip: double-click a tab to rename it.
+              </div>
+            </div>
+
+            <div class="cipher-img-wrap" id="cipher-image-wrap" style="display:none;">
+              <h3 style="margin-bottom:8px;">Cipher Image</h3>
+              <img id="cipher-img" class="cipher-img" src="" alt="Cipher image" />
+              <div class="hint">Tap/click to zoom.</div>
+            </div>
+
+            <textarea id="cipher-text" class="cipher-text" placeholder="Paste ciphertext here…">{{ ws.cipher_text or "" }}</textarea>
+
+            <div class="hint" style="margin-top:8px;">
+              Paste your cipher here. Tools read from this box. Save stores it in the workspace.
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <!-- Confirm Delete Modal -->
+  <div id="confirm-modal" class="cmodal" aria-hidden="true">
+    <div class="cmodal-backdrop" data-close="1"></div>
+
+    <div class="cmodal-box" role="dialog" aria-modal="true" aria-label="Confirm">
+      <div class="cmodal-top">
+        <div class="cmodal-title" id="cmodal-title">Confirm</div>
+        <button class="cmodal-x" id="cmodal-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="cmodal-body" id="cmodal-body">Are you sure?</div>
+
+      <div class="cmodal-actions">
+        <button class="cmodal-btn ghost" id="cmodal-cancel" type="button">Cancel</button>
+        <button class="cmodal-btn danger" id="cmodal-confirm" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Labs Pro Modal -->
+  <div id="pro-modal" class="promodal" aria-hidden="true">
+    <div class="promodal-backdrop" data-pro-close="1"></div>
+
+    <div class="promodal-box" role="dialog" aria-modal="true" aria-label="Labs Pro required">
+      <div class="promodal-hero">
+        <div class="promodal-top">
+          <div class="promodal-title">
+            <span class="pro-chip">PRO</span>
+            <span id="pro-title">Labs Pro required</span>
+          </div>
+          <button class="promodal-x" id="pro-x" type="button" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <div class="promodal-body">
+        <div id="pro-body">You’ve hit the free limit. Upgrade to Labs Pro to keep going.</div>
+
+        <ul class="promodal-list">
+          <li><span class="tick">✓</span> Export lab as PDF</li>
+          <li><span class="tick">✓</span> Clone any lab instantly</li>
+          <li><span class="tick">✓</span> Lab history (snapshots)</li>
+          <li><span class="tick">✓</span> Unlimited Labs</li>
+          <li><span class="tick">✓</span> Unlimited Tabs (images)</li>
+          <li><span class="tick">✓</span> Pro badge across the site</li>
+        </ul>
+      </div>
+
+      <div class="promodal-actions">
+        <button class="promodal-btn" id="pro-cancel" type="button">Not now</button>
+        <a class="promodal-btn primary" id="pro-go" href="/labs-pro">View Labs Pro</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal (Pro) -->
+  <div id="history-modal" class="hmodal" aria-hidden="true">
+    <div class="hmodal-backdrop" data-hclose="1"></div>
+    <div class="hmodal-box" role="dialog" aria-modal="true" aria-label="Lab history">
+      <div class="hmodal-top">
+        <div class="hmodal-title">
+          <span class="pro-chip" style="box-shadow:none;">PRO</span>
+          Lab history
+        </div>
+        <button class="hmodal-x" id="history-x" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="hmodal-body">
+        <div class="hstatus" id="history-status">—</div>
+        <ul class="hlist" id="history-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CoLab Modal (sharing + collaborators) -->
+<div id="colab-modal" class="colab" aria-hidden="true">
+  <div class="colab-backdrop" data-colab-close="1"></div>
+
+  <div class="colab-box" role="dialog" aria-modal="true" aria-label="CoLab">
+    <div class="colab-hero">
+      <div class="colab-top">
+        <div class="colab-title">
+          <span style="display:inline-flex;align-items:center;gap:10px;">
+            <span class="ws-dot" aria-hidden="true" style="width:10px;height:10px;"></span>
+            CoLab
+          </span>
+          <span class="colab-chip" id="colab-chip">Sharing: off</span>
+        </div>
+        <button class="colab-x" id="colab-x" type="button" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="colab-body">
+      <div class="colab-status" id="colab-status">—</div>
+
+      <div class="colab-warn" id="colab-warn">
+        Only the lab owner can enable/disable sharing, change roles, or remove collaborators.
+      </div>
+
+      <div class="colab-row">
+        <div class="hint" style="max-width: 56ch;">
+          Turn on sharing to generate a join link. Anyone with the link who is logged in can join (default role is editor — you can change it below).
+        </div>
+
+        <div class="colab-actions">
+          <!-- ✅ Single toggle button -->
+          <button class="run-btn" id="colab-toggle" type="button">Enable sharing</button>
+        </div>
+      </div>
+
+      <div class="colab-linkbox" id="colab-linkbox" style="display:none;">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+          <div style="font-weight:1000;color:var(--text);">Share link</div>
+          <div class="hint">Send this to friends.</div>
+        </div>
+
+        <div class="colab-linkrow">
+          <input class="colab-link" id="colab-link" readonly value="" />
+          <button  class="run-btn danger" id="colab-copy" type="button" style="text-decoration:solid;"x>Copy</button>
+          <a class="run-btn" id="colab-open" href="#" target="_blank" rel="noopener">Open</a>
+        </div>
+
+        <div class="colab-divider"></div>
+
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+          <div style="font-weight:1000;color:var(--text);">Collaborators</div>
+          <button class="run-btn secondary" id="colab-refresh" type="button">Refresh</button>
+        </div>
+
+        <ul class="colab-list" id="colab-list"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Image Zoom Lightbox -->
+  <div id="img-modal" class="img-lightbox" aria-hidden="true">
+    <button id="img-close" class="img-lightbox-close" type="button">Close</button>
+    <img id="img-modal-img" class="img-lightbox-img" alt="Cipher image preview">
+  </div>
+<div class="tour-overlay" id="tour-overlay" aria-hidden="true"></div>
+<div class="tour-highlight" id="tour-highlight" style="display:none;"></div>
+
+<div class="tour-card" id="tour-card" style="display:none;" role="dialog" aria-modal="true">
+  <div class="tour-title" id="tour-title">—</div>
+  <p class="tour-body" id="tour-body">—</p>
+
+  <div class="tour-actions">
+    <div class="left">
+      <button class="tour-btn" id="tour-skip" type="button">Skip</button>
+      <span class="tour-step" id="tour-step">1/1</span>
+    </div>
+    <div class="right">
+      <button class="tour-btn" id="tour-back" type="button">Back</button>
+      <button class="tour-btn primary" id="tour-next" type="button">Next</button>
+    </div>
+  </div>
+</div>
+
+  <script>
+    // ===========================
+    // Viewer / role gate (server truth)
+    // ===========================
+    const VIEWER_ROLE = "{{ viewer_role }}"; // "owner" | "editor" | "viewer"
+    const CAN_EDIT = {{ "true" if viewer_can_edit else "false" }};
+
+    // ===========================
+    // Auth / Pro flags (server truth)
+    // ===========================
+    window.USER_LOGGED_IN = {{ 1 if user else 0 }};
+    window.USER_IS_PRO = {{ 1 if viewer_is_pro else 0 }};
+
+
+    // ===========================
+    // Helpers
+    // ===========================
+    function escapeHtml(str) {
+      return (str || "").replace(/[&<>"']/g, s =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s])
+      );
+    }
+
+    async function toolsRun(tool_type, payload = {}) {
+      const formData = new FormData();
+      formData.append("tool_type", tool_type);
+      formData.append("text", payload.text ?? "");
+      if (payload.block_length != null) formData.append("block_length", String(payload.block_length));
+      if (payload.to_replace != null) formData.append("to_replace", payload.to_replace);
+      if (payload.replacement != null) formData.append("replacement", payload.replacement);
+
+      const res = await fetch("/tools/run", { method: "POST", body: formData });
+      const data = await res.json();
+      return data.text || "";
+    }
+
+    async function breakerRunRequest(payload = {}) {
+      const fd = new FormData();
+      fd.append("text", payload.text ?? "");
+      fd.append("cipher_type", (payload.cipher_type ?? "vigenere").toLowerCase());
+      fd.append("known_plaintext", payload.known_plaintext ?? "");
+
+      const res = await fetch("/breaker", { method: "POST", body: fd });
+      const data = await res.json();
+      return data;
+    }
+
+    function setStatus(msg) {
+      const el = document.getElementById("save-status");
+      if (el) el.textContent = msg;
+
+      const pill = document.getElementById("autosave-pill");
+      const text = document.getElementById("autosave-text");
+      if (!pill || !text) return;
+
+      // View-only override
+      if (!CAN_EDIT) {
+        pill.classList.remove("saving");
+        text.textContent = "View-only";
+        return;
+      }
+
+      const m = (msg || "").toLowerCase();
+
+      if (m.includes("saving")) {
+        pill.classList.add("saving");
+        text.textContent = "Saving…";
+        return;
+      }
+      if (m.includes("saved")) {
+        pill.classList.remove("saving");
+        text.textContent = "Saved";
+        return;
+      }
+      if (m.includes("failed")) {
+        pill.classList.remove("saving");
+        text.textContent = "Save failed";
+        return;
+      }
+      if (m.includes("unsaved")) {
+        pill.classList.remove("saving");
+        text.textContent = "Unsaved changes";
+        return;
+      }
+
+      pill.classList.remove("saving");
+      text.textContent = "Autosave on";
+    }
+
+    // ===== Custom confirm modal (NO window.confirm) =====
+    function confirmDeleteModal({
+      title = "Confirm",
+      message = "Are you sure?",
+      confirmText = "Confirm",
+      cancelText = "Cancel",
+      danger = false
+    } = {}) {
+      const modal = document.getElementById("confirm-modal");
+      const titleEl = document.getElementById("cmodal-title");
+      const bodyEl = document.getElementById("cmodal-body");
+      const btnCancel = document.getElementById("cmodal-cancel");
+      const btnConfirm = document.getElementById("cmodal-confirm");
+      const btnX = document.getElementById("cmodal-x");
+
+      if (!modal || !btnCancel || !btnConfirm) return Promise.resolve(false);
+
+      titleEl.textContent = title;
+      bodyEl.textContent = message;
+
+      btnCancel.textContent = cancelText;
+      btnConfirm.textContent = confirmText;
+
+      btnConfirm.classList.toggle("danger", !!danger);
+
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      setTimeout(() => btnConfirm.focus(), 0);
+
+      return new Promise((resolve) => {
+        const cleanup = (result) => {
+          modal.classList.remove("open");
+          modal.setAttribute("aria-hidden", "true");
+
+          btnCancel.removeEventListener("click", onCancel);
+          btnConfirm.removeEventListener("click", onConfirm);
+          btnX?.removeEventListener("click", onCancel);
+          modal.removeEventListener("click", onBackdrop);
+          document.removeEventListener("keydown", onKey);
+
+          resolve(result);
+        };
+
+        const onCancel = () => cleanup(false);
+        const onConfirm = () => cleanup(true);
+
+        const onBackdrop = (e) => {
+          const closeEl = e.target?.closest?.("[data-close='1']");
+          if (closeEl) cleanup(false);
+        };
+
+        const onKey = (e) => {
+          if (e.key === "Escape") cleanup(false);
+          if (e.key === "Enter") cleanup(true);
+        };
+
+        btnCancel.addEventListener("click", onCancel);
+        btnConfirm.addEventListener("click", onConfirm);
+        btnX?.addEventListener("click", onCancel);
+        modal.addEventListener("click", onBackdrop);
+        document.addEventListener("keydown", onKey);
+      });
+    }
+
+    // ===== Info modal (single OK) =====
+    function infoModal({ title = "Notice", message = "—", okText = "OK" } = {}) {
+      const modal = document.getElementById("confirm-modal");
+      const btnCancel = document.getElementById("cmodal-cancel");
+      const btnConfirm = document.getElementById("cmodal-confirm");
+      const btnX = document.getElementById("cmodal-x");
+
+      if (!modal || !btnCancel || !btnConfirm) return Promise.resolve();
+
+      const prevCancelDisplay = btnCancel.style.display;
+      const prevConfirmDanger = btnConfirm.classList.contains("danger");
+
+      btnCancel.style.display = "none";
+      btnConfirm.classList.remove("danger");
+
+      return confirmDeleteModal({
+        title,
+        message,
+        confirmText: okText,
+        cancelText: "Cancel"
+      }).finally(() => {
+        btnCancel.style.display = prevCancelDisplay;
+        btnConfirm.classList.toggle("danger", prevConfirmDanger);
+        btnX?.blur?.();
+      });
+    }
+
+    // ===== Labs Pro modal =====
+    function openProModal({
+      title = "Labs Pro required",
+      body = "This feature is available on Labs Pro.",
+      href = "/labs-pro",
+      cta = "View Labs Pro"
+    } = {}) {
+      const modal = document.getElementById("pro-modal");
+      const titleEl = document.getElementById("pro-title");
+      const bodyEl = document.getElementById("pro-body");
+      const btnX = document.getElementById("pro-x");
+      const btnCancel = document.getElementById("pro-cancel");
+      const btnGo = document.getElementById("pro-go");
+
+      if (!modal || !titleEl || !bodyEl || !btnCancel || !btnGo) return;
+
+      titleEl.textContent = title;
+      bodyEl.textContent = body;
+      btnGo.textContent = cta;
+      btnGo.href = href;
+
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+
+      const close = () => {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+        btnCancel.removeEventListener("click", onClose);
+        btnX?.removeEventListener("click", onClose);
+        modal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKey);
+      };
+
+      const onClose = () => close();
+      const onBackdrop = (e) => {
+        const closeEl = e.target?.closest?.("[data-pro-close='1']");
+        if (closeEl) close();
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") close();
+      };
+
+      btnCancel.addEventListener("click", onClose);
+      btnX?.addEventListener("click", onClose);
+      modal.addEventListener("click", onBackdrop);
+      document.addEventListener("keydown", onKey);
+    }
+
+    // ============================================================
+    // PRO / PERMISSION GATES
+    // ============================================================
+    function isProError(data) {
+      const err = String(data?.error || "").toLowerCase();
+      return (
+        data?.pro_required === true ||
+        err.includes("pro") ||
+        err.includes("upgrade") ||
+        err.includes("payment") ||
+        err.includes("subscribe") ||
+        err.includes("plan limit") ||
+        err.includes("free limit")
+      );
+    }
+
+    function isPermissionError(data) {
+      const err = String(data?.error || "").toLowerCase();
+      return (
+        data?.permission_denied === true ||
+        data?.owner_only === true ||
+        err.includes("permission") ||
+        err.includes("forbidden") ||
+        err.includes("not allowed") ||
+        err.includes("owner") ||
+        err.includes("role")
+      );
+    }
+
+    async function handleForbidden(res, data, context = "action") {
+      if (res?.status !== 403) return false;
+      if (isProError(data)) return false;
+
+      const msg =
+        data?.error ||
+        (context === "colab"
+          ? "You don’t have permission to do that in this lab. Only the owner can manage sharing/collaborators."
+          : "You don’t have permission to do that in this lab.");
+
+      await infoModal({
+        title: "Permission denied",
+        message: msg,
+        okText: "OK"
+      });
+
+      return true;
+    }
+
+    function maybeHandleProGate(res, data, context = "action") {
+      const status = res?.status;
+
+      if (status === 402) {
+        openProModal({
+          title: "Labs Pro required",
+          body: context === "history"
+            ? "Lab history is a Labs Pro feature. Upgrade to browse snapshots and restore older versions."
+            : context === "clone"
+              ? "Cloning a lab is a Labs Pro feature."
+              : context === "export"
+                ? "Exporting a lab as PDF is a Labs Pro feature."
+                : context === "colab"
+                  ? "CoLab (sharing + collaborators) is a Labs Pro feature."
+                  : context === "tabs"
+                    ? "Unlimited tabs (images) is a Labs Pro feature."
+                    : "This is a Labs Pro feature.",
+          href: "/labs-pro",
+          cta: "Upgrade to Pro"
+        });
+        return true;
+      }
+
+      if (status === 403 && isProError(data)) {
+        openProModal({
+          title: "Labs Pro required",
+          body: data?.error || "This is a Labs Pro feature.",
+          href: "/labs-pro",
+          cta: "View Labs Pro"
+        });
+        return true;
+      }
+
+      if (isProError(data)) {
+        openProModal({
+          title: "Labs Pro required",
+          body: data?.error || "This is a Labs Pro feature.",
+          href: "/labs-pro",
+          cta: "View Labs Pro"
+        });
+        return true;
+      }
+
+      return false;
+    }
+
+    // ===========================
+    // Toolbar switching
+    // ===========================
+    const toolButtons = Array.from(document.querySelectorAll(".tb-btn[data-tool]"));
+    const toolCards = {
+      frequency: document.getElementById("tool-frequency"),
+      substitution: document.getElementById("tool-substitution"),
+      replacer: document.getElementById("tool-replacer"),
+      spacer: document.getElementById("tool-spacer"),
+      remove_spaces: document.getElementById("tool-remove_spaces"),
+      remove_punctuation: document.getElementById("tool-remove_punctuation"),
+      breaker: document.getElementById("tool-breaker"),
+      pro_analysis: document.getElementById("tool-pro_analysis"),
+    };
+
+    function showTool(name) {
+      toolButtons.forEach(b => b.classList.toggle("active", b.dataset.tool === name));
+      Object.entries(toolCards).forEach(([k, el]) => {
+        if (!el) return;
+        el.classList.toggle("active", k === name);
+      });
+    }
+
+    toolButtons.forEach(btn => {
+      btn.addEventListener("click", () => showTool(btn.dataset.tool));
+    });
+
+    // ===========================
+    // View-only enforcement (client)
+    // ===========================
+    const notesEl = document.getElementById("ws-notes");
+    const editorEl = document.getElementById("ws-editor");
+    const toolbarEl = document.getElementById("note-toolbar");
+    const titleEl = document.getElementById("ws-title-input");
+    const cipherEl = document.getElementById("cipher-text");
+
+
+    // ===========================
+    // Notes Rich Editor (Word-style mini toolbar)
+    // ===========================
+    function looksLikeHtml(s){
+      return /<\w+[\s>]/.test(s || "");
+    }
+
+    function plaintextToHtml(s){
+      // escape HTML then keep newlines
+      const esc = (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      return esc.replace(/\n/g, "<br>");
+    }
+
+    function sanitizeEditorHtml(html){
+      // light cleanup only; we rely on the app being private per-user
+      return (html || "")
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/ on\w+="[^"]*"/g, "")
+        .replace(/ on\w+='[^']*'/g, "");
+    }
+
+    function syncTextareaToEditor(){
+      if (!editorEl || !notesEl) return;
+      const raw = notesEl.value || "";
+      if (raw.trim() === "") { editorEl.innerHTML = ""; return; }
+      editorEl.innerHTML = looksLikeHtml(raw) ? sanitizeEditorHtml(raw) : plaintextToHtml(raw);
+    }
+
+    function syncEditorToTextarea(){
+      if (!editorEl || !notesEl) return;
+      // Ensure checkbox state is serialized (property -> attribute)
+      editorEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        if (cb.checked) cb.setAttribute('checked', '');
+        else cb.removeAttribute('checked');
+      });
+      // store HTML so formatting survives autosave
+      const html = sanitizeEditorHtml(editorEl.innerHTML);
+      notesEl.value = html;
+    }
+
+    function getEditorPlainText(){
+      if (!editorEl) return "";
+      return (editorEl.innerText || "").replace(/ /g, " ").trimEnd();
+    }
+
+    function focusEditorEnd(){
+      if (!editorEl) return;
+      editorEl.focus();
+      const range = document.createRange();
+      range.selectNodeContents(editorEl);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    function insertHtmlAtCursor(html){
+      if (!editorEl) return;
+      editorEl.focus();
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) { focusEditorEnd(); return; }
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      const frag = document.createDocumentFragment();
+      let node, lastNode;
+      while ((node = el.firstChild)) {
+        lastNode = frag.appendChild(node);
+      }
+      range.insertNode(frag);
+      if (lastNode) {
+        range.setStartAfter(lastNode);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+
+
+  function getSubstitutionInsertText() {
+  // build mapping text
+  const map = [];
+  document.querySelectorAll("#sub-grid .sub-box").forEach(box => {
+    const plain = box.querySelector(".sub-top")?.textContent?.toUpperCase();
+    const cipher = box.querySelector(".sub-input")?.value?.toUpperCase();
+    if (plain && cipher) {
+      map.push(`${plain}→${cipher}`);
+    }
+  });
+
+  // decoded text = live cipher view
+  const decoded = document.getElementById("cipher-text")?.value || "";
+
+  let out = "Substitution mapping:\n";
+  out += map.length ? map.join(", ") : "(no mappings)\n";
+  out += "\n\nDecoded text:\n";
+  out += decoded.trim() || "(empty)";
+
+  return out;
+}
+
+
+    function insertToolOutputIntoEditor(tool, stamp, text){
+  const editor = document.getElementById("ws-editor");
+  if (!editor) return;
+
+  // Always insert at the bottom of the document
+  focusEditorEnd();
+
+  const block =
+`--- ${tool} output (${stamp}) ---
+${text || ""}`;
+
+  insertPlainTextWithLineBreaksAtCursor(block, { padBefore: true, padAfter: true });
+}
+
+function insertPlainTextWithLineBreaksAtCursor(text, opts = {}) {
+  const { padBefore = false, padAfter = false } = opts;
+
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+
+  // Always append to the end of the editor
+  const editor = document.getElementById("ws-editor");
+  if (!editor) return;
+  const r = document.createRange();
+  r.selectNodeContents(editor);
+  r.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(r);
+
+  const range = sel.getRangeAt(0);
+
+  const frag = document.createDocumentFragment();
+
+  // optional padding blank lines
+  if (padBefore) { frag.appendChild(document.createElement("br")); frag.appendChild(document.createElement("br")); }
+
+  // insert text preserving newlines
+  const lines = String(text).split(/\r?\n/);
+  lines.forEach((line, i) => {
+    frag.appendChild(document.createTextNode(line));
+    if (i !== lines.length - 1) frag.appendChild(document.createElement("br"));
+  });
+
+  if (padAfter) { frag.appendChild(document.createElement("br")); frag.appendChild(document.createElement("br")); }
+
+  // replace selection with fragment
+  range.deleteContents();
+  range.insertNode(frag);
+
+  // move caret to end of inserted content
+  sel.removeAllRanges();
+  const endRange = document.createRange();
+  endRange.selectNodeContents(editor);
+  endRange.collapse(false);
+  sel.addRange(endRange);
+}
+
+    function exec(cmd, value=null){
+      try{ document.execCommand(cmd, false, value); } catch {}
+      syncEditorToTextarea();
+    }
+
+    function applyFontSizePx(px){
+      // execCommand fontSize is 1-7; we use the classic "size=7" then restyle.
+      try { document.execCommand('styleWithCSS', false, true); } catch {}
+      try { document.execCommand('fontSize', false, '7'); } catch {}
+      // Convert the injected <font size="7"> wrappers to inline font-size in px.
+      editorEl?.querySelectorAll?.('font[size="7"]').forEach(f => {
+        f.removeAttribute('size');
+        f.style.fontSize = `${px}px`;
+      });
+      syncEditorToTextarea();
+    }
+
+    function applyBlockTag(tag){
+      // Use formatBlock for headings/quote/pre
+      const t = (tag || "P").toLowerCase();
+      exec('formatBlock', `<${t}>`);
+    }
+
+    function makeChecklist(){
+      // Convert selection into a checklist item (simple + resilient)
+      // If you're inside a list already, we inject a checkbox into the current LI.
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) { focusEditorEnd(); }
+      const range = sel.getRangeAt(0);
+      let node = range.startContainer;
+      while (node && node !== editorEl) {
+        if (node.nodeName === 'LI') {
+          const li = node;
+          if (!li.querySelector('input[type="checkbox"]')) {
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.style.marginRight = '8px';
+            cb.addEventListener('click', () => syncEditorToTextarea());
+            li.insertBefore(cb, li.firstChild);
+          }
+          syncEditorToTextarea();
+          return;
+        }
+        node = node.parentNode;
+      }
+      // Not in a list: create a new checklist line
+      insertHtmlAtCursor(`<div><label style="display:inline-flex;align-items:flex-start;gap:8px;"><input type="checkbox"/> <span>Checklist item</span></label></div>`);
+      syncEditorToTextarea();
+    }
+
+    function wireToolbar(){
+      if (!toolbarEl || !editorEl) return;
+
+      // Buttons
+      toolbarEl.querySelectorAll('button.note-btn[data-cmd]').forEach(btn => {
+        btn.addEventListener('mousedown', (e) => e.preventDefault()); // keep selection
+        btn.addEventListener('click', () => {
+          if (!CAN_EDIT) return;
+          exec(btn.dataset.cmd);
+        });
+      });
+
+      // Link
+      toolbarEl.querySelectorAll('button.note-btn[data-action="link"]').forEach(btn => {
+        btn.addEventListener('mousedown', (e) => e.preventDefault());
+        btn.addEventListener('click', async () => {
+          if (!CAN_EDIT) return;
+          const url = prompt('Paste a URL (https://...)');
+          if (!url) return;
+          exec('createLink', url.trim());
+        });
+      });
+
+      // Checklist
+      const cl = document.getElementById('note-checklist');
+      cl?.addEventListener('mousedown', (e) => e.preventDefault());
+      cl?.addEventListener('click', () => { if (CAN_EDIT) makeChecklist(); });
+
+      // Style dropdown
+      const styleSel = document.getElementById('note-style');
+      styleSel?.addEventListener('change', () => {
+        if (!CAN_EDIT) return;
+        applyBlockTag(styleSel.value);
+        editorEl.focus();
+      });
+
+      // Font size dropdown
+      const sizeSel = document.getElementById('note-size');
+      sizeSel?.addEventListener('change', () => {
+        if (!CAN_EDIT) return;
+        const px = parseInt(sizeSel.value, 10);
+        if (!Number.isFinite(px)) return;
+        applyFontSizePx(px);
+        editorEl.focus();
+      });
+
+      // Keep hidden textarea synced on checkbox toggles in content
+      editorEl.addEventListener('click', (e) => {
+        const t = e.target;
+        if (t && t.tagName === 'INPUT' && t.type === 'checkbox') {
+          syncEditorToTextarea();
+        }
+      });
+
+      // On paste: keep it clean-ish (no huge styles)
+      editorEl.addEventListener('paste', (e) => {
+        if (!CAN_EDIT) return;
+        // prefer plain text paste
+        if (e.clipboardData) {
+          e.preventDefault();
+          const text = e.clipboardData.getData('text/plain');
+          exec('insertText', text);
+        }
+      });
+    }
+
+    // Init editor from saved notes
+    syncTextareaToEditor();
+    wireToolbar();
+
+
+    function applyViewOnlyUI() {
+      if (CAN_EDIT) return;
+
+      // hard lock main editors
+      if (titleEl) {
+        titleEl.readOnly = true;
+        titleEl.setAttribute("aria-readonly", "true");
+      }
+      if (notesEl) {
+        notesEl.readOnly = true;
+        notesEl.setAttribute("aria-readonly", "true");
+      }
+      if (editorEl) {
+        editorEl.setAttribute('contenteditable', 'false');
+        editorEl.setAttribute('aria-readonly', 'true');
+      }
+      toolbarEl?.querySelectorAll?.('button, select')?.forEach?.(el => {
+        el.disabled = true;
+        el.title = 'View-only';
+      });
+      if (cipherEl) {
+        cipherEl.readOnly = true;
+        cipherEl.setAttribute("aria-readonly", "true");
+      }
+
+      // Disable image ops
+      const imgUploadBtn = document.getElementById("upload-cipher-image");
+      const imgDeleteBtn = document.getElementById("delete-cipher-image");
+      if (imgUploadBtn) { imgUploadBtn.disabled = true; imgUploadBtn.title = "View-only"; }
+      if (imgDeleteBtn) { imgDeleteBtn.disabled = true; imgDeleteBtn.title = "View-only"; }
+
+      // Disable “insert output → doc” because it changes notes
+      const insertBtn = document.getElementById("insert-tool-output");
+      if (insertBtn) { insertBtn.disabled = true; insertBtn.title = "View-only"; }
+
+      // Disable substitution mapping inputs (they mutate cipher text)
+      const subGrid = document.getElementById("sub-grid");
+      subGrid?.querySelectorAll?.("input, button, select")?.forEach?.(el => {
+        el.disabled = true;
+        el.title = "View-only";
+      });
+      document.querySelectorAll("#sub-clear, #sub-reset").forEach(el => {
+        el.disabled = true;
+        el.title = "View-only";
+      });
+
+      // CoLab management will already be enforced by server; leave button enabled to view state.
+      setStatus("—");
+    }
+
+    applyViewOnlyUI();
+
+    // ===========================
+    // Save + Autosave
+    // ===========================
+    const AUTOSAVE_DELAY_MS = 900;
+    const FORCE_SAVE_MAX_MS = 9000;
+
+    let dirty = false;
+    let saving = false;
+    let autosaveTimer = null;
+    let forceTimer = null;
+    let lastSavedPayload = null;
+    let saveQueued = false;
+
+    let internalCipherUpdate = false;
+
+    function currentPayload() {
+      return {
+        title: (titleEl?.value || "").trim(),
+        notes: notesEl?.value || "",
+        cipher_text: cipherEl?.value || ""
+      };
+    }
+
+    function payloadEquals(a, b) {
+      if (!a || !b) return false;
+      return a.title === b.title && a.notes === b.notes && a.cipher_text === b.cipher_text;
+    }
+
+    function markDirty() {
+      if (!CAN_EDIT) return; // ✅ viewers never become "dirty"
+      if (!dirty) setStatus("Unsaved changes");
+      dirty = true;
+
+      if (autosaveTimer) clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => triggerAutosave("debounce"), AUTOSAVE_DELAY_MS);
+
+      if (!forceTimer) {
+        forceTimer = setTimeout(() => {
+          forceTimer = null;
+          triggerAutosave("force");
+        }, FORCE_SAVE_MAX_MS);
+      }
+    }
+
+    async function triggerAutosave(reason = "auto") {
+      if (!CAN_EDIT) return; // ✅ hard stop
+      if (saving) { saveQueued = true; return; }
+
+      const payload = currentPayload();
+      if (!dirty || payloadEquals(payload, lastSavedPayload)) { dirty = false; return; }
+
+      await saveWorkspace(payload, reason);
+
+      if (saveQueued) {
+        saveQueued = false;
+        await triggerAutosave("queued");
+      }
+    }
+
+    async function saveWorkspace(payloadOverride = null, reason = "manual") {
+      if (!CAN_EDIT) {
+        // keep it quiet unless user explicitly tries to force save
+        if (reason === "manual" || reason === "hotkey") {
+          await infoModal({
+            title: "View-only",
+            message: "You have viewer access, so you can’t edit or save changes in this lab.",
+            okText: "OK"
+          });
+        }
+        return;
+      }
+
+      const payload = payloadOverride || currentPayload();
+
+      saving = true;
+      setStatus("Saving…");
+
+      try {
+        const fd = new FormData();
+        fd.append("title", payload.title);
+        fd.append("notes", payload.notes);
+        fd.append("cipher_text", payload.cipher_text);
+
+        const res = await fetch(`/workspaces/{{ ws.id }}/save`, { method: "POST", body: fd });
+
+        if (res.status === 401) {
+          window.location.href = "{{ url_for('login') }}?next={{ url_for('workspace_view', ws_id=ws.id) }}";
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        // If server denies (viewer), snap UI back to view-only state
+        if (res.status === 403) {
+          await handleForbidden(res, data, "action");
+          dirty = false;
+          setStatus("—");
+          return;
+        }
+
+        if (!data.ok) throw new Error(data.error || "save failed");
+
+        const updatedEl = document.getElementById("updated-at");
+        if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
+
+        lastSavedPayload = payload;
+        dirty = false;
+
+        setStatus("Saved ✓");
+        setTimeout(() => setStatus("—"), 1400);
+      } catch {
+        dirty = true;
+        setStatus("Save failed");
+        setTimeout(() => setStatus("Unsaved changes"), 1600);
+      } finally {
+        saving = false;
+      }
+    }
+
+    lastSavedPayload = currentPayload();
+
+    // ✅ Only wire edit listeners if editable
+    if (CAN_EDIT) {
+      titleEl?.addEventListener("input", markDirty, { passive: true });
+      // Notes editor: sync rich HTML -> hidden textarea -> autosave
+      editorEl?.addEventListener("input", () => {
+        if (!CAN_EDIT) return;
+        syncEditorToTextarea();
+        markDirty();
+      }, { passive: true });
+
+      cipherEl?.addEventListener("input", () => {
+        if (internalCipherUpdate) return;
+        markDirty();
+      }, { passive: true });
+
+      [titleEl, editorEl, cipherEl].forEach(el => {
+        if (!el) return;
+        el.addEventListener("blur", () => triggerAutosave("blur"));
+        el.addEventListener("change", () => markDirty(), { passive: true });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          dirty = true;
+          triggerAutosave("hotkey");
+        }
+      });
+
+      window.addEventListener("beforeunload", (e) => {
+        if (!dirty) return;
+        triggerAutosave("beforeunload");
+        e.preventDefault();
+        e.returnValue = "";
+      });
+    } else {
+      // Still intercept Ctrl/Cmd+S for viewers to avoid confusion
+      document.addEventListener("keydown", async (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          await infoModal({
+            title: "View-only",
+            message: "You can’t save changes because you have viewer access.",
+            okText: "OK"
+          });
+        }
+      });
+    }
+
+    // ===========================
+    // Insert output → doc
+    // ===========================
+    const insertBtn = document.getElementById("insert-tool-output");
+
+    const TOOL_LABELS = {
+      frequency: "Frequency",
+      substitution: "Substitution",
+      replacer: "Replace",
+      spacer: "Spacer",
+      remove_spaces: "No spaces",
+      remove_punctuation: "No punct",
+      breaker: "Breaker",
+      pro_analysis: "Pro Analysis",
+    };
+
+    function getActiveToolOutput() {
+      const active = document.querySelector(".tool-card.active");
+      if (!active) return { tool: "Tool", text: "" };
+
+      const id = active.id || "";
+      const toolKey = id.startsWith("tool-") ? id.slice(5) : "tool";
+      const toolLabel = TOOL_LABELS[toolKey] || toolKey;
+
+      // Special-case: Substitution Analyzer "Insert into doc" should include the
+      // current mapping + decoded text (not the frequency placeholder panel).
+      if (toolKey === "substitution") {
+        return { tool: toolLabel, text: getSubstitutionInsertText() };
+      }
+
+      const out = active.querySelector(".result");
+      return { tool: toolLabel, text: out ? out.textContent : "" };
+    }
+
+    insertBtn?.addEventListener("click", async () => {
+      if (!CAN_EDIT) {
+        await infoModal({
+          title: "View-only",
+          message: "You have viewer access, so you can’t modify notes.",
+          okText: "OK"
+        });
+        return;
+      }
+
+      const { tool, text } = getActiveToolOutput();
+      if (!text || text.trim() === "" || text.trim() === "Run a tool to see output here.") return;
+
+      const stamp = new Date().toLocaleString("en-GB", {
+        day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+      }).replace(",", "");
+
+      insertToolOutputIntoEditor(tool, stamp, text);
+      editorEl?.focus();
+      syncEditorToTextarea();
+      markDirty();
+    });
+
+    document.getElementById("copy-doc")?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(getEditorPlainText());
+        setStatus("Copied");
+        setTimeout(() => setStatus("—"), 900);
+      } catch {}
+    });
+
+    // ===========================
+    // Frequency
+    // ===========================
+    const freqBtn = document.getElementById("run-frequency");
+    const copyToolBtn = document.getElementById("copy-tool");
+    const outMain = document.getElementById("tool-output");
+
+    freqBtn?.addEventListener("click", async () => {
+      outMain.textContent = "Running…";
+      try {
+        const text = cipherEl?.value || "";
+        const out = await toolsRun("frequency", { text });
+        outMain.textContent = out || "(no output)";
+      } catch {
+        outMain.textContent = "Error running frequency.";
+      }
+    });
+
+    copyToolBtn?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText((outMain.textContent || "").trim());
+        setStatus("Copied");
+        setTimeout(() => setStatus("—"), 900);
+      } catch {}
+    });
+
+    
+    // ===========================
+    // Pro Analysis (outputs into Tool Dock)
+    // ===========================
+    const proBtn = document.getElementById("run-pro-analysis");
+    const proCopyBtn = document.getElementById("copy-pro-analysis");
+    const proOut = document.getElementById("tool-output-pro");
+
+    function formatProReport(data) {
+      const len = data?.length ?? 0;
+      const alpha = data?.alpha_len ?? 0;
+      const digits = data?.digit_len ?? 0;
+      const white = data?.whitespace_len ?? 0;
+      const punct = data?.punct_len ?? 0;
+
+      const ioc = data?.ioc ?? null;
+      const chi = data?.chi_square_english ?? null;
+      const ent = data?.entropy_bits_per_char ?? null;
+      const vr = data?.vowel_ratio ?? null;
+
+      const enc = data?.encoding_hints || {};
+      const encHints = [
+        enc.looks_base64 ? "Base64-ish" : null,
+        enc.looks_hex ? "Hex-ish" : null,
+        enc.looks_binary ? "Binary-ish" : null
+      ].filter(Boolean).join(" · ") || "None";
+
+      const topLetters = Array.isArray(data?.top_letters)
+        ? data.top_letters.slice(0, 18).map(([k,v]) => `${k}:${v}`).join("  ")
+        : "—";
+      const topBigrams = Array.isArray(data?.top_bigrams)
+        ? data.top_bigrams.slice(0, 12).map(([k,v]) => `${k}:${v}`).join("  ")
+        : "—";
+      const topTrigrams = Array.isArray(data?.top_trigrams)
+        ? data.top_trigrams.slice(0, 10).map(([k,v]) => `${k}:${v}`).join("  ")
+        : "—";
+
+      const ranking = Array.isArray(data?.ranking) ? data.ranking : [];
+      const rankLines = ranking.slice(0, 6).map((r, idx) => {
+        const reasons = Array.isArray(r.reasons) ? r.reasons.slice(0, 3).join(" · ") : "";
+        return `${idx+1}. ${r.name} (${r.score}/100)${reasons ? " — " + reasons : ""}`;
+      }).join("\n") || "—";
+
+      const autoc = Array.isArray(data?.autocorr_top) ? data.autocorr_top : [];
+      const autocLines = autoc.slice(0, 6).map(a => `shift ${a.shift}: rate ${a.rate} (${a.matches} matches)`).join("\n") || "—";
+
+      const fried = data?.friedman_keylen ?? null;
+
+      const kas = data?.kasiski || {};
+      const kasRepeats = Array.isArray(kas?.repeats) ? kas.repeats : [];
+      const kasRepeatLines = kasRepeats.slice(0, 6).map(r => {
+        const d = Array.isArray(r.distances) ? r.distances.slice(0, 6).join(",") : "";
+        return `${r.ngram} ×${r.count} | dists: ${d}`;
+      }).join("\n") || "—";
+
+      const kasFactors = Array.isArray(kas?.factor_counts) ? kas.factor_counts : [];
+      const kasFactorLine = kasFactors.slice(0, 10).map(f => `${f.factor}:${f.count}`).join(", ") || "—";
+
+      const steps = Array.isArray(data?.next_steps) ? data.next_steps : [];
+      const stepsText = steps.length ? steps.map(s => `- ${s}`).join("\n") : "—";
+
+      const fmt = (x) => (x === null || x === undefined) ? "—" : String(x);
+
+      return (
+`[Pro Analysis]
+Length: ${len} chars
+Alphabetic: ${alpha} | Digits: ${digits} | Punct: ${punct} | Whitespace: ${white}
+
+Core stats
+- IoC: ${fmt(ioc)}
+- Chi-square vs English: ${fmt(chi)}
+- Entropy (no-whitespace): ${fmt(ent)} bits/char
+- Vowel ratio (A/E/I/O/U/Y): ${fmt(vr)}
+- Encoding hints: ${encHints}
+
+Key length hints
+- Friedman estimate: ${fmt(fried)}
+- Autocorr peaks:
+${autocLines}
+
+Cipher ranking
+${rankLines}
+
+Top letters
+${topLetters}
+
+Top bigrams
+${topBigrams}
+
+Top trigrams
+${topTrigrams}
+
+Kasiski (repeats)
+${kasRepeatLines}
+
+Factor counts (2–20)
+${kasFactorLine}
+
+Next steps
+${stepsText}
+`);
+    }
+
+    async function runProAnalysisToDock() {
+      if (!proOut) return;
+
+      const text = (cipherEl?.value || "").trim();
+      if (text.length < 20) {
+        proOut.textContent = "Add more ciphertext (20+ chars) for meaningful Pro Analysis.";
+        return;
+      }
+
+      proOut.textContent = "Running Pro Analysis…";
+
+      try {
+        const res = await fetch("/api/pro-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        // handle login redirects / forbidden
+        if (res.status === 401) {
+          proOut.textContent = "Login required for Pro Analysis.";
+          openProModal({
+            title: "Login required",
+            body: "Log in to run Pro Analysis on your workspace text.",
+            href: `/login?next=${encodeURIComponent(window.location.pathname)}`,
+            cta: "Login"
+          });
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if (await handleForbidden(res, data, "Pro Analysis")) {
+          proOut.textContent = "Pro Analysis requires Labs Pro.";
+          return;
+        }
+
+        if (!res.ok) {
+          proOut.textContent = data?.error || "Error running Pro Analysis.";
+          return;
+        }
+
+        proOut.textContent = formatProReport(data);
+
+        // Switch to the Pro Analysis card so the user sees it
+        showTool("pro_analysis");
+      } catch (e) {
+        proOut.textContent = "Error running Pro Analysis (network/server).";
+      }
+    }
+
+    proBtn?.addEventListener("click", runProAnalysisToDock);
+
+    // Allow quick copy
+    proCopyBtn?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText((proOut?.textContent || "").trim());
+        toast?.("Copied.");
+      } catch {}
+    });
+
+
+    // ===========================
+    // Substitution (client-side mapping MVP)
+    // ===========================
+    const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
+    const subGrid = document.getElementById("sub-grid");
+    const subFreqBtn = document.getElementById("sub-frequency");
+    const subFreqOut = document.getElementById("sub-freq-output");
+
+    const mapping = {};
+    let originalCipher = (cipherEl?.value || "").toUpperCase();
+
+    function renderSubGrid() {
+      if (!subGrid) return;
+      subGrid.innerHTML = "";
+
+      alphabet.forEach(plain => {
+        mapping[plain] = mapping[plain] || "";
+        const box = document.createElement("div");
+        box.className = "sub-box";
+        box.innerHTML = `
+          <div class="sub-top">${plain}</div>
+          <div class="sub-arrow">↓</div>
+          <input class="sub-input" maxlength="1" data-plain="${plain}" placeholder="…" value="${escapeHtml(mapping[plain] || "")}" ${CAN_EDIT ? "" : "disabled"}>
+        `;
+        subGrid.appendChild(box);
+      });
+
+      subGrid.querySelectorAll(".sub-input").forEach(inp => {
+        inp.addEventListener("input", async () => {
+          if (!CAN_EDIT) return;
+          const plain = inp.dataset.plain;
+          const c = (inp.value || "").toUpperCase().replace(/[^A-Z]/g, "");
+          inp.value = c;
+          mapping[plain] = c;
+          applySubMapping();
+        });
+      });
+    }
+
+    function applySubMapping() {
+      if (!CAN_EDIT) return;
+
+      const text = originalCipher || "";
+      let out = "";
+
+      for (const ch of text) {
+        let replaced = false;
+        for (const [plain, cipher] of Object.entries(mapping)) {
+          if (cipher && ch === cipher) {
+            out += plain;
+            replaced = true;
+            break;
+          }
+        }
+        if (!replaced) out += ch;
+      }
+
+      internalCipherUpdate = true;
+      cipherEl.value = out;
+      internalCipherUpdate = false;
+
+      markDirty();
+    }
+
+    cipherEl?.addEventListener("input", () => {
+      if (internalCipherUpdate) return;
+      // If viewer somehow types (e.g. browser autofill), snap back immediately
+      if (!CAN_EDIT) {
+        internalCipherUpdate = true;
+        cipherEl.value = (lastSavedPayload?.cipher_text ?? originalCipher ?? "");
+        internalCipherUpdate = false;
+        return;
+      }
+      originalCipher = (cipherEl.value || "").toUpperCase();
+    });
+
+    document.getElementById("sub-clear")?.addEventListener("click", async () => {
+      if (!CAN_EDIT) {
+        await infoModal({ title: "View-only", message: "Viewers can’t modify ciphertext.", okText: "OK" });
+        return;
+      }
+      Object.keys(mapping).forEach(k => mapping[k] = "");
+      renderSubGrid();
+      applySubMapping();
+    });
+
+    document.getElementById("sub-reset")?.addEventListener("click", async () => {
+      if (!CAN_EDIT) {
+        await infoModal({ title: "View-only", message: "Viewers can’t modify ciphertext.", okText: "OK" });
+        return;
+      }
+      internalCipherUpdate = true;
+      cipherEl.value = originalCipher;
+      internalCipherUpdate = false;
+      subFreqOut.textContent = "Frequency output will appear here.";
+      markDirty();
+    });
+
+    subFreqBtn?.addEventListener("click", async () => {
+      subFreqOut.textContent = "Running…";
+      try {
+        const out = await toolsRun("frequency", { text: originalCipher });
+        subFreqOut.textContent = out || "(no output)";
+      } catch {
+        subFreqOut.textContent = "Error running frequency.";
+      }
+    });
+
+    renderSubGrid();
+
+    // ===========================
+    // Text Replacer
+    // ===========================
+    const repFind = document.getElementById("rep-find");
+    const repWith = document.getElementById("rep-with");
+    const repRun = document.getElementById("run-replace");
+    const repOut = document.getElementById("tool-output-replace");
+
+    repRun?.addEventListener("click", async () => {
+      repOut.textContent = "Running…";
+      try {
+        const out = await toolsRun("text_replacer", {
+          text: cipherEl?.value || "",
+          to_replace: repFind?.value || "",
+          replacement: repWith?.value || ""
+        });
+        repOut.textContent = out || "(no output)";
+      } catch {
+        repOut.textContent = "Error running replacer.";
+      }
+    });
+
+    // ===========================
+    // Spacer
+    // ===========================
+    const spacerRun = document.getElementById("run-spacer");
+    const spacerLen = document.getElementById("spacer-len");
+    const spacerOut = document.getElementById("tool-output-spacer");
+
+    spacerRun?.addEventListener("click", async () => {
+      spacerOut.textContent = "Running…";
+      try {
+        const out = await toolsRun("text_spacer", {
+          text: cipherEl?.value || "",
+          block_length: Number(spacerLen?.value || 5)
+        });
+        spacerOut.textContent = out || "(no output)";
+      } catch {
+        spacerOut.textContent = "Error running spacer.";
+      }
+    });
+
+    // ===========================
+    // Remove spaces / punctuation
+    // ===========================
+    const rsBtn = document.getElementById("run-remove-spaces");
+    const rsOut = document.getElementById("tool-output-remove-spaces");
+
+    rsBtn?.addEventListener("click", async () => {
+      rsOut.textContent = "Running…";
+      try {
+        const out = await toolsRun("remove_spaces", { text: cipherEl?.value || "" });
+        rsOut.textContent = out || "(no output)";
+      } catch {
+        rsOut.textContent = "Error running remove spaces.";
+      }
+    });
+
+    const rpBtn = document.getElementById("run-remove-punct");
+    const rpOut = document.getElementById("tool-output-remove-punct");
+
+    rpBtn?.addEventListener("click", async () => {
+      rpOut.textContent = "Running…";
+      try {
+        const out = await toolsRun("remove_punctuation", { text: cipherEl?.value || "" });
+        rpOut.textContent = out || "(no output)";
+      } catch {
+        rpOut.textContent = "Error running remove punctuation.";
+      }
+    });
+
+    // ===========================
+    // Breaker
+    // ===========================
+    const breakerTypeEl = document.getElementById("breaker-type");
+    const breakerKnownEl = document.getElementById("breaker-known");
+    const breakerRunBtn = document.getElementById("run-breaker");
+    const breakerCopyBtn = document.getElementById("copy-breaker");
+    const breakerOutEl = document.getElementById("breaker-output");
+
+    breakerRunBtn?.addEventListener("click", async () => {
+      breakerOutEl.textContent = "Running…";
+      try {
+        const data = await breakerRunRequest({
+          text: cipherEl?.value || "",
+          cipher_type: breakerTypeEl?.value || "vigenere",
+          known_plaintext: breakerKnownEl?.value || ""
+        });
+
+        const cipher = data?.cipher ?? "—";
+        const key = (data?.key === null || data?.key === undefined || data?.key === "") ? "—" : String(data.key);
+        const plain = data?.text ?? "";
+
+        breakerOutEl.textContent =
+          `Cipher: ${cipher}\n` +
+          `Key: ${key}\n\n` +
+          `${plain || "(no output)"}`;
+      } catch {
+        breakerOutEl.textContent = "Error running breaker.";
+      }
+    });
+
+    breakerCopyBtn?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText((breakerOutEl.textContent || "").trim());
+        setStatus("Copied");
+        setTimeout(() => setStatus("—"), 900);
+      } catch {}
+    });
+
+    // ============================================================
+    // Cipher Image tabs + upload/delete + rename + kebab menu (PORTAL)
+    // ============================================================
+    const imgInput = document.getElementById("cipher-image-input");
+    const imgUploadBtn = document.getElementById("upload-cipher-image");
+    const imgDeleteBtn = document.getElementById("delete-cipher-image");
+    const imgStatus = document.getElementById("cipher-image-status");
+
+    const tabsEl = document.getElementById("cipher-tabs");
+    const tabsHint = document.getElementById("cipher-tabs-hint");
+
+    const imgWrap = document.getElementById("cipher-image-wrap");
+    const img = document.getElementById("cipher-img");
+
+    let images = [];
+    let activeImageId = null;
+
+    let floatMenuEl = null;
+    let floatMenuForId = null;
+
+    function ensureFloatMenu() {
+      if (floatMenuEl) return floatMenuEl;
+
+      floatMenuEl = document.createElement("div");
+      floatMenuEl.className = "cipher-float-menu";
+      floatMenuEl.innerHTML = `
+        <button class="cipher-menu-item" type="button" data-action="rename">
+          Rename <span style="opacity:.7;">↵</span>
+        </button>
+        <button class="cipher-menu-item danger" type="button" data-action="delete">
+          Delete <span style="opacity:.7;">⌫</span>
+        </button>
+      `;
+
+      floatMenuEl.addEventListener("click", async (e) => {
+        if (!CAN_EDIT) {
+          closeFloatMenu();
+          await infoModal({ title: "View-only", message: "You can’t edit images with viewer access.", okText: "OK" });
+          return;
+        }
+
+        const item = e.target?.closest?.(".cipher-menu-item");
+        if (!item) return;
+
+        const im = images.find(x => x.id === floatMenuForId);
+        if (!im) return closeFloatMenu();
+
+        const action = item.dataset.action;
+
+        if (action === "rename") {
+          closeFloatMenu();
+          startRenameTab(im.id);
+          return;
+        }
+
+        if (action === "delete") {
+          closeFloatMenu();
+          const ok = await confirmDeleteModal({
+            title: "Delete image?",
+            message: `Delete "${(im.label || "Image").trim()}"? This can’t be undone.`
+          });
+          if (!ok) return;
+
+          await deleteImageById(im.id);
+        }
+      });
+
+      document.body.appendChild(floatMenuEl);
+      return floatMenuEl;
+    }
+
+    function closeFloatMenu() {
+      if (!floatMenuEl) return;
+      floatMenuEl.classList.remove("open");
+      floatMenuEl.style.left = "-9999px";
+      floatMenuEl.style.top = "-9999px";
+      floatMenuForId = null;
+    }
+
+    function openFloatMenuFor(imageId, anchorEl) {
+      if (!CAN_EDIT) return;
+      const menu = ensureFloatMenu();
+      floatMenuForId = imageId;
+
+      menu.classList.add("open");
+      menu.style.left = "0px";
+      menu.style.top = "0px";
+
+      const r = anchorEl.getBoundingClientRect();
+      const mr = menu.getBoundingClientRect();
+
+      const pad = 10;
+      let left = r.right - mr.width;
+      let top = r.bottom + 8;
+
+      if (left < pad) left = pad;
+      if (left + mr.width > window.innerWidth - pad) left = window.innerWidth - mr.width - pad;
+
+      if (top + mr.height > window.innerHeight - pad) {
+        top = r.top - mr.height - 8;
+      }
+      if (top < pad) top = pad;
+
+      menu.style.left = `${left}px`;
+      menu.style.top = `${top}px`;
+    }
+
+    function showCipherImage(src) {
+      if (!imgWrap || !img) return;
+      img.src = src;
+      imgWrap.style.display = "grid";
+    }
+
+    function hideCipherImage() {
+      if (!imgWrap || !img) return;
+      img.src = "";
+      imgWrap.style.display = "none";
+    }
+
+    function setActiveImage(id) {
+      activeImageId = id;
+      const active = images.find(x => x.id === id);
+      if (active && active.url) {
+        showCipherImage(active.url + (active.url.includes("?") ? "&" : "?") + "v=" + Date.now());
+      } else {
+        hideCipherImage();
+      }
+      renderTabs();
+    }
+
+    async function deleteImageById(imageId) {
+      if (!CAN_EDIT) {
+        await infoModal({ title: "View-only", message: "You can’t delete images with viewer access.", okText: "OK" });
+        return;
+      }
+      if (!imageId) return;
+
+      if (imgStatus) imgStatus.textContent = "Removing…";
+
+      try {
+        const res = await fetch(`/workspaces/{{ ws.id }}/image/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_id: imageId })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (await handleForbidden(res, data, "tabs")) {
+          if (imgStatus) imgStatus.textContent = "—";
+          return;
+        }
+        if (maybeHandleProGate(res, data, "tabs")) {
+          if (imgStatus) imgStatus.textContent = "—";
+          return;
+        }
+
+        if (!data.ok) throw new Error(data.error || "delete failed");
+
+        images = images.filter(x => x.id !== imageId);
+
+        const updatedEl = document.getElementById("updated-at");
+        if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
+
+        if (images.length === 0) {
+          activeImageId = null;
+          hideCipherImage();
+          closeFloatMenu();
+          renderTabs();
+        } else {
+          closeFloatMenu();
+          const next = images[0].id;
+          setActiveImage(next);
+        }
+
+        if (imgStatus) imgStatus.textContent = "Removed ✓";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
+      } catch {
+        if (imgStatus) imgStatus.textContent = "Remove failed";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
+      }
+    }
+
+    function renderTabs() {
+      if (!tabsEl) return;
+
+      if (!images || images.length === 0) {
+        tabsEl.classList.remove("show");
+        if (tabsHint) tabsHint.style.display = "none";
+        closeFloatMenu();
+        return;
+      }
+
+      tabsEl.classList.add("show");
+      if (tabsHint) tabsHint.style.display = "block";
+
+      tabsEl.innerHTML = "";
+
+      images.forEach((im) => {
+        const wrap = document.createElement("div");
+        wrap.className = "cipher-tab-wrap";
+        wrap.dataset.imageId = String(im.id);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cipher-tab" + (im.id === activeImageId ? " active" : "");
+        btn.dataset.imageId = String(im.id);
+
+        const kebab = CAN_EDIT
+          ? `<span class="cipher-tab-more" role="button" tabindex="0" aria-label="Tab options" title="Options">⋮</span>`
+          : "";
+
+        btn.innerHTML = `
+          <span class="cipher-tab-label" title="${escapeHtml(im.label || "")}">
+            ${escapeHtml(im.label || "")}
+          </span>
+          ${kebab}
+        `;
+
+        btn.addEventListener("click", (e) => {
+          const isMore = e.target?.closest?.(".cipher-tab-more");
+          if (isMore) return;
+          closeFloatMenu();
+          setActiveImage(im.id);
+        });
+
+        const more = btn.querySelector(".cipher-tab-more");
+        const openMenu = (ev) => {
+          if (!CAN_EDIT) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+
+          if (floatMenuForId === im.id && floatMenuEl?.classList.contains("open")) {
+            closeFloatMenu();
+            return;
+          }
+          openFloatMenuFor(im.id, more);
+        };
+
+        more?.addEventListener("click", openMenu);
+        more?.addEventListener("keydown", (ev) => {
+          if (!CAN_EDIT) return;
+          if (ev.key === "Enter" || ev.key === " ") openMenu(ev);
+        });
+
+        btn.addEventListener("dblclick", async (e) => {
+          if (!CAN_EDIT) return;
+          e.preventDefault();
+          closeFloatMenu();
+          startRenameTab(im.id);
+        });
+
+        wrap.appendChild(btn);
+        tabsEl.appendChild(wrap);
+      });
+    }
+
+    function startRenameTab(imageId) {
+      if (!CAN_EDIT) return;
+
+      const im = images.find(x => x.id === imageId);
+      if (!im || !tabsEl) return;
+
+      const wrap = Array.from(tabsEl.querySelectorAll(".cipher-tab-wrap"))
+        .find(w => Number(w.dataset.imageId) === imageId);
+      if (!wrap) return;
+
+      closeFloatMenu();
+
+      const oldLabel = (im.label || "").trim() || "Image";
+
+      wrap.innerHTML = `
+        <input class="cipher-tab-input" value="${escapeHtml(oldLabel)}" />
+      `;
+
+      const input = wrap.querySelector(".cipher-tab-input");
+      input?.focus();
+      input?.select();
+
+      const cancel = () => { renderTabs(); };
+
+      const commit = async () => {
+        const newLabel = (input?.value || "").trim();
+        const finalLabel = newLabel || oldLabel;
+
+        im.label = finalLabel;
+        renderTabs();
+
+        try {
+          const res = await fetch(`/workspaces/{{ ws.id }}/image/rename`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image_id: imageId, label: finalLabel })
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (await handleForbidden(res, data, "tabs")) return;
+          if (maybeHandleProGate(res, data, "tabs")) return;
+          if (!data.ok) throw new Error(data.error || "rename failed");
+        } catch {
+          im.label = oldLabel;
+          renderTabs();
+          if (imgStatus) {
+            imgStatus.textContent = "Rename failed";
+            setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1400);
+          }
+        }
+      };
+
+      input?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") commit();
+        if (e.key === "Escape") cancel();
+      });
+      input?.addEventListener("blur", commit);
+    }
+
+    async function loadImages() {
+      try {
+        const res = await fetch(`/workspaces/{{ ws.id }}/images`);
+        const data = await res.json().catch(() => ({}));
+
+        if (await handleForbidden(res, data, "tabs")) return;
+        if (maybeHandleProGate(res, data, "tabs")) return;
+        if (!data.ok) throw new Error("failed");
+
+        images = Array.isArray(data.images) ? data.images : [];
+
+        if (images.length === 0) {
+          activeImageId = null;
+          hideCipherImage();
+          closeFloatMenu();
+          renderTabs();
+          return;
+        }
+
+        if (!activeImageId || !images.some(x => x.id === activeImageId)) {
+          activeImageId = images[0].id;
+        }
+
+        renderTabs();
+        setActiveImage(activeImageId);
+      } catch {
+        images = [];
+        renderTabs();
+      }
+    }
+
+    async function uploadSelectedImage() {
+      if (!CAN_EDIT) {
+        await infoModal({ title: "View-only", message: "You can’t upload images with viewer access.", okText: "OK" });
+        if (imgInput) imgInput.value = "";
+        return;
+      }
+
+      const file = imgInput?.files?.[0];
+      if (!file) return;
+
+      if (imgStatus) imgStatus.textContent = "Uploading…";
+      if (imgUploadBtn) imgUploadBtn.disabled = true;
+
+      try {
+        const fd = new FormData();
+        fd.append("image", file);
+
+        const res = await fetch(`/workspaces/{{ ws.id }}/image`, { method: "POST", body: fd });
+        const data = await res.json().catch(() => ({}));
+
+        if (await handleForbidden(res, data, "tabs")) {
+          if (imgStatus) imgStatus.textContent = "—";
+          return;
+        }
+        if (maybeHandleProGate(res, data, "tabs")) {
+          if (imgStatus) imgStatus.textContent = "—";
+          return;
+        }
+
+        if (!res.ok || !data.ok) throw new Error(data.error || "upload failed");
+
+        const newImg = data.image;
+        if (newImg && newImg.id) {
+          images.push(newImg);
+          closeFloatMenu();
+          setActiveImage(newImg.id);
+        } else {
+          await loadImages();
+        }
+
+        const updatedEl = document.getElementById("updated-at");
+        if (updatedEl && data.updated_at) updatedEl.textContent = data.updated_at;
+
+        if (imgStatus) imgStatus.textContent = "Uploaded ✓";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
+      } catch {
+        if (imgStatus) imgStatus.textContent = "Upload failed";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1600);
+      } finally {
+        if (imgUploadBtn) imgUploadBtn.disabled = !CAN_EDIT ? true : false;
+        if (imgInput) imgInput.value = "";
+      }
+    }
+
+    if (CAN_EDIT) {
+      imgUploadBtn?.addEventListener("click", () => imgInput?.click());
+      imgInput?.addEventListener("change", uploadSelectedImage);
+    } else {
+      // viewers: clicking upload gives a friendly message
+      imgUploadBtn?.addEventListener("click", async () => {
+        await infoModal({ title: "View-only", message: "You can’t upload images with viewer access.", okText: "OK" });
+      });
+      imgInput?.addEventListener("change", () => { if (imgInput) imgInput.value = ""; });
+    }
+
+    imgDeleteBtn?.addEventListener("click", async () => {
+      if (!CAN_EDIT) {
+        await infoModal({ title: "View-only", message: "You can’t delete images with viewer access.", okText: "OK" });
+        return;
+      }
+
+      if (!activeImageId) {
+        if (imgStatus) imgStatus.textContent = "No image selected";
+        setTimeout(() => { if (imgStatus) imgStatus.textContent = "—"; }, 1200);
+        return;
+      }
+
+      const active = images.find(x => x.id === activeImageId);
+      const ok = await confirmDeleteModal({
+        title: "Delete selected image?",
+        message: `Delete "${((active?.label) || "Image").trim()}"? This can’t be undone.`
+      });
+      if (!ok) return;
+
+      await deleteImageById(activeImageId);
+    });
+
+    document.addEventListener("click", (e) => {
+      const inMenu = e.target?.closest?.(".cipher-float-menu");
+      const onKebab = e.target?.closest?.(".cipher-tab-more");
+      if (!inMenu && !onKebab) closeFloatMenu();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeFloatMenu();
+    });
+
+    document.addEventListener("scroll", () => closeFloatMenu(), true);
+    window.addEventListener("resize", () => closeFloatMenu());
+
+    loadImages();
+
+    // ===========================
+    // Image zoom (preview)
+    // ===========================
+    const modal = document.getElementById("img-modal");
+    const modalImg = document.getElementById("img-modal-img");
+    const closeBtn = document.getElementById("img-close");
+
+    function openImgModal(src) {
+      if (!modal || !modalImg) return;
+      modalImg.src = src;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+    function closeImgModal() {
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    img?.addEventListener("click", () => openImgModal(img.src));
+    closeBtn?.addEventListener("click", closeImgModal);
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) closeImgModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeImgModal();
+    });
+
+    // ===========================
+    // PRO FEATURES: Export PDF / Clone / History
+    // ===========================
+    const exportBtn = document.getElementById("ws-export-pdf");
+    const cloneBtn  = document.getElementById("ws-clone");
+    const histBtn   = document.getElementById("ws-history");
+
+    async function workspaceCanCreateCheck() {
+      try {
+        const res = await fetch(`/workspaces/can-create`, { method: "GET" });
+
+        if (res.status === 401) {
+          return { ok: false, can_create: false, error: "login required" };
+        }
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return { ok: false, can_create: false, error: data.error || "not allowed" };
+
+        if (typeof data.can_create === "boolean") return data;
+
+        return { ok: true, can_create: true };
+      } catch {
+        return { ok: true, can_create: true };
+      }
+    }
+
+    exportBtn?.addEventListener("click", async () => {
+      try {
+        exportBtn.disabled = true;
+        setStatus("Preparing PDF…");
+
+        const res = await fetch(`/workspaces/{{ ws.id }}/export.pdf`, { method: "GET" });
+
+        if (res.status === 402 || res.status === 403) {
+          let data = {};
+          try { data = await res.json(); } catch {}
+
+          if (await handleForbidden(res, data, "export")) return;
+          if (maybeHandleProGate(res, data, "export")) return;
+
+          throw new Error(data.error || "export failed");
+        }
+
+        if (!res.ok) throw new Error("export failed");
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `cipherlab_lab_{{ ws.id }}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        setStatus("Downloaded ✓");
+        setTimeout(() => setStatus("—"), 1200);
+      } catch {
+        setStatus("Export failed");
+        setTimeout(() => setStatus("—"), 1200);
+      } finally {
+        exportBtn.disabled = false;
+      }
+    });
+
+    cloneBtn?.addEventListener("click", async () => {
+      // viewers shouldn't create clones (even if they’re Pro)
+      if (!CAN_EDIT) {
+        await infoModal({
+          title: "View-only",
+          message: "You have viewer access, so you can’t clone this lab. Ask the owner to upgrade your role to editor.",
+          okText: "OK"
+        });
+        return;
+      }
+
+      const can = await workspaceCanCreateCheck();
+      if (can && can.can_create === false) {
+        openProModal({
+          title: "Can’t create more labs",
+          body: can.error || "You’ve hit your plan limit. Upgrade to Labs Pro for unlimited labs + cloning.",
+          href: "/labs-pro",
+          cta: "Upgrade to Pro"
+        });
+        return;
+      }
+
+      const ok = await confirmDeleteModal({
+        title: "Clone this lab?",
+        message: "This creates a new lab with the same notes + ciphertext (and images)."
+      });
+      if (!ok) return;
+
+      try {
+        cloneBtn.disabled = true;
+        setStatus("Cloning…");
+
+        const res = await fetch(`/workspaces/{{ ws.id }}/clone`, { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+
+        if (await handleForbidden(res, data, "clone")) return;
+        if (maybeHandleProGate(res, data, "clone")) return;
+
+        if (!res.ok || !data.ok || !data.ws_id) throw new Error(data.error || "clone failed");
+
+        window.location.href = `/workspaces/${data.ws_id}`;
+      } catch {
+        setStatus("Clone failed");
+        setTimeout(() => setStatus("—"), 1200);
+      } finally {
+        cloneBtn.disabled = false;
+      }
+    });
+
+    // ===== History modal =====
+    const hModal = document.getElementById("history-modal");
+    const hX = document.getElementById("history-x");
+    const hList = document.getElementById("history-list");
+    const hStatus = document.getElementById("history-status");
+
+    function openHistoryModal() {
+      if (!hModal) return;
+      hModal.classList.add("open");
+      hModal.setAttribute("aria-hidden","false");
+    }
+    function closeHistoryModal() {
+      if (!hModal) return;
+      hModal.classList.remove("open");
+      hModal.setAttribute("aria-hidden","true");
+    }
+
+    hX?.addEventListener("click", closeHistoryModal);
+    hModal?.addEventListener("click", (e) => {
+      const closeEl = e.target?.closest?.("[data-hclose='1']");
+      if (closeEl) closeHistoryModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && hModal?.classList.contains("open")) closeHistoryModal();
+    });
+
+    function fmtWhen(s) {
+      const t = (s || "").replace("T"," ").slice(0,19);
+      return t || "—";
+    }
+
+    async function loadHistory() {
+      if (!hList || !hStatus) return;
+
+      hStatus.textContent = "Loading…";
+      hList.innerHTML = "";
+
+      try {
+        const res = await fetch(`/workspaces/{{ ws.id }}/history`);
+        const data = await res.json().catch(() => ({}));
+
+        if (await handleForbidden(res, data, "history")) {
+          closeHistoryModal();
+          return;
+        }
+        if (maybeHandleProGate(res, data, "history")) {
+          closeHistoryModal();
+          return;
+        }
+
+        if (!res.ok || !data.ok) throw new Error(data.error || "history failed");
+
+        const items = Array.isArray(data.history) ? data.history : [];
+        if (items.length === 0) {
+          hStatus.textContent = "No snapshots yet.";
+          return;
+        }
+
+        hStatus.textContent = `Showing ${items.length} snapshots`;
+        items.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+        for (const it of items) {
+          const li = document.createElement("li");
+          li.className = "hitem";
+          li.innerHTML = `
+            <div class="hrow">
+              <div class="hwhen">${escapeHtml(fmtWhen(it.created_at))}</div>
+              <div class="hmeta">${escapeHtml((it.reason || "save").toUpperCase())}${it.title ? " • " + escapeHtml(it.title) : ""}</div>
+            </div>
+            <div class="hactions">
+              <button class="hbtn" data-action="restore" data-id="${it.id}">Restore</button>
+            </div>
+          `;
+
+          li.querySelector("[data-action='restore']")?.addEventListener("click", async () => {
+            if (!CAN_EDIT) {
+              await infoModal({
+                title: "View-only",
+                message: "You have viewer access, so you can’t restore snapshots.",
+                okText: "OK"
+              });
+              return;
+            }
+
+            const ok = await confirmDeleteModal({
+              title: "Restore this snapshot?",
+              message: "This will overwrite your current title/notes/ciphertext."
+            });
+            if (!ok) return;
+
+            try {
+              hStatus.textContent = "Restoring…";
+              const rres = await fetch(`/workspaces/{{ ws.id }}/history/${it.id}/restore`, { method: "POST" });
+              const rdata = await rres.json().catch(() => ({}));
+
+              if (await handleForbidden(rres, rdata, "history")) return;
+              if (maybeHandleProGate(rres, rdata, "history")) return;
+
+              if (!rres.ok || !rdata.ok) throw new Error(rdata.error || "restore failed");
+
+              window.location.reload();
+            } catch {
+              hStatus.textContent = "Restore failed";
+              setTimeout(() => (hStatus.textContent = "—"), 1200);
+            }
+          });
+
+          hList.appendChild(li);
+        }
+      } catch {
+        hStatus.textContent = "Couldn’t load history.";
+      }
+    }
+
+    histBtn?.addEventListener("click", async () => {
+      openHistoryModal();
+      await loadHistory();
+    });
+
+  // ===========================
+// CoLab modal logic (SINGLE TOGGLE BUTTON + ROLE CHANGER)
+// ===========================
+const colabBtn = document.getElementById("ws-colab");
+const colabModal = document.getElementById("colab-modal");
+const colabX = document.getElementById("colab-x");
+const colabStatus = document.getElementById("colab-status");
+const colabChip = document.getElementById("colab-chip");
+
+const colabToggleBtn = document.getElementById("colab-toggle");
+
+const colabLinkbox = document.getElementById("colab-linkbox");
+const colabLinkEl = document.getElementById("colab-link");
+const colabCopyBtn = document.getElementById("colab-copy");
+const colabOpenA = document.getElementById("colab-open");
+const colabRefreshBtn = document.getElementById("colab-refresh");
+const colabList = document.getElementById("colab-list");
+const colabWarn = document.getElementById("colab-warn");
+
+const COLAB_ROLE_ENDPOINT = `/workspaces/{{ ws.id }}/share/role`;
+
+let colabState = {
+  is_shared: false,
+  share_url: null,
+  collaborators: [],
+  ownerOnly: false,
+  owner_id: null
+};
+
+function openCoLabModal() {
+  if (!colabModal) return;
+  colabModal.classList.add("open");
+  colabModal.setAttribute("aria-hidden", "false");
+}
+function closeCoLabModal() {
+  if (!colabModal) return;
+  colabModal.classList.remove("open");
+  colabModal.setAttribute("aria-hidden", "true");
+}
+
+colabX?.addEventListener("click", closeCoLabModal);
+colabModal?.addEventListener("click", (e) => {
+  const closeEl = e.target?.closest?.("[data-colab-close='1']");
+  if (closeEl) closeCoLabModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && colabModal?.classList.contains("open")) closeCoLabModal();
+});
+
+function setCoLabStatus(msg) {
+  if (colabStatus) colabStatus.textContent = msg || "—";
+}
+
+function setChip(on) {
+  if (!colabChip) return;
+  colabChip.classList.toggle("on", !!on);
+  colabChip.textContent = on ? "Sharing: on" : "Sharing: off";
+}
+
+function normalizeRole(r) {
+  const role = String(r || "editor").toLowerCase().trim();
+  if (role === "viewer" || role === "read" || role === "readonly") return "viewer";
+  if (role === "owner") return "owner";
+  return "editor";
+}
+
+async function setCollaboratorRole(userId, newRole) {
+  const role = normalizeRole(newRole);
+  if (!userId) return;
+
+  if (colabState.ownerOnly) {
+    if (colabWarn) colabWarn.classList.add("show");
+    setCoLabStatus("Only the owner can change roles.");
+    setTimeout(() => setCoLabStatus("—"), 1200);
+    return;
+  }
+
+  try {
+    setCoLabStatus("Updating role…");
+
+    const res = await fetch(COLAB_ROLE_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, role })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (await handleForbidden(res, data, "colab")) {
+      colabState.ownerOnly = true;
+      if (colabWarn) colabWarn.classList.add("show");
+      applyCoLabUI();
+      return;
+    }
+
+    if (maybeHandleProGate(res, data, "colab")) {
+      closeCoLabModal();
+      return;
+    }
+
+    if (!res.ok || !data.ok) throw new Error(data.error || "role update failed");
+
+    colabState.collaborators = (colabState.collaborators || []).map(c => {
+      if (Number(c.user_id) === Number(userId)) return { ...c, role };
+      return c;
+    });
+
+    applyCoLabUI();
+    setCoLabStatus("Role updated ✓");
+    setTimeout(() => setCoLabStatus("—"), 1000);
+  } catch {
+    setCoLabStatus("Role update failed");
+    setTimeout(() => setCoLabStatus("—"), 1300);
+    await loadCoLabState();
+  }
+}
+
+function renderCollaborators() {
+  if (!colabList) return;
+  colabList.innerHTML = "";
+
+  const items = Array.isArray(colabState.collaborators) ? colabState.collaborators : [];
+  if (items.length === 0) {
+    const li = document.createElement("li");
+    li.className = "colab-item";
+    li.innerHTML = `
+      <div class="colab-who">
+        <div class="colab-name">No collaborators yet</div>
+        <div class="colab-meta">Share the link — people who open it will appear here.</div>
+      </div>
+    `;
+    colabList.appendChild(li);
+    return;
+  }
+
+  for (const c of items) {
+    const username = c.username || `User #${c.user_id}`;
+    const role = normalizeRole(c.role || "editor");
+    const added = (c.added_at || "").replace("T"," ").slice(0,19);
+
+    const isOwner = !!c.is_owner || (colabState.owner_id && Number(c.user_id) === Number(colabState.owner_id)) || role === "owner";
+
+    const li = document.createElement("li");
+    li.className = "colab-item";
+
+    li.innerHTML = `
+      <div class="colab-who">
+        <div class="colab-name">${escapeHtml(username)} ${isOwner ? `<span class="role-badge owner">Owner</span>` : ""}</div>
+        <div class="colab-meta">
+          Role: <strong>${escapeHtml(role)}</strong>${added ? " • Added: " + escapeHtml(added) : ""}
+        </div>
+      </div>
+
+      <div class="colab-item-actions">
+        ${
+          isOwner
+            ? `<span class="role-badge owner">Can’t change owner</span>`
+            : `
+              <div class="role-wrap">
+                <span class="role-label">Role</span>
+                <select class="role-select" data-action="role" data-id="${c.user_id}">
+                  <option value="editor" ${role === "editor" ? "selected" : ""}>editor</option>
+                  <option value="viewer" ${role === "viewer" ? "selected" : ""}>viewer</option>
+                </select>
+                <button class="run-btn secondary" data-action="apply-role" data-id="${c.user_id}">Apply</button>
+              </div>
+              <button class="run-btn secondary" data-action="remove" data-id="${c.user_id}">Remove</button>
+            `
+        }
+      </div>
+    `;
+
+    const applyBtn = li.querySelector("[data-action='apply-role']");
+    const roleSel = li.querySelector("[data-action='role']");
+    const removeBtn = li.querySelector("[data-action='remove']");
+
+    if (colabState.ownerOnly) {
+      if (applyBtn) { applyBtn.disabled = true; applyBtn.title = "Only the owner can change roles"; }
+      if (roleSel)  { roleSel.disabled = true; roleSel.title = "Only the owner can change roles"; }
+      if (removeBtn){ removeBtn.disabled = true; removeBtn.title = "Only the owner can remove collaborators"; }
+    }
+
+    applyBtn?.addEventListener("click", async () => {
+      const newRole = roleSel?.value || "editor";
+      await setCollaboratorRole(c.user_id, newRole);
+    });
+
+    removeBtn?.addEventListener("click", async () => {
+      if (colabState.ownerOnly) {
+        if (colabWarn) colabWarn.classList.add("show");
+        setCoLabStatus("Only the owner can remove collaborators.");
+        setTimeout(() => setCoLabStatus("—"), 1200);
+        return;
+      }
+
+      const ok = await confirmDeleteModal({
+        title: "Remove collaborator?",
+        message: `Remove ${username} from this lab? They’ll lose access immediately.`,
+        confirmText: "Remove",
+        danger: true
+      });
+      if (!ok) return;
+
+      try {
+        setCoLabStatus("Removing…");
+        const res = await fetch(`/workspaces/{{ ws.id }}/share/remove`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: c.user_id })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (await handleForbidden(res, data, "colab")) {
+          colabState.ownerOnly = true;
+          if (colabWarn) colabWarn.classList.add("show");
+          applyCoLabUI();
+          return;
+        }
+
+        if (maybeHandleProGate(res, data, "colab")) {
+          closeCoLabModal();
+          return;
+        }
+
+        if (!res.ok || !data.ok) throw new Error(data.error || "remove failed");
+        await loadCoLabState();
+        setCoLabStatus("Removed ✓");
+        setTimeout(() => setCoLabStatus("—"), 1000);
+      } catch {
+        setCoLabStatus("Remove failed");
+        setTimeout(() => setCoLabStatus("—"), 1300);
+      }
+    });
+
+    colabList.appendChild(li);
+  }
+}
+
+function applyCoLabUI() {
+  const isOn = !!colabState.is_shared;
+
+  setChip(isOn);
+  if (colabWarn) colabWarn.classList.toggle("show", !!colabState.ownerOnly);
+
+  // ✅ Single toggle button behavior
+  if (colabToggleBtn) {
+    colabToggleBtn.disabled = !!colabState.ownerOnly;
+
+    // label + styling
+    colabToggleBtn.textContent = isOn ? "Disable sharing" : "Enable sharing";
+
+    // optional: if you have styles for secondary/danger, this gives a nice visual cue
+    colabToggleBtn.classList.toggle("danger", isOn);       // disable = danger
+    colabToggleBtn.classList.toggle("secondary", !isOn);   // enable = secondary (optional)
+  }
+
+  if (colabLinkbox) colabLinkbox.style.display = (isOn && colabState.share_url) ? "grid" : "none";
+  if (colabLinkEl) colabLinkEl.value = colabState.share_url || "";
+  if (colabOpenA) colabOpenA.href = colabState.share_url || "#";
+
+  renderCollaborators();
+}
+
+async function loadCoLabState() {
+  setCoLabStatus("Loading…");
+
+  try {
+    const res = await fetch(`/workspaces/{{ ws.id }}/share/collaborators`, { method: "GET" });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 403 && !isProError(data)) {
+      colabState.ownerOnly = true;
+      if (colabWarn) colabWarn.classList.add("show");
+      setCoLabStatus(data?.error || "Only the lab owner can manage sharing/collaborators.");
+    } else {
+      colabState.ownerOnly = !!data?.owner_only || !!data?.permission_denied || false;
+    }
+
+    if (maybeHandleProGate(res, data, "colab")) {
+      closeCoLabModal();
+      return;
+    }
+
+    if (res.status === 401) {
+      setCoLabStatus("Login required");
+      applyCoLabUI();
+      return;
+    }
+
+    if (!res.ok || !data.ok) {
+      if (res.status !== 403) throw new Error(data.error || "failed");
+    }
+
+    colabState = {
+      is_shared: !!data.is_shared,
+      share_url: data.share_url || null,
+      collaborators: Array.isArray(data.collaborators) ? data.collaborators : [],
+      ownerOnly: colabState.ownerOnly,
+      owner_id: (data.owner_id != null ? data.owner_id : colabState.owner_id)
+    };
+
+    setCoLabStatus("—");
+    applyCoLabUI();
+  } catch {
+    setCoLabStatus("Couldn’t load CoLab state.");
+    applyCoLabUI();
+  }
+}
+
+async function enableSharing() {
+  if (colabState.ownerOnly) {
+    if (colabWarn) colabWarn.classList.add("show");
+    setCoLabStatus("Only the owner can enable sharing.");
+    setTimeout(() => setCoLabStatus("—"), 1200);
+    return;
+  }
+
+  try {
+    setCoLabStatus("Enabling…");
+    if (colabToggleBtn) colabToggleBtn.disabled = true;
+
+    const res = await fetch(`/workspaces/{{ ws.id }}/share/create`, { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+
+    if (await handleForbidden(res, data, "colab")) {
+      colabState.ownerOnly = true;
+      if (colabWarn) colabWarn.classList.add("show");
+      applyCoLabUI();
+      return;
+    }
+
+    if (maybeHandleProGate(res, data, "colab")) {
+      closeCoLabModal();
+      return;
+    }
+
+    if (res.status === 401) {
+      setCoLabStatus("Login required");
+      return;
+    }
+    if (!res.ok || !data.ok) throw new Error(data.error || "enable failed");
+
+    setCoLabStatus("Sharing enabled ✓");
+    await loadCoLabState();
+    setTimeout(() => setCoLabStatus("—"), 900);
+  } catch {
+    setCoLabStatus("Enable failed");
+    setTimeout(() => setCoLabStatus("—"), 1200);
+  } finally {
+    if (colabToggleBtn) colabToggleBtn.disabled = !!colabState.ownerOnly;
+  }
+}
+
+async function disableSharing() {
+  if (colabState.ownerOnly) {
+    if (colabWarn) colabWarn.classList.add("show");
+    setCoLabStatus("Only the owner can disable sharing.");
+    setTimeout(() => setCoLabStatus("—"), 1200);
+    return;
+  }
+
+  const ok = await confirmDeleteModal({
+    title: "Disable sharing?",
+    message: "This will invalidate the link and remove all collaborators for this lab.",
+    confirmText: "Disable",
+    danger: true
+  });
+  if (!ok) return;
+
+  try {
+    setCoLabStatus("Disabling…");
+    if (colabToggleBtn) colabToggleBtn.disabled = true;
+
+    const res = await fetch(`/workspaces/{{ ws.id }}/share/disable`, { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+
+    if (await handleForbidden(res, data, "colab")) {
+      colabState.ownerOnly = true;
+      if (colabWarn) colabWarn.classList.add("show");
+      applyCoLabUI();
+      return;
+    }
+
+    if (maybeHandleProGate(res, data, "colab")) {
+      closeCoLabModal();
+      return;
+    }
+
+    if (res.status === 401) {
+      setCoLabStatus("Login required");
+      return;
+    }
+    if (!res.ok || !data.ok) throw new Error(data.error || "disable failed");
+
+    setCoLabStatus("Sharing disabled ✓");
+    await loadCoLabState();
+    setTimeout(() => setCoLabStatus("—"), 900);
+  } catch {
+    setCoLabStatus("Disable failed");
+    setTimeout(() => setCoLabStatus("—"), 1200);
+  } finally {
+    if (colabToggleBtn) colabToggleBtn.disabled = !!colabState.ownerOnly;
+  }
+}
+
+// ✅ Single toggle click
+colabToggleBtn?.addEventListener("click", async () => {
+  if (!!colabState.is_shared) {
+    await disableSharing();
+  } else {
+    await enableSharing();
+  }
+});
+
+colabRefreshBtn?.addEventListener("click", async () => {
+  await loadCoLabState();
+});
+
+colabCopyBtn?.addEventListener("click", async () => {
+  try {
+    const v = (colabLinkEl?.value || "").trim();
+    if (!v) return;
+    await navigator.clipboard.writeText(v);
+    setCoLabStatus("Copied ✓");
+    setTimeout(() => setCoLabStatus("—"), 900);
+  } catch {}
+});
+
+colabBtn?.addEventListener("click", async () => {
+  openCoLabModal();
+  await loadCoLabState();
+});
+
+    // ===========================
+    // Default tool state
+    // ===========================
+    showTool("frequency");
+    setStatus("—");
+  </script>
+
+<script>
+(function(){
+  // Server decides if we should show it (first time)
+  const SHOULD_TOUR = {{ 1 if show_tour else 0 }};
+  if (!SHOULD_TOUR) return;
+
+  // Optional: don’t show tour to view-only collaborators
+  // (since they can’t do actions the tour suggests)
+  if (typeof CAN_EDIT !== "undefined" && !CAN_EDIT) return;
+
+  const overlay  = document.getElementById("tour-overlay");
+  const highlight= document.getElementById("tour-highlight");
+  const card     = document.getElementById("tour-card");
+  const titleEl  = document.getElementById("tour-title");
+  const bodyEl   = document.getElementById("tour-body");
+  const stepEl   = document.getElementById("tour-step");
+  const btnSkip  = document.getElementById("tour-skip");
+  const btnBack  = document.getElementById("tour-back");
+  const btnNext  = document.getElementById("tour-next");
+
+  if (!overlay || !highlight || !card || !titleEl || !bodyEl || !stepEl || !btnSkip || !btnBack || !btnNext) return;
+
+  // ✅ includes the "Run Frequency" step, forcing a stable location
+  const steps = [
+    {
+      sel: "#ws-title-input",
+      title: "Lab title",
+      body: "Name the puzzle you’re working on. Keeping titles specific makes search + organisation way easier later."
+    },
+    {
+      sel: "#cipher-text",
+      title: "Ciphertext",
+      body: "Paste the ciphertext here. This is what most tools read from."
+    },
+    {
+      sel: "#ws-editor  ",
+      title: "Notes",
+      body: "Dump cribs, hypotheses, partial plaintext, and anything you don’t want to lose. Autosave keeps it safe."
+    },
+    {
+      sel: ".tb-btn[data-tool='frequency']",
+      title: "Tools toolbar",
+      body: "Pick a tool here. Frequency is usually a great first step to identify what you’re dealing with."
+    },
+    {
+      // Force Frequency tool so the "Run" button is in a predictable place
+      before: () => { if (typeof showTool === "function") showTool("frequency"); },
+      sel: "#run-frequency",
+      title: "Run Frequency",
+      body: "Hit Run to generate frequency analysis. This is one of the fastest ways to identify what cipher you’re dealing with."
+    },
+    {
+      sel: "#insert-tool-output",
+      title: "Insert output",
+      body: "Quickly drop tool results into your notes so your working stays in one place."
+    }
+  ];
+
+  let i = 0;
+  let scrollParents = [];
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+  function findTarget(step){ return document.querySelector(step.sel) || null; }
+
+  // Find nearest scrollable ancestors (your workspace has nested scroll panes)
+  function getScrollParents(el){
+    const parents = [];
+    let p = el ? el.parentElement : null;
+
+    while (p && p !== document.body) {
+      const s = getComputedStyle(p);
+      const oy = s.overflowY;
+      const ox = s.overflowX;
+      if (/(auto|scroll|overlay)/.test(oy) || /(auto|scroll|overlay)/.test(ox)) {
+        parents.push(p);
+      }
+      p = p.parentElement;
+    }
+    parents.push(window);
+    return parents;
+  }
+
+  function unbindScrollTracking(){
+    scrollParents.forEach(p => {
+      if (p === window) {
+        window.removeEventListener("scroll", onReflow, true);
+      } else {
+        try { p.removeEventListener("scroll", onReflow); } catch(_e){}
+      }
+    });
+    scrollParents = [];
+  }
+
+  function bindScrollTracking(target){
+    unbindScrollTracking();
+    scrollParents = getScrollParents(target);
+
+    scrollParents.forEach(p => {
+      if (p === window) {
+        window.addEventListener("scroll", onReflow, true);
+      } else {
+        p.addEventListener("scroll", onReflow, { passive: true });
+      }
+    });
+  }
+
+  function place(el){
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+
+    // --- compute a tight-fit highlight box ---
+    const bwL = parseFloat(cs.borderLeftWidth) || 0;
+    const bwR = parseFloat(cs.borderRightWidth) || 0;
+    const bwT = parseFloat(cs.borderTopWidth) || 0;
+    const bwB = parseFloat(cs.borderBottomWidth) || 0;
+
+    // Keep your current behaviour
+    const glowInset = 0;
+
+    const insetL = bwL - glowInset;
+    const insetR = bwR - glowInset;
+    const insetT = bwT - glowInset;
+    const insetB = bwB - glowInset;
+
+    // Highlight hugs the visible field nicely
+    highlight.style.display = "block";
+    highlight.style.left   = (r.left + insetL - 9) + "px";
+    highlight.style.top    = (r.top  + insetT) + "px";
+    highlight.style.width  = Math.max(0, r.width  - insetL - insetR) + "px";
+    highlight.style.height = Math.max(0, r.height - insetT - insetB) + "px";
+    highlight.style.borderRadius = cs.borderRadius || "12px";
+
+    // --- card placement (unchanged logic) ---
+    card.style.display = "block";
+    const cr = card.getBoundingClientRect();
+
+    const gap = 12;
+    const pad = 10;
+
+    const space = {
+      top: r.top,
+      bottom: window.innerHeight - r.bottom,
+      left: r.left,
+      right: window.innerWidth - r.right
+    };
+
+    const candidates = [
+      {
+        name: "below",
+        top: r.bottom + gap,
+        left: clamp(r.left, pad, window.innerWidth - cr.width - pad),
+        fits: space.bottom >= cr.height + gap,
+        score: space.bottom
+      },
+      {
+        name: "above",
+        top: r.top - gap - cr.height,
+        left: clamp(r.left, pad, window.innerWidth - cr.width - pad),
+        fits: space.top >= cr.height + gap,
+        score: space.top
+      },
+      {
+        name: "right",
+        top: clamp(r.top, pad, window.innerHeight - cr.height - pad),
+        left: r.right + gap,
+        fits: space.right >= cr.width + gap,
+        score: space.right
+      },
+      {
+        name: "left",
+        top: clamp(r.top, pad, window.innerHeight - cr.height - pad),
+        left: r.left - gap - cr.width,
+        fits: space.left >= cr.width + gap,
+        score: space.left
+      }
+    ];
+
+    let pick = candidates.find(c => c.fits);
+    if (!pick) pick = candidates.sort((a,b)=>b.score-a.score)[0];
+
+    const top  = clamp(pick.top,  pad, window.innerHeight - cr.height - pad);
+    const left = clamp(pick.left, pad, window.innerWidth  - cr.width  - pad);
+
+    card.style.top  = top + "px";
+    card.style.left = left + "px";
+  }
+
+  function render(){
+    // run any step setup (e.g., force frequency tool)
+    if (typeof steps[i]?.before === "function") steps[i].before();
+
+    // skip missing targets gracefully
+    let tries = 0;
+    let target = findTarget(steps[i]);
+    while (!target && tries < steps.length){
+      i = (i + 1) % steps.length;
+      if (typeof steps[i]?.before === "function") steps[i].before();
+      target = findTarget(steps[i]);
+      tries++;
+    }
+    if (!target) return finish(true);
+
+    titleEl.textContent = steps[i].title;
+    bodyEl.textContent  = steps[i].body;
+    stepEl.textContent  = `${i+1}/${steps.length}`;
+
+    btnBack.disabled = (i === 0);
+    btnNext.textContent = (i === steps.length - 1) ? "Finish" : "Next";
+
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+
+    bindScrollTracking(target);
+
+    // scroll into view (important for nested scroll panes)
+    target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+
+    // wait for scroll/layout to settle
+    setTimeout(() => place(target), 180);
+  }
+
+  function onReflow(){
+    const target = findTarget(steps[i]);
+    if (target) place(target);
+  }
+
+  async function persistSeen(){
+    try{
+      await fetch("/prefs/labs-tour-seen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seen: true })
+      });
+    }catch(_e){}
+  }
+
+  function closeUI(){
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+    highlight.style.display = "none";
+    card.style.display = "none";
+
+    unbindScrollTracking();
+
+    document.body.style.overflow = "";
+    window.removeEventListener("resize", onReflow);
+    document.removeEventListener("keydown", onKey);
+  }
+
+  async function finish(markSeen){
+    closeUI();
+    if (markSeen) await persistSeen();
+  }
+
+  function onKey(e){
+    if (e.key === "Escape") return finish(true);
+    if (e.key === "ArrowRight") btnNext.click();
+    if (e.key === "ArrowLeft")  btnBack.click();
+  }
+
+  btnSkip.addEventListener("click", () => finish(true));
+  btnBack.addEventListener("click", () => { if (i > 0) { i--; render(); } });
+  btnNext.addEventListener("click", () => {
+    if (i >= steps.length - 1) return finish(true);
+    i++;
+    render();
+  });
+
+  overlay.addEventListener("click", () => finish(true));
+
+  // lock scrolling behind tour
+  document.body.style.overflow = "hidden";
+  window.addEventListener("resize", onReflow);
+  document.addEventListener("keydown", onKey);
+
+  // start
+  setTimeout(render, 250);
+})();
+</script>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const topProBtn = document.getElementById("ws-pro-analysis");
+  if (!topProBtn) return;
+
+  topProBtn.addEventListener("click", (e) => {
+    if (!window.USER_IS_PRO) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof openProModal === "function") {
+        openProModal();
+      } else {
+        document.getElementById("pro-modal")?.classList.add("open");
+      }
+      return;
+    }
+    // PRO users continue normally
+  });
+});
+</script>
+
+</body>
+
+
+</html>
