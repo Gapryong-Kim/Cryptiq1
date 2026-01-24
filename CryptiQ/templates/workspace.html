@@ -3243,6 +3243,30 @@
       }
     }
 
+
+  function getSubstitutionInsertText() {
+  // build mapping text
+  const map = [];
+  document.querySelectorAll("#sub-grid .sub-box").forEach(box => {
+    const plain = box.querySelector(".sub-top")?.textContent?.toUpperCase();
+    const cipher = box.querySelector(".sub-input")?.value?.toUpperCase();
+    if (plain && cipher) {
+      map.push(`${plain}→${cipher}`);
+    }
+  });
+
+  // decoded text = live cipher view
+  const decoded = document.getElementById("cipher-text")?.value || "";
+
+  let out = "Substitution mapping:\n";
+  out += map.length ? map.join(" ") : "(no mappings)\n";
+  out += "\n\nDecoded text:\n";
+  out += decoded.trim() || "(empty)";
+
+  return out;
+}
+
+
     function insertToolOutputIntoEditor(tool, stamp, text){
   const editor = document.getElementById("ws-editor");
   if (!editor) return;
@@ -3667,6 +3691,12 @@ function insertPlainTextWithLineBreaksAtCursor(text, opts = {}) {
       const id = active.id || "";
       const toolKey = id.startsWith("tool-") ? id.slice(5) : "tool";
       const toolLabel = TOOL_LABELS[toolKey] || toolKey;
+
+      // Special-case: Substitution Analyzer "Insert into doc" should include the
+      // current mapping + decoded text (not the frequency placeholder panel).
+      if (toolKey === "substitution") {
+        return { tool: toolLabel, text: getSubstitutionInsertText() };
+      }
 
       const out = active.querySelector(".result");
       return { tool: toolLabel, text: out ? out.textContent : "" };
