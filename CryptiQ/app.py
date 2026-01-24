@@ -2113,7 +2113,8 @@ def init_weekly_tables():
         ciphertext TEXT NOT NULL,
         solution TEXT NOT NULL,
         hint TEXT,
-        posted_at TEXT NOT NULL
+        posted_at TEXT NOT NULL,
+        score_start_at TEXT NOT NULL
     )
     """)
     cur.execute("""
@@ -2131,14 +2132,31 @@ def init_weekly_tables():
     cur.execute("SELECT 1 FROM weekly_cipher WHERE id=1")
     if not cur.fetchone():
         cur.execute("""
-        INSERT INTO weekly_cipher (id, week_number, title, description, ciphertext, solution, hint, posted_at)
+        INSERT INTO weekly_cipher (id, week_number, title, description, ciphertext, solution, hint, posted_at, score_start_at)
         VALUES (1, 1, 'Week #1 — Welcome Cipher',
                 'Kickoff puzzle. Decrypt and submit the plaintext keyword.',
                 'BJQHTRJ YT YMJ HNUMJW QFG!',  -- HELLO WORLD TEST!
                 'WELCOME TO THE CIPHER LAB',
-                'Think Caesar…', datetime('now'))
+                'Think Caesar…', datetime('now'), datetime('now'))
         """)
     conn.commit()
+    conn.close()
+
+
+def migrate_weekly_cipher_score_start_at():
+    """Adds weekly_cipher.score_start_at (used for scoring window) if missing."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(weekly_cipher)")
+    cols = {row["name"] for row in cur.fetchall()}
+    if "score_start_at" not in cols:
+        cur.execute("ALTER TABLE weekly_cipher ADD COLUMN score_start_at TEXT")
+        # Backfill: use posted_at as best available approximation for existing data.
+        cur.execute(
+            "UPDATE weekly_cipher SET score_start_at = posted_at "
+            "WHERE score_start_at IS NULL OR score_start_at = ''"
+        )
+        conn.commit()
     conn.close()
 
 
@@ -2210,6 +2228,7 @@ init_weekly_tables()
 init_weekly_archive_tables()
 migrate_weekly_tables()
 
+migrate_weekly_cipher_score_start_at()
 @app.before_request
 def clear_flash_on_login():
     """
@@ -2388,7 +2407,7 @@ def weekly_submit():
     # === Compute score only if correct ===
     if correct:
         try:
-            posted_time = datetime.fromisoformat(wc["posted_at"])
+            posted_time = datetime.fromisoformat(wc.get("score_start_at") or wc.get("posted_at") or now.isoformat())
         except Exception:
             posted_time = now
 
@@ -2415,10 +2434,10 @@ def weekly_submit():
             bonus = 10
         else:
             bonus = 0
-
+        if score<20:
+            score = 20
         score = base_score + bonus
-		if score<20:
-			score=20
+	
     # === Always record submission ===
     conn = get_db()
     conn.execute(
@@ -2491,19 +2510,44 @@ def admin_weekly():
         ):
             archive_weekly_cipher_row(wc)
 
-        # --- Upsert into weekly_cipher (singleton row id=1) ---
-        conn.execute("""
-            INSERT INTO weekly_cipher (id, week_number, title, description, ciphertext, solution, hint, posted_at)
-            VALUES (1, ?, ?, ?, ?, ?, ?, datetime('now'))
-            ON CONFLICT(id) DO UPDATE SET
-                week_number=excluded.week_number,
-                title=excluded.title,
-                description=excluded.description,
-                ciphertext=excluded.ciphertext,
-                solution=excluded.solution,
-                hint=excluded.hint,
-                posted_at=excluded.posted_at
-        """, (week_number, title, description, ciphertext, solution, hint))
+        # --- Update weekly_cipher (singleton row id=1) ---
+        # posted_at tracks *any* admin edit (including hint/title/description).
+        # score_start_at only changes when the actual puzzle changes (ciphertext/solution) OR week number changes.
+        now_iso = datetime.utcnow().isoformat()
+
+        puzzle_changed = bool(reset_needed) or (wc and int(wc.get("week_number") or 0) != int(week_number))
+
+        if wc:
+            if puzzle_changed:
+                conn.execute(
+                    """
+                    UPDATE weekly_cipher
+                    SET week_number=?, title=?, description=?, ciphertext=?, solution=?, hint=?,
+                        posted_at=?, score_start_at=?
+                    WHERE id=1
+                    """,
+                    (week_number, title, description, ciphertext, solution, hint, now_iso, now_iso),
+                )
+            else:
+                conn.execute(
+                    """
+                    UPDATE weekly_cipher
+                    SET week_number=?, title=?, description=?, ciphertext=?, solution=?, hint=?,
+                        posted_at=?
+                    WHERE id=1
+                    """,
+                    (week_number, title, description, ciphertext, solution, hint, now_iso),
+                )
+        else:
+            # First-time insert
+            conn.execute(
+                """
+                INSERT INTO weekly_cipher (id, week_number, title, description, ciphertext, solution, hint, posted_at, score_start_at)
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (week_number, title, description, ciphertext, solution, hint, now_iso, now_iso),
+            )
+
 
         # --- Reset submissions only if needed ---
         if reset_needed and wc and int(wc.get("week_number") or 0) == int(week_number):
@@ -6632,4 +6676,3 @@ def admin_db_download(token):
 if __name__ == "__main__":
     app.run(debug=True)
     
-
