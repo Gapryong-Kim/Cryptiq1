@@ -153,7 +153,7 @@
           <tbody>
             {% for w in most_active_labs %}
               <tr>
-                <td><a href="{{ url_for('workspace_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
+                <td><a href="{{ url_for('admin_lab_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
                 <td>{{ w["owner"] }}</td>
                 <td>{{ w["updated_at"] }}</td>
               </tr>
