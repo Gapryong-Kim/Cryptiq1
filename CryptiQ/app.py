@@ -2417,7 +2417,8 @@ def weekly_submit():
             bonus = 0
 
         score = base_score + bonus
-
+		if score<20:
+			score=20
     # === Always record submission ===
     conn = get_db()
     conn.execute(
@@ -6631,3 +6632,4 @@ def admin_db_download(token):
 if __name__ == "__main__":
     app.run(debug=True)
     
+
