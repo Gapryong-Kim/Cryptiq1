@@ -2407,7 +2407,9 @@ def weekly_submit():
     # === Compute score only if correct ===
     if correct:
         try:
-            posted_time = datetime.fromisoformat(wc.get("score_start_at") or wc.get("posted_at") or now.isoformat())
+            posted_time = datetime.fromisoformat(
+                wc.get("score_start_at") or wc.get("posted_at") or now.isoformat()
+            )
         except Exception:
             posted_time = now
 
@@ -2434,10 +2436,11 @@ def weekly_submit():
             bonus = 10
         else:
             bonus = 0
-        if score<20:
-            score = 20
+
         score = base_score + bonus
-	
+        if score < 20:
+            score = 20
+
     # === Always record submission ===
     conn = get_db()
     conn.execute(
@@ -2452,7 +2455,7 @@ def weekly_submit():
             (user["id"] if user else None),
             (user["username"] if user else None),
             wc["week_number"],
-            answer_raw,   # store what the user typed
+            answer_raw,  # store what the user typed
             correct,
             score,
             now.isoformat(),
@@ -2464,7 +2467,6 @@ def weekly_submit():
     conn.close()
 
     return jsonify({"ok": True, "correct": bool(correct), "score": score})
-
 
 @app.route("/admin/weekly", methods=["GET", "POST"])
 def admin_weekly():
