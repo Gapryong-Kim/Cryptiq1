@@ -2273,6 +2273,34 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
+.note-surface{
+  padding: 12px 12px;
+  color: var(--text);
+  font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+  font-size: 17px;
+  line-height: 1.55;
+  overflow-y: auto;
+  min-height: 380px;
+  scrollbar-gutter: stable both-edges;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.note-surface{
+  padding: 12px 12px;
+  color: var(--text);
+  font-family: 'Fira Code','JetBrains Mono','Courier New',monospace;
+  font-size: 17px;
+  line-height: 1.55;
+
+  height: 420px;        /* ✅ fixed editor height */
+  overflow-y: auto;     /* ✅ internal scroll */
+
+  scrollbar-gutter: stable both-edges;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
 </style>
 
@@ -3259,7 +3287,7 @@
   const decoded = document.getElementById("cipher-text")?.value || "";
 
   let out = "Substitution mapping:\n";
-  out += map.length ? map.join(" ") : "(no mappings)\n";
+  out += map.length ? map.join(", ") : "(no mappings)\n";
   out += "\n\nDecoded text:\n";
   out += decoded.trim() || "(empty)";
 
@@ -3271,8 +3299,8 @@
   const editor = document.getElementById("ws-editor");
   if (!editor) return;
 
-  // Always focus so selection is inside the editor
-  editor.focus();
+  // Always insert at the bottom of the document
+  focusEditorEnd();
 
   const block =
 `--- ${tool} output (${stamp}) ---
@@ -3287,17 +3315,16 @@ function insertPlainTextWithLineBreaksAtCursor(text, opts = {}) {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return;
 
-  const range = sel.getRangeAt(0);
-
-  // Ensure we’re inserting into the editor (fallback: append to end)
+  // Always append to the end of the editor
   const editor = document.getElementById("ws-editor");
-  if (editor && !editor.contains(range.commonAncestorContainer)) {
-    const r = document.createRange();
-    r.selectNodeContents(editor);
-    r.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(r);
-  }
+  if (!editor) return;
+  const r = document.createRange();
+  r.selectNodeContents(editor);
+  r.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(r);
+
+  const range = sel.getRangeAt(0);
 
   const frag = document.createDocumentFragment();
 
