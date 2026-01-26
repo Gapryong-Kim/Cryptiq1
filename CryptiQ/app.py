@@ -3078,6 +3078,9 @@ def workspace_view(ws_id):
             viewer_role="admin",
             viewer_can_edit=False,  # admin view-only in lab UI
             viewer_is_pro=is_pro(fresh_user),
+            avg_tabs_per_lab=None,
+            avg_labs_per_owner=None,
+            total_tabs=None,
         )
 
     # ✅ Normal users: owner or collaborator only (your existing logic)
@@ -3129,6 +3132,9 @@ def workspace_view(ws_id):
         viewer_role=("owner" if is_owner else (role or "viewer")),
         viewer_can_edit=viewer_can_edit,
         viewer_is_pro=is_pro(fresh_user),
+        avg_tabs_per_lab=None,
+        avg_labs_per_owner=None,
+        total_tabs=None,
     )
 
 # ----------------------
