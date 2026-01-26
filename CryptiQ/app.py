@@ -3048,21 +3048,6 @@ def workspace_view(ws_id):
 
     conn = get_db()
 
-    # --- Compute Avg labs per owner (site-wide) for the template ---
-    # Avoid division-by-zero, and keep it safe if tables are empty.
-    try:
-        total_labs = conn.execute("SELECT COUNT(*) AS c FROM workspaces").fetchone()
-        total_labs = int(total_labs["c"] or 0) if total_labs else 0
-
-        total_owners = conn.execute(
-            "SELECT COUNT(DISTINCT owner_id) AS c FROM workspaces WHERE owner_id IS NOT NULL"
-        ).fetchone()
-        total_owners = int(total_owners["c"] or 0) if total_owners else 0
-
-        avg_labs_per_owner = (total_labs / total_owners) if total_owners > 0 else 0.0
-    except Exception:
-        avg_labs_per_owner = 0.0
-
     # ✅ Admin override: admins can view any lab (view-only)
     if is_admin(user):
         row = conn.execute("""
@@ -3093,7 +3078,6 @@ def workspace_view(ws_id):
             viewer_role="admin",
             viewer_can_edit=False,  # admin view-only in lab UI
             viewer_is_pro=is_pro(fresh_user),
-            avg_labs_per_owner=avg_labs_per_owner,
         )
 
     # ✅ Normal users: owner or collaborator only (your existing logic)
@@ -3145,7 +3129,6 @@ def workspace_view(ws_id):
         viewer_role=("owner" if is_owner else (role or "viewer")),
         viewer_can_edit=viewer_can_edit,
         viewer_is_pro=is_pro(fresh_user),
-        avg_labs_per_owner=avg_labs_per_owner,
     )
 
 # ----------------------
