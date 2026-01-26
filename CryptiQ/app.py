@@ -2407,9 +2407,7 @@ def weekly_submit():
     # === Compute score only if correct ===
     if correct:
         try:
-            posted_time = datetime.fromisoformat(
-                wc.get("score_start_at") or wc.get("posted_at") or now.isoformat()
-            )
+            posted_time = datetime.fromisoformat(wc.get("score_start_at") or wc.get("posted_at") or now.isoformat())
         except Exception:
             posted_time = now
 
@@ -2436,11 +2434,10 @@ def weekly_submit():
             bonus = 10
         else:
             bonus = 0
-
-        score = base_score + bonus
-        if score < 20:
+        if score<20:
             score = 20
-
+        score = base_score + bonus
+	
     # === Always record submission ===
     conn = get_db()
     conn.execute(
@@ -2455,7 +2452,7 @@ def weekly_submit():
             (user["id"] if user else None),
             (user["username"] if user else None),
             wc["week_number"],
-            answer_raw,  # store what the user typed
+            answer_raw,   # store what the user typed
             correct,
             score,
             now.isoformat(),
@@ -2467,6 +2464,7 @@ def weekly_submit():
     conn.close()
 
     return jsonify({"ok": True, "correct": bool(correct), "score": score})
+
 
 @app.route("/admin/weekly", methods=["GET", "POST"])
 def admin_weekly():
@@ -3047,43 +3045,6 @@ def workspace_view(ws_id):
         return redirect(url_for("login"))
 
     conn = get_db()
-
-    # ✅ Admin override: admins can view any lab (view-only)
-    if is_admin(user):
-        row = conn.execute("""
-            SELECT *
-            FROM workspaces
-            WHERE id = ?
-            LIMIT 1
-        """, (ws_id,)).fetchone()
-
-        if not row:
-            conn.close()
-            abort(404)
-
-        ws = dict(row)
-
-        # refresh user for pro flag correctness (keep your existing behavior)
-        fresh_user = conn.execute("SELECT * FROM users WHERE id=? LIMIT 1", (user["id"],)).fetchone()
-        fresh_user = dict(fresh_user) if fresh_user else user
-
-        conn.close()
-
-        return render_template(
-            "workspace.html",
-            user=fresh_user,
-            ws=ws,
-            is_owner=False,
-            show_tour=(not fresh_user.get("labs_tour_seen")),
-            viewer_role="admin",
-            viewer_can_edit=False,  # admin view-only in lab UI
-            viewer_is_pro=is_pro(fresh_user),
-            avg_tabs_per_lab=None,
-            avg_labs_per_owner=None,
-            total_tabs=None,
-        )
-
-    # ✅ Normal users: owner or collaborator only (your existing logic)
     row = conn.execute("""
         SELECT *
         FROM workspaces
@@ -3128,13 +3089,10 @@ def workspace_view(ws_id):
         user=fresh_user,
         ws=ws,
         is_owner=is_owner,
-        show_tour=(not fresh_user.get("labs_tour_seen")),
+        show_tour = (not fresh_user.get("labs_tour_seen")),
         viewer_role=("owner" if is_owner else (role or "viewer")),
         viewer_can_edit=viewer_can_edit,
         viewer_is_pro=is_pro(fresh_user),
-        avg_tabs_per_lab=None,
-        avg_labs_per_owner=None,
-        total_tabs=None,
     )
 
 # ----------------------
@@ -6714,44 +6672,6 @@ def admin_db_download(token):
     )
 
 
-@app.get("/admin/labs/<int:ws_id>")
-@admin_required
-def admin_lab_view(ws_id):
-    user = current_user()
-    if not user or not is_admin(user):
-        return redirect(url_for("home"))
-
-    conn = get_db()
-    row = conn.execute("""
-        SELECT *
-        FROM workspaces
-        WHERE id=?
-        LIMIT 1
-    """, (ws_id,)).fetchone()
-
-    if not row:
-        conn.close()
-        abort(404)
-
-    ws = dict(row)
-
-    # refresh user for pro flag correctness (keep consistent with rest of app)
-    fresh_user = conn.execute("SELECT * FROM users WHERE id=? LIMIT 1", (user["id"],)).fetchone()
-    fresh_user = dict(fresh_user) if fresh_user else user
-
-    conn.close()
-
-    # Admin should be able to VIEW any lab; keep it view-only in the UI
-    return render_template(
-        "workspace.html",
-        user=fresh_user,
-        ws=ws,
-        is_owner=False,
-        show_tour=False,
-        viewer_role="admin",
-        viewer_can_edit=False,
-        viewer_is_pro=is_pro(fresh_user),
-    )
 
 if __name__ == "__main__":
     app.run(debug=True)
