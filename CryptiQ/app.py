@@ -3048,7 +3048,7 @@ def workspace_view(ws_id):
 
     conn = get_db()
 
-    # ✅ Admin override: admins can view any lab (view-only)
+    # ✅ If admin: fetch the workspace first
     if is_admin(user):
         row = conn.execute("""
             SELECT *
@@ -3063,24 +3063,31 @@ def workspace_view(ws_id):
 
         ws = dict(row)
 
-        # refresh user for pro flag correctness (keep your existing behavior)
-        fresh_user = conn.execute("SELECT * FROM users WHERE id=? LIMIT 1", (user["id"],)).fetchone()
-        fresh_user = dict(fresh_user) if fresh_user else user
+        # ✅ If admin is ALSO the owner, treat them like an owner (editable)
+        if ws.get("owner_id") == user["id"]:
+            # fall through to "owner" rendering below by NOT returning here
+            pass
+        else:
+            fresh_user = conn.execute(
+                "SELECT * FROM users WHERE id=? LIMIT 1",
+                (user["id"],)
+            ).fetchone()
+            fresh_user = dict(fresh_user) if fresh_user else user
 
-        conn.close()
+            conn.close()
 
-        return render_template(
-            "workspace.html",
-            user=fresh_user,
-            ws=ws,
-            is_owner=False,
-            show_tour=(not fresh_user.get("labs_tour_seen")),
-            viewer_role="admin",
-            viewer_can_edit=False,  # admin view-only in lab UI
-            viewer_is_pro=is_pro(fresh_user),
-        )
+            return render_template(
+                "workspace.html",
+                user=fresh_user,
+                ws=ws,
+                is_owner=False,
+                show_tour=(not fresh_user.get("labs_tour_seen")),
+                viewer_role="admin",
+                viewer_can_edit=False,
+                viewer_is_pro=is_pro(fresh_user),
+            )
 
-    # ✅ Normal users: owner or collaborator only (your existing logic)
+    # ✅ Normal users (and admins who own the lab): owner or collaborator only
     row = conn.execute("""
         SELECT *
         FROM workspaces
@@ -3101,7 +3108,6 @@ def workspace_view(ws_id):
 
     ws = dict(row)
 
-    # Viewer context
     is_owner = (ws["owner_id"] == user["id"])
     role = None
     if not is_owner:
@@ -3110,12 +3116,14 @@ def workspace_view(ws_id):
             WHERE workspace_id=? AND user_id=?
             LIMIT 1
         """, (ws_id, user["id"])).fetchone()
-        role = (r["role"] if r else "viewer")  # default safe
+        role = (r["role"] if r else "viewer")
 
     viewer_can_edit = True if is_owner else (role == "editor")
 
-    # refresh user for pro flag correctness
-    fresh_user = conn.execute("SELECT * FROM users WHERE id=? LIMIT 1", (user["id"],)).fetchone()
+    fresh_user = conn.execute(
+        "SELECT * FROM users WHERE id=? LIMIT 1",
+        (user["id"],)
+    ).fetchone()
     fresh_user = dict(fresh_user) if fresh_user else user
 
     conn.close()
