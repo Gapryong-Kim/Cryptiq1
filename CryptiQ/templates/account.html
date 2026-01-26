@@ -167,6 +167,13 @@
       transform: translateY(-1px);
     }
 
+    /* ✅ Active tab highlight (new) */
+    .account-links a.active {
+      background: var(--accent);
+      color: #0f0f0f;
+      border-color: var(--accent);
+    }
+
     /* ===== Sections ===== */
     .section {
       border-top: 1px solid var(--line);
@@ -188,6 +195,10 @@
       font-size: .95rem;
       line-height: 1.5;
     }
+
+    /* ✅ Real-tab behavior (new): hide all panels by default */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     /* ===== Clean “settings row” card ===== */
     .setting-card{
@@ -526,21 +537,22 @@
         </div>
       </div>
 
-      <div class="account-links">
+      <div class="account-links" id="account-tabs">
         <a href="#profile">Profile</a>
         <a href="#security">Security</a>
         <a href="#leaderboard">Leaderboard</a>
         <a href="#posts">My Posts</a>
+        <a href="#settings">Settings</a>
       </div>
 
       <!-- ===== Profile ===== -->
-      <div id="profile" class="section">
+      <div id="profile" class="section tab-panel">
         <h3>Profile</h3>
         <p>Your profile summary appears above. More options coming soon.</p>
       </div>
 
       <!-- ===== Security (Discord-style change password modal) ===== -->
-      <div id="security" class="section">
+      <div id="security" class="section tab-panel">
         <h3>Security</h3>
 
         <div class="setting-card">
@@ -562,7 +574,7 @@
       </div>
 
       <!-- ===== Leaderboard ===== -->
-      <div id="leaderboard" class="section">
+      <div id="leaderboard" class="section tab-panel">
         <h3>Leaderboard</h3>
         {% if leaderboard_data %}
         <div class="lb-stats">
@@ -585,7 +597,7 @@
       </div>
 
       <!-- ===== Posts ===== -->
-      <div id="posts" class="section">
+      <div id="posts" class="section tab-panel">
         <h3>My Posts</h3>
         {% if posts %}
         <div class="post-grid">
@@ -622,10 +634,30 @@
         {% endif %}
       </div>
 
+      <!-- ===== Settings (separate tab) ===== -->
+      <div id="settings" class="section tab-panel">
+        <h3>Settings</h3>
+        <p>Account preferences and administrative actions.</p>
+
+        <div class="setting-card" style="border-color: rgba(255,90,90,0.45); margin-top: 12px;">
+          <div class="setting-left">
+            <div class="setting-title" style="color:#ff5a5a;">
+              <span class="dot" style="background:#ff5a5a; box-shadow: 0 0 0 4px rgba(255,90,90,0.12);"></span>
+              Delete Account
+            </div>
+            <div class="setting-desc">
+              Permanently delete your account. This removes your posts, solves, and stats.
+            </div>
+          </div>
+
+          <!-- Keep same id so your existing JS works unchanged -->
+          <button class="btn btn-danger" id="delete-btn" type="button">Delete Account</button>
+        </div>
+      </div>
+
       <!-- ===== Bottom Actions ===== -->
       <div class="bottom-actions">
         <a href="#" class="btn btn-ghost" id="logout-btn">Logout</a>
-        <a href="#" class="btn btn-danger" id="delete-btn">Delete Account</a>
       </div>
     </div>
   </main>
@@ -743,6 +775,33 @@
   </div>
 
   <script>
+    // =========================
+    // ✅ Real tabs controller (NEW)
+    // =========================
+    const tabsWrap = document.getElementById('account-tabs');
+    const tabLinks = tabsWrap ? Array.from(tabsWrap.querySelectorAll('a[href^="#"]')) : [];
+    const panels = Array.from(document.querySelectorAll('.tab-panel'));
+
+    function activateTab(hash) {
+      const target = (hash || '#profile').toLowerCase();
+      const panel = document.querySelector(target);
+
+      // If invalid hash, fall back
+      const safeTarget = (panel && panel.classList.contains('tab-panel')) ? target : '#profile';
+
+      // panels
+      panels.forEach(p => p.classList.toggle('active', ('#' + p.id) === safeTarget));
+
+      // links
+      tabLinks.forEach(a => a.classList.toggle('active', (a.getAttribute('href') || '').toLowerCase() === safeTarget));
+    }
+
+    window.addEventListener('hashchange', () => activateTab(location.hash));
+    activateTab(location.hash);
+
+    // =========================
+    // Existing JS (unchanged)
+    // =========================
     const logoutBtn = document.getElementById('logout-btn');
     const deleteBtn = document.getElementById('delete-btn');
     const logoutModal = document.getElementById('confirm-logout');

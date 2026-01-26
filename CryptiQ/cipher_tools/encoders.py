@@ -317,96 +317,130 @@ def binary_decode(text):
 # ==============================
 def permutation_encode(text: str, key: str) -> str:
     """
-    Block transposition cipher using a keyword-derived permutation.
-    Only letters A-Z are processed/output. Everything else is ignored.
-    Output is uppercase. Pads final block with 'X'.
+    Block transposition ENCODE using a keyword-derived permutation.
+
+    - Only A-Z letters are transposed (others are left in place at the end).
+    - Output keeps original punctuation/spacing/digits in the same positions.
+    - Original letter case is preserved.
+    - Pads the *letter stream* with 'x' so letters length is a multiple of block size,
+      but padding letters are appended at the very end (because they have no original
+      punctuation positions to occupy).
     """
-    perm = _perm_from_keyword(key)
+    perm = _perm_from_keyword(key)  # 1-based positions, like your breaker expects
     n = len(perm)
 
-    letters = [ch.upper() for ch in text if ch.isalpha()]
+    # Extract letters only (lowercase stream for cipher math)
+    letters = [ch.lower() for ch in text if ch.isalpha()]
 
-    pad = "X"
-    if len(letters) % n != 0:
-        letters.extend([pad] * (n - (len(letters) % n)))
+    # Pad letter-stream to full blocks
+    pad_char = "x"
+    pad_len = (-len(letters)) % n
+    if pad_len:
+        letters.extend([pad_char] * pad_len)
 
-    out = []
+    # Build inverse mapping so that decode_using_perm(encode(...), perm) == original
+    # Your breaker/decode does: plain += block[perm[j]-1]
+    # So encode must set: cipher[pos] = plain[inv[pos]]
+    inv = [0] * n
+    for j, p in enumerate(perm):        # p is 1..n
+        inv[p - 1] = j                  # inv[cipher_pos] = plain_pos
+
+    # Encode letters in blocks
+    enc_letters = []
     for i in range(0, len(letters), n):
-        block = letters[i:i+n]
-        out.append("".join(block[perm[j]] for j in range(n)))
+        block = letters[i:i + n]
+        cipher_block = [block[inv[pos]] for pos in range(n)]
+        enc_letters.extend(cipher_block)
+
+    # Reinsert letters into original text positions, preserving case; keep non-letters unchanged
+    out = []
+    li = 0
+    for ch in text:
+        if ch.isalpha():
+            new = enc_letters[li]
+            out.append(new.upper() if ch.isupper() else new)
+            li += 1
+        else:
+            out.append(ch)
+
+    # If we padded, append the extra cipher letters at the end (no original slots for them)
+    # These are lowercase by design (like the breaker lowercases the message before scoring).
+    if pad_len:
+        out.append("".join(enc_letters[len([c for c in text if c.isalpha()]):]))
+
     return "".join(out)
 
 
 def permutation_decode(text: str, key: str) -> str:
     """
-    Inverse of permutation_encode for the same keyword.
-    Only letters A-Z are processed/output. Everything else is ignored.
-    Output is uppercase. Does not strip padding.
+    Block transposition DECODE using the same keyword-derived permutation.
+
+    This applies the same per-block readout as in your breaker:
+        plain += block[perm[i]-1]
+
+    - Only letters are decoded; non-letters are put back in place.
+    - Preserves original case.
+    - If the letter-stream length isn't a multiple of block size, pads with 'x' to decode safely.
+      (You can strip trailing 'x' yourself if you used padding.)
     """
-    perm = _perm_from_keyword(key)
+    perm = _perm_from_keyword(key)  # 1-based positions
     n = len(perm)
 
-    inv = [0] * n
-    for j, src in enumerate(perm):
-        inv[src] = j
+    letters = [ch.lower() for ch in text if ch.isalpha()]
 
-    letters = [ch.upper() for ch in text if ch.isalpha()]
+    pad_char = "x"
+    pad_len = (-len(letters)) % n
+    if pad_len:
+        letters.extend([pad_char] * pad_len)
 
-    pad = "X"
-    if len(letters) % n != 0:
-        letters.extend([pad] * (n - (len(letters) % n)))
-
-    out = []
+    dec_letters = []
     for i in range(0, len(letters), n):
-        block = letters[i:i+n]
-        plain = [""] * n
-        for pos in range(n):
-            plain[pos] = block[inv[pos]]
-        out.append("".join(plain))
+        block = letters[i:i + n]
+        # EXACTLY like your breaker "decoded" construction
+        plain_block = []
+        for idx in perm:  # idx is 1..n
+            plain_block.append(block[idx - 1])
+        dec_letters.extend(plain_block)
+
+    # Reinsert decoded letters into original text positions, preserving case
+    out = []
+    li = 0
+    for ch in text:
+        if ch.isalpha():
+            new = dec_letters[li]
+            out.append(new.upper() if ch.isupper() else new)
+            li += 1
+        else:
+            out.append(ch)
+
+    # If ciphertext had extra padded letters (or we padded to decode), append leftovers
+    # (Typically you’ll strip trailing 'x' manually if needed.)
+    extra = len(dec_letters) - len([c for c in text if c.isalpha()])
+    if extra > 0:
+        out.append("".join(dec_letters[-extra:]))
+
     return "".join(out)
 
 
 def _perm_from_keyword(keyword: str):
     """
-    Convert keyword -> permutation by stable alphabetical order.
-    Example: ZEBRA -> [4,2,1,3,0] (A smallest ... Z largest)
-    Duplicate letters are handled left-to-right stably.
+    Keyword -> 1-based permutation list, suitable for:
+        for idx in perm: output += block[idx-1]
+
+    Stable ordering for duplicates (left-to-right).
+
+    Example: "ZEBRA" -> [5, 3, 2, 4, 1]
+      (A from pos5, B from pos3, E from pos2, R from pos4, Z from pos1)
     """
     if not isinstance(keyword, str):
-        raise TypeError("Key must be a string.")
+        raise TypeError("Key must be a string keyword.")
 
     letters = [ch.upper() for ch in keyword if ch.isalpha()]
     if len(letters) < 2:
         raise ValueError("Key must contain at least two letters A-Z.")
 
     order = sorted(range(len(letters)), key=lambda i: (letters[i], i))
-
-    perm = [0] * len(letters)
-    for rank, pos in enumerate(order):
-        perm[pos] = rank
-
-    return perm
-
-
-
-
-
-def _perm_from_keyword(keyword: str):
-    if not isinstance(keyword, str):
-        raise TypeError("Key must be a string.")
-
-    letters = [ch.upper() for ch in keyword if ch.isalpha()]
-    if len(letters) < 2:
-        raise ValueError("Key must contain at least two letters.")
-
-    # Stable alphabetical ranking
-    order = sorted(range(len(letters)), key=lambda i: (letters[i], i))
-
-    perm = [0] * len(letters)
-    for rank, pos in enumerate(order):
-        perm[pos] = rank
-
-    return perm
+    return [i + 1 for i in order]
 
 
 
@@ -480,7 +514,3 @@ def baconian_decode(cipher):
         decoded += inv.get(chunk, "")
     return decoded
     
-
-
-
-

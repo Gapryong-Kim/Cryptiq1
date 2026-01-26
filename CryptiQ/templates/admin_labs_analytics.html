@@ -180,7 +180,7 @@
             <tbody>
               {% for w in biggest_labs %}
                 <tr>
-                  <td><a href="{{ url_for('workspace_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
+                  <td><a href="{{ url_for('admin_lab_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
                   <td>{{ w["owner"] }}</td>
                   <td>{{ w["tabs"] }}</td>
                 </tr>
@@ -206,7 +206,7 @@
             <tbody>
               {% for w in collab_heavy %}
                 <tr>
-                  <td><a href="{{ url_for('workspace_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
+                  <td><a href="{{ url_for('admin_lab_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
                   <td>{{ w["owner"] }}</td>
                   <td>{{ w["collaborators"] }}</td>
                 </tr>
@@ -232,7 +232,7 @@
             <tbody>
               {% for w in shared_labs_list %}
                 <tr>
-                  <td><a href="{{ url_for('workspace_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
+                  <td><a href="{{ url_for('admin_lab_view', ws_id=w['id']) }}">#{{ w["id"] }} — {{ w["title"] }}</a></td>
                   <td>{{ w["owner"] }}</td>
                   <td>{{ w["updated_at"] }}</td>
                 </tr>

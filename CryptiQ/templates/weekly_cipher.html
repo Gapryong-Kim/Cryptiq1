@@ -526,6 +526,12 @@ main.weekly-wrap > #site-footer{
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+  
+    .ciphertext.animating{
+      
+      transition: box-shadow .2s ease, border-color .2s ease;
+    }
+
   </style>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
@@ -588,8 +594,8 @@ main.weekly-wrap > #site-footer{
           <p class="desc">{{ wc.description }}</p>
         {% endif %}
         <div class="cipher-block">
-          <div class="cipher-label">Ciphertext</div>
-          <div class="ciphertext">{{ wc.ciphertext }}</div>
+          <div class="cipher-label" id="cipher-label">Ciphertext</div>
+          <div class="ciphertext" id="ciphertext-box">{{ wc.ciphertext }}</div>
         </div>
 
         <!-- Open in Lab CTA (only ONE, always here) -->
@@ -618,7 +624,12 @@ main.weekly-wrap > #site-footer{
           <p style="color:var(--muted);margin:0 0 10px 0;">
             This is an archived puzzle — submissions are closed.
           </p>
-          <a class="lab-btn" href="{{ url_for('weekly_page') }}" style="text-decoration:none;text-align:center;">Back to current week</a>
+
+          <button id="reveal-solution" class="lab-btn" type="button" style="width:100%;margin-bottom:10px;">
+            Official Decrypt
+          </button>
+
+          <a class="lab-btn" href="{{ url_for('weekly_page') }}" style="text-decoration:none;text-align:center;width:100%;">Back to current week</a>
 
         {% else %}
 
@@ -653,6 +664,7 @@ main.weekly-wrap > #site-footer{
       {% include "base_footer.html" %}
 
   </main>
+
 
   <!-- Info Modal -->
   <div class="info-modal" id="info-modal">
@@ -867,5 +879,131 @@ Some puzzles may include hints. These are typically released later, allowing sol
   })();
   </script>
   
+
+  {% if is_archive %}
+<script>
+(() => {
+  const btn = document.getElementById('reveal-solution');
+  const box = document.getElementById('ciphertext-box');
+  const label = document.getElementById('cipher-label');
+  if (!btn || !box) return;
+
+  const week = {{ wc.week_number or 0 }};
+  const originalText = box.textContent;
+  let revealed = false;
+  let timer = null;
+  let raf = null;
+
+  function randChar(){
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    return alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+
+  function shuffle(arr){
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function stopAnim(){
+    if (timer) { clearInterval(timer); timer = null; }
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    box.classList.remove('animating');
+  }
+
+  function renderFrame(target, locked){
+    let out = '';
+    for (let i = 0; i < target.length; i++) {
+      const ch = target[i];
+      if (locked[i] || ch === '\n' || ch === '\r') { out += ch; continue; }
+      if (ch === ' ' || ch === '\t') { out += ch; continue; }
+      out += randChar();
+    }
+    box.textContent = out;
+  }
+
+  function animateReveal(solution){
+    stopAnim();
+    const target = String(solution || '');
+    const locked = new Array(target.length).fill(false);
+
+    for (let i = 0; i < target.length; i++) {
+      const ch = target[i];
+      if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') locked[i] = true;
+    }
+
+    const indices = [];
+    for (let i = 0; i < target.length; i++) if (!locked[i]) indices.push(i);
+    shuffle(indices);
+
+    box.classList.add('animating');
+
+    timer = setInterval(() => renderFrame(target, locked), 28);
+
+    let p = 0;
+    const lockStep = () => {
+      const batch = 2;
+      for (let k = 0; k < batch && p < indices.length; k++) {
+        locked[indices[p]] = true;
+        p++;
+      }
+      if (p >= indices.length) {
+        renderFrame(target, locked);
+        stopAnim();
+        box.textContent = target;
+        return;
+      }
+      raf = requestAnimationFrame(lockStep);
+    };
+    raf = requestAnimationFrame(lockStep);
+  }
+
+  async function fetchSolution(){
+    const res = await fetch(`/weekly/archive/${week}/solution`, { method: 'GET' });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || !data.ok) throw new Error(data?.error || 'fetch failed');
+    return String(data.solution || '');
+  }
+
+  btn.addEventListener('click', async () => {
+    if (!week) return;
+
+    // Optional toggle back to ciphertext
+    if (revealed) {
+      stopAnim();
+      box.textContent = originalText;
+      if (label) label.textContent = 'Ciphertext';
+      btn.textContent = 'Official Decrypt';
+      revealed = false;
+      return;
+    }
+
+    const old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Decrypting…';
+
+    try {
+      const solution = await fetchSolution();
+      if (label) label.textContent = 'Official Decryption';
+      animateReveal(solution);
+      revealed = true;
+      btn.textContent = 'Show Ciphertext';
+    } catch (e) {
+      console.error(e);
+      btn.textContent = old;
+      alert('Could not load solution.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Stop animation if user navigates away
+  window.addEventListener('beforeunload', stopAnim);
+})();
+</script>
+{% endif %}
+
 </body>
 </html>
