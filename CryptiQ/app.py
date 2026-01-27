@@ -548,32 +548,13 @@ def breaker():
             # Polybius (standardize → 2-stage substitution)
             # ======================
             elif cipher_type == "polybius":
-                    key, plaintext = substitution_break(
-                        polybius_standardize(text),
-                        max_restarts=3,
-                        sa_steps=2000,
-                        seed=42,
-                        time_limit_seconds=25,
-                        threads=None,   # auto: Render → 1, local → cores
-                        fixed=fixed_map,
-                        verbose=True
-                    )
+                    key, plaintext = substitution_break(polybius_standardize(text), corpus_path="big_english_corpus.txt", max_restarts=2, sa_steps=10000)
                     
             # ======================
             # Substitution (true 2-stage pipeline)
             # ======================
             elif cipher_type == "substitution":
-                key, plaintext = substitution_break(
-                    text,
-                    max_restarts=30,
-                    sa_steps=14000,
-                    seed=42,
-                    time_limit_seconds=10,
-                    threads=1,   # auto: Render → 1, local → cores
-                    fixed=fixed_map,
-                    verbose=True
-                )
-                
+                key, plaintext = substitution_break(text, corpus_path="big_english_corpus.txt", max_restarts=2, sa_steps=10000)
                 
             # Non-key ciphers
             # ======================
@@ -6758,3 +6739,4 @@ def admin_lab_view(ws_id):
 if __name__ == "__main__":
     app.run(debug=True)
     
+
