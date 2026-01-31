@@ -575,7 +575,26 @@
     .comment-collapsed-note{ display:none !important; }
 
 /* When collapsed: hide body + actions + forms + replies */
-    .comment.comment-collapsed .comment-body,
+/* ✅ When collapsed: show + inline next to username */
+    .comment.comment-collapsed .comment-header{
+      align-items: center;
+      gap: 8px;
+    }
+    .comment.comment-collapsed .comment-collapse-btn{
+      position: static !important;
+      display: inline-grid !important;
+      place-items: center;
+      margin-right: 6px;
+      transform: none !important;
+    }
+
+    
+    /* ✅ Collapse avatar when the comment thread is collapsed */
+    .comment.comment-collapsed .comment-avatar{
+      display: none !important;
+    }
+
+.comment.comment-collapsed .comment-body,
     .comment.comment-collapsed .comment-actions,
     .comment.comment-collapsed .reply-form,
     .comment.comment-collapsed .comment-children,
@@ -741,7 +760,7 @@
       .comment { padding: 8px 10px; }
 
       /* Mobile: tap-to-collapse, hide +/- button */
-      .comment-collapse-btn{ display:none !important; }
+      .comment:not(.comment-collapsed) .comment-collapse-btn{ display:none !important; }
     }
 
     /* === Search Bar (Google-style) === */
@@ -1309,6 +1328,20 @@
 }
 
 
+/* === Collapsed comment: + on left, username slightly right === */
+.comment.comment-collapsed .comment-header{
+  justify-content: flex-start;   /* stop centering */
+  gap: 10px;                     /* space between + and name */
+}
+
+.comment.comment-collapsed .comment-user{
+  margin-left: 2px;              /* subtle nudge right */
+}
+/* === Expanded comment: nudge − button down to avoid avatar overlap === */
+.comment:not(.comment-collapsed) .comment-collapse-btn{
+  top: 50px; /* increase this slightly if needed */
+}
+
 </style>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
@@ -1708,7 +1741,11 @@ function renderCommentTree(nodes, parentEl, opts, depth = 0) {
           btn.textContent = '−';
           btn.setAttribute('aria-label', 'Collapse');
           btn.setAttribute('aria-expanded', 'true');
-          li.appendChild(btn);
+
+          // ✅ Put the +/- button next to the username (inline when collapsed)
+          const hdr = li.querySelector('.comment-header');
+          if (hdr) hdr.insertAdjacentElement('afterbegin', btn);
+          else li.appendChild(btn);
         }
         applyReplyCollapse(li, childUl, opts);
       }
@@ -2151,7 +2188,6 @@ function renderPostHTML(p, isAdmin, isLogged) {
       <div class="post-author">
         by ${escapeHtml(p.username || "[Deleted User]")}
         ${p.is_admin ? `<span class="admin-badge">Admin</span>` : ""}
-        ${p.is_pro ? `<span class="pro-badge">PRO</span>` : ""}
         ${p.banned ? `<span class="banned-badge">BANNED</span>` : ""}
       </div>
     </div>
