@@ -78,12 +78,7 @@ def migrate_weekly_tables():
 from datetime import datetime, timezone
 
 def get_current_season():
-    """Season 1 starts 2025-12-01 00:00 UTC. Each season is 2 calendar months."""
-    start = datetime(2025, 12, 1, tzinfo=timezone.utc)
-    now = datetime.now(timezone.utc)
-
-    months_since = (now.year - start.year) * 12 + (now.month - start.month)
-    return max(1, (months_since // 2) + 1)
+    return 1
 
 
 import re
@@ -2551,13 +2546,7 @@ from flask import render_template, session
 from datetime import datetime
 
 
-def get_current_season():
-    """Season 1 starts 2025-12-01 00:00 UTC. Each season is 2 calendar months."""
-    start = datetime(2025, 12, 1, tzinfo=timezone.utc)
-    now = datetime.now(timezone.utc)
 
-    months_since = (now.year - start.year) * 12 + (now.month - start.month)
-    return max(1, (months_since // 2) + 1)
 
 @app.route("/leaderboard")
 def leaderboard():
@@ -6739,4 +6728,3 @@ def admin_lab_view(ws_id):
 if __name__ == "__main__":
     app.run(debug=True)
     
-
