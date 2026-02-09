@@ -9,4 +9,6 @@ dotenv
 stripe
 sendgrid
 Authlib
+setuptools
+
 
