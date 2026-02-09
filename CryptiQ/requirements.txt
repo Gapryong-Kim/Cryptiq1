@@ -8,5 +8,5 @@ reportlab
 dotenv
 stripe
 sendgrid
-pkg_resources
 Authlib
+
