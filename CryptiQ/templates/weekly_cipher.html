@@ -531,6 +531,12 @@ main.weekly-wrap > #site-footer{
       
       transition: box-shadow .2s ease, border-color .2s ease;
     }
+.ciphertext {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;   /* 🔑 force wrap even mid-word */
+  word-break: break-word;    /* fallback for older browsers */
+  max-width: 100%;
+}
 
   </style>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
@@ -1006,4 +1012,5 @@ Some puzzles may include hints. These are typically released later, allowing sol
 {% endif %}
 
 </body>
+
 </html>
