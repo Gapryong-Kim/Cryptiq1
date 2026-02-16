@@ -197,11 +197,27 @@ def railfence_decode(cipher, rails=3, offset=0):
 #  COLUMNAR TRANSPOSITION
 # ==============================
 def columnar_encode(text, key):
-    key_order = sorted(range(len(key)), key=lambda k: key[k])
-    columns = [''] * len(key)
-    for i, ch in enumerate(text):
-        columns[i % len(key)] += ch
-    return ''.join(columns[k] for k in key_order)
+    text = ''.join(i for i in text.upper() if i.isalpha())
+    n_cols = len(key)
+
+    # Step 1: create rows
+    rows = [text[i:i+n_cols] for i in range(0, len(text), n_cols)]
+
+    # Step 2: pad last row if needed
+    if len(rows[-1]) < n_cols:
+        rows[-1] += 'X' * (n_cols - len(rows[-1]))
+
+    # Step 3: get column order from key
+    key_order = sorted(range(n_cols), key=lambda k: key[k])
+
+    # Step 4: read columns in key order
+    ciphertext = ''
+    for col in key_order:
+        for row in rows:
+            ciphertext += row[col]
+
+    return ciphertext
+
 
 def columnar_decode(cipher, key):
     key_order = sorted(range(len(key)), key=lambda k: key[k])
@@ -514,3 +530,4 @@ def baconian_decode(cipher):
         decoded += inv.get(chunk, "")
     return decoded
     
+
