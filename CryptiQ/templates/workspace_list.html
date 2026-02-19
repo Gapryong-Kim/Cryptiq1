@@ -944,7 +944,8 @@
 
                   <p class="ws-snippet">
                     {% set preview = (w.cipher_text or w.notes or "") %}
-                    {{ preview[:180] }}{% if preview|length > 180 %}…{% endif %}
+                    {{ preview | striptags | truncate(180, True, "…") }}
+{% if preview|length > 180 %}…{% endif %}
                   </p>
 
                   <div class="ws-meta">
