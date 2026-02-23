@@ -549,7 +549,7 @@ def breaker():
             # Substitution (true 2-stage pipeline)
             # ======================
             elif cipher_type == "substitution":
-                key, plaintext = substitution_break(text, corpus_path="big_english_corpus.txt", max_restarts=2, sa_steps=10000)
+                key, plaintext = substitution_break(text, corpus_path="big_english_corpus.txt", max_restarts=1, sa_steps=50)
                 
             # Non-key ciphers
             # ======================
@@ -6728,3 +6728,4 @@ def admin_lab_view(ws_id):
 if __name__ == "__main__":
     app.run(debug=True)
     
+
