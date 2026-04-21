@@ -18,7 +18,7 @@ from cipher_tools.railfence import railfence_break
 from cipher_tools.columnar_transposition import columnar_break
 from cipher_tools.permutation import permutation_break
 from cipher_tools.polybius_square import *  # ✅ make sure this path is correct
-
+from cipher_tools.baconian import baconian_break
 # --- Frequency analysis (for broad classification only) ---
 from cipher_tools.frequency_analyser import analyse
 
@@ -28,7 +28,6 @@ from cipher_tools.breakers import (
     base64_break,
     hex_break,
     binary_break,
-    baconian_break,
 )
 
 # ===============================
