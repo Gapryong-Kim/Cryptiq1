@@ -44,7 +44,6 @@ from cipher_tools.breakers import (
             base64_break,
             hex_break,
             binary_break,
-            baconian_break
         )
 from cipher_tools.auto_break import auto_break  #  new auto detector
 from cipher_tools.random_tools import nospace
