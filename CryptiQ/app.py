@@ -7,7 +7,6 @@ from cipher_tools.breakers import (
     base64_break,
     hex_break,
     binary_break,
-    baconian_break
 )
 from dotenv import load_dotenv
 load_dotenv()
